@@ -1,0 +1,5 @@
+{
+    "linterOptions": {
+        "exclude": ["src/**","irlui/**"]
+    }
+}
