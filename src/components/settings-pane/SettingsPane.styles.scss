@@ -1,0 +1,39 @@
+@import '~styles/index';
+
+.settingsPane {
+  position: absolute;
+  left: 0;
+  top: 36px;
+  background-color: rgba($color-grey-000, 0.7);
+  padding: 16px;
+
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+
+  transform: translateX(-100%);
+  transition: transform 0.2s ease;
+}
+
+.settingsPaneActive {
+  transform: translateX(0);
+}
+
+.layerRow {
+  display: flex;
+  flex-direction: row;
+  justify-content: flex-start;
+  align-content: center;
+  padding: 4px 0;
+}
+
+.layerElement {
+  min-width: 50px;
+  margin: 0 4px;
+}
+
+.addLayerButton {
+  width: fit-content;
+  align-self: flex-end;
+  margin-top: 16px;
+}
