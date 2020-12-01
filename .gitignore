@@ -1,0 +1,17 @@
+# Ignore NPM 3rd party packages
+node_modules
+
+# Ignore application build files
+dist
+
+# Ignore NPM generated package-lock.json
+package-lock.json
+
+# Ignore Firebase cache
+.firebase
+
+# Ignore VS Code config files
+.vscode
+
+ref
+
