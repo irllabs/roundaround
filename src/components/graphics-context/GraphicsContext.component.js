@@ -1,10 +1,18 @@
-import React, { useRef } from 'react';
-import { extend, Canvas, useFrame, useThree } from 'react-three-fiber'
+import React, { useRef, useCallback } from 'react';
+import { extend, Canvas, useFrame, useThree } from 'react-three-fiber';
+import { OrthographicCamera, Html } from 'drei';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls';
-import Round from '../round/Round.component';
+
+import { connect, ReactReduxContext, Provider } from "react-redux";
+
+import Round from './round/Round.component';
+import Contributors from './contributors/Contributors.component';
+import EditorLine from './editor-line/EditorLine.component'
+import { FirebaseContext } from '../../firebase/index';
+
 import styles from './GraphicsContext.styles.scss';
 
-extend({ OrbitControls, });
+extend({ OrbitControls });
 
 const CameraControls = (props) => {
   const {
@@ -13,18 +21,80 @@ const CameraControls = (props) => {
   } = useThree();
   const controls = useRef();
   useFrame(() => controls.current.update());
-  return <orbitControls ref={controls} args={[camera, domElement]} />;
+  return (
+  <orbitControls
+    ref={controls}
+    args={[camera, domElement]} 
+    enablePan={false}
+    enableRotate={props.cameraMode === 'perspective'}
+  />);
 }
 
-const GraphicsContextComponent = (props) => (
-  <div className={props.className}>
-    <Canvas className={styles.canvas}>
-      <CameraControls />
-      <ambientLight />
-      <pointLight position={[10, 10, 10]} />
-      <Round round={props.round} />
-    </Canvas>
-  </div>
-);
+class GraphicsContextComponent extends React.Component {
+  constructor(props) {
+    super(props);
+    this.cameraRef = React.createRef();
+    this.raycasterFilter = this.raycasterFilter.bind(this);
+  }
 
-export default GraphicsContextComponent ;
+  raycasterFilter = (intersects, state) => {
+    return this.props.raycasterActive ? intersects.slice(0, 1) : [];
+  };
+  
+  // repassing redux and firebase contexts since react-three-fiber is mounted in another component three.
+  render() {
+    return (
+      <ReactReduxContext.Consumer>
+        {
+          ({store}) => (
+            <FirebaseContext.Consumer>
+              {
+                (firebase) => (
+                    <Canvas
+                      className={styles.canvas}
+                      raycaster={{ filter: this.raycasterFilter }}
+                    >
+                      <Provider store={store}>
+                        <FirebaseContext.Provider value={firebase}>
+                          <CameraControls cameraMode={this.props.camera} />
+                          {
+                            this.props.camera === 'orthographic' &&
+                            <OrthographicCamera 
+                              makeDefault={true}
+                              ref={this.cameraRef}
+                              position={[0,0,1]}
+                              zoom={130}
+                            />
+                          }
+                          <ambientLight />
+                          <pointLight position={[10, 10, 10]} />
+                          <Round/>
+                          {
+                                this.props.collaboration &&
+                                <Contributors/>
+                          }
+                          <EditorLine/>
+                        </FirebaseContext.Provider>
+                      </Provider>
+                    </Canvas>
+                  )
+                }
+            </FirebaseContext.Consumer>
+            )
+        }
+      </ReactReduxContext.Consumer>
+    )
+  }
+};
+const mapStateToProps = state => {
+  return {
+    raycasterActive: state.raycaster.active,
+    camera: state.camera,
+    collaboration: state.collaboration
+  };
+};
+
+export default connect(
+  mapStateToProps,
+  null
+)(GraphicsContextComponent);

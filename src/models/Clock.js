@@ -7,8 +7,9 @@ class Clock {
 
   toggle = () => this.isRunning ? this.stop() : this.start();
 
-  start = () => {
-    Tone.Transport.start();
+  start = async () => {
+    // if (!Tone.Transport.loop) Tone.Transport.loop = true;
+    Tone.Transport.start("+0");
     this.isRunning = true;
   };
 

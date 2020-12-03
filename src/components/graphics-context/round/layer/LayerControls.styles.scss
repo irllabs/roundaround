@@ -1,0 +1,48 @@
+@import "~styles/index";
+
+.layerControls {
+    display: flex;
+    direction: rtl;
+    align-items: center;
+    color: white;
+    font-size: 12px;
+    user-select: none; /* don't let the text get selected */
+    text-shadow:  /* create a black outline */ -1px -1px 0 #000, 0 -1px 0 #000, 1px -1px 0 #000, 1px 0 0 #000,
+        1px 1px 0 #000, 0 1px 0 #000, -1px 1px 0 #000, -1px 0 0 #000;
+    margin: -12px 0 0 -12px;
+    width: calc(100% + 12px);
+}
+
+.layerControls > div {
+    direction: ltr;
+    margin: 12px 0 0 12px;
+}
+
+.patternLabelInput {
+    //   width: 10px;
+    white-space: nowrap;
+}
+
+.layerLabelInput {
+    color: white;
+    font-size: 12px;
+    white-space: nowrap;
+}
+
+.instrumentLabelContainer {
+    white-space: nowrap;
+    border-radius: 4px;
+    width: fit-content;
+}
+
+.instrumentLabel {
+    cursor: pointer;
+    font-size: 12px;
+    text-align: center;
+    padding: 2px;
+    // white-space: nowrap;
+}
+
+.cannotEdit {
+    cursor: not-allowed;
+}

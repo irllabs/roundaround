@@ -1,0 +1,83 @@
+@import '~styles/index';
+
+.sidenav {
+  z-index: 100000000;
+  height: 100%;
+  width: 0; 
+  position: fixed;
+  display: flex;
+  flex-direction: column;
+  top: 0; 
+  background-color: $color-grey-000;
+  overflow-x: hidden; 
+  transition: 0.5s;
+  
+  a {
+    cursor: pointer;
+    padding: 8px 8px 8px 32px;
+    text-decoration: none;
+    font-size: 18px;
+    color: $color-grey-070;
+    transition: 0.3s;
+    display: flex;
+    white-space: nowrap;
+    justify-content: space-between;
+    flex-direction: row;
+  }
+}
+
+.open {
+  width: 250px;
+  box-shadow: 1px 1px 20px 5px #000;
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-weight: bold;
+}
+
+.headerText {
+  color: $color-grey-080 !important;
+  padding: 8px !important;
+  cursor: initial !important;
+}
+
+.sidenav a:hover {
+  color: $color-grey-080;
+}
+
+.unselected { 
+  border: 1px solid $color-grey-000;
+}
+.selected {
+  border: 1px solid $color-grey-070;
+}
+
+
+
+.closeBtn {
+  cursor: pointer;
+  font-size: 36px;
+  text-align: end;
+}
+
+.removeBtn {
+  cursor: pointer;
+  top: 0;
+  right: 25px;
+  float: right;
+}
+
+// /* Style page content - use this if you want to push the page content to the right when you open the side navigation */
+// #main {
+//   transition: margin-left .5s;
+//   padding: 20px;
+// }
+
+// /* On smaller screens, where height is less than 450px, change the style of the sidenav (less padding and a smaller font size) */
+// @media screen and (max-height: 450px) {
+//   .sidenav {padding-top: 15px;}
+//   .sidenav a {font-size: 18px;}
+// }

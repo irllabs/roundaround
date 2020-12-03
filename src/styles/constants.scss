@@ -1,7 +1,34 @@
-// $menu-time: 0.15s;
-// $menu-height: 30px;
-// $icon-animation: 0.15s ease-in-out;
-// $pane-animation: 0.2s ease-out;
-// $pane-top-buffer: 60px;
-// $pane-left-buffer: 30px;
-// $icon-buffer: 10px;
+.text-micro {
+   font-size: 8px;
+   line-height: 8px;
+}
+.text-small {
+    font-size: 14px;
+    line-height: 18px;
+}
+.text-regular {
+    font-size: 17px;
+    line-height: 22px;
+}
+.text-large {
+    font-size: 19px;
+    line-height: 24px;
+}
+.text-title3 {
+    font-size: 24px;
+    line-height: 28px;
+}
+.text-title2 {
+    font-size: 32px;
+    line-height: 26px;
+}
+.text-title1 {
+    font-size: 44px;
+    line-height: 56px;
+}
+
+$spacing-tiny: 8px;
+$spacing-small: 16px;
+$spacing-base: 24px;
+$spacing-large: 48px;
+$spacing-x-larg: 64px;
