@@ -103,3 +103,7 @@ export const ContributorSphereArgs = [0.1, 16, 16,];
 export const ThrottleDelay = 1000;
 
 export const ACTIVE_TTL = 0.6;
+
+export const EditorLineParams = {
+    speed: 4
+}
