@@ -40,11 +40,11 @@ const SettingsPane = ({
     }
 
     const addLayer = () => {
-        addRoundLayer(getDefaultLayerData(user.id), userId)
+        addRoundLayer(getDefaultLayerData(user.id), user.id)
     }
 
     const deleteLayer = (index) => {
-        removeRoundLayer(index, userId)
+        removeRoundLayer(index, user.id)
     }
 
     const setLayerLength = (layer, layerIndex, newLength) => {
@@ -60,9 +60,9 @@ const SettingsPane = ({
                     round.layers.map((layer, i) => {
                         const collaborationAndContributor = collaboration && collaboration.contributors && collaboration.contributors[layer.creator];
                         if (collaborationAndContributor) {
-                            layer = {...layer, color: collaboration.contributors[layer.creator].color};
+                            layer = { ...layer, color: collaboration.contributors[layer.creator].color };
                         } else {
-                            layer = {...layer, color: user.color};
+                            layer = { ...layer, color: user.color };
                         }
                         return (
                             <div
@@ -79,15 +79,15 @@ const SettingsPane = ({
                                 </div>
                                 <span>Steps:</span>
                                 <input
-                                type="range"
-                                min={Limits.stepsPerLayer.min}
-                                max={Limits.stepsPerLayer.max}
-                                onChange={event => {
-                                    const layerLength = parseInt(event.target.value);
-                                    setLayerLength(layer, i, layerLength);
-                                }}
-                                value={layer.steps.length}
-                                className={styles.layerElementLong}
+                                    type="range"
+                                    min={Limits.stepsPerLayer.min}
+                                    max={Limits.stepsPerLayer.max}
+                                    onChange={event => {
+                                        const layerLength = parseInt(event.target.value);
+                                        setLayerLength(layer, i, layerLength);
+                                    }}
+                                    value={layer.steps.length}
+                                    className={styles.layerElementLong}
                                 />
                                 <span className={styles.layerElementShort}>{layer.steps.length}</span>
                                 <span>Gain:</span>
