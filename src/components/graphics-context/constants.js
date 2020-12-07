@@ -50,7 +50,7 @@ export const Step = {
 export const Beat = {
     MinVelocity: 0,
     MaxVelocity: 1,
-    MinProbability: 0, 
+    MinProbability: 0,
     MaxProbability: 1
 };
 
@@ -92,11 +92,13 @@ export const UX = {
 }
 
 export const SphereArgs = {
-    addLayer: [ 0.1, 16, 16, ],
-    Contributor: [ 0.3, 32, 32, ]
+    addLayer: [0.1, 16, 16,],
+    Contributor: [0.3, 32, 32,],
+    xPadding: 1,
+    yPadding: 1
 }
 
-export const ContributorSphereArgs = [ 0.1, 16, 16, ];
+export const ContributorSphereArgs = [0.1, 16, 16,];
 
 export const ThrottleDelay = 1000;
 
