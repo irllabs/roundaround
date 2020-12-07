@@ -1,4 +1,5 @@
 import React, { useState, useContext, useEffect } from 'react';
+import 'regenerator-runtime/runtime' // Add to prevent Babel error.
 import {
     HashRouter as Router,
     Route,
@@ -38,24 +39,24 @@ const App = ({
             if (firebase.currentUser) {
                 const userData = JSON.parse(firebase.currentUser.displayName);
                 console.log('user: ', user)
-                setUser({...user, id: fbUser.uid, email: fbUser.email, ...userData});
+                setUser({ ...user, id: fbUser.uid, email: fbUser.email, ...userData });
             } else {
                 let color = localStorage.getItem('color');
                 let id = localStorage.getItem('id');
-                
+
                 if (!color) {
                     console.log('assign anonymous color')
                     color = getRandomColor();
                     localStorage.setItem('color', color);
                 }
-                
+
                 if (!id) {
                     console.log('assign anonymous id')
                     id = uuid();
                     localStorage.setItem('id', id);
                 }
-                console.log('no user present, retrieve from localstorage or create', {id, color})
-                setUser({id, color})
+                console.log('no user present, retrieve from localstorage or create', { id, color })
+                setUser({ id, color })
             }
         })
 

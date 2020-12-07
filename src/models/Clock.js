@@ -1,7 +1,7 @@
 import * as Tone from 'tone';
 
 class Clock {
-  constructor() {
+  constructor () {
     this.isRunning = false;
   }
 
