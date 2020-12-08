@@ -1,0 +1,17 @@
+{
+  "projects": {
+    "roundaround": "roundaround"
+  },
+  "targets": {
+    "roundaround": {
+      "hosting": {
+        "stage": [
+          "roundaround-stage"
+        ],
+        "production": [
+          "roundaround"
+        ]
+      }
+    }
+  }
+}

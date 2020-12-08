@@ -77,11 +77,14 @@ const StepComponent = ({
         }
     }, [editingMode, step.isOn, layerIndex, stepIndex, noteLabel.current, editingNote])
 
+    // Todo: do a lot less in here! Think this is what's frying my CPU
     useFrame((state, elapsedTime) => {
+        // console.log('useFrame');
         const { activePercent } = activeLayerHelper.steps[step.id].update(elapsedTime);
         const colorSource = threeFillColor || Colors.on;
         const color = colorSource.clone().lerp(Colors.active, activePercent);
         mesh.current.material.color.copy(color);
+        mesh.current.material.transparent = true;
     });
 
     const onSetNote = (note) => {
@@ -102,7 +105,7 @@ const StepComponent = ({
             console.log('componentDidMount')
             mounted.current = true;
         } else {
-            if(!_.isEmpty(diff(prevStep, step))) {
+            if (!_.isEmpty(diff(prevStep, step))) {
                 // optimise components updates
                 console.log('componentDidUpdate')
             }
@@ -140,11 +143,11 @@ const StepComponent = ({
     }, [])
 
     useEffect(() => {
-        function onDocumentKeyDown(e) {
+        function onDocumentKeyDown (e) {
             if (e.key === "Shift") setEditingNote(true);
         }
 
-        function onDocumentKeyUp(e) {
+        function onDocumentKeyUp (e) {
             if (e.key === "Shift" && noteLabel.current !== document.activeElement) setEditingNote(false);
         }
 
