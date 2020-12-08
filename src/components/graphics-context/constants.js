@@ -92,7 +92,7 @@ export const UX = {
 }
 
 export const SphereArgs = {
-    addLayer: [0.1, 16, 16,],
+    addLayer: [0.3, 16, 16,],
     Contributor: [0.3, 32, 32,],
     xPadding: 1,
     yPadding: 1
