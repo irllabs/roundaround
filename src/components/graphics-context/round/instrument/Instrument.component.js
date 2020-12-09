@@ -1,8 +1,9 @@
 import React, { useMemo, useEffect, useRef } from 'react';
 import * as Tone from 'tone';
 import * as SamplesCollection from '../../../../samples/index';
+import _ from 'lodash'
 
-function usePrevious(value) {
+function usePrevious (value) {
     const ref = useRef();
     useEffect(() => {
         ref.current = value;
@@ -25,7 +26,7 @@ const InstrumentComponent = ({
                 active.instrument.triggerAttackRelease(note, instrument.noteLength, time, velocity);
             }
         } catch (e) {
-            console.error( e)
+            console.error(e)
         }
     }
 
@@ -58,6 +59,13 @@ const InstrumentComponent = ({
 
     useEffect(() => {
         // active change instrument
+        if (!_.isNil(active.instrument)) {
+            if (!_.isNil(active.instrument.releaseAll)) {
+                active.instrument.releaseAll()
+            } else {
+                active.instrument.triggerRelease()
+            }
+        }
         const config = instrument.instrument === 'Sampler'
             ?
             { "C4": SamplesCollection[instrument.sampler][instrument.sample] }
