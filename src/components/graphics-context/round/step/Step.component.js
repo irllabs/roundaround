@@ -287,24 +287,6 @@ const StepComponent = ({
                         </div>
                     }
                 </Html>
-                <Html
-                    zIndexRange={[100, 0]}
-                    center
-                    style={{
-                        fontSize: Step.Note.TextSize,
-                        color: Step.Note.TextColor
-                    }}
-                >
-                    <div
-                        ref={noteLabel}
-                        className={editingMode === 'notes' || editingNote
-                            ?
-                            classNames(editable ? styles.noteLabel : [styles.cannotEdit, styles.noteLabel])
-                            :
-                            classNames(editable ? [styles.noteLabel, styles.labelDisabled] : [styles.noteLabel, styles.cannotEdit])}
-                        contentEditable={editable}
-                    />
-                </Html>
             </mesh>
             <mesh
                 position={position}
