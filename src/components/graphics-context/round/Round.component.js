@@ -6,9 +6,9 @@ import { connect } from "react-redux";
 import * as Tone from 'tone';
 import * as _ from 'lodash';
 import { addRoundLayer, removeRoundLayer, setRoundName, setRoundBpm, setLayerSteps, resetRoundStore, setLayersPositions, setRoundInfoPosition } from '../../../redux/actions';
-import { getDefaultLayerData, refrashAllIdsInArray } from './dummyData';
+import { getDefaultLayerData, refrashAllIdsInArray } from '../../../utils/dummyData';
 import { initiateElementWatch, watchCleanup } from './htmlHelpers';
-import { Constants, SphereArgs, Layer, Round, Colors } from '../constants';
+import { Constants, SphereArgs, Layer, Round, Colors } from '../../../utils/constants';
 import RoundLayer from './layer/Layer.component';
 import RoundHand from './RoundHand.component';
 import styles from './Round.styles.scss';
@@ -41,7 +41,7 @@ const RoundComponent = ({
         const position = new Vector3()
             .setFromSphericalCoords(radius, Math.PI / 2, 0)
             .applyAxisAngle(Constants.AXIS, Constants.ANGLE);
-        
+
         setRoundInfoPosition(position);
         return position;
     }, [layersAmount])
@@ -173,9 +173,9 @@ const RoundComponent = ({
                     const radius = Round.Padding.Interior + index * Layer.Padding;
                     const collaborationAndContributor = collaboration && collaboration.contributors && collaboration.contributors[layer.creator];
                     if (collaborationAndContributor) {
-                        layer = {...layer, color: collaboration.contributors[layer.creator].color};
+                        layer = { ...layer, color: collaboration.contributors[layer.creator].color };
                     } else {
-                        layer = {...layer, color: user.color};
+                        layer = { ...layer, color: user.color };
                     }
                     return (
                         <RoundLayer

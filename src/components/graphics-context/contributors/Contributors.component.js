@@ -1,7 +1,7 @@
 import React, { useRef, useCallback, useMemo, useEffect } from 'react';
 import { connect } from "react-redux";
 import { Color, Vector3 } from 'three';
-import { SphereArgs, Round, Layer, Constants } from '../constants';
+import { SphereArgs, Round, Layer, Constants } from '../../../utils/constants';
 import { setContributorsPositions } from '../../../redux/actions';
 import Contributor from './Contributor.component';
 

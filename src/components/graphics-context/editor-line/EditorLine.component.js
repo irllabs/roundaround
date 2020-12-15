@@ -4,7 +4,7 @@ import { Geometry, LineBasicMaterial, Line, Vector3, Group } from 'three';
 import { connect } from "react-redux";
 import * as _ from 'lodash';
 import { usePrevious } from '../round/htmlHelpers';
-import { EditorLineParams } from '../constants';
+import { EditorLineParams } from '../../../utils/constants';
 
 
 const EditorLineComponent = ({ collaboration, round, user, positions }) => {

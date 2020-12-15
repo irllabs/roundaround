@@ -15,7 +15,7 @@ import {
 } from "../../../redux/actions";
 import { diff } from 'deep-object-diff';
 var _ = require('lodash/core');
-import { ThrottleDelay } from '../../graphics-context/constants';
+import { ThrottleDelay } from '../../../utils/constants';
 import GraphicsContext from '../../graphics-context/GraphicsContext.component';
 import ControlsBar from '../../controls-bar/ControlsBar.component';
 import SettingsPane from '../../settings-pane/SettingsPane.component';
@@ -32,7 +32,7 @@ import styles from './CollaborationRoute.styles.scss';
 
 class CollaborationRoute extends React.Component {
     static contextType = FirebaseContext;
-    constructor(props) {
+    constructor (props) {
         super(props);
         this.state = {
             isOn: Tone.Transport.state === 'started',
@@ -45,7 +45,7 @@ class CollaborationRoute extends React.Component {
                 editableByOthers: false
             }
         };
-        
+
         this.listenForDerivative = this.listenForDerivative.bind(this);
         this.finishBringRoundDialog = this.finishBringRoundDialog.bind(this);
         this.updateBringRoundConfig = this.updateBringRoundConfig.bind(this);
@@ -55,7 +55,7 @@ class CollaborationRoute extends React.Component {
         this.throttleQueue = 0;
     }
 
-    componentDidMount() {
+    componentDidMount () {
         this.firebase = this.context;
         if (this.state.toneActivated) {
             this.initiateCollaboration();
@@ -64,7 +64,7 @@ class CollaborationRoute extends React.Component {
         }
     }
 
-    async initiateCollaboration() {
+    async initiateCollaboration () {
         const { id } = this.props.match.params;
 
         // listen for collaboration changes
@@ -75,19 +75,19 @@ class CollaborationRoute extends React.Component {
 
         this.props.toggleLoader(false);
     }
-    
-    listenForDerivative(derivativeId) {
+
+    listenForDerivative (derivativeId) {
         this.firebase.db.collection('rounds').doc(derivativeId).onSnapshot((doc) => {
             // console.log('doc.metadata', doc.metadata)
             if (!doc.data() || doc.metadata.hasPendingWrites) return;
             const tempDoc = { id: doc.id, ...doc.data() };
             this.rounChangeFromBackend = true;
-            
+
             this.props.setRoundData(tempDoc)
         })
     }
 
-    throttle() {
+    throttle () {
         this.throttleLock = true;
         setTimeout(() => {
             const collaboration = this.props.collaboration;
@@ -97,7 +97,7 @@ class CollaborationRoute extends React.Component {
                 id: collaboration.derivative,
                 lastEditor: this.props.user.id
             };
-            
+
             this.firebase.updateRound(collaboration.derivative, derivative);
             // check queue, if queue - self-repeat and eraise queue      
             if (this.throttleQueue) {
@@ -109,7 +109,7 @@ class CollaborationRoute extends React.Component {
         }, ThrottleDelay)
     }
 
-    async addDerivative() {
+    async addDerivative () {
         const derivativeId = uuid();
 
         const collaboration = { ...this.props.collaboration, derivative: derivativeId };
@@ -122,19 +122,19 @@ class CollaborationRoute extends React.Component {
         console.log('listenForDerivative')
     }
 
-    updateUserInContributors() {
+    updateUserInContributors () {
         const { collaboration, user } = this.props;
-        const contributors = {...collaboration.contributors, [user.id]: {color: user.color}}
-        this.firebase.updateCollaboration(collaboration.id, {contributors})
+        const contributors = { ...collaboration.contributors, [user.id]: { color: user.color } }
+        this.firebase.updateCollaboration(collaboration.id, { contributors })
     }
 
-    handleLocalRoundUpdate(changes) {
+    handleLocalRoundUpdate (changes) {
         // don't run compare on changes recieved from backend to avoid infinity updates
-        if(this.rounChangeFromBackend) {
+        if (this.rounChangeFromBackend) {
             this.rounChangeFromBackend = false;
             return;
         }
-        if(_.isEmpty(changes)) return;
+        if (_.isEmpty(changes)) return;
 
         const { collaboration, user } = this.props;
 
@@ -155,8 +155,8 @@ class CollaborationRoute extends React.Component {
         }
     }
 
-    async initialSetup() {
-        const { collaboration, user }  = this.props;
+    async initialSetup () {
+        const { collaboration, user } = this.props;
 
         if (collaboration.derivative) {
             this.listenForDerivative(collaboration.derivative)
@@ -166,13 +166,13 @@ class CollaborationRoute extends React.Component {
             this.rounChangeFromBackend = true;
             this.props.setRoundData(round);
         }
-          
+
         // offer to bring round
         if (
             user.email &&
             collaboration.creator !== user.id &&
             !collaboration.contributors[user.id]) {
-                this.setState({ bringRoundsDialogOpened: true });
+            this.setState({ bringRoundsDialogOpened: true });
         }
 
         // sync colors
@@ -181,9 +181,9 @@ class CollaborationRoute extends React.Component {
         }
     }
 
-    async handleCollabChanges(changes) {
-        if(_.isEmpty(changes)) return;
-        
+    async handleCollabChanges (changes) {
+        if (_.isEmpty(changes)) return;
+
         if ('isPlaying' in changes && this.state.isOn !== changes.isPlaying) {
             this.togglePlay();
         }
@@ -197,26 +197,26 @@ class CollaborationRoute extends React.Component {
         }
     }
 
-    handleUserChanges(changes) {
-        if(_.isEmpty(changes)) return;
-        
+    handleUserChanges (changes) {
+        if (_.isEmpty(changes)) return;
+
         if ('color' in changes) {
             this.updateUserInContributors();
         }
     }
 
-    async componentDidUpdate(prevProps) {
+    async componentDidUpdate (prevProps) {
         const roundDifference = diff(prevProps.round, this.props.round);
         const userDifference = diff(prevProps.user, this.props.user);
         const collabDifference = diff(prevProps.collaboration, this.props.collaboration);
-        
+
         this.handleLocalRoundUpdate(roundDifference);
         this.handleUserChanges(userDifference);
         this.handleCollabChanges(collabDifference);
     }
 
-    async updatePlayStatus(isPlaying) {
-        await this.firebase.updateCollaboration(this.props.collaboration.id, {isPlaying})
+    async updatePlayStatus (isPlaying) {
+        await this.firebase.updateCollaboration(this.props.collaboration.id, { isPlaying })
     }
 
     togglePlay = () => {
@@ -240,11 +240,11 @@ class CollaborationRoute extends React.Component {
         this.initiateCollaboration();
     }
 
-    updateBringRoundConfig(data) {
+    updateBringRoundConfig (data) {
         this.setState(state => ({ bringRoundConfig: { ...state.bringRoundConfig, ...data } }))
     }
 
-    finishBringRoundDialog() {
+    finishBringRoundDialog () {
         this.setState({ bringRoundsDialogOpened: false });
 
         if (this.state.bringRoundConfig.round) {
@@ -252,7 +252,7 @@ class CollaborationRoute extends React.Component {
         }
     }
 
-    async addCollaboratorRound() {
+    async addCollaboratorRound () {
         this.props.toggleLoader(true);
         const layers = [...this.state.bringRoundConfig.round.layers];
 
@@ -260,12 +260,12 @@ class CollaborationRoute extends React.Component {
             layer.creator = this.props.user.id;
             layer.readonly = !this.state.bringRoundConfig.editableByOthers;
         });
-        
+
         this.props.addRoundLayers(layers);
         this.props.toggleLoader(false);
     }
 
-    componentWillUnmount() {
+    componentWillUnmount () {
         console.log('collaboration component getting unmounted')
         this.props.resetRaycasterStore()
         this.props.resetCameraStore()
@@ -274,7 +274,7 @@ class CollaborationRoute extends React.Component {
         this.props.resetCollaborationStore()
     }
 
-    render() {
+    render () {
         return (
             <>
                 <Modal

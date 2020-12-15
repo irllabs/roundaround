@@ -1,4 +1,4 @@
-import { ACTIVE_TTL } from '../../constants';
+import { ACTIVE_TTL } from '../../../../utils/constants';
 import * as Tone from 'tone';
 
 const getActivePercent = (activeTtl) => {
@@ -9,7 +9,7 @@ const getActivePercent = (activeTtl) => {
 };
 // for changing color of the step and deciding if to play it
 export class ActiveStep {
-    constructor(isOn, note, velocity, probability) {
+    constructor (isOn, note, velocity, probability) {
         this.isOn = isOn;
         this.activeTtl = 0;
         this.note = note;
@@ -17,19 +17,19 @@ export class ActiveStep {
         this.probability = probability;
     }
 
-    toggleIsOn(isOn) {
+    toggleIsOn (isOn) {
         this.isOn = isOn;
     }
 
-    setNote(note) {
+    setNote (note) {
         this.note = note;
     }
 
-    setVelocity(velocity) {
+    setVelocity (velocity) {
         this.velocity = velocity;
     }
 
-    setProbability(probability) {
+    setProbability (probability) {
         this.probability = probability;
     }
 
@@ -37,7 +37,7 @@ export class ActiveStep {
         this.activeTtl = ACTIVE_TTL;
     }
 
-    update(elapsedTime) {
+    update (elapsedTime) {
         if (this.activeTtl <= 0) {
             return { activePercent: 0 };
         }
@@ -48,22 +48,22 @@ export class ActiveStep {
 
 // for managing what to play and what not
 export class ActiveLayer {
-    constructor(layerIsActive) {
+    constructor (layerIsActive) {
         this.layerIsActive = layerIsActive;
         this.steps = {};
         this.instrument;
         this.gain;
     }
 
-    addStep(step) {
+    addStep (step) {
         this.steps[step.id] = new ActiveStep(step.isOn, step.note, step.velocity, step.probability);
     }
 
-    removeStep(stepId) {
+    removeStep (stepId) {
         delete this.steps[stepId];
     }
 
-    toggleStep(stepId, isOn) {
+    toggleStep (stepId, isOn) {
         this.steps[stepId].toggleIsOn(isOn)
     }
 
@@ -79,7 +79,7 @@ export class ActiveLayer {
         this.gain = gain;
     }
 
-    changeGainValue(gain) {
+    changeGainValue (gain) {
         this.gain.gain.linearRampToValueAtTime(gain, Tone.now() + 0.2);
     }
 }

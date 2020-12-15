@@ -1,7 +1,7 @@
 import React, { useRef, useState, useEffect, useMemo, useCallback } from 'react';
 import compose from 'recompose/compose';
 import { MathUtils, TorusBufferGeometry } from 'three';
-import { Layer, Instrument, UX } from '../../constants';
+import { Layer, Instrument, UX } from '../../../../utils/constants';
 import { connect } from "react-redux";
 import { updateLayerInstrument, toggleLayer } from "../../../../redux/actions";
 import Effects from '../Effects';
@@ -10,11 +10,11 @@ import styles from './LayerLine.styles.scss';
 
 let shiftDown = false;
 
-function onDocumentKeyDown(e) {
+function onDocumentKeyDown (e) {
     if (e.key === "Shift") shiftDown = true;
 }
 
-function onDocumentKeyUp(e) {
+function onDocumentKeyUp (e) {
     if (e.key === "Shift") shiftDown = false;
 }
 
@@ -44,12 +44,12 @@ const LayerLineComponent = ({
     const maxThikness = Layer.Line.MaxThickness;
 
     const currentThinkness = useMemo(() => MathUtils.mapLinear(
-            layer.instrument.gain,
-            Instrument.MinGain,
-            Instrument.MaxGain,
-            minThikness,
-            maxThikness
-        ), [layer.instrument.gain])
+        layer.instrument.gain,
+        Instrument.MinGain,
+        Instrument.MaxGain,
+        minThikness,
+        maxThikness
+    ), [layer.instrument.gain])
 
     const [torusArgs, setTorusArgs] = useState([radius, currentThinkness, radialSegments, tubularSegments,]);
 
@@ -129,7 +129,7 @@ const LayerLineComponent = ({
     }, [radius, layer.instrument.gain]);
 
     const onLayerClick = useCallback(() => {
-        if(selected) {
+        if (selected) {
             deselectLayer();
         } else {
             selectLayer(layer.id);

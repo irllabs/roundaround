@@ -2,7 +2,7 @@ import React, { useEffect, useRef } from 'react';
 import { initiateElementWatch, watchCleanup } from '../htmlHelpers';
 import { Html } from "drei";
 const classNames = require("classnames");
-import { UX, Layer } from '../../constants';
+import { UX, Layer } from '../../../../utils/constants';
 import styles from './LayerMark.styles.scss';
 
 const LayerMarkComponent = ({

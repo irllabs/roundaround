@@ -9,7 +9,7 @@ import { connect } from "react-redux";
 import { initiateElementWatch, watchCleanup, usePrevious } from '../htmlHelpers';
 import { toggleStep, setStepVelocity, setStepProbability, setStepNote } from "../../../../redux/actions";
 const classNames = require('classnames');
-import { Step, Beat, Colors, UX } from '../../constants';
+import { Step, Beat, Colors, UX } from '../../../../utils/constants';
 import StepEdges from './StepEdges.component';
 import styles from './Step.styles.scss';
 

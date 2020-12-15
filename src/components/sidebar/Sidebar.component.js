@@ -1,8 +1,8 @@
 import React, { useEffect, useContext } from 'react';
 import { connect } from "react-redux";
 import { setRoundData, updateRound, addRound, removeRound } from "../../redux/actions";
-import {getDefaultRoundData} from '../graphics-context/round/dummyData';
-import  { FirebaseContext } from '../../firebase';
+import { getDefaultRoundData } from '../../utils/dummyData';
+import { FirebaseContext } from '../../firebase';
 
 const classNames = require('classnames');
 
@@ -22,7 +22,7 @@ const Sidebar = ({
   const firebase = useContext(FirebaseContext);
 
   const onRoundSelect = (event) => {
-    const {index, id} = event.target.dataset;
+    const { index, id } = event.target.dataset;
 
     //check if not selected
     if (id !== round.id) {
@@ -50,15 +50,15 @@ const Sidebar = ({
 
     const userData = JSON.parse(firebase.currentUser.displayName);
     firebase.currentUser.updateProfile({
-      displayName: JSON.stringify({...userData, lastVisitedRound: round.id})
+      displayName: JSON.stringify({ ...userData, lastVisitedRound: round.id })
     }).then(function () {
       console.log(`last visited round updated: `, round.id);
     })
-    .catch(e => console.error())
+      .catch(e => console.error())
   }, [round.id])
 
   return (
-    <div className={ isOpen? classNames(styles.sidenav, styles.open) : styles.sidenav}>
+    <div className={isOpen ? classNames(styles.sidenav, styles.open) : styles.sidenav}>
       <div className={styles.header}>
         <a className={styles.headerText}>Current Session: </a>
         <a className={styles.closeBtn} onClick={toggleSidebar}>&times;</a>
@@ -66,34 +66,34 @@ const Sidebar = ({
       {
         rounds.map((roundItem, index) => {
           return (
-          <a 
-            key={roundItem.id}
-            data-index={index}
-            data-id={roundItem.id}
-            className={roundItem.id == round.id ? styles.selected : styles.unselected}
-            onClick={onRoundSelect}
-          >
-            {roundItem.name}
-            {
-              rounds.length > 1 &&
-              <div
-                data-index={index}
-                onClick={onRemoveRound}
-                className={styles.removeBtn}>&times;</div>
-            }
-          </a>
+            <a
+              key={roundItem.id}
+              data-index={index}
+              data-id={roundItem.id}
+              className={roundItem.id == round.id ? styles.selected : styles.unselected}
+              onClick={onRoundSelect}
+            >
+              {roundItem.name}
+              {
+                rounds.length > 1 &&
+                <div
+                  data-index={index}
+                  onClick={onRemoveRound}
+                  className={styles.removeBtn}>&times;</div>
+              }
+            </a>
           )
         })
       }
       <Footer
         addRound={onAddRound}
       />
-  </div>
+    </div>
   );
 };
 
 const mapStateToProps = state => {
-  return { 
+  return {
     round: state.round,
     rounds: state.rounds
   };

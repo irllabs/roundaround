@@ -1,17 +1,17 @@
-import { Layer } from '../constants';
-import { uuid } from '../../../models/SequencerUtil';
+import { Layer } from './constants';
+import { uuid } from '../models/SequencerUtil';
 
 export const refrashAllIdsInArray = (array) => {
-    return array.map(item => ({...item, id: uuid()}))
+    return array.map(item => ({ ...item, id: uuid() }))
 }
 
 export const getDefaultStepData = () => {
     return {
-    "isOn": false,
-    "id": uuid(),
-    "probability": 1,
-    "velocity": 1,
-    "note": "C4"
+        "isOn": false,
+        "id": uuid(),
+        "probability": 1,
+        "velocity": 1,
+        "note": "C4"
     }
 };
 
@@ -29,7 +29,7 @@ export const getDefaultLayerData = (userId, instrument) => {
             "sample": "bdLong04",
             ...instrument
         },
-        "steps": Array(Layer.DefaultStepsAmount).fill(null).map(() => {return getDefaultStepData()}),
+        "steps": Array(Layer.DefaultStepsAmount).fill(null).map(() => { return getDefaultStepData() }),
     }
 };
 

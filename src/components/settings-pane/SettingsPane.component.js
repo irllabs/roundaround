@@ -8,8 +8,8 @@ import {
     addRoundLayer,
     removeRoundLayer
 } from "../../redux/actions";
-import { getDefaultLayerData } from '../graphics-context/round/dummyData';
-import { Limits } from '../graphics-context/constants';
+import { getDefaultLayerData } from '../../utils/dummyData';
+import { Limits } from '../../utils/constants';
 import { changeLayerLength } from '../../utils';
 import LayerControls from '../graphics-context/round/layer/LayerControls.component';
 

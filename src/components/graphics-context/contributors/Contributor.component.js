@@ -1,9 +1,9 @@
 import React, { useMemo } from 'react';
-import { SphereArgs } from '../constants';
+import { SphereArgs } from '../../../utils/constants';
 import { Color } from 'three';
 import { Sphere } from "drei";
 
-const ContributorComponent = ({color, position,}) => {
+const ContributorComponent = ({ color, position, }) => {
     const sphereColor = useMemo(() => new Color(color), [color]);
 
     return (
@@ -11,7 +11,7 @@ const ContributorComponent = ({color, position,}) => {
             <meshStandardMaterial color={sphereColor} attach="material" />
         </Sphere>
     )
-  
+
 };
 
 export default ContributorComponent;

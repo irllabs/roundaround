@@ -1,11 +1,11 @@
-import { Limits } from '../components/graphics-context/constants';
-import { getDefaultStepData } from '../components/graphics-context/round/dummyData';
+import { Limits } from './constants';
+import { getDefaultStepData } from './dummyData';
 
 export const getRandomColor = () => {
     return '#' + Math.floor(Math.random() * 16777215).toString(16);
 }
 
-export function paths(root) {
+export function paths (root) {
     let paths = [];
     let nodes = [{
         obj: root,
