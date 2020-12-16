@@ -6,7 +6,7 @@ export const HTML_UI_Params = {
     avatarDiameter: 128,
     avatarPadding: 128,
     avatarRoundPadding: 128,
-    activityIndicatorDiameter: 24,
+    activityIndicatorDiameter: 48,
     activityAnimationTime: 700,
     stepAnimationUpdateTime: 200
 }

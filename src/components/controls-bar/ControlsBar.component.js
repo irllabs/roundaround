@@ -2,6 +2,7 @@ import React, { useRef } from 'react';
 const classNames = require('classnames');
 import styles from './ControlsBar.styles.scss';
 
+
 const ControlsBar = ({
     isOn,
     togglePlay,
@@ -11,7 +12,7 @@ const ControlsBar = ({
     toggleProfile,
     mode,
     user
- }) => {
+}) => {
     const playButton = useRef();
     const onClickPlay = () => {
         togglePlay();
