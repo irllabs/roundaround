@@ -29,6 +29,7 @@ import clock from '../../../models/Clock';
 import { FirebaseContext } from '../../../firebase';
 
 import styles from './CollaborationRoute.styles.scss';
+import HtmlUi from '../../html-ui/HtmlUi';
 
 class CollaborationRoute extends React.Component {
     static contextType = FirebaseContext;
@@ -311,9 +312,7 @@ class CollaborationRoute extends React.Component {
                     <div
                         className={styles.mainContainer}
                     >
-                        <GraphicsContext
-                            className={styles.graphicsContext}
-                        />
+                        <HtmlUi />
                         <ControlsBar
                             user={this.firebase ? this.firebase.currentUser : {}}
                             mode="collaboration"
