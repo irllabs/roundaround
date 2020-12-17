@@ -4,7 +4,6 @@ import { numberRange } from '../../utils';
 const Note = require('@tonaljs/note')
 import _ from 'lodash'
 
-
 export default class InstrumentBaseClass {
     constructor (name, articulations) {
         this.id = Math.floor(Math.random() * 999999)
@@ -56,7 +55,6 @@ export default class InstrumentBaseClass {
         return new Promise(function (resolve, reject) {
             _this.dispose()
             _this.instrument = new Tone.Sampler(sampleMap, {
-                release: 0.5,
                 onload: function () {
                     _this.updateParameters(_this.parameters)
                     if (!_.isNil(_this.connectedToChannel)) {
@@ -75,7 +73,7 @@ export default class InstrumentBaseClass {
         notes
     ) {
         let _this = this
-        console.log('instrument loading notes', notes);
+        //console.log('instrument loading notes', notes);
         this.clearPart()
         this.notes = _.cloneDeep(notes)
         this.beforeLoadPart(this.notes)
@@ -88,16 +86,18 @@ export default class InstrumentBaseClass {
                 !_.isNil(_this.instrument) &&
                 !_.isNil(_this.instrument.context)
             ) {
+
                 _this.instrument.triggerAttackRelease(
                     Tone.Midi(note.midi),
                     note.duration,
-                    parseFloat(time),
+                    time,
                     note.velocity
                 )
             }
         }, this.notes)
         this.afterPartLoaded()
-        this.part.start()
+        // console.log('this.part', this.part);
+        this.part.start(0)
     }
     beforeLoadPart (notes) {
         // to be overidden if necessary
@@ -117,9 +117,8 @@ export default class InstrumentBaseClass {
         this.instrument.releaseAll()
     }
     getSampleMap () {
-
         let map = {
-            'C4': '/samples/Bass Drum [BD]/E808_BD[long]-01.wav'// '/samples/' + this.name + '/' + this.parameters.articulation + '.wav'
+            'C4': '/' + this.articulations[this.parameters.articulation]
         }
         return map
     }

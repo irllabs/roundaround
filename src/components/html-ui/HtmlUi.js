@@ -59,7 +59,7 @@ class HtmlUi extends Component {
         this.draw()
     }
 
-    componentDidUpdate () {
+    async componentDidUpdate () {
         // console.log('componentDidUpdate()', this.round, this.props.round)
 
         // Calculate what's changed so we only redraw if necessary
@@ -71,6 +71,8 @@ class HtmlUi extends Component {
             for (let layer of this.props.round.layers) {
                 let oldLayer = _.find(this.round.layers, { id: layer.id })
                 if (_.isNil(oldLayer)) {
+                    await AudioEngine.createTrack(layer)
+
                     layer.order = this.props.round.layers.length - 1
                     if (layer.creator !== this.props.user.id) {
                         this.animateActivityIndicator(layer.creator, this.containerWidth / 2, this.containerHeight / 2)
@@ -89,6 +91,7 @@ class HtmlUi extends Component {
             for (let layer of this.round.layers) {
                 let newLayer = _.find(this.props.round.layers, { id: layer.id })
                 if (_.isNil(newLayer)) {
+                    AudioEngine.removeTrack(layer.id)
                     redraw = true
                 }
             }
@@ -119,8 +122,9 @@ class HtmlUi extends Component {
             let newStep = _.find(newSteps, { id: previousStep.id })
             if (!_.isNil(newStep)) {
                 if (!_.isEqual(previousStep, newStep)) {
-                    //    console.log('found changed step', previousStep, newStep);
+                    console.log('found changed step', previousStep, newStep);
                     this.updateStep(newStep, true)
+                    AudioEngine.recalculateParts(this.props.round)
                 }
 
             }
@@ -396,6 +400,7 @@ class HtmlUi extends Component {
                 step.velocity = stepGraphic.velocity
                 _this.props.dispatch({ type: SET_STEP_VELOCITY, payload: { velocity: stepGraphic.velocity, layerIndex: stepGraphic.layerIndex, stepIndex: stepGraphic.stepIndex, user: _this.props.user.id } })
             }
+            AudioEngine.recalculateParts(_this.props.round)
             stepGraphic.isPanningX = false;
             stepGraphic.isPanningY = false;
             _this.stepIsPanning = false
@@ -427,13 +432,28 @@ class HtmlUi extends Component {
             // update internal round so that it doesn't trigger another update when we receive a change after the dispatch
             step.isOn = !step.isOn
             this.updateStep(step, false)
+            AudioEngine.recalculateParts(this.round)
             this.props.dispatch({ type: TOGGLE_STEP, payload: { layerIndex: stepGraphic.layerIndex, stepIndex: stepGraphic.stepIndex, isOn: step.isOn, user: null } })
         }
     }
 
     onAddLayerClick () {
         const newLayer = getDefaultLayerData(this.props.user.id);
-        this.props.dispatch({ type: ADD_ROUND_LAYER, payload: { layer: newLayer, user: this.props.user.id } })
+        /*AudioEngine.createTrack({
+            id: Math.round(Math.random() * 99999),
+            steps: [
+
+            ],
+            instrument: {
+                sampler: 'BassDrum',
+                sample: 'bdLong04'
+            }
+
+        }, 'layer')*/
+        const _this = this
+        _.delay(() => {
+            _this.props.dispatch({ type: ADD_ROUND_LAYER, payload: { layer: newLayer, user: _this.props.user.id } })
+        }, 1)
     }
 
     addEventListeners () {

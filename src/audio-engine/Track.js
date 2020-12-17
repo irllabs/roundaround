@@ -18,7 +18,6 @@ export default class Track {
         } else {
             this.channel = new Tone.Gain()
         }
-        console.log('created track', trackParameters, this.channel, Track.TRACK_TYPE_MASTER);
         this.fx = null
         this.sortedFx = null
         //this.createFX(trackParameters.fx)
@@ -118,41 +117,31 @@ export default class Track {
         this.notes = this.convertStepsToNotes(layer.steps)
         _.sortBy(this.notes, 'time')
         this.instrument.loadPart(this.notes, false)
-
-
     }
     convertStepsToNotes (steps) {
-        return [
-            {
-                time: 0,
-                duration: 192,
-                midi: 60,
-                probability: 1,
-                velocity: 1
-            },
-            {
-                time: 192,
-                duration: 192,
-                midi: 60,
-                probability: 1,
-                velocity: 1
-            }, {
-                time: 384,
-                duration: 192,
-                midi: 60,
-                probability: 1,
-                velocity: 1
-            }, {
-                time: 576,
-                duration: 192,
-                midi: 60,
-                probability: 1,
-                velocity: 1
+        const PPQ = Tone.Transport.PPQ
+        const totalTicks = PPQ * 4
+        const ticksPerStep = Math.round(totalTicks / steps.length)
+        //  console.log('convertStepsToNotes()', steps, PPQ, ticksPerStep);
+        let notes = []
+        for (let i = 0; i < steps.length; i++) {
+            let step = steps[i]
+            if (step.isOn) {
+                const note = {
+                    time: i * ticksPerStep,
+                    duration: ticksPerStep,
+                    midi: 60,
+                    velocity: Number(step.velocity),
+                    probability: step.probability
+                }
+                notes.push(note)
             }
-        ]
+        }
+        // console.log('notes', notes);
+        return notes
     }
     async setInstrument (instrument) {
-        console.log('Track::setInstrument', instrument);
+        // console.time('setInstrument')
         const instrumentName = instrument.sampler
         const articulation = instrument.sample
         let _this = this
@@ -164,6 +153,7 @@ export default class Track {
                 instrumentName,
                 articulation
             )
+            //console.timeEnd('setInstrument')
             _this.buildAudioChain()
             _this.calculatePart()
             _this.instrument.setVolume(_this.channel.volume.value)

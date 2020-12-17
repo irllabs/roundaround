@@ -6,7 +6,6 @@ const Instruments = {
     instrumentClasses: {},
     instruments: [],
     init () {
-        console.log('Instruments.init()');
         const classes = [
             BassDrum
         ];
@@ -18,10 +17,7 @@ const Instruments = {
         if (!_.isNil(instrumentName)) {
             let _this = this;
             return new Promise(async function (resolve, reject) {
-                console.log('loading instrument', instrumentName, _this.instrumentClasses)
                 let InstrumentClass = _this.instrumentClasses[instrumentName];
-                console.log('InstrumentClass', InstrumentClass)
-
                 let instrument = new InstrumentClass();
                 await instrument.load(articulation);
                 _this.instruments.push(instrument);

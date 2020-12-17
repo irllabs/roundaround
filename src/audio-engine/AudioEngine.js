@@ -19,7 +19,17 @@ const AudioEngine = {
             await track.load(layer)
         }
     },
+    // assumes tracks haven't changed, just the steps
+    recalculateParts (round, layerId = null) {
+        for (let layer of round.layers) {
+            if (_.isNil(layerId) || layerId === layer.id) {
+                this.tracksById[layer.id].calculatePart(layer)
+            }
+        }
+    },
     createTrack (trackParameters) {
+        console.log('createTrack', trackParameters);
+        console.time('createTrack')
         let _this = this
         return new Promise(async function (resolve, reject) {
             let track = new Track(trackParameters)
@@ -34,8 +44,14 @@ const AudioEngine = {
                 trackParameters.instrument
             )
 
+            console.timeEnd('createTrack')
             resolve(track)
         })
+    },
+    removeTrack (id) {
+        if (!_.isNil(this.tracksById[id])) {
+            this.tracksById[id].dispose()
+        }
     },
     reset () {
         for (let track of this.tracks) {
