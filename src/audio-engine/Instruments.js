@@ -1,13 +1,35 @@
 "use strict";
 import _ from "lodash";
 import BassDrum from './instruments/BassDrum'
+import Clap from './instruments/Clap'
+import Claves from './instruments/Claves'
+import Congas from './instruments/Congas'
+import Cowbell from './instruments/Cowbell'
+import Cymbal from './instruments/Cymbal'
+import HiHatClosed from './instruments/HiHatClosed'
+import HitHatOpen from './instruments/HitHatOpen'
+import Maracas from './instruments/Maracas'
+import Rimshot from './instruments/Rimshot'
+import SnareDrum from './instruments/SnareDrum'
+import TomToms from './instruments/TomToms'
 
 const Instruments = {
     instrumentClasses: {},
     instruments: [],
     init () {
         const classes = [
-            BassDrum
+            BassDrum,
+            Clap,
+            Claves,
+            Congas,
+            Cowbell,
+            Cymbal,
+            HiHatClosed,
+            HitHatOpen,
+            Maracas,
+            Rimshot,
+            SnareDrum,
+            TomToms
         ];
         for (let instrumentClass of classes) {
             this.instrumentClasses[instrumentClass.name] = instrumentClass;

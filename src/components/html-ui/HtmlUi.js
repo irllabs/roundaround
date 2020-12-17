@@ -130,6 +130,15 @@ class HtmlUi extends Component {
             }
         }
 
+        // Check for instrument changes (maybe do this somewhere else)
+        for (let layer of this.round.layers) {
+            let newLayer = _.find(this.props.round.layers, { id: layer.id })
+            if (!_.isNil(newLayer) && !_.isEqual(layer.instrument, newLayer.instrument)) {
+                // instrument has changed
+                AudioEngine.tracksById[newLayer.id].setInstrument(newLayer.instrument)
+            }
+        }
+
         if (redraw) {
             this.clear()
             this.round = _.cloneDeep(this.props.round)
@@ -439,21 +448,8 @@ class HtmlUi extends Component {
 
     onAddLayerClick () {
         const newLayer = getDefaultLayerData(this.props.user.id);
-        /*AudioEngine.createTrack({
-            id: Math.round(Math.random() * 99999),
-            steps: [
+        this.props.dispatch({ type: ADD_ROUND_LAYER, payload: { layer: newLayer, user: this.props.user.id } })
 
-            ],
-            instrument: {
-                sampler: 'BassDrum',
-                sample: 'bdLong04'
-            }
-
-        }, 'layer')*/
-        const _this = this
-        _.delay(() => {
-            _this.props.dispatch({ type: ADD_ROUND_LAYER, payload: { layer: newLayer, user: _this.props.user.id } })
-        }, 1)
     }
 
     addEventListeners () {

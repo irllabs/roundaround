@@ -155,7 +155,10 @@ export default class Track {
             )
             //console.timeEnd('setInstrument')
             _this.buildAudioChain()
-            _this.calculatePart()
+            if (!_.isNil(_this.notes)) {
+                _this.instrument.loadPart(_this.notes, false)
+            }
+            // _this.calculatePart()
             _this.instrument.setVolume(_this.channel.volume.value)
             resolve(_this.instrument)
         })

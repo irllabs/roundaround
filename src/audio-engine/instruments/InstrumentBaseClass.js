@@ -3,6 +3,7 @@ import * as Tone from 'tone';
 import { numberRange } from '../../utils';
 const Note = require('@tonaljs/note')
 import _ from 'lodash'
+import { randomBool } from '../../utils/index'
 
 export default class InstrumentBaseClass {
     constructor (name, articulations) {
@@ -86,13 +87,18 @@ export default class InstrumentBaseClass {
                 !_.isNil(_this.instrument) &&
                 !_.isNil(_this.instrument.context)
             ) {
-
-                _this.instrument.triggerAttackRelease(
-                    Tone.Midi(note.midi),
-                    note.duration,
-                    time,
-                    note.velocity
-                )
+                let shouldPlayNote = true
+                if (note.probability < 1) {
+                    shouldPlayNote = randomBool(note.probability)
+                }
+                if (shouldPlayNote) {
+                    _this.instrument.triggerAttackRelease(
+                        Tone.Midi(note.midi),
+                        note.duration,
+                        time,
+                        note.velocity
+                    )
+                }
             }
         }, this.notes)
         this.afterPartLoaded()
