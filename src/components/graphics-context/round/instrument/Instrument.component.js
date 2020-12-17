@@ -1,6 +1,6 @@
 import React, { useMemo, useEffect, useRef } from 'react';
 import * as Tone from 'tone';
-import * as SamplesCollection from '../../../../samples/index';
+//import * as SamplesCollection from '../../../../samples/index';
 import _ from 'lodash'
 
 function usePrevious (value) {
@@ -68,7 +68,8 @@ const InstrumentComponent = ({
         }
         const config = instrument.instrument === 'Sampler'
             ?
-            { "C4": SamplesCollection[instrument.sampler][instrument.sample] }
+            //// { "C4": SamplesCollection[instrument.sampler][instrument.sample] }
+            { "C4": 'some sample' }
             :
             {};
         const gain = new Tone.Gain(instrument.gain);

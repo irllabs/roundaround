@@ -6,7 +6,8 @@ import { SVG } from '@svgdotjs/svg.js'
 import '@svgdotjs/svg.panzoom.js'
 import { HTML_UI_Params } from './Constants.js'
 import { connect } from "react-redux";
-import * as Tone from 'tone';
+import AudioEngine from '../../audio-engine/AudioEngine'
+import Instruments from '../../audio-engine/Instruments'
 
 import { getDefaultLayerData } from '../../utils/dummyData';
 import { TOGGLE_STEP, ADD_ROUND_LAYER, SET_STEP_PROBABILITY, SET_STEP_VELOCITY } from '../../redux/actionTypes'
@@ -22,10 +23,13 @@ class HtmlUi extends Component {
 
     componentDidMount () {
         this.createRound()
+        AudioEngine.init()
+        Instruments.init()
+        AudioEngine.load(this.props.round)
     }
 
     createRound () {
-        // console.log('createRound()');
+        //console.log('createRound()');
         this.round = _.cloneDeep(this.props.round)
         // Create SVG container
         this.containerWidth = Math.max(document.documentElement.clientWidth || 0, window.innerWidth || 0)

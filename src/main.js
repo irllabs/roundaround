@@ -13,4 +13,4 @@ ReactDOM.render(
             <App />
         </FirebaseContext.Provider>
     </Provider>
-, document.getElementById('root'));
+    , document.getElementById('root'));

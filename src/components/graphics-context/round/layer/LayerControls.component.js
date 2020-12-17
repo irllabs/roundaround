@@ -8,7 +8,7 @@ const classNames = require("classnames");
 import { setLayerName, updateLayerInstrument, toggleRaycaster, setLayerControlsPositions } from '../../../../redux/actions';
 import { Constants, Layer } from '../../../../utils/constants';
 import Modal from '../../../modal/Modal.component';
-import InstrumentSelect from '../../../instrument-select/InstrumentSelect.component';
+//import InstrumentSelect from '../../../instrument-select/InstrumentSelect.component';
 import { initiateElementWatch, watchCleanup } from '../htmlHelpers';
 import styles from './LayerControls.styles.scss';
 
@@ -74,16 +74,24 @@ const LayerControlsComponent = ({
     }, [labelPosition])
 
     const getInstrumentModal = () => {
+        /* return (
+             <Modal
+                 isOpen={instrumentModalOpen}
+                 onModalClose={onModalClose}
+             >
+                 <InstrumentSelect
+                     onInstrumentSelect={onInstrumentSelect}
+                     instrumentObject={layer.instrument}
+                     layerIndex={layerIndex}
+                 />
+             </Modal>
+         )*/
         return (
             <Modal
                 isOpen={instrumentModalOpen}
                 onModalClose={onModalClose}
             >
-                <InstrumentSelect
-                    onInstrumentSelect={onInstrumentSelect}
-                    instrumentObject={layer.instrument}
-                    layerIndex={layerIndex}
-                />
+                instrument select goes here
             </Modal>
         )
     }

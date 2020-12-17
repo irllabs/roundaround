@@ -33,6 +33,7 @@
     "@reduxjs/toolkit": "^1.4.0",
     "@svgdotjs/svg.js": "^3.0.16",
     "@svgdotjs/svg.panzoom.js": "^2.1.1",
+    "@tonaljs/tonal": "^4.6.0",
     "classnames": "^2.2.6",
     "deep-object-diff": "^1.1.0",
     "drei": "0.0.70",

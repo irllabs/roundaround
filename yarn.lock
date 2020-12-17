@@ -1218,6 +1218,187 @@
   dependencies:
     "@svgdotjs/svg.js" "^3.0.16"
 
+"@tonaljs/abc-notation@^4.5.1":
+  version "4.5.1"
+  resolved "https://registry.yarnpkg.com/@tonaljs/abc-notation/-/abc-notation-4.5.1.tgz#7efc562e43badd8e682131c8d9bbeb7ad4d047fb"
+  integrity sha512-xapFuj1e7jyNSPq0qiW9ohW0CbdI4nDy0qIQJ+zyLvTD6i8r3ZvQN5DRdemYYl2VAaxkHh1zPhuaHOucHK2kRQ==
+  dependencies:
+    "@tonaljs/core" "^4.5.1"
+
+"@tonaljs/array@^4.5.1":
+  version "4.5.1"
+  resolved "https://registry.yarnpkg.com/@tonaljs/array/-/array-4.5.1.tgz#afdfe9143d3741ebf2d9f70e8b9d157ddcab416c"
+  integrity sha512-QDHke1btJCDtUPqbuhySkaeR2c5FEyH7wt7tCIiQwOCYbC6wabksH9zo0cbbvc0yOdy96RKqHv+mNcUu9rp0oA==
+  dependencies:
+    "@tonaljs/core" "^4.5.1"
+
+"@tonaljs/chord-detect@^4.5.1":
+  version "4.5.1"
+  resolved "https://registry.yarnpkg.com/@tonaljs/chord-detect/-/chord-detect-4.5.1.tgz#a393c31c7d169aceaddbb9df7a05407f0ea298c2"
+  integrity sha512-rA6vSLsd0b+oTEg3qZicsARXix49jKMoQLpqYnFWfNwSEop0eWcTv5cORJ6vcRrML+9TkXr9qtbZyvzK4Ev2Qw==
+  dependencies:
+    "@tonaljs/chord-type" "^4.5.1"
+    "@tonaljs/core" "^4.5.1"
+    "@tonaljs/pcset" "^4.5.1"
+
+"@tonaljs/chord-type@^4.5.1":
+  version "4.5.1"
+  resolved "https://registry.yarnpkg.com/@tonaljs/chord-type/-/chord-type-4.5.1.tgz#c92dfb04517816c771cd829c690134bf5494e235"
+  integrity sha512-QHrQEnBmjqdOpuJ2Bs4vqX4Z6gAo3LtUOHiJuoj8KyEHvUelmgj4UwXz7mQYc2eSyrpyBzhkPsZXbMXn4frZ+Q==
+  dependencies:
+    "@tonaljs/core" "^4.5.1"
+    "@tonaljs/pcset" "^4.5.1"
+
+"@tonaljs/chord@^4.5.1":
+  version "4.5.1"
+  resolved "https://registry.yarnpkg.com/@tonaljs/chord/-/chord-4.5.1.tgz#4ea3cfa60a3066faf7aa8afb5cc5e182d9fda1fc"
+  integrity sha512-lPvJ96L61m0aJsB8eEagx3yTcoJZMTXIxzoKVg2ge9xtPI9Iq5p5Y3aX5fkb12HpOu2Hoas3Kg2favCN0AENpw==
+  dependencies:
+    "@tonaljs/chord-detect" "^4.5.1"
+    "@tonaljs/chord-type" "^4.5.1"
+    "@tonaljs/collection" "^4.5.1"
+    "@tonaljs/core" "^4.5.1"
+    "@tonaljs/pcset" "^4.5.1"
+    "@tonaljs/scale-type" "^4.5.1"
+
+"@tonaljs/collection@^4.5.1":
+  version "4.5.1"
+  resolved "https://registry.yarnpkg.com/@tonaljs/collection/-/collection-4.5.1.tgz#8ca162020f1cd62078e38cc6c30dfb32a9837b8a"
+  integrity sha512-MEKjbJaS4SNUsIegW+IIGXgUZGs+Q/W9nSvdJWJnE0Jnxk76mNUNBzfT3OZBsDAlup/uazbEwzmaMHKvoXlAnA==
+
+"@tonaljs/core@^4.5.1":
+  version "4.5.1"
+  resolved "https://registry.yarnpkg.com/@tonaljs/core/-/core-4.5.1.tgz#7297a75c0a8fce6feda836b2e1aec93bfd1c83fb"
+  integrity sha512-dJxnI3wKZkgMhhrzV9gR+JBUUncgKcU2sxriVR53xCrxInwd7ql00018y21V8X9wsiMwyFjpGwlmegQEw13fkg==
+
+"@tonaljs/duration-value@^4.5.1":
+  version "4.5.1"
+  resolved "https://registry.yarnpkg.com/@tonaljs/duration-value/-/duration-value-4.5.1.tgz#cd2149486896d3a9457ada31f41e49a65c6cb6c8"
+  integrity sha512-J4ABYcLheOFsnVIY2mqZhHIekepuO0fDZ2KB+6DOnslkNXrYjKT4H1H/qv4/gLOZzbcDfYyj43e5jag+4BcL4w==
+
+"@tonaljs/interval@^4.5.1":
+  version "4.5.1"
+  resolved "https://registry.yarnpkg.com/@tonaljs/interval/-/interval-4.5.1.tgz#845db15e474f25abe3b839c27da06e2d815f4646"
+  integrity sha512-nqu7h8Lq8t6hhITRqcC8oLZhq+KSTHZbV29af7cSrYanZb0/mzJUg3GcGLAyMoUksKo40A5ArRcaWXvoWighLg==
+  dependencies:
+    "@tonaljs/core" "^4.5.1"
+
+"@tonaljs/key@^4.6.0":
+  version "4.6.0"
+  resolved "https://registry.yarnpkg.com/@tonaljs/key/-/key-4.6.0.tgz#6852ead6c0f62900aa3d28f9f13ea878b2a68500"
+  integrity sha512-a45oY4UIIPgIeiesH6M8tpA2j053Pi8WgMlZGMRCMEWxuaLXz6Ej4qdwuBYyby0M17cZvCSNDAFd+aZsTuLq5g==
+  dependencies:
+    "@tonaljs/core" "^4.5.1"
+    "@tonaljs/note" "^4.6.0"
+    "@tonaljs/roman-numeral" "^4.5.1"
+
+"@tonaljs/midi@^4.5.1":
+  version "4.5.1"
+  resolved "https://registry.yarnpkg.com/@tonaljs/midi/-/midi-4.5.1.tgz#9e6a07b7dfd1584d7df41bc0d648ae8a946e4fb7"
+  integrity sha512-CMfBtouilxGRR+lrmjiupMD10KRCanMvFVbGdcmwHRDNBQFtUw2fOUQoWdinEwky2KFPbuxpQ2vXibmiAViH/Q==
+  dependencies:
+    "@tonaljs/core" "^4.5.1"
+
+"@tonaljs/mode@^4.5.1":
+  version "4.5.1"
+  resolved "https://registry.yarnpkg.com/@tonaljs/mode/-/mode-4.5.1.tgz#d86fb2da97868ab609d2ed05c434ac5b79181e60"
+  integrity sha512-NFygHwxyyp+k3DioLhVQaI4FiEumKYANqgY3hvjf9e4dfnb6GbE4692KvDTX5Tgmg7wCcJDWs6s1YtAbFbAZbw==
+  dependencies:
+    "@tonaljs/collection" "^4.5.1"
+    "@tonaljs/core" "^4.5.1"
+    "@tonaljs/interval" "^4.5.1"
+    "@tonaljs/pcset" "^4.5.1"
+
+"@tonaljs/note@^4.6.0":
+  version "4.6.0"
+  resolved "https://registry.yarnpkg.com/@tonaljs/note/-/note-4.6.0.tgz#a52b74dfb415429ca38ea86dc6e8f486cc87375e"
+  integrity sha512-09DqI3khZXqa0KziAXP3D9Yc7nklyYYMyL9IthtpPGrqaZyoA5ryrGUhtpXWg/tOrtkNx3VK+iJFDQdUiA9btQ==
+  dependencies:
+    "@tonaljs/core" "^4.5.1"
+    "@tonaljs/midi" "^4.5.1"
+
+"@tonaljs/pcset@^4.5.1":
+  version "4.5.1"
+  resolved "https://registry.yarnpkg.com/@tonaljs/pcset/-/pcset-4.5.1.tgz#83b7ff5e998a1de2302c3857aa1d093c364fb2ab"
+  integrity sha512-v5xGgwadWidd0lZa1T7JdtelcqcRTtv9cEv+JXbRsjVn6WNLcRbfnA3dHrveJ8CysK45Bnuh3gvG1fu9SOZesA==
+  dependencies:
+    "@tonaljs/collection" "^4.5.1"
+    "@tonaljs/core" "^4.5.1"
+
+"@tonaljs/progression@^4.5.1":
+  version "4.5.1"
+  resolved "https://registry.yarnpkg.com/@tonaljs/progression/-/progression-4.5.1.tgz#3ad494081bb7f00d2d9a35df9e35c371a0427052"
+  integrity sha512-xXEAMSKQs2PhrgPRP/hqn+AHKv+UcsryCRrLSQTEntY1AQW6eWlCIxWkgKASXRS926Y+eiGp6fdCR/4T5+wunQ==
+  dependencies:
+    "@tonaljs/chord" "^4.5.1"
+    "@tonaljs/core" "^4.5.1"
+    "@tonaljs/roman-numeral" "^4.5.1"
+
+"@tonaljs/range@^4.5.1":
+  version "4.5.1"
+  resolved "https://registry.yarnpkg.com/@tonaljs/range/-/range-4.5.1.tgz#7062b991d7d03789a3829fe079134d699251b11a"
+  integrity sha512-wHxy6o5TGtHSR0YcLAIUFcjg5D8GNHvQEAOXDujgakZ60hRxjYdIVMBcyFVbP4hd9zHGKRb8IqcwdtmWcWlcNw==
+  dependencies:
+    "@tonaljs/collection" "^4.5.1"
+    "@tonaljs/midi" "^4.5.1"
+
+"@tonaljs/roman-numeral@^4.5.1":
+  version "4.5.1"
+  resolved "https://registry.yarnpkg.com/@tonaljs/roman-numeral/-/roman-numeral-4.5.1.tgz#8361b7cbd0db939a773de2b36690bea411568f75"
+  integrity sha512-esdWyFd/g8zzsreRa6fj4k7hCnOqtSJdClgVkikUcatDu0DA8NRlifpPagPx3TDikU0vF/jb2WoWITjLO7NMYA==
+  dependencies:
+    "@tonaljs/core" "^4.5.1"
+
+"@tonaljs/scale-type@^4.5.1":
+  version "4.5.1"
+  resolved "https://registry.yarnpkg.com/@tonaljs/scale-type/-/scale-type-4.5.1.tgz#95458daa6dd7013d03a2d667442fe08ce7a31078"
+  integrity sha512-FgOkAJ4+6hmMgCMY6AWD4lFv/FOeO4HiGY7ZcYvpyUB22oE9uQyrcXs3E18BFrsnr3Y9RXwvg5qW7/VUI33Ocg==
+  dependencies:
+    "@tonaljs/core" "^4.5.1"
+    "@tonaljs/pcset" "^4.5.1"
+
+"@tonaljs/scale@^4.6.0":
+  version "4.6.0"
+  resolved "https://registry.yarnpkg.com/@tonaljs/scale/-/scale-4.6.0.tgz#cf957f639bc1cb2d310e03be89ce56ebb394ef95"
+  integrity sha512-ysmenWuovMu/aWHVn56o7UhQA9DTXY9o5PoaIDlZa7+CM2LXqkiayL6FAPJ7Y3ss7bOSFwovDd53yYwK9/xT9A==
+  dependencies:
+    "@tonaljs/chord-type" "^4.5.1"
+    "@tonaljs/collection" "^4.5.1"
+    "@tonaljs/core" "^4.5.1"
+    "@tonaljs/note" "^4.6.0"
+    "@tonaljs/pcset" "^4.5.1"
+    "@tonaljs/scale-type" "^4.5.1"
+
+"@tonaljs/time-signature@^4.5.1":
+  version "4.5.1"
+  resolved "https://registry.yarnpkg.com/@tonaljs/time-signature/-/time-signature-4.5.1.tgz#14cad7ad4876891a553829e964b9ce701713bb59"
+  integrity sha512-ci35yhEIDniPUCZRG7ey8WYJIzgQchAGLCRggQd20wERPIry2rdItK2w+CVaSxvCy057PPTX6mH6ax/LRsF6PA==
+
+"@tonaljs/tonal@^4.6.0":
+  version "4.6.0"
+  resolved "https://registry.yarnpkg.com/@tonaljs/tonal/-/tonal-4.6.0.tgz#bfa5cd3753bc8f6a9dc6d23c0eb0cec9b0843168"
+  integrity sha512-KlRYI/9Iv73Oupc1vxU8QgjWJEnu+yBGUxsgGleDAOEtS/rdFsEu0BkaGsPr2cj2S9kt91M3herqHd6Nl9TbCA==
+  dependencies:
+    "@tonaljs/abc-notation" "^4.5.1"
+    "@tonaljs/array" "^4.5.1"
+    "@tonaljs/chord" "^4.5.1"
+    "@tonaljs/chord-type" "^4.5.1"
+    "@tonaljs/collection" "^4.5.1"
+    "@tonaljs/core" "^4.5.1"
+    "@tonaljs/duration-value" "^4.5.1"
+    "@tonaljs/interval" "^4.5.1"
+    "@tonaljs/key" "^4.6.0"
+    "@tonaljs/midi" "^4.5.1"
+    "@tonaljs/mode" "^4.5.1"
+    "@tonaljs/note" "^4.6.0"
+    "@tonaljs/pcset" "^4.5.1"
+    "@tonaljs/progression" "^4.5.1"
+    "@tonaljs/range" "^4.5.1"
+    "@tonaljs/roman-numeral" "^4.5.1"
+    "@tonaljs/scale" "^4.6.0"
+    "@tonaljs/scale-type" "^4.5.1"
+    "@tonaljs/time-signature" "^4.5.1"
+
 "@types/anymatch@*":
   version "1.3.1"
   resolved "https://registry.yarnpkg.com/@types/anymatch/-/anymatch-1.3.1.tgz#336badc1beecb9dacc38bea2cf32adf627a8421a"

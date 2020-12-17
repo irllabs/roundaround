@@ -52,3 +52,7 @@ export const changeLayerLength = (layer, newLength) => {
         return [...layer.steps, ...stepsToAdd]
     }
 }
+
+export const numberRange = (value, inMin, inMax, outMin, outMax) => {
+    return ((value - inMin) * (outMax - outMin)) / (inMax - inMin) + outMin
+}
