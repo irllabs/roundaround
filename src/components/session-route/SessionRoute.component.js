@@ -222,7 +222,7 @@ const SessionRoute = ({
             toggleSidebar={toggleSidebar}
           />
           <div className={styles.mainContainer}>
-            <HtmlUi />
+            <HtmlUi isOn={clockIsRunning} />
             <ControlsBar
               user={firebase.currentUser}
               isOn={clockIsRunning}

@@ -312,7 +312,7 @@ class CollaborationRoute extends React.Component {
                     <div
                         className={styles.mainContainer}
                     >
-                        <HtmlUi />
+                        <HtmlUi isOn={this.state.isOn} />
                         <ControlsBar
                             user={this.firebase ? this.firebase.currentUser : {}}
                             mode="collaboration"

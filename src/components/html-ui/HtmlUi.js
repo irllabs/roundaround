@@ -19,6 +19,7 @@ class HtmlUi extends Component {
         this.isPanning = false
         this.stepGraphics = []
         this.round = null; // local copy of round, prevent mutating store.
+        this.isOn = false
     }
 
     componentDidMount () {
@@ -60,7 +61,16 @@ class HtmlUi extends Component {
     }
 
     async componentDidUpdate () {
-        // console.log('componentDidUpdate()', this.round, this.props.round)
+        // console.log('componentDidUpdate()', this.round, this.props.isOn)
+        if (!this.isOn && this.props.isOn && !_.isNil(this.positionLine)) {
+            //console.log('playing timeline');
+            this.positionLine.timeline().play()
+            this.isOn = true
+        } else if (this.isOn && !this.props.isOn && !_.isNil(this.positionLine)) {
+            //console.log('pausing timeline');
+            this.positionLine.timeline().stop()
+            this.isOn = false
+        }
 
         // Calculate what's changed so we only redraw if necessary
         let redraw = false
@@ -161,6 +171,19 @@ class HtmlUi extends Component {
         this.clear()
         const _this = this
 
+        // position line
+        const positionLineLength = (HTML_UI_Params.addNewLayerButtonDiameter / 2) + (HTML_UI_Params.initialLayerPadding / 2) + ((HTML_UI_Params.stepDiameter + HTML_UI_Params.layerPadding) * this.round.layers.length)
+
+        const positionLineWidth = 16
+        const positionLineTime = 2000
+        this.positionLine = this.container.rect(positionLineWidth, positionLineLength).fill('#666666')
+        this.positionLine.move((this.containerWidth / 2) - (positionLineWidth / 2), (this.containerHeight / 2) - positionLineLength)
+        this.positionLine.animate({ duration: positionLineTime }).ease('-').transform({ rotate: 360, relative: true, origin: 'bottom center' }).loop()
+        if (!this.isOn) {
+            this.positionLine.timeline().pause()
+        } else {
+            this.positionLine.timeline().seek(AudioEngine.getPositionMilliseconds())
+        }
         // draw layers
         this.stepGrahpics = []
         let i = 0
@@ -474,7 +497,7 @@ class HtmlUi extends Component {
 }
 
 const mapStateToProps = state => {
-    // console.log('mapStateToProps', state);
+    console.log('mapStateToProps', state);
     return {
         round: state.round,
         user: state.user,

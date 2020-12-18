@@ -1,3 +1,4 @@
+import * as Tone from 'tone';
 import Track from './Track';
 import _ from 'lodash'
 
@@ -66,6 +67,11 @@ const AudioEngine = {
         for (let track of this.tracks) {
             track.releaseAll()
         }
+    },
+    getPositionMilliseconds () {
+        return Math.round(Tone.Transport.seconds * 1000)
     }
+
+
 }
 export default AudioEngine
