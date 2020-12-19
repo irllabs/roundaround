@@ -20,6 +20,7 @@ class HtmlUi extends Component {
         this.stepGraphics = []
         this.round = null; // local copy of round, prevent mutating store.
         this.isOn = false
+        this.editAllLayers = false
     }
 
     componentDidMount () {
@@ -61,7 +62,20 @@ class HtmlUi extends Component {
     }
 
     async componentDidUpdate () {
-        // console.log('componentDidUpdate()', this.round, this.props.isOn)
+        // console.log('componentDidUpdate()', this.round, this.props.isOn, 'editAllLayers', this.editAllLayers, this.props.editAllLayers)
+        if (this.editAllLayers !== this.props.editAllLayers) {
+            this.editAllLayers = this.props.editAllLayers
+            this.removeAllStepEventListeners()
+            for (let stepGraphic of this.stepGraphics) {
+                if (this.editAllLayers) {
+                    stepGraphic.isAllowedInteraction = true
+                } else {
+                    stepGraphic.isAllowedInteraction = this.stepLayerDictionary[stepGraphic.id].creator === this.props.user.id
+                }
+                this.addStepEventListeners(stepGraphic)
+            }
+        }
+
         if (!this.isOn && this.props.isOn && !_.isNil(this.positionLine)) {
             //console.log('playing timeline');
             this.positionLine.timeline().play()
@@ -264,7 +278,7 @@ class HtmlUi extends Component {
             stepGraphic.addClass('step')
             this.stepGraphics.push(stepGraphic)
             this.updateStep(step)
-            this.addStepEventListeners(stepGraphic, step)
+            this.addStepEventListeners(stepGraphic)
         }
 
     }
@@ -450,9 +464,11 @@ class HtmlUi extends Component {
     removeAllStepEventListeners () {
         for (let stepGraphic of this.stepGraphics) {
             stepGraphic.click(null)
-            stepGraphic.hammertime.off('pan')
-            stepGraphic.hammertime.off('panstart')
-            stepGraphic.hammertime.off('panend')
+            if (!_.isNil(stepGraphic.hammertime)) {
+                stepGraphic.hammertime.off('pan')
+                stepGraphic.hammertime.off('panstart')
+                stepGraphic.hammertime.off('panend')
+            }
         }
     }
 
@@ -505,7 +521,8 @@ const mapStateToProps = state => {
     return {
         round: state.round,
         user: state.user,
-        collaboration: state.collaboration
+        collaboration: state.collaboration,
+        editAllLayers: state.editAllLayers
     };
 };
 

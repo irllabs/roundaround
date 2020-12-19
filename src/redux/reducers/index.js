@@ -1,6 +1,7 @@
 import { combineReducers } from "redux";
 import camera from './camera';
 import editingMode from './editingMode';
+import editAllLayers from './editAllLayers';
 import loader from "./loader";
 import raycaster from "./raycaster";
 import round from './round';
@@ -16,6 +17,7 @@ export default combineReducers({
     rounds,
     camera,
     editingMode,
+    editAllLayers,
     user,
     collaboration,
     positions

@@ -5,6 +5,7 @@ import {
     setCamera,
     setEditingMode,
     setLayerSteps,
+    setEditAllLayers,
     addRoundLayer,
     removeRoundLayer
 } from "../../redux/actions";
@@ -24,6 +25,8 @@ const SettingsPane = ({
     setCamera,
     editingMode,
     setEditingMode,
+    editAllLayers,
+    setEditAllLayers,
     updateLayerInstrument,
     addRoundLayer,
     setLayerSteps,
@@ -37,6 +40,11 @@ const SettingsPane = ({
     const onEditingModeSelect = (event) => {
         const mode = event.target.value;
         setEditingMode(mode)
+    }
+    const onEditAllLayersSelect = (event) => {
+        const value = event.target.checked;
+        console.log('onEditAllLayersSelect', value);
+        setEditAllLayers(value)
     }
 
     const addLayer = () => {
@@ -181,7 +189,18 @@ const SettingsPane = ({
                             />
                             <label htmlFor="notes">Notes Editing</label>
                         </div>
+
                     </div>
+                </div>
+                <div>
+                    <input
+                        type="checkbox"
+                        name="edit-all-layers"
+                        checked={editAllLayers}
+                        onChange={onEditAllLayersSelect}
+                        disabled={collaboration.creator !== user.id}
+                    />
+                    <label htmlFor="edit-all-layers">Edit all layers</label>
                 </div>
             </div>
         </div>
@@ -193,6 +212,7 @@ const mapStateToProps = state => {
         camera: state.camera,
         round: state.round,
         editingMode: state.editingMode,
+        editAllLayers: state.editAllLayers,
         user: state.user,
         collaboration: state.collaboration
     };
@@ -204,6 +224,7 @@ export default connect(
         updateLayerInstrument,
         setCamera,
         setEditingMode,
+        setEditAllLayers,
         addRoundLayer,
         removeRoundLayer,
         setLayerSteps

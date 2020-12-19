@@ -1,6 +1,7 @@
 import {
     RESET_CAMERA_STORE,
     RESET_EDITING_MODE_STORE,
+    RESET_EDIT_ALL_LAYERS_STORE,
     RESET_LOADER_STORE,
     RESET_RAYCASTER_STORE,
     RESET_ROUNDS_STORE,
@@ -11,6 +12,7 @@ import {
     TOGGLE_RAYCASTER,
     SET_CAMERA,
     SET_EDITING_MODE,
+    SET_EDIT_ALL_LAYERS,
     SET_ROUND_DATA,
     SET_ROUNDS,
     UPDATE_ROUND,
@@ -60,6 +62,9 @@ export const resetCollaborationStore = () => ({
 export const resetEditingModeStore = () => ({
     type: RESET_EDITING_MODE_STORE
 })
+export const resetEditAllLayers = () => ({
+    type: RESET_EDIT_ALL_LAYERS_STORE
+})
 export const resetCameraStore = () => ({
     type: RESET_CAMERA_STORE
 })
@@ -75,6 +80,11 @@ export const setCamera = camera => ({
 export const setEditingMode = mode => ({
     type: SET_EDITING_MODE,
     payload: { mode }
+})
+
+export const setEditAllLayers = value => ({
+    type: SET_EDIT_ALL_LAYERS,
+    payload: { value }
 })
 
 export const toggleLoader = active => ({
@@ -215,15 +225,15 @@ export const setLayersPositions = layers => ({
 
 export const setStepsPositions = (layerIndex, steps) => ({
     type: SET_STEPS_POSITIONS,
-    payload: {layerIndex, steps}
+    payload: { layerIndex, steps }
 })
 
 export const setLayerControlsPositions = (layerIndex, controls) => ({
     type: SET_LAYER_CONTROLS_POSITION,
-    payload: {layerIndex, controls}
+    payload: { layerIndex, controls }
 })
 
 export const setRoundInfoPosition = (round) => ({
     type: SET_ROUND_INFO_POSITION,
-    payload: {round}
+    payload: { round }
 })
