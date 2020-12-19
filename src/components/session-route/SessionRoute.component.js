@@ -3,7 +3,7 @@ import * as Tone from 'tone';
 import { withRouter } from 'react-router-dom';
 import { connect } from "react-redux";
 import { setRoundData, setRounds, toggleLoader, resetRoundsStore, resetRaycasterStore, resetCameraStore, resetEditingModeStore, resetLoaderStore } from "../../redux/actions";
-import { ThrottleDelay } from '../../utils/constants';
+import { ThrottleDelay } from '../../constants';
 import { getDefaultRoundData } from '../../utils/dummyData';
 import ControlsBar from '../controls-bar/ControlsBar.component';
 import SettingsPane from '../settings-pane/SettingsPane.component';

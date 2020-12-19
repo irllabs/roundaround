@@ -1,4 +1,4 @@
-import { Layer } from './constants';
+import { Layer } from '../constants';
 import { uuid } from '../models/SequencerUtil';
 
 export const refrashAllIdsInArray = (array) => {

@@ -10,7 +10,7 @@ import {
     removeRoundLayer
 } from "../../redux/actions";
 import { getDefaultLayerData } from '../../utils/dummyData';
-import { Limits } from '../../utils/constants';
+import { Limits } from '../../constants';
 import { changeLayerLength } from '../../utils';
 import LayerControls from './LayerControls.component';
 

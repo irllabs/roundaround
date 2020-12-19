@@ -4,7 +4,7 @@ import compose from 'recompose/compose';
 const classNames = require("classnames");
 
 import { setLayerName, updateLayerInstrument, toggleRaycaster, setLayerControlsPositions } from '../../redux/actions';
-import { Constants, Layer } from '../../utils/constants';
+import { Constants, Layer } from '../../constants';
 import Modal from '../modal/Modal.component';
 import InstrumentSelect from '../instrument-select/InstrumentSelect.component';
 import { initiateElementWatch, watchCleanup } from '../../utils/htmlHelpers';

@@ -1,4 +1,4 @@
-import { Limits } from './constants';
+import { Limits } from '../constants';
 import { getDefaultStepData } from './dummyData';
 
 export const getRandomColor = () => {
