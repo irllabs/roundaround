@@ -260,6 +260,7 @@ class HtmlUi extends Component {
             stepGraphic.stepIndex = index++
             stepGraphic.layerIndex = layer.order
             stepGraphic.id = step.id
+            stepGraphic.isAllowedInteraction = layer.creator === this.props.user.id
             stepGraphic.addClass('step')
             this.stepGraphics.push(stepGraphic)
             this.updateStep(step)
@@ -347,100 +348,103 @@ class HtmlUi extends Component {
 
     addStepEventListeners (stepGraphic) {
         const _this = this
-        stepGraphic.click(function () {
-            _this.onStepClick(stepGraphic)
-        })
+        if (stepGraphic.isAllowedInteraction) {
+            stepGraphic.click(function () {
+                _this.onStepClick(stepGraphic)
+            })
 
-        stepGraphic.on('mousedown', () => {
-            // prevent panning round if we're trying to pan a step
-            _this.stepIsPanning = true
-        })
-        stepGraphic.on('mouseup', () => {
-            // prevent panning round if we're trying to pan a step
-            _this.stepIsPanning = false
-        })
+            stepGraphic.on('mousedown', () => {
+                // prevent panning round if we're trying to pan a step
+                _this.stepIsPanning = true
+            })
+            stepGraphic.on('mouseup', () => {
+                // prevent panning round if we're trying to pan a step
+                _this.stepIsPanning = false
+            })
 
-        stepGraphic.hammertime = new Hammer(stepGraphic.node, {});
-        stepGraphic.hammertime.get('pan').set({ enable: true });
-        stepGraphic.hammertime.on('panstart', function (e) {
-            // console.log('step panstart');
-            _this.stepIsPanning = true
-            const step = _this.getStep(stepGraphic.id)
-            stepGraphic.isOn = step.isOn
-            stepGraphic.probabilityPanStart = stepGraphic.probability = step.probability;
-            stepGraphic.velocityPanStart = stepGraphic.velocity = step.velocity;
-            if (stepGraphic.isOn) {
-                _this.stepModal.show()
-                _this.updateStepModal(stepGraphic)
-            }
-        })
-        stepGraphic.hammertime.on('pan', function (e) {
-            if (!_this.isZooming && stepGraphic.isOn) {
-                if (stepGraphic.isPanningX) {
-                    let delta = e.deltaX
-                    if (delta < -100) {
-                        delta = -100
-                    }
-                    delta = delta / 100
-                    delta += 1
-                    stepGraphic.probability = delta * stepGraphic.probabilityPanStart
-                    if (stepGraphic.probability < 0.3) {
-                        stepGraphic.probability = 0.3
-                    } else if (stepGraphic.probability > 1) {
-                        stepGraphic.probability = 1
-                    }
-                    stepGraphic.fill({ opacity: stepGraphic.probability })
+            stepGraphic.hammertime = new Hammer(stepGraphic.node, {});
+            stepGraphic.hammertime.get('pan').set({ enable: true });
+            stepGraphic.hammertime.on('panstart', function (e) {
+                // console.log('step panstart');
+
+                _this.stepIsPanning = true
+                const step = _this.getStep(stepGraphic.id)
+                stepGraphic.isOn = step.isOn
+                stepGraphic.probabilityPanStart = stepGraphic.probability = step.probability;
+                stepGraphic.velocityPanStart = stepGraphic.velocity = step.velocity;
+                if (stepGraphic.isOn) {
+                    _this.stepModal.show()
                     _this.updateStepModal(stepGraphic)
-                } else if (stepGraphic.isPanningY) {
-                    let delta = e.deltaY
-                    if (delta < -100) {
-                        delta = -100
-                    }
-                    delta = delta / -100
-                    delta += 1
-                    stepGraphic.velocity = delta * stepGraphic.velocityPanStart;
-                    if (stepGraphic.velocity < 0.5) {
-                        stepGraphic.velocity = 0.5
-                    } else if (stepGraphic.velocity > 1) {
-                        stepGraphic.velocity = 1
-                    }
-                    requestAnimationFrame(() => {
-                        stepGraphic.transform({
-                            scale: stepGraphic.velocity
-                        })
+                }
+            })
+            stepGraphic.hammertime.on('pan', function (e) {
+                if (!_this.isZooming && stepGraphic.isOn) {
+                    if (stepGraphic.isPanningX) {
+                        let delta = e.deltaX
+                        if (delta < -100) {
+                            delta = -100
+                        }
+                        delta = delta / 100
+                        delta += 1
+                        stepGraphic.probability = delta * stepGraphic.probabilityPanStart
+                        if (stepGraphic.probability < 0.3) {
+                            stepGraphic.probability = 0.3
+                        } else if (stepGraphic.probability > 1) {
+                            stepGraphic.probability = 1
+                        }
+                        stepGraphic.fill({ opacity: stepGraphic.probability })
                         _this.updateStepModal(stepGraphic)
-                    })
-                } else {
-                    //console.log('not panning yet', e.deltaY);
-                    if (Math.abs(e.deltaY) > 20) {
-                        stepGraphic.isPanningY = true
-                        _this.isPanning = true
-                    } else if (Math.abs(e.deltaX) > 20) {
-                        stepGraphic.isPanningX = true
-                        _this.isPanning = true
+                    } else if (stepGraphic.isPanningY) {
+                        let delta = e.deltaY
+                        if (delta < -100) {
+                            delta = -100
+                        }
+                        delta = delta / -100
+                        delta += 1
+                        stepGraphic.velocity = delta * stepGraphic.velocityPanStart;
+                        if (stepGraphic.velocity < 0.5) {
+                            stepGraphic.velocity = 0.5
+                        } else if (stepGraphic.velocity > 1) {
+                            stepGraphic.velocity = 1
+                        }
+                        requestAnimationFrame(() => {
+                            stepGraphic.transform({
+                                scale: stepGraphic.velocity
+                            })
+                            _this.updateStepModal(stepGraphic)
+                        })
+                    } else {
+                        //console.log('not panning yet', e.deltaY);
+                        if (Math.abs(e.deltaY) > 20) {
+                            stepGraphic.isPanningY = true
+                            _this.isPanning = true
+                        } else if (Math.abs(e.deltaX) > 20) {
+                            stepGraphic.isPanningX = true
+                            _this.isPanning = true
+                        }
                     }
                 }
-            }
-        })
-        stepGraphic.hammertime.on('panend', function (e) {
-            if (stepGraphic.isPanningX && stepGraphic.isOn) {
-                const step = _this.getStep(stepGraphic.id)
-                step.probability = stepGraphic.probability
-                _this.props.dispatch({ type: SET_STEP_PROBABILITY, payload: { probability: stepGraphic.probability, layerIndex: stepGraphic.layerIndex, stepIndex: stepGraphic.stepIndex, user: _this.props.user.id } })
-            } else if (stepGraphic.isPanningY && stepGraphic.isOn) {
-                const step = _this.getStep(stepGraphic.id)
-                step.velocity = stepGraphic.velocity
-                _this.props.dispatch({ type: SET_STEP_VELOCITY, payload: { velocity: stepGraphic.velocity, layerIndex: stepGraphic.layerIndex, stepIndex: stepGraphic.stepIndex, user: _this.props.user.id } })
-            }
-            AudioEngine.recalculateParts(_this.props.round)
-            stepGraphic.isPanningX = false;
-            stepGraphic.isPanningY = false;
-            _this.stepIsPanning = false
-            _this.stepModal.hide()
-            setTimeout(() => {
-                _this.isPanning = false
-            }, 100)
-        })
+            })
+            stepGraphic.hammertime.on('panend', function (e) {
+                if (stepGraphic.isPanningX && stepGraphic.isOn) {
+                    const step = _this.getStep(stepGraphic.id)
+                    step.probability = stepGraphic.probability
+                    _this.props.dispatch({ type: SET_STEP_PROBABILITY, payload: { probability: stepGraphic.probability, layerIndex: stepGraphic.layerIndex, stepIndex: stepGraphic.stepIndex, user: _this.props.user.id } })
+                } else if (stepGraphic.isPanningY && stepGraphic.isOn) {
+                    const step = _this.getStep(stepGraphic.id)
+                    step.velocity = stepGraphic.velocity
+                    _this.props.dispatch({ type: SET_STEP_VELOCITY, payload: { velocity: stepGraphic.velocity, layerIndex: stepGraphic.layerIndex, stepIndex: stepGraphic.stepIndex, user: _this.props.user.id } })
+                }
+                AudioEngine.recalculateParts(_this.props.round)
+                stepGraphic.isPanningX = false;
+                stepGraphic.isPanningY = false;
+                _this.stepIsPanning = false
+                _this.stepModal.hide()
+                setTimeout(() => {
+                    _this.isPanning = false
+                }, 100)
+            })
+        }
     }
 
     removeAllStepEventListeners () {
