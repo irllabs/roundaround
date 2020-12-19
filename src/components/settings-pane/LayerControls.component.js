@@ -1,15 +1,13 @@
 import React, { useEffect, useRef, useState, useMemo, useCallback } from 'react';
 import { connect, ReactReduxContext, Provider } from "react-redux";
 import compose from 'recompose/compose';
-import { Html } from 'drei';
-import { Vector3 } from 'three';
 const classNames = require("classnames");
 
-import { setLayerName, updateLayerInstrument, toggleRaycaster, setLayerControlsPositions } from '../../../../redux/actions';
-import { Constants, Layer } from '../../../../utils/constants';
-import Modal from '../../../modal/Modal.component';
-import InstrumentSelect from '../../../instrument-select/InstrumentSelect.component';
-import { initiateElementWatch, watchCleanup } from '../htmlHelpers';
+import { setLayerName, updateLayerInstrument, toggleRaycaster, setLayerControlsPositions } from '../../redux/actions';
+import { Constants, Layer } from '../../utils/constants';
+import Modal from '../modal/Modal.component';
+import InstrumentSelect from '../instrument-select/InstrumentSelect.component';
+import { initiateElementWatch, watchCleanup } from '../../utils/htmlHelpers';
 import styles from './LayerControls.styles.scss';
 
 const LayerControlsComponent = ({
@@ -29,14 +27,6 @@ const LayerControlsComponent = ({
 
     const patternLabel = useRef();
     const layerLabel = useRef();
-
-    const labelPosition = useMemo(() => {
-        const position = new Vector3()
-            .setFromSphericalCoords(radius, 0, 0)
-            .applyAxisAngle(Constants.AXIS, Constants.ANGLE);
-        position.x = -roundRadius;
-        return position;
-    }, [radius, roundRadius])
 
     const onInstrumentSelect = useCallback((instrument, sampler, sample) => {
         updateLayerInstrument(layerIndex, { instrument, sampler, sample }, user.id);
@@ -59,19 +49,6 @@ const LayerControlsComponent = ({
         return watchCleanup(patternLabel, watchFunction);
     }, [patternLabel.current])
 
-    useEffect(() => {
-        const name = layer.name || 'layer ' + (layerIndex + 1);
-        const watchFunction = initiateElementWatch(layerLabel, name, (name) => {
-            setLayerName(layerIndex, name, user.id);
-        });
-        return watchCleanup(layerLabel, watchFunction);
-    }, [layerLabel.current, layer.name])
-
-    useEffect(() => {
-        if (!settingsPane) {
-            setLayerControlsPositions(layerIndex, labelPosition)
-        }
-    }, [labelPosition])
 
     const getInstrumentModal = () => {
         return (
@@ -137,31 +114,6 @@ const LayerControlsComponent = ({
                     {getInstrumentModal()}
                     {getControls()}
                 </>
-            }
-            {
-                !settingsPane &&
-                <ReactReduxContext.Consumer>
-                    {
-                        ({ store }) => (
-                            <>
-                                <Html
-                                    fullscreen={instrumentModalOpen}
-                                >
-                                    <Provider store={store}>
-                                        {getInstrumentModal()}
-                                    </Provider>
-                                </Html>
-                                <Html
-                                    position={labelPosition}
-                                    className={styles.layerControls}
-                                    zIndexRange={[10, 0]}
-                                >
-                                    {getControls()}
-                                </Html>
-                            </>
-                        )
-                    }
-                </ReactReduxContext.Consumer>
             }
         </>
     )

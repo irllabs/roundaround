@@ -5,7 +5,6 @@ import { connect } from "react-redux";
 import { setRoundData, setRounds, toggleLoader, resetRoundsStore, resetRaycasterStore, resetCameraStore, resetEditingModeStore, resetLoaderStore } from "../../redux/actions";
 import { ThrottleDelay } from '../../utils/constants';
 import { getDefaultRoundData } from '../../utils/dummyData';
-import GraphicsContext from '../graphics-context/GraphicsContext.component';
 import ControlsBar from '../controls-bar/ControlsBar.component';
 import SettingsPane from '../settings-pane/SettingsPane.component';
 import LinkGenerator from '../collaboration/link-generator/LinkGenerator.component';

@@ -36,7 +36,6 @@
     "@tonaljs/tonal": "^4.6.0",
     "classnames": "^2.2.6",
     "deep-object-diff": "^1.1.0",
-    "drei": "0.0.70",
     "firebase": "^7.15.5",
     "flat": "^5.0.2",
     "hammerjs": "^2.0.8",
@@ -49,10 +48,8 @@
     "react-loader-spinner": "^3.1.14",
     "react-redux": "^7.2.1",
     "react-router-dom": "^5.2.0",
-    "react-three-fiber": "^4.2.8",
     "recompose": "^0.30.0",
     "redux": "^4.0.5",
-    "three": "^0.116.1",
     "tone": "^14.7.12",
     "webpack-merge": "^5.0.9"
   },

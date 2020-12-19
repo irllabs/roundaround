@@ -12,7 +12,7 @@ import {
 import { getDefaultLayerData } from '../../utils/dummyData';
 import { Limits } from '../../utils/constants';
 import { changeLayerLength } from '../../utils';
-import LayerControls from '../graphics-context/round/layer/LayerControls.component';
+import LayerControls from './LayerControls.component';
 
 import styles from './SettingsPane.styles.scss';
 

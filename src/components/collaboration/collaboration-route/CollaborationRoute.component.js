@@ -16,7 +16,6 @@ import {
 import { diff } from 'deep-object-diff';
 var _ = require('lodash/core');
 import { ThrottleDelay } from '../../../utils/constants';
-import GraphicsContext from '../../graphics-context/GraphicsContext.component';
 import ControlsBar from '../../controls-bar/ControlsBar.component';
 import SettingsPane from '../../settings-pane/SettingsPane.component';
 import Profile from '../../profile/Profile.component';
