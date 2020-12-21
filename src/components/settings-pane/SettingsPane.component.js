@@ -13,6 +13,7 @@ import { getDefaultLayerData } from '../../utils/dummyData';
 import { Limits } from '../../constants';
 import { changeLayerLength } from '../../utils';
 import LayerControls from './LayerControls.component';
+import _ from 'lodash'
 
 import styles from './SettingsPane.styles.scss';
 
@@ -198,7 +199,7 @@ const SettingsPane = ({
                         name="edit-all-layers"
                         checked={editAllLayers}
                         onChange={onEditAllLayersSelect}
-                        disabled={collaboration.creator !== user.id}
+                        disabled={_.isNil(collaboration) || collaboration.creator !== user.id}
                     />
                     <label htmlFor="edit-all-layers">Edit all layers</label>
                 </div>

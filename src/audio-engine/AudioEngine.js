@@ -14,7 +14,7 @@ const AudioEngine = {
         this.master.buildAudioChain()
     },
     async load (round) {
-        console.log('audio engine loading round', round);
+        //console.log('audio engine loading round', round);
         for (const layer of round.layers) {
             const track = await this.createTrack(layer, Track.TRACK_TYPE_LAYER)
             await track.load(layer)
@@ -29,8 +29,8 @@ const AudioEngine = {
         }
     },
     createTrack (trackParameters) {
-        console.log('createTrack', trackParameters);
-        console.time('createTrack')
+        //console.log('createTrack', trackParameters);
+        //  console.time('createTrack')
         let _this = this
         return new Promise(async function (resolve, reject) {
             let track = new Track(trackParameters)
@@ -45,7 +45,7 @@ const AudioEngine = {
                 trackParameters.instrument
             )
 
-            console.timeEnd('createTrack')
+            // console.timeEnd('createTrack')
             resolve(track)
         })
     },

@@ -517,7 +517,7 @@ class HtmlUi extends Component {
 }
 
 const mapStateToProps = state => {
-    console.log('mapStateToProps', state);
+    //console.log('mapStateToProps', state);
     return {
         round: state.round,
         user: state.user,
