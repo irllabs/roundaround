@@ -21,6 +21,7 @@ class HtmlUi extends Component {
         this.round = null; // local copy of round, prevent mutating store.
         this.isOn = false
         this.editAllLayers = false
+        this.userColors = {};
     }
 
     componentDidMount () {
@@ -33,6 +34,7 @@ class HtmlUi extends Component {
     createRound () {
         //console.log('createRound()');
         this.round = _.cloneDeep(this.props.round)
+        this.userColors = this.getUserColors()
         // Create SVG container
         this.containerWidth = Math.max(document.documentElement.clientWidth || 0, window.innerWidth || 0)
         this.containerHeight = Math.max(document.documentElement.clientHeight || 0, window.innerHeight || 0)
@@ -51,18 +53,33 @@ class HtmlUi extends Component {
         })
         this.container.viewbox(0, 0, this.containerWidth, this.containerHeight)
 
-        this.stepLayerDictionary = {}
-        for (let layer of this.props.round.layers) {
-            for (let step of layer.steps) {
-                this.stepLayerDictionary[step.id] = layer
-            }
-        }
 
         this.draw()
     }
 
     async componentDidUpdate () {
-        // console.log('componentDidUpdate()', this.round, this.props.isOn, 'editAllLayers', this.editAllLayers, this.props.editAllLayers)
+        // console.log('componentDidUpdate()', this.round)
+
+        // Calculate what's changed so we only redraw if necessary
+        let redraw = false
+        const _this = this
+
+        if (this.round.id !== this.props.round.id) {
+            // whole round has changed
+            this.round = _.cloneDeep(this.props.round)
+            AudioEngine.load(this.props.round)
+            this.draw()
+            return
+        }
+
+        // User profile color changed
+        const userColors = this.getUserColors()
+        if (!_.isEqual(userColors, this.userColors)) {
+            this.userColors = userColors
+            redraw = true
+        }
+
+        // Edit all interactions changed
         if (this.editAllLayers !== this.props.editAllLayers) {
             this.editAllLayers = this.props.editAllLayers
             this.removeAllStepEventListeners()
@@ -86,12 +103,9 @@ class HtmlUi extends Component {
             this.isOn = false
         }
 
-        // Calculate what's changed so we only redraw if necessary
-        let redraw = false
-        const _this = this
-
         if (this.round.layers.length < this.props.round.layers.length) {
             // layer added
+            this.cacheStepLayers()
             for (let layer of this.props.round.layers) {
                 let oldLayer = _.find(this.round.layers, { id: layer.id })
                 if (_.isNil(oldLayer)) {
@@ -112,6 +126,7 @@ class HtmlUi extends Component {
             }
         } else if (this.round.layers.length > this.props.round.layers.length) {
             // layer removed
+            this.cacheStepLayers()
             for (let layer of this.round.layers) {
                 let newLayer = _.find(this.props.round.layers, { id: layer.id })
                 if (_.isNil(newLayer)) {
@@ -121,6 +136,7 @@ class HtmlUi extends Component {
             }
         }
 
+        // check for number of steps per layer changed
         let previousSteps = []
         for (let i = 0; i < this.round.layers.length; i++) {
             const layer = this.round.layers[i]
@@ -128,17 +144,17 @@ class HtmlUi extends Component {
             const newLayer = _.find(this.props.round.layers, { id: layer.id })
             if (!_.isNil(newLayer)) {
                 if (newLayer.steps.length !== layer.steps.length) {
-                    // number of steps changed
+                    // number of steps has changed
                     redraw = true
                 }
             }
         }
+
+        // Check if an individual step has changed
         let newSteps = []
-        this.stepLayerDictionary = {}
         for (let layer of this.props.round.layers) {
             for (let newStep of layer.steps) {
                 newSteps.push(newStep)
-                this.stepLayerDictionary[newStep.id] = layer
             }
 
         }
@@ -146,7 +162,7 @@ class HtmlUi extends Component {
             let newStep = _.find(newSteps, { id: previousStep.id })
             if (!_.isNil(newStep)) {
                 if (!_.isEqual(previousStep, newStep)) {
-                    console.log('found changed step', previousStep, newStep);
+                    //    console.log('found changed step', previousStep, newStep);
                     this.updateStep(newStep, true)
                     AudioEngine.recalculateParts(this.props.round)
                 }
@@ -154,7 +170,7 @@ class HtmlUi extends Component {
             }
         }
 
-        // Check for instrument changes (maybe do this somewhere else)
+        // Check for instrument changes
         for (let layer of this.round.layers) {
             let newLayer = _.find(this.props.round.layers, { id: layer.id })
             if (!_.isNil(newLayer) && !_.isEqual(layer.instrument, newLayer.instrument)) {
@@ -181,9 +197,10 @@ class HtmlUi extends Component {
     }
 
     draw (shouldAnimate) {
-        // console.log('draw()', shouldAnimate);
         this.clear()
         const _this = this
+
+        this.cacheStepLayers()
 
         // position line
         const positionLineLength = (HTML_UI_Params.addNewLayerButtonDiameter / 2) + (HTML_UI_Params.initialLayerPadding / 2) + ((HTML_UI_Params.stepDiameter + HTML_UI_Params.layerPadding) * this.round.layers.length)
@@ -252,7 +269,7 @@ class HtmlUi extends Component {
         const layerDiameter = HTML_UI_Params.addNewLayerButtonDiameter + HTML_UI_Params.initialLayerPadding + ((HTML_UI_Params.stepDiameter + HTML_UI_Params.layerPadding + HTML_UI_Params.layerPadding + HTML_UI_Params.stepDiameter) * (layer.order + 1))
         const xOffset = (this.containerWidth / 2) - (layerDiameter / 2)
         const yOffset = (this.containerHeight / 2) - (layerDiameter / 2)
-        const layerGraphic = this.container.circle(layerDiameter, layerDiameter).attr({ fill: 'none' }).stroke({ color: this.getUserColor(layer.creator), width: '6px', opacity: 0 })
+        const layerGraphic = this.container.circle(layerDiameter, layerDiameter).attr({ fill: 'none' }).stroke({ color: this.userColors[layer.creator], width: '6px', opacity: 0 })
         layerGraphic.x(xOffset)
         layerGraphic.y(yOffset)
         layerGraphic.animate(animateTime).stroke({ opacity: 1 })
@@ -266,7 +283,7 @@ class HtmlUi extends Component {
             const x = Math.round(layerDiameter / 2 + radius * Math.cos(angle) - HTML_UI_Params.stepDiameter / 2) + xOffset;
             const y = Math.round(layerDiameter / 2 + radius * Math.sin(angle) - HTML_UI_Params.stepDiameter / 2) + yOffset;
             const stepGraphic = this.container.circle(HTML_UI_Params.stepDiameter)
-            stepGraphic.stroke({ color: this.getUserColor(layer.creator), width: '6px', opacity: 0 })
+            stepGraphic.stroke({ color: this.userColors[layer.creator], width: '6px', opacity: 0 })
             stepGraphic.animate(animateTime).stroke({ opacity: 1 })
             stepGraphic.x(x)
             stepGraphic.y(y)
@@ -294,7 +311,7 @@ class HtmlUi extends Component {
                 // add delay so that graphic updates after activity indicator hits it
                 _.delay(() => {
                     if (step.isOn) {
-                        stepGraphic.animate(HTML_UI_Params.stepAnimationUpdateTime).attr({ fill: _this.getUserColor(layer.creator), 'fill-opacity': step.probability })
+                        stepGraphic.animate(HTML_UI_Params.stepAnimationUpdateTime).attr({ fill: _this.userColors[layer.creator], 'fill-opacity': step.probability })
                         stepGraphic.animate(HTML_UI_Params.stepAnimationUpdateTime).transform({
                             scale: step.velocity
                         })
@@ -305,13 +322,22 @@ class HtmlUi extends Component {
                 this.animateActivityIndicator(layer.creator, stepGraphic.x() + (HTML_UI_Params.stepDiameter / 2), stepGraphic.y() + (HTML_UI_Params.stepDiameter / 2))
             } else {
                 if (step.isOn) {
-                    stepGraphic.attr({ fill: _this.getUserColor(layer.creator), 'fill-opacity': step.probability })
+                    stepGraphic.attr({ fill: _this.userColors[layer.creator], 'fill-opacity': step.probability })
                     stepGraphic.transform({
                         scale: step.velocity
                     })
                 } else {
                     stepGraphic.attr({ fill: '#282c34' })
                 }
+            }
+        }
+    }
+
+    cacheStepLayers () {
+        this.stepLayerDictionary = {}
+        for (let layer of this.props.round.layers) {
+            for (let step of layer.steps) {
+                this.stepLayerDictionary[step.id] = layer
             }
         }
     }
@@ -347,7 +373,7 @@ class HtmlUi extends Component {
     animateActivityIndicator (userId, toX, toY) {
         const avatarGraphic = _.find(this.avatarGraphics, { id: userId })
         if (!_.isNil(this.activityIndicator) && !_.isNil(avatarGraphic)) {
-            this.activityIndicator.fill({ color: this.getUserColor(userId), opacity: 1 })
+            this.activityIndicator.fill({ color: this.userColors[userId], opacity: 1 })
             const fromX = avatarGraphic.x() + (HTML_UI_Params.avatarDiameter / 2)
             const fromY = avatarGraphic.y() + (HTML_UI_Params.avatarDiameter / 2)
             toX -= HTML_UI_Params.activityIndicatorDiameter / 2
@@ -500,12 +526,16 @@ class HtmlUi extends Component {
         const hammertime = new Hammer(element, {});
         hammertime.get('pinch').set({ enable: true });
     }
-
-    getUserColor (id) {
+    getUserColors () {
+        let userColors = {}
         if (!_.isNil(this.props.collaboration)) {
-            return this.props.collaboration.contributors[id].color
+            for (const [id, contributor] of Object.entries(this.props.collaboration.contributors)) {
+                userColors[id] = contributor.color
+            }
+        } else {
+            userColors[this.props.user.id] = this.props.user.color
         }
-        return this.props.user.color
+        return userColors
     }
 
     render () {

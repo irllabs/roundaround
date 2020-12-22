@@ -15,6 +15,7 @@ const AudioEngine = {
     },
     async load (round) {
         //console.log('audio engine loading round', round);
+        this.reset()
         for (const layer of round.layers) {
             const track = await this.createTrack(layer, Track.TRACK_TYPE_LAYER)
             await track.load(layer)
