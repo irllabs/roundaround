@@ -10,7 +10,7 @@ import AudioEngine from '../../audio-engine/AudioEngine'
 import Instruments from '../../audio-engine/Instruments'
 
 import { getDefaultLayerData } from '../../utils/dummyData';
-import { TOGGLE_STEP, ADD_ROUND_LAYER, SET_STEP_PROBABILITY, SET_STEP_VELOCITY } from '../../redux/actionTypes'
+import { TOGGLE_STEP, ADD_ROUND_LAYER, SET_STEP_PROBABILITY, SET_STEP_VELOCITY, SET_SELECTED_LAYER_ID, SET_IS_SHOWING_LAYER_SETTINGS } from '../../redux/actionTypes'
 
 class HtmlUi extends Component {
     constructor (props) {
@@ -18,6 +18,7 @@ class HtmlUi extends Component {
         this.isZooming = false
         this.isPanning = false
         this.stepGraphics = []
+        this.layerGraphics = []
         this.round = null; // local copy of round, prevent mutating store.
         this.isOn = false
         this.editAllLayers = false
@@ -217,6 +218,7 @@ class HtmlUi extends Component {
         }
         // draw layers
         this.stepGrahpics = []
+        this.layerGraphics = []
         let i = 0
         for (const layer of this.round.layers) {
             // add order parameter so we can calculate offsets (todo: add this when we create a layer?)
@@ -249,6 +251,13 @@ class HtmlUi extends Component {
 
     clear () {
         this.removeAllStepEventListeners()
+        this.removeAllLayerEventListeners()
+        if (!_.isNil(this.layerGrahpics)) {
+            for (let layerGrahpic of this.layerGrahpics) {
+                layerGrahpic.clear()
+            }
+        }
+
         if (!_.isNil(this.stepGrahpics)) {
             for (let stepGraphic of this.stepGraphics) {
                 stepGraphic.clear()
@@ -269,10 +278,13 @@ class HtmlUi extends Component {
         const layerDiameter = HTML_UI_Params.addNewLayerButtonDiameter + HTML_UI_Params.initialLayerPadding + ((HTML_UI_Params.stepDiameter + HTML_UI_Params.layerPadding + HTML_UI_Params.layerPadding + HTML_UI_Params.stepDiameter) * (layer.order + 1))
         const xOffset = (this.containerWidth / 2) - (layerDiameter / 2)
         const yOffset = (this.containerHeight / 2) - (layerDiameter / 2)
-        const layerGraphic = this.container.circle(layerDiameter, layerDiameter).attr({ fill: 'none' }).stroke({ color: this.userColors[layer.creator], width: '6px', opacity: 0 })
+        const layerGraphic = this.container.circle(layerDiameter, layerDiameter).attr({ fill: 'none' }).stroke({ color: this.userColors[layer.creator], width: HTML_UI_Params.layerStrokeMax + 'px', opacity: 0 })
         layerGraphic.x(xOffset)
         layerGraphic.y(yOffset)
-        layerGraphic.animate(animateTime).stroke({ opacity: 1 })
+        layerGraphic.id = layer.id
+        layerGraphic.animate(animateTime).stroke({ opacity: HTML_UI_Params.layerStrokeOpacity })
+        this.addLayerEventListeners(layerGraphic)
+        this.layerGraphics.push(layerGraphic)
 
         // draw steps
         const stepSize = (2 * Math.PI) / layer.steps.length;
@@ -283,7 +295,7 @@ class HtmlUi extends Component {
             const x = Math.round(layerDiameter / 2 + radius * Math.cos(angle) - HTML_UI_Params.stepDiameter / 2) + xOffset;
             const y = Math.round(layerDiameter / 2 + radius * Math.sin(angle) - HTML_UI_Params.stepDiameter / 2) + yOffset;
             const stepGraphic = this.container.circle(HTML_UI_Params.stepDiameter)
-            stepGraphic.stroke({ color: this.userColors[layer.creator], width: '6px', opacity: 0 })
+            stepGraphic.stroke({ color: this.userColors[layer.creator], width: HTML_UI_Params.stepStrokeWidth + 'px', opacity: 0 })
             stepGraphic.animate(animateTime).stroke({ opacity: 1 })
             stepGraphic.x(x)
             stepGraphic.y(y)
@@ -384,6 +396,18 @@ class HtmlUi extends Component {
                 this.activityIndicator.animate().fill({ opacity: 0 })
             })
         }
+    }
+
+    addLayerEventListeners (layerGraphic) {
+        const _this = this
+        layerGraphic.click(function () {
+            _this.onLayerClicked(layerGraphic.id)
+        })
+    }
+    onLayerClicked (layerId) {
+        this.props.dispatch({ type: SET_SELECTED_LAYER_ID, payload: { layerId } })
+        this.props.dispatch({ type: SET_IS_SHOWING_LAYER_SETTINGS, payload: { value: true } })
+
     }
 
     addStepEventListeners (stepGraphic) {
@@ -495,6 +519,12 @@ class HtmlUi extends Component {
                 stepGraphic.hammertime.off('panstart')
                 stepGraphic.hammertime.off('panend')
             }
+        }
+    }
+
+    removeAllLayerEventListeners () {
+        for (let layerGraphic of this.layerGraphics) {
+            layerGraphic.click(null)
         }
     }
 

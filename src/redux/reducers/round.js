@@ -19,6 +19,7 @@ import {
     RESET_ROUND_STORE
 } from "../actionTypes";
 import update from 'immutability-helper';
+import _ from 'lodash'
 
 const initialState = null;
 const updateStepProperty = (state, name, value, layerIndex, stepIndex, user) => {
@@ -158,7 +159,8 @@ export default function (state = initialState, action) {
             })
         }
         case SET_LAYER_NAME: {
-            const { layerIndex, name, user } = action.payload;
+            const { id, name, user } = action.payload;
+            const layerIndex = _.findIndex(state.layers, { id })
             return update(state, {
                 layers: {
                     [layerIndex]: {

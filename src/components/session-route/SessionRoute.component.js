@@ -16,6 +16,7 @@ import { FirebaseContext } from '../../firebase';
 
 import styles from './SessionRoute.styles.scss';
 import HtmlUi from '../html-ui/HtmlUi';
+import LayerSettings from '../layer-settings/LayerSettings'
 
 function usePrevious (value) {
   const ref = useRef();
@@ -50,6 +51,7 @@ const SessionRoute = ({
   const firebase = useContext(FirebaseContext);
   const prevRounds = usePrevious(rounds);
   const didMountRef = useRef(false);
+  const [isShowingLayerSettings, setIsShowingLayerSettings] = useState(true)
 
   useEffect(() => {
     console.log('initiate session route')
@@ -219,6 +221,9 @@ const SessionRoute = ({
           <Sidebar
             isOpen={sidebarOpened}
             toggleSidebar={toggleSidebar}
+          />
+          <LayerSettings
+            isOpen={isShowingLayerSettings}
           />
           <div className={styles.mainContainer}>
             <HtmlUi isOn={clockIsRunning} />

@@ -9,6 +9,7 @@ import rounds from './rounds';
 import user from './user';
 import collaboration from './collaboration';
 import positions from './positions';
+import display from './display';
 
 export default combineReducers({
     loader,
@@ -20,5 +21,6 @@ export default combineReducers({
     editAllLayers,
     user,
     collaboration,
-    positions
+    positions,
+    display
 });

@@ -19,7 +19,7 @@ export const getDefaultLayerData = (userId, instrument) => {
     return {
         "id": uuid(),
         "creator": userId || null,
-        "name": "",
+        "name": "Default layer name",
         "isActive": true,
         "instrument": {
             "noteLength": "64n",

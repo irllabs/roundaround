@@ -8,7 +8,10 @@ export const HTML_UI_Params = {
     avatarRoundPadding: 128,
     activityIndicatorDiameter: 48,
     activityAnimationTime: 700,
-    stepAnimationUpdateTime: 200
+    stepAnimationUpdateTime: 200,
+    stepStrokeWidth: 6,
+    layerStrokeMax: 48,
+    layerStrokeOpacity: 0.3
 }
 
 

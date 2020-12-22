@@ -57,7 +57,7 @@ const common = {
     ]
   },
   resolve: {
-    extensions: [ '.tsx', '.ts', '.js', '.png' ],
+    extensions: ['.tsx', '.ts', '.js', '.png'],
     alias: {
       styles: path.resolve(__dirname, 'src/styles/'),
     }
