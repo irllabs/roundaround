@@ -21,9 +21,11 @@ export const getDefaultLayerData = (userId, instrument) => {
         "creator": userId || null,
         "name": "Default layer name",
         "isActive": true,
+        "isMuted": false,
+        "isPreviewed": false,
         "instrument": {
             "noteLength": "64n",
-            "gain": 0.2,
+            "gain": 0,
             "instrument": "Sampler",
             "sampler": "BassDrum",
             "sample": "bdLong04",

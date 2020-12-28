@@ -1,4 +1,4 @@
-import React, { useRef, useState } from 'react'
+import React, { useRef, useState, Component } from 'react'
 import { connect, ReactReduxContext, Provider, useDispatch } from "react-redux";
 import styles from './LayerSettings.scss'
 import { Drawer } from '@material-ui/core';
@@ -13,72 +13,68 @@ import MailIcon from '@material-ui/icons/Mail';
 import TextField from '@material-ui/core/TextField';
 import Slider from '@material-ui/core/Slider';
 import _ from 'lodash'
-import { SET_LAYER_NAME } from '../../redux/actionTypes'
+import { SET_LAYER_NAME, SET_LAYER_MUTE, SET_LAYER_PREVIEW } from '../../redux/actionTypes'
 import Box from '@material-ui/core/Box';
 import { makeStyles } from '@material-ui/core/styles';
-const LayerSettings = ({ isOpen, selectedLayer, user }) => {
-    console.log('selectedLayer', selectedLayer);
-    const dispatch = useDispatch();
+import { convertPercentToDB, convertDBToPercent, numberRange } from '../../utils/index'
+import AudioEngine from '../../audio-engine/AudioEngine'
 
-    const onLayerNameChange = (e) => {
-        console.log('name changed', e.target.value);
-        dispatch({ type: SET_LAYER_NAME, payload: { id: selectedLayer.id, name: e.target.value, user: user.id } })
+import VolumeSlider from './VolumeSlider'
+import LayerName from './LayerName'
+import LayerInstrument from './LayerInstrument'
+
+
+class LayerSettings extends Component {
+    constructor (props) {
+        super(props)
     }
 
-    const makeVerticalSliderStyles = makeStyles({
-        root: {
-            height: 300
-        }
-    })
-    const verticalSliderStyles = makeVerticalSliderStyles();
-    const verticalSliderMarks = [
-        {
-            value: 100,
-            label: '6',
-        },
-        {
-            value: 80,
-            label: '0',
-        },
-        {
-            value: 60,
-            label: '-6',
-        },
-        {
-            value: 40,
-            label: '-12',
-        },
-    ];
+    onPreviewClick () {
+        // todo: only audible to this user (mute for all others)
+    }
 
-    let form = '';
-    if (!_.isNil(selectedLayer)) {
-        form = (
-            <Box display="flex" flexDirection="column">
-                <TextField id="standard-basic" value={selectedLayer.name} onChange={onLayerNameChange} />
-                <div className={verticalSliderStyles.root + ' mt-32'}>
-                    <Slider
-                        orientation="vertical"
-                        defaultValue={30}
-                        aria-labelledby="vertical-slider"
-                        marks={verticalSliderMarks}
-                    />
-                </div>
-            </Box>
+    onMuteClick () {
+        const isMuted = !this.props.selectedLayer.instrument.isMuted
+        AudioEngine.tracksById[this.props.selectedLayer.id].setMute(isMuted)
+        this.props.dispatch({ type: SET_LAYER_MUTE, payload: { id: this.props.selectedLayer.id, value: isMuted, user: this.props.user.id } })
+    }
+
+
+    render () {
+        //  console.log('Layer settings render()');
+        let layerVolumePercent = 80;
+        let form = '';
+        if (!_.isNil(this.props.selectedLayer)) {
+            layerVolumePercent = convertDBToPercent(this.props.selectedLayer.instrument.gain)
+            form = (
+                <Box display="flex" flexDirection="column" justifyContent="space-evenly" height="100%" alignItems="center">
+                    <LayerName selectedLayer={this.props.selectedLayer} user={this.props.user} />
+                    <LayerInstrument selectedLayer={this.props.selectedLayer} user={this.props.user} />
+                    <div className={`${styles.layerSettingsVolumeSlider}`}>
+                        <VolumeSlider selectedLayer={this.props.selectedLayer} user={this.props.user} />
+                    </div>
+                    <Box display="flex" justifyContent="space-evenly">
+                        <Button onClick={this.onPreviewClick.bind(this)} variant={this.props.selectedLayer.instrument.isPreviewed ? 'contained' : 'outlined'} disableElevation>Preview</Button>
+                        <Button onClick={this.onMuteClick.bind(this)} variant={this.props.selectedLayer.instrument.isMuted ? 'contained' : 'outlined'} disableElevation>Mute</Button>
+                    </Box>
+                </Box>
+            )
+        }
+        return (
+            <div>
+                <Drawer
+                    open={this.props.isOpen}
+                    variant={"persistent"}
+                >
+                    <div className={`${styles.layerSettingsContents}`}>
+                        {form}
+                    </div>
+                </Drawer>
+            </div>
         )
     }
-    return (
-        <div>
-            <Drawer
-                open={isOpen}
-                variant={"persistent"}
-            >
-                <div className={`${styles.layerSettingsContents}`}>
-                    {form}
-                </div>
-            </Drawer>
-        </div>
-    )
 }
+
 const mapStateToProps = state => {
     console.log('mapStateToProps', state);
     let selectedLayer = null;

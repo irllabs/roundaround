@@ -60,3 +60,29 @@ export const numberRange = (value, inMin, inMax, outMin, outMax) => {
 export const randomBool = (probability = 0.5) => {
     return Math.random() < probability
 }
+
+export const convertPercentToDB = (percent) => {
+    let dB;
+    if (percent > 60) {
+        dB = numberRange(percent, 60, 100, -6, 6)
+    } else {
+        dB = numberRange(percent, 0, 60, -48, -6)
+    }
+    if (dB <= -48) {
+        dB = -96
+    }
+    return dB;
+}
+
+export const convertDBToPercent = (dB) => {
+    if (dB < -48) {
+        dB = -48
+    }
+    let percent;
+    if (dB > -6) {
+        percent = numberRange(dB, -6, 6, 60, 100)
+    } else {
+        percent = numberRange(dB, -48, -6, 0, 60)
+    }
+    return percent;
+}

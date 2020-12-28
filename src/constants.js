@@ -29,8 +29,8 @@ export const Beat = {
 };
 
 export const Instrument = {
-    MinGain: 0,
-    MaxGain: 1
+    MinGain: -48,
+    MaxGain: 6
 }
 
 export const Limits = {

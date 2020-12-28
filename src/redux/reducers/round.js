@@ -7,6 +7,9 @@ import {
     ADD_LAYER_STEP,
     REMOVE_LAYER_STEP,
     SET_LAYER_NAME,
+    SET_LAYER_GAIN,
+    SET_LAYER_MUTE,
+    SET_LAYER_PREVIEW,
     UPDATE_LAYER_INSTRUMENT,
     ADD_ROUND_LAYER,
     ADD_ROUND_LAYERS,
@@ -161,6 +164,7 @@ export default function (state = initialState, action) {
         case SET_LAYER_NAME: {
             const { id, name, user } = action.payload;
             const layerIndex = _.findIndex(state.layers, { id })
+            //console.log('SET_LAYER_NAME', name);
             return update(state, {
                 layers: {
                     [layerIndex]: {
@@ -180,8 +184,85 @@ export default function (state = initialState, action) {
                 },
             })
         }
+        case SET_LAYER_GAIN: {
+            const { id, value, user } = action.payload;
+            const layerIndex = _.findIndex(state.layers, { id })
+            //console.log('SET_LAYER_GAIN', id, value);
+            return update(state, {
+                layers: {
+                    [layerIndex]: {
+                        instrument: {
+                            gain: {
+                                $set: value
+                            }
+                        }
+                    }
+                },
+                lastEditor: {
+                    $set: user
+                },
+                lastEdition: {
+                    $set: {
+                        unit: 'layerControls',
+                        layerIndex
+                    }
+                },
+            })
+        }
+        case SET_LAYER_PREVIEW: {
+            const { id, value, user } = action.payload;
+            const layerIndex = _.findIndex(state.layers, { id })
+            //console.log('SET_LAYER_GAIN', id, value);
+            return update(state, {
+                layers: {
+                    [layerIndex]: {
+                        instrument: {
+                            isPreviewed: {
+                                $set: value
+                            }
+                        }
+                    }
+                },
+                lastEditor: {
+                    $set: user
+                },
+                lastEdition: {
+                    $set: {
+                        unit: 'layerControls',
+                        layerIndex
+                    }
+                },
+            })
+        }
+        case SET_LAYER_MUTE: {
+            const { id, value, user } = action.payload;
+            const layerIndex = _.findIndex(state.layers, { id })
+            //console.log('SET_LAYER_GAIN', id, value);
+            return update(state, {
+                layers: {
+                    [layerIndex]: {
+                        instrument: {
+                            isMuted: {
+                                $set: value
+                            }
+                        }
+                    }
+                },
+                lastEditor: {
+                    $set: user
+                },
+                lastEdition: {
+                    $set: {
+                        unit: 'layerControls',
+                        layerIndex
+                    }
+                },
+            })
+        }
         case UPDATE_LAYER_INSTRUMENT: {
-            const { layerIndex, instrument, user } = action.payload;
+            console.log('updating instrument', action.payload);
+            const { id, instrument, user } = action.payload;
+            const layerIndex = _.findIndex(state.layers, { id })
             return update(state, {
                 layers: {
                     [layerIndex]: {

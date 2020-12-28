@@ -40,7 +40,7 @@ export default class Track {
     }
     buildAudioChain () {
         if (this.type === Track.TRACK_TYPE_MASTER) {
-            this.channel.toMaster()
+            this.channel.toDestination()
         } else {
             if (!_.isNil(this.instrument)) {
                 this.disconnectAudioChain()
@@ -67,7 +67,7 @@ export default class Track {
                             if (this.type !== Track.TRACK_TYPE_MASTER) {
                                 fx.fx.connect(AudioEngine.master.channel)
                             } else {
-                                fx.fx.toMaster()
+                                fx.fx.toDestination()
                             }
                         }
                     }
@@ -75,7 +75,7 @@ export default class Track {
                     if (this.type !== Track.TRACK_TYPE_MASTER) {
                         this.channel.connect(AudioEngine.master.channel)
                     } else {
-                        this.channel.toMaster()
+                        this.channel.toDestination()
                     }
                 }
             }
@@ -168,6 +168,12 @@ export default class Track {
         if (!_.isNil(this.instrument)) {
             this.instrument.setVolume(value)
         }
+    }
+    setSolo (value) {
+        this.channel.solo = value
+    }
+    setMute (value) {
+        this.channel.mute = value
     }
     async setMixerSettings (settings) {
         let _this = this

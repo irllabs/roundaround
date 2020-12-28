@@ -63,25 +63,23 @@ const Instruments = {
     getInstrumentOptions (channelName) {
         let options = [];
         for (let [key, instrument] of Object.entries(this.instrumentClasses)) {
-            if (_.includes(instrument.showIn, channelName)) {
-                options.push({
-                    label: instrument.label,
-                    name: instrument.name,
-                    articulations: instrument.articulations
-                });
-            }
+            options.push({
+                label: instrument.label,
+                name: instrument.name,
+                articulations: instrument.articulations
+            });
         }
         options = _.sortBy(options, "label");
         return options;
     },
     getInstrumentArticulationOptions (instrumentName) {
         let options = [];
-        for (let [value, label] of Object.entries(
+        for (let [name, value] of Object.entries(
             this.instrumentClasses[instrumentName].articulations
         )) {
             let option = {
-                value,
-                label
+                name,
+                value
             };
             options.push(option);
         }

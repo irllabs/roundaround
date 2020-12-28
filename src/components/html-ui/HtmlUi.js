@@ -59,7 +59,7 @@ class HtmlUi extends Component {
     }
 
     async componentDidUpdate () {
-        // console.log('componentDidUpdate()', this.round)
+        console.log('componentDidUpdate()', this.round)
 
         // Calculate what's changed so we only redraw if necessary
         let redraw = false

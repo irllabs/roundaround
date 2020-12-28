@@ -23,6 +23,7 @@ import {
     ADD_LAYER_STEP,
     REMOVE_LAYER_STEP,
     SET_LAYER_NAME,
+    SET_LAYER_GAIN,
     UPDATE_LAYER_INSTRUMENT,
     ADD_ROUND_LAYER,
     ADD_ROUND_LAYERS,
@@ -167,6 +168,10 @@ export const setLayerSteps = (layerIndex, steps, user) => ({
 export const setLayerName = (layerIndex, name, user) => ({
     type: SET_LAYER_NAME,
     payload: { layerIndex, name, user }
+})
+export const setLayerGain = (id, value, user) => ({
+    type: SET_LAYER_GAIN,
+    payload: { id, value, user }
 })
 
 export const updateLayerInstrument = (layerIndex, instrument, user) => ({

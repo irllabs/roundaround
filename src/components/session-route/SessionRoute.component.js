@@ -236,9 +236,7 @@ const SessionRoute = ({
               toggleSettings={toggleSettings}
               toggleSidebar={toggleSidebar}
             />
-            <SettingsPane
-              isActive={settingsOpened}
-            />
+
           </div>
           <LinkGenerator
             sharing={sharingLink}

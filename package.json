@@ -36,6 +36,7 @@
     "@svgdotjs/svg.js": "^3.0.16",
     "@svgdotjs/svg.panzoom.js": "^2.1.1",
     "@tonaljs/tonal": "^4.6.0",
+    "autoprefixer": "^10.1.0",
     "classnames": "^2.2.6",
     "deep-object-diff": "^1.1.0",
     "firebase": "^7.15.5",
@@ -44,6 +45,7 @@
     "immutability-helper": "^3.1.1",
     "irlui": "git+https://git@batchku@dev.azure.com/batchku/irlui/_git/irlui",
     "lodash": "^4.17.19",
+    "postcss": "^8.2.1",
     "react": "^16.13.1",
     "react-color": "^2.18.1",
     "react-dom": "^16.13.1",
@@ -52,6 +54,7 @@
     "react-router-dom": "^5.2.0",
     "recompose": "^0.30.0",
     "redux": "^4.0.5",
+    "tailwindcss": "^2.0.2",
     "tone": "^14.7.12",
     "webpack-merge": "^5.0.9"
   },
