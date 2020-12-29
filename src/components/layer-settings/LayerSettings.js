@@ -13,7 +13,7 @@ import MailIcon from '@material-ui/icons/Mail';
 import TextField from '@material-ui/core/TextField';
 import Slider from '@material-ui/core/Slider';
 import _ from 'lodash'
-import { SET_LAYER_NAME, SET_LAYER_MUTE, SET_LAYER_PREVIEW } from '../../redux/actionTypes'
+import { SET_LAYER_NAME, SET_LAYER_MUTE, SET_LAYER_PREVIEW, REMOVE_ROUND_LAYER, SET_IS_SHOWING_LAYER_SETTINGS } from '../../redux/actionTypes'
 import Box from '@material-ui/core/Box';
 import { makeStyles } from '@material-ui/core/styles';
 import { convertPercentToDB, convertDBToPercent, numberRange } from '../../utils/index'
@@ -29,6 +29,10 @@ class LayerSettings extends Component {
         super(props)
     }
 
+    onCloseClick () {
+        this.props.dispatch({ type: SET_IS_SHOWING_LAYER_SETTINGS, payload: { value: false } })
+    }
+
     onPreviewClick () {
         // todo: only audible to this user (mute for all others)
     }
@@ -37,6 +41,11 @@ class LayerSettings extends Component {
         const isMuted = !this.props.selectedLayer.instrument.isMuted
         AudioEngine.tracksById[this.props.selectedLayer.id].setMute(isMuted)
         this.props.dispatch({ type: SET_LAYER_MUTE, payload: { id: this.props.selectedLayer.id, value: isMuted, user: this.props.user.id } })
+    }
+
+    onDeleteLayerClick () {
+        this.props.dispatch({ type: REMOVE_ROUND_LAYER, payload: { id: this.props.selectedLayer.id, user: this.props.user.id } })
+        this.onCloseClick()
     }
 
 
@@ -57,6 +66,7 @@ class LayerSettings extends Component {
                         <Button onClick={this.onPreviewClick.bind(this)} variant={this.props.selectedLayer.instrument.isPreviewed ? 'contained' : 'outlined'} disableElevation>Preview</Button>
                         <Button onClick={this.onMuteClick.bind(this)} variant={this.props.selectedLayer.instrument.isMuted ? 'contained' : 'outlined'} disableElevation>Mute</Button>
                     </Box>
+                    <Button onClick={this.onDeleteLayerClick.bind(this)} variant="outlined" disableElevation>Delete layer</Button>
                 </Box>
             )
         }
@@ -67,6 +77,7 @@ class LayerSettings extends Component {
                     variant={"persistent"}
                 >
                     <div className={`${styles.layerSettingsContents}`}>
+                        <Button onClick={this.onCloseClick.bind(this)} className={`${styles.layerSettingsCloseButton}`}>X</Button>
                         {form}
                     </div>
                 </Drawer>

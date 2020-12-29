@@ -300,7 +300,8 @@ export default function (state = initialState, action) {
             })
         }
         case REMOVE_ROUND_LAYER: {
-            const { layerIndex, user } = action.payload;
+            const { id, user } = action.payload;
+            const layerIndex = _.findIndex(state.layers, { id })
             return update(state, {
                 layers: {
                     $splice: [[layerIndex, 1]]
