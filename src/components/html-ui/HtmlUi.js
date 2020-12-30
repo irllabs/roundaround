@@ -61,7 +61,7 @@ class HtmlUi extends Component {
     }
 
     async componentDidUpdate () {
-        console.log('componentDidUpdate()', this.props.round)
+        //console.log('componentDidUpdate()', this.props.round)
 
         // Calculate what's changed so we only redraw if necessary
         let redraw = false
@@ -649,7 +649,7 @@ class HtmlUi extends Component {
          })*/
         const element = document.getElementById('round')
         element.addEventListener('click', () => {
-            console.log('click outside');
+            //console.log('click outside');
             _this.unhighlightAllLayers()
             this.props.dispatch({ type: SET_IS_SHOWING_LAYER_SETTINGS, payload: { value: false } })
         })
