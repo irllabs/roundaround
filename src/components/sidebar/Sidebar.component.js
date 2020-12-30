@@ -3,7 +3,7 @@ import { connect } from "react-redux";
 import { setRoundData, updateRound, addRound, removeRound } from "../../redux/actions";
 import { getDefaultRoundData } from '../../utils/dummyData';
 import { FirebaseContext } from '../../firebase';
-import Button from '@material-ui/core/Button';
+
 import _ from 'lodash'
 
 const classNames = require('classnames');
@@ -46,26 +46,7 @@ const Sidebar = ({
     addRound(getDefaultRoundData(firebase.currentUser.uid));
   }
 
-  const onFullscreenClick = () => {
-    var element = document.documentElement;
-    if (_.isNil(document.fullscreenElement)) {
-      if (element.requestFullscreen) {
-        element.requestFullscreen();
-      } else if (element.webkitRequestFullscreen) { /* Safari */
-        element.webkitRequestFullscreen();
-      } else if (element.msRequestFullscreen) { /* IE11 */
-        element.msRequestFullscreen();
-      }
-    } else {
-      if (document.exitFullscreen) {
-        document.exitFullscreen();
-      } else if (document.webkitExitFullscreen) { /* Safari */
-        document.webkitExitFullscreen();
-      } else if (document.msExitFullscreen) { /* IE11 */
-        document.msExitFullscreen();
-      }
-    }
-  }
+
 
   useEffect(() => {
     // update user with last visited round
@@ -108,7 +89,7 @@ const Sidebar = ({
           )
         })
       }
-      <Button onClick={onFullscreenClick} variant="outlined">Fullscreen</Button>
+
       <Footer
         addRound={onAddRound}
       />

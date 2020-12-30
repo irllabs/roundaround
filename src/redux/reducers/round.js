@@ -99,7 +99,8 @@ export default function (state = initialState, action) {
             })
         }
         case SET_LAYER_STEPS: {
-            const { layerIndex, steps, user } = action.payload;
+            const { id, steps, user } = action.payload;
+            const layerIndex = _.findIndex(state.layers, { id })
             return update(state, {
                 layers: {
                     [layerIndex]: {
@@ -191,11 +192,11 @@ export default function (state = initialState, action) {
             return update(state, {
                 layers: {
                     [layerIndex]: {
-                        instrument: {
-                            gain: {
-                                $set: value
-                            }
+
+                        gain: {
+                            $set: value
                         }
+
                     }
                 },
                 lastEditor: {

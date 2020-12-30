@@ -17,7 +17,7 @@ import { diff } from 'deep-object-diff';
 var _ = require('lodash/core');
 import { ThrottleDelay } from '../../../constants';
 import ControlsBar from '../../controls-bar/ControlsBar.component';
-import SettingsPane from '../../settings-pane/SettingsPane.component';
+
 import Profile from '../../profile/Profile.component';
 import Modal from '../../modal/Modal.component';
 import BringRoundsDialog from '../bring-rounds-dialog/BringRoundsDialog.component';
@@ -322,9 +322,7 @@ class CollaborationRoute extends React.Component {
                             toggleSettings={this.toggleSettings}
                             toggleSidebar={this.toggleSidebar}
                         />
-                        <SettingsPane
-                            isActive={this.state.settingsAreOpen}
-                        />
+
                     </div>
                 }
             </>

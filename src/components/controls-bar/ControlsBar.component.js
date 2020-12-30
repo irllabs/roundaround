@@ -1,6 +1,7 @@
 import React, { useRef } from 'react';
 const classNames = require('classnames');
 import styles from './ControlsBar.styles.scss';
+import _ from 'lodash'
 
 
 const ControlsBar = ({
@@ -16,6 +17,27 @@ const ControlsBar = ({
     const playButton = useRef();
     const onClickPlay = () => {
         togglePlay();
+    }
+
+    const onFullscreenClick = () => {
+        var element = document.documentElement;
+        if (_.isNil(document.fullscreenElement)) {
+            if (element.requestFullscreen) {
+                element.requestFullscreen();
+            } else if (element.webkitRequestFullscreen) { /* Safari */
+                element.webkitRequestFullscreen();
+            } else if (element.msRequestFullscreen) { /* IE11 */
+                element.msRequestFullscreen();
+            }
+        } else {
+            if (document.exitFullscreen) {
+                document.exitFullscreen();
+            } else if (document.webkitExitFullscreen) { /* Safari */
+                document.webkitExitFullscreen();
+            } else if (document.msExitFullscreen) { /* IE11 */
+                document.msExitFullscreen();
+            }
+        }
     }
 
     return (
@@ -40,12 +62,7 @@ const ControlsBar = ({
                         </button>
                     }
                 </div>
-                <button
-                    type="button"
-                    onClick={toggleSettings}
-                >
-                    Settings
-                </button>
+
             </div>
             <div className={classNames(styles.controlsBar, styles.bottom)}>
                 {
@@ -58,6 +75,16 @@ const ControlsBar = ({
                     </button>
                 }
                 {
+                    user &&
+                    <button
+                        type="button"
+                        onClick={onFullscreenClick}
+                    >
+                        Fullscreen
+                    </button>
+                }
+
+                {
                     mode !== 'collaboration' &&
                     <button
                         type="button"
@@ -65,6 +92,7 @@ const ControlsBar = ({
                     >
                         Project
                     </button>
+
                 }
             </div>
         </>

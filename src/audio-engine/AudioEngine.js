@@ -21,6 +21,11 @@ const AudioEngine = {
             await track.load(layer)
         }
     },
+    play () {
+        Tone.Transport.start("+0.1");
+        Tone.Transport.loop = true
+        Tone.Transport.loopEnd = '1:0:0'
+    },
     // assumes tracks haven't changed, just the steps
     recalculateParts (round, layerId = null) {
         for (let layer of round.layers) {

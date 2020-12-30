@@ -1,4 +1,5 @@
 const path = require('path');
+const CopyPlugin = require('copy-webpack-plugin');
 
 const common = {
   context: path.resolve(__dirname, 'src'),
@@ -61,7 +62,14 @@ const common = {
     alias: {
       styles: path.resolve(__dirname, 'src/styles/'),
     }
-  }
+  },
+  plugins: [
+    new CopyPlugin({
+      patterns: [
+        { from: 'samples', to: 'dist' }
+      ]
+    }),
+  ]
 };
 
 module.exports = common;

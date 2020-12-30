@@ -12,7 +12,7 @@ import {
 import { getDefaultLayerData } from '../../utils/dummyData';
 import { Limits } from '../../constants';
 import { changeLayerLength } from '../../utils';
-import LayerControls from './LayerControls.component';
+//import LayerControls from './LayerControls.component';
 import _ from 'lodash'
 
 import styles from './SettingsPane.styles.scss';
@@ -79,12 +79,7 @@ const SettingsPane = ({
                                 className={styles.layerRow}
                             >
                                 <div className={styles.layerElementSuperLong}>
-                                    <LayerControls
-                                        layer={layer}
-                                        editable={true}
-                                        layerIndex={i}
-                                        settingsPane={true}
-                                    />
+
                                 </div>
                                 <span>Steps:</span>
                                 <input

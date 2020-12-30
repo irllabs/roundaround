@@ -23,9 +23,9 @@ export const getDefaultLayerData = (userId, instrument) => {
         "isActive": true,
         "isMuted": false,
         "isPreviewed": false,
+        "gain": 0,
         "instrument": {
             "noteLength": "64n",
-            "gain": 0,
             "instrument": "Sampler",
             "sampler": "BassDrum",
             "sample": "bdLong04",

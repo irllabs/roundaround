@@ -31,7 +31,7 @@ class HtmlUi extends Component {
         AudioEngine.init()
         Instruments.init()
         AudioEngine.load(this.props.round)
-        //window.addEventListener('resize', this.onWindowResizeThrottled)
+        window.addEventListener('resize', this.onWindowResizeThrottled)
     }
 
     createRound () {
@@ -55,8 +55,6 @@ class HtmlUi extends Component {
             }
         })
         this.container.viewbox(0, 0, this.containerWidth, this.containerHeight)
-
-
         this.draw()
     }
 
@@ -98,12 +96,17 @@ class HtmlUi extends Component {
 
         if (!this.isOn && this.props.isOn && !_.isNil(this.positionLine)) {
             //console.log('playing timeline');
-            this.positionLine.timeline().play()
-            this.isOn = true
+            // adding 500ms delay to compensate for starting audio with delay to reduce audio glitches. Todo: sync this better with the transport
+            _.delay(() => {
+                this.positionLine.timeline().play()
+                this.isOn = true
+            }, 500)
         } else if (this.isOn && !this.props.isOn && !_.isNil(this.positionLine)) {
             //console.log('pausing timeline');
-            this.positionLine.timeline().stop()
-            this.isOn = false
+            _.delay(() => {
+                this.positionLine.timeline().stop()
+                this.isOn = false
+            }, 500)
         }
 
         if (this.round.layers.length < this.props.round.layers.length) {
@@ -149,6 +152,7 @@ class HtmlUi extends Component {
                 if (newLayer.steps.length !== layer.steps.length) {
                     // number of steps has changed
                     redraw = true
+                    AudioEngine.recalculateParts(this.props.round)
                 }
             }
         }
@@ -276,6 +280,7 @@ class HtmlUi extends Component {
     }
 
     addLayer (layer, shouldAnimate = true) {
+        console.log('addLayer', layer);
         let animateTime = shouldAnimate ? 600 : 0
 
         const layerDiameter = HTML_UI_Params.addNewLayerButtonDiameter + HTML_UI_Params.initialLayerPadding + ((HTML_UI_Params.stepDiameter + HTML_UI_Params.layerPadding + HTML_UI_Params.layerPadding + HTML_UI_Params.stepDiameter) * (layer.order + 1))
@@ -564,7 +569,16 @@ class HtmlUi extends Component {
     onAddLayerClick () {
         const newLayer = getDefaultLayerData(this.props.user.id);
         this.props.dispatch({ type: ADD_ROUND_LAYER, payload: { layer: newLayer, user: this.props.user.id } })
-
+        /* const newLayer = _.cloneDeep(this.props.round.layers[this.props.round.layers.length - 1])
+         newLayer.id = Math.round(Math.random() * 99999)
+         newLayer.order++;
+         for (const step of newLayer.steps) {
+             step.id = Math.round(Math.random() * 99999)
+             this.stepLayerDictionary[step.id] = newLayer
+         }
+         this.addLayer(newLayer, false)
+         AudioEngine.createTrack(newLayer)*/
+        // this.draw()
     }
 
     addEventListeners () {

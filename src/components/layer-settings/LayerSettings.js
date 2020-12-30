@@ -22,6 +22,7 @@ import AudioEngine from '../../audio-engine/AudioEngine'
 import VolumeSlider from './VolumeSlider'
 import LayerName from './LayerName'
 import LayerInstrument from './LayerInstrument'
+import LayerNumberOfSteps from './LayerNumberOfSteps'
 
 
 class LayerSettings extends Component {
@@ -59,6 +60,7 @@ class LayerSettings extends Component {
                 <Box display="flex" flexDirection="column" justifyContent="space-evenly" height="100%" alignItems="center">
                     <LayerName selectedLayer={this.props.selectedLayer} user={this.props.user} />
                     <LayerInstrument selectedLayer={this.props.selectedLayer} user={this.props.user} />
+                    <LayerNumberOfSteps selectedLayer={this.props.selectedLayer} user={this.props.user} />
                     <div className={`${styles.layerSettingsVolumeSlider}`}>
                         <VolumeSlider selectedLayer={this.props.selectedLayer} user={this.props.user} />
                     </div>

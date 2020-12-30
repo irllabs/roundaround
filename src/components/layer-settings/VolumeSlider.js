@@ -26,7 +26,7 @@ export default function VolumeSlider ({ selectedLayer, user }) {
 
     useEffect(() => {
         //console.log('selectedLayer.id changed', selectedLayer.id, selectedLayer.instrument.gain);
-        setSliderValue(convertDBToPercent(selectedLayer.instrument.gain))
+        setSliderValue(convertDBToPercent(selectedLayer.gain))
     }, [selectedLayer.id])
 
     const verticalSliderMarks = [

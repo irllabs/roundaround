@@ -4,13 +4,15 @@ import { numberRange } from '../../utils';
 const Note = require('@tonaljs/note')
 import _ from 'lodash'
 import { randomBool } from '../../utils/index'
+//import sample from '../samples/sample.wav'
 
 export default class InstrumentBaseClass {
-    constructor (name, articulations) {
+    constructor (name, articulations, folder) {
         this.id = Math.floor(Math.random() * 999999)
         this.parameters = {}
         this.name = name
         this.articulations = articulations
+        this.folder = folder
         this.instrument = null
         this.volume = 1
     }
@@ -123,8 +125,9 @@ export default class InstrumentBaseClass {
         this.instrument.releaseAll()
     }
     getSampleMap () {
+        console.log('getSampleMap', this.name, this.folder, this.articulations, this.parameters.articulation);
         let map = {
-            'C4': '/' + this.articulations[this.parameters.articulation]
+            'C4': '/samples/' + this.folder + '/' + this.articulations[this.parameters.articulation]
         }
         return map
     }

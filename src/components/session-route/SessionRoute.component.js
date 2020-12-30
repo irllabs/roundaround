@@ -6,14 +6,12 @@ import { setRoundData, setRounds, toggleLoader, resetRoundsStore, resetRaycaster
 import { ThrottleDelay } from '../../constants';
 import { getDefaultRoundData } from '../../utils/dummyData';
 import ControlsBar from '../controls-bar/ControlsBar.component';
-import SettingsPane from '../settings-pane/SettingsPane.component';
 import LinkGenerator from '../collaboration/link-generator/LinkGenerator.component';
 import Sidebar from '../sidebar/Sidebar.component';
 import Modal from '../modal/Modal.component';
 import Profile from '../profile/Profile.component';
 import clock from '../../models/Clock';
 import { FirebaseContext } from '../../firebase';
-
 import styles from './SessionRoute.styles.scss';
 import HtmlUi from '../html-ui/HtmlUi';
 import LayerSettings from '../layer-settings/LayerSettings'
@@ -236,7 +234,6 @@ const SessionRoute = ({
               toggleSettings={toggleSettings}
               toggleSidebar={toggleSidebar}
             />
-
           </div>
           <LinkGenerator
             sharing={sharingLink}
@@ -247,6 +244,40 @@ const SessionRoute = ({
       }
     </>
   )
+  /*return (
+    <>
+
+      {
+        round &&
+        <>
+
+          <div className={styles.mainContainer}>
+            <HtmlUi isOn={clockIsRunning} />
+
+          </div>
+
+        </>
+      }
+    </>
+  )*/
+  /*return (
+    <>
+
+      {
+        round &&
+        <>
+          <LayerSettings
+            isOpen={isShowingLayerSettings}
+          />
+          <div className={styles.mainContainer}>
+            <HtmlUi isOn={clockIsRunning} />
+
+          </div>
+
+        </>
+      }
+    </>
+  )*/
 }
 
 const mapStateToProps = state => {
