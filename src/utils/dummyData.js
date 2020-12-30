@@ -19,7 +19,7 @@ export const getDefaultLayerData = (userId, instrument) => {
     return {
         "id": uuid(),
         "creator": userId || null,
-        "name": "Default layer name",
+        "name": "",
         "isActive": true,
         "isMuted": false,
         "isPreviewed": false,
@@ -32,11 +32,12 @@ export const getDefaultLayerData = (userId, instrument) => {
             ...instrument
         },
         "steps": Array(Layer.DefaultStepsAmount).fill(null).map(() => { return getDefaultStepData() }),
+        "createdAt": Date.now()
     }
 };
 
 export const getDefaultRoundData = (userId) => {
-    return {
+    const round = {
         "user": userId || null,
         "id": uuid(),
         "bpm": 120,
@@ -59,4 +60,10 @@ export const getDefaultRoundData = (userId) => {
             }),
         ]
     }
+    // increase each layer createdAt time by 1 ms so they're not equal
+    let i = 0
+    round.layers.map((layer) => {
+        layer.createdAt += i++
+    })
+    return round
 }

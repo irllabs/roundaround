@@ -65,7 +65,7 @@ class LayerSettings extends Component {
                         <VolumeSlider selectedLayer={this.props.selectedLayer} user={this.props.user} />
                     </div>
                     <Box display="flex" justifyContent="space-evenly">
-                        <Button onClick={this.onPreviewClick.bind(this)} variant={this.props.selectedLayer.instrument.isPreviewed ? 'contained' : 'outlined'} disableElevation>Preview</Button>
+
                         <Button onClick={this.onMuteClick.bind(this)} variant={this.props.selectedLayer.instrument.isMuted ? 'contained' : 'outlined'} disableElevation>Mute</Button>
                     </Box>
                     <Button onClick={this.onDeleteLayerClick.bind(this)} variant="outlined" disableElevation>Delete layer</Button>
@@ -79,7 +79,7 @@ class LayerSettings extends Component {
                     variant={"persistent"}
                 >
                     <div className={`${styles.layerSettingsContents}`}>
-                        <Button onClick={this.onCloseClick.bind(this)} className={`${styles.layerSettingsCloseButton}`}>X</Button>
+
                         {form}
                     </div>
                 </Drawer>
@@ -89,7 +89,7 @@ class LayerSettings extends Component {
 }
 
 const mapStateToProps = state => {
-    console.log('mapStateToProps', state);
+    //  console.log('mapStateToProps', state);
     let selectedLayer = null;
     if (!_.isNil(state.display.selectedLayerId)) {
         selectedLayer = _.find(state.round.layers, { id: state.display.selectedLayerId })

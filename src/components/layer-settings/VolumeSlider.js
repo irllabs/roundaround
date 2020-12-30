@@ -16,7 +16,7 @@ export default function VolumeSlider ({ selectedLayer, user }) {
     }
     const updateVolumeStateThrottled = useCallback(_.throttle(function (dB, selectedLayerId) {
         updateVolumeState(dB, selectedLayerId)
-    }, 1000), []);
+    }, 2000), []);
     const onSliderChange = (e, percent) => {
         setSliderValue(percent)
         const dB = convertPercentToDB(percent)
@@ -42,19 +42,12 @@ export default function VolumeSlider ({ selectedLayer, user }) {
             value: 60,
             label: '-6',
         },
-        {
-            value: 51,
-            label: '-12',
-        },
 
         {
             value: 34,
             label: '-24',
         },
-        {
-            value: 17,
-            label: '-36',
-        },
+
         {
             value: 0,
             label: '-48',

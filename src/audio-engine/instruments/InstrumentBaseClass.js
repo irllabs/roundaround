@@ -125,7 +125,7 @@ export default class InstrumentBaseClass {
         this.instrument.releaseAll()
     }
     getSampleMap () {
-        console.log('getSampleMap', this.name, this.folder, this.articulations, this.parameters.articulation);
+        // console.log('getSampleMap', this.name, this.folder, this.articulations, this.parameters.articulation);
         let map = {
             'C4': '/samples/' + this.folder + '/' + this.articulations[this.parameters.articulation]
         }

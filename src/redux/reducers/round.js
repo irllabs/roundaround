@@ -25,7 +25,11 @@ import update from 'immutability-helper';
 import _ from 'lodash'
 
 const initialState = null;
-const updateStepProperty = (state, name, value, layerIndex, stepIndex, user) => {
+const updateStepProperty = (state, name, value, layerId, stepId, user) => {
+    const layerIndex = _.findIndex(state.layers, { id: layerId })
+    const layer = _.find(state.layers, { id: layerId })
+    const stepIndex = _.findIndex(layer.steps, { id: stepId })
+
     return update(state, {
         layers: {
             [layerIndex]: {
@@ -41,8 +45,8 @@ const updateStepProperty = (state, name, value, layerIndex, stepIndex, user) => 
         lastEdition: {
             $set: {
                 unit: 'step',
-                layerIndex,
-                stepIndex
+                layerId,
+                stepId
             }
         },
         lastEditor: {
@@ -62,23 +66,24 @@ export default function (state = initialState, action) {
             return data;
         }
         case TOGGLE_STEP: {
-            const { layerIndex, stepIndex, isOn, user } = action.payload;
-            return updateStepProperty(state, 'isOn', isOn, layerIndex, stepIndex, user);
+            const { layerId, stepId, isOn, user } = action.payload;
+            return updateStepProperty(state, 'isOn', isOn, layerId, stepId, user);
         }
         case SET_STEP_VELOCITY: {
-            const { layerIndex, stepIndex, velocity, user } = action.payload;
-            return updateStepProperty(state, 'velocity', velocity, layerIndex, stepIndex, user);
+            const { layerId, stepId, velocity, user } = action.payload;
+            return updateStepProperty(state, 'velocity', velocity, layerId, stepId, user);
         }
         case SET_STEP_PROBABILITY: {
-            const { layerIndex, stepIndex, probability, user } = action.payload;
-            return updateStepProperty(state, 'probability', probability, layerIndex, stepIndex, user);
+            const { layerId, stepId, probability, user } = action.payload;
+            return updateStepProperty(state, 'probability', probability, layerId, stepId, user);
         }
         case SET_STEP_NOTE: {
-            const { layerIndex, stepIndex, note, user } = action.payload;
-            return updateStepProperty(state, 'note', note, layerIndex, stepIndex, user);
+            const { layerId, stepId, note, user } = action.payload;
+            return updateStepProperty(state, 'note', note, layerId, stepId, user);
         }
         case TOGGLE_LAYER: {
-            const { isActive, layerIndex, user } = action.payload;
+            const { isActive, id, user } = action.payload;
+            const layerIndex = _.findIndex(state.layers, { id })
             return update(state, {
                 layers: {
                     [layerIndex]: {
@@ -120,52 +125,9 @@ export default function (state = initialState, action) {
                 },
             })
         }
-        case ADD_LAYER_STEP: {
-            const { layerIndex, step, user } = action.payload;
-            return update(state, {
-                layers: {
-                    [layerIndex]: {
-                        steps: {
-                            $push: [step]
-                        }
-                    }
-                },
-                lastEditor: {
-                    $set: user
-                },
-                lastEdition: {
-                    $set: {
-                        unit: 'layer',
-                        layerIndex
-                    }
-                },
-            })
-        }
-        case REMOVE_LAYER_STEP: {
-            const { layerIndex, stepIndex, user } = action.payload;
-            return update(state, {
-                layers: {
-                    [layerIndex]: {
-                        steps: {
-                            $splice: [[stepIndex, 1]]
-                        }
-                    }
-                },
-                lastEditor: {
-                    $set: user
-                },
-                lastEdition: {
-                    $set: {
-                        unit: 'layer',
-                        layerIndex
-                    }
-                },
-            })
-        }
         case SET_LAYER_NAME: {
             const { id, name, user } = action.payload;
             const layerIndex = _.findIndex(state.layers, { id })
-            //console.log('SET_LAYER_NAME', name);
             return update(state, {
                 layers: {
                     [layerIndex]: {
@@ -188,15 +150,12 @@ export default function (state = initialState, action) {
         case SET_LAYER_GAIN: {
             const { id, value, user } = action.payload;
             const layerIndex = _.findIndex(state.layers, { id })
-            //console.log('SET_LAYER_GAIN', id, value);
             return update(state, {
                 layers: {
                     [layerIndex]: {
-
                         gain: {
                             $set: value
                         }
-
                     }
                 },
                 lastEditor: {
@@ -213,7 +172,6 @@ export default function (state = initialState, action) {
         case SET_LAYER_PREVIEW: {
             const { id, value, user } = action.payload;
             const layerIndex = _.findIndex(state.layers, { id })
-            //console.log('SET_LAYER_GAIN', id, value);
             return update(state, {
                 layers: {
                     [layerIndex]: {
@@ -238,7 +196,6 @@ export default function (state = initialState, action) {
         case SET_LAYER_MUTE: {
             const { id, value, user } = action.payload;
             const layerIndex = _.findIndex(state.layers, { id })
-            //console.log('SET_LAYER_GAIN', id, value);
             return update(state, {
                 layers: {
                     [layerIndex]: {
@@ -261,7 +218,6 @@ export default function (state = initialState, action) {
             })
         }
         case UPDATE_LAYER_INSTRUMENT: {
-            console.log('updating instrument', action.payload);
             const { id, instrument, user } = action.payload;
             const layerIndex = _.findIndex(state.layers, { id })
             return update(state, {

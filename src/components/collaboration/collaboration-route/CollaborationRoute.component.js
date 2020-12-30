@@ -29,6 +29,7 @@ import { FirebaseContext } from '../../../firebase';
 
 import styles from './CollaborationRoute.styles.scss';
 import HtmlUi from '../../html-ui/HtmlUi';
+import LayerSettings from '../../layer-settings/LayerSettings'
 
 class CollaborationRoute extends React.Component {
     static contextType = FirebaseContext;
@@ -306,24 +307,30 @@ class CollaborationRoute extends React.Component {
                         toggleLoader={this.props.toggleLoader}
                     />
                 </Modal>
+
                 {
                     this.props.round && this.state.toneActivated &&
-                    <div
-                        className={styles.mainContainer}
-                    >
-                        <HtmlUi isOn={this.state.isOn} />
-                        <ControlsBar
-                            user={this.firebase ? this.firebase.currentUser : {}}
-                            mode="collaboration"
-                            isOn={this.state.isOn}
-                            shareRound={this.shareRound}
-                            toggleProfile={this.toggleProfile}
-                            togglePlay={this.togglePlay}
-                            toggleSettings={this.toggleSettings}
-                            toggleSidebar={this.toggleSidebar}
-                        />
+                    <>
+                        <LayerSettings
 
-                    </div>
+                        />
+                        <div
+                            className={styles.mainContainer}
+                        >
+                            <HtmlUi isOn={this.state.isOn} />
+                            <ControlsBar
+                                user={this.firebase ? this.firebase.currentUser : {}}
+                                mode="collaboration"
+                                isOn={this.state.isOn}
+                                shareRound={this.shareRound}
+                                toggleProfile={this.toggleProfile}
+                                togglePlay={this.togglePlay}
+                                toggleSettings={this.toggleSettings}
+                                toggleSidebar={this.toggleSidebar}
+                            />
+
+                        </div>
+                    </>
                 }
             </>
         )

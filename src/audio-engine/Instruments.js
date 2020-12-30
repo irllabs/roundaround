@@ -36,8 +36,6 @@ const Instruments = {
         }
     },
     create (instrumentName, articulation) {
-        console.log('instrumentName', instrumentName);
-        //instrumentName = 'BassDrum'
         if (!_.isNil(instrumentName)) {
             let _this = this;
             return new Promise(async function (resolve, reject) {
