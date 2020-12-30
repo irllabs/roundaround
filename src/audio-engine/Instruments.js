@@ -4,14 +4,14 @@ import BassDrum from './instruments/BassDrum'
 import HiHatClosed from './instruments/HiHatClosed'
 import HitHatOpen from './instruments/HitHatOpen'
 import SnareDrum from './instruments/SnareDrum'
-/*import Clap from './instruments/Clap'
+import Clap from './instruments/Clap'
 import Claves from './instruments/Claves'
 import Congas from './instruments/Congas'
 import Cowbell from './instruments/Cowbell'
 import Cymbal from './instruments/Cymbal'
 import Maracas from './instruments/Maracas'
 import Rimshot from './instruments/Rimshot'
-import TomToms from './instruments/TomToms'*/
+import TomToms from './instruments/TomToms'
 
 const Instruments = {
     instrumentClasses: {},
@@ -22,14 +22,14 @@ const Instruments = {
             HiHatClosed,
             SnareDrum,
             HitHatOpen,
-            /*Clap,
+            Clap,
             Claves,
             Congas,
             Cowbell,
             Cymbal,
             Maracas,
             Rimshot,
-            TomToms*/
+            TomToms
         ];
         for (let instrumentClass of classes) {
             this.instrumentClasses[instrumentClass.name] = instrumentClass;
