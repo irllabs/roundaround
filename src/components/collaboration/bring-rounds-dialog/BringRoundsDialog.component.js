@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { contributorsColors } from './colors';
 const classNames = require('classnames');
 import styles from './BringRoundsDialog.styles.scss';
+import { removeOldRounds } from '../../../utils/index'
 
 const BringRoundsDialogComponent = ({ onFinishDialog, updateBringRoundConfig, firebase, toggleLoader }) => {
     const [stage, setStage] = useState(0);
@@ -11,7 +12,7 @@ const BringRoundsDialogComponent = ({ onFinishDialog, updateBringRoundConfig, fi
 
     const finishDialog = () => {
         onFinishDialog();
-        
+
         // clean up
         setStage(0);
         setRounds([]);
@@ -21,7 +22,7 @@ const BringRoundsDialogComponent = ({ onFinishDialog, updateBringRoundConfig, fi
         setStage(stage + 1);
     }
 
-    
+
     const loadUserRounds = () => {
         toggleLoader(true);
         const user = firebase.currentUser;
@@ -31,35 +32,38 @@ const BringRoundsDialogComponent = ({ onFinishDialog, updateBringRoundConfig, fi
             const userRounds = querySnapshot.docs.map((doc) => {
                 return { id: doc.id, ...doc.data() }
             })
+
+            removeOldRounds(userRounds)
+
             const lastVisitedRound = userRounds.find(round => round.id === userData.lastVisitedRound);
-            
+
             const roundToBring = lastVisitedRound || userRounds[0];
             setRounds(userRounds);
             setRoundToBring(roundToBring.id);
-            updateBringRoundConfig({round: roundToBring})
-            
+            updateBringRoundConfig({ round: roundToBring })
+
             moveToNextStage();
             toggleLoader(false);
         })
-        .catch(e => {
-            console.log(e);
-        })
+            .catch(e => {
+                console.log(e);
+            })
     }
-    
+
     const onRoundSelect = (event) => {
         const roundId = event.target.value;
         const round = rounds.find(round => round.id === roundId);
 
-        updateBringRoundConfig({round})
+        updateBringRoundConfig({ round })
     }
-    
+
     const onAllowEditingByOthers = () => {
-        updateBringRoundConfig({editableByOthers: true})
+        updateBringRoundConfig({ editableByOthers: true })
         setAllowEditingByOthers(true);
     }
 
     const onDenyEditingByOthers = () => {
-        updateBringRoundConfig({editableByOthers: false})
+        updateBringRoundConfig({ editableByOthers: false })
         setAllowEditingByOthers(false);
     }
 
@@ -94,7 +98,7 @@ const BringRoundsDialogComponent = ({ onFinishDialog, updateBringRoundConfig, fi
                 <div className={styles.settingsForm}>
                     <div className={styles.dialog}>
                         The last round you visited is chosen by default, but you can select a different one:
-                        <select 
+                        <select
                             className={styles.dialogSelect}
                             defaultValue={roundToBring}
                             onChange={onRoundSelect}
@@ -114,10 +118,10 @@ const BringRoundsDialogComponent = ({ onFinishDialog, updateBringRoundConfig, fi
                             <button
                                 className={classNames(
                                     allowEditingByOthers
-                                    ?
-                                    [styles.dialogButton, styles.dialogButtonSelected]
-                                    :
-                                    styles.dialogButton)}
+                                        ?
+                                        [styles.dialogButton, styles.dialogButtonSelected]
+                                        :
+                                        styles.dialogButton)}
                                 onClick={onAllowEditingByOthers}
                             >
                                 Yes
@@ -125,10 +129,10 @@ const BringRoundsDialogComponent = ({ onFinishDialog, updateBringRoundConfig, fi
                             <button
                                 className={classNames(
                                     !allowEditingByOthers
-                                    ?
-                                    [styles.dialogButton, styles.dialogButtonSelected]
-                                    :
-                                    styles.dialogButton)}
+                                        ?
+                                        [styles.dialogButton, styles.dialogButtonSelected]
+                                        :
+                                        styles.dialogButton)}
                                 onClick={onDenyEditingByOthers}
                             >
                                 No

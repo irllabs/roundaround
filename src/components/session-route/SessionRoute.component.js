@@ -15,6 +15,8 @@ import { FirebaseContext } from '../../firebase';
 import styles from './SessionRoute.styles.scss';
 import HtmlUi from '../html-ui/HtmlUi';
 import LayerSettings from '../layer-settings/LayerSettings'
+import _ from 'lodash'
+import { removeOldRounds } from '../../utils/index'
 
 function usePrevious (value) {
   const ref = useRef();
@@ -61,6 +63,9 @@ const SessionRoute = ({
       })
       toggleLoader(false);
       console.log('tempDoc', tempDoc)
+
+      removeOldRounds(tempDoc)
+
       const currentRound = tempDoc[0];
       fromBackend = true;
       if (!currentRound) {

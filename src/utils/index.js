@@ -1,5 +1,6 @@
 import { Limits } from '../constants';
 import { getDefaultStepData } from './dummyData';
+import _ from 'lodash'
 
 export const getRandomColor = () => {
     return '#' + Math.floor(Math.random() * 16777215).toString(16);
@@ -85,4 +86,19 @@ export const convertDBToPercent = (dB) => {
         percent = numberRange(dB, -48, -6, 0, 60)
     }
     return percent;
+}
+
+// remove any old rounds that won't work with this version (will mutate incoming array)
+export const removeOldRounds = (rounds) => {
+    let roundsToRemove = []
+    for (const round of rounds) {
+        for (const layer of round.layers) {
+            if (_.isNil(layer.createdAt) && !_.includes(roundsToRemove, round)) {
+                roundsToRemove.push(round)
+            }
+        }
+    }
+    for (const roundToRemove of roundsToRemove) {
+        _.remove(rounds, roundToRemove)
+    }
 }
