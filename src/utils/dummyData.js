@@ -63,6 +63,7 @@ export const getDefaultRoundData = (userId) => {
     // increase each layer createdAt time by 1 ms so they're not equal
     let i = 0
     round.layers.map((layer) => {
+        layer.name = "Layer " + (i + 1)
         layer.createdAt += i++
     })
     return round

@@ -221,7 +221,7 @@ class HtmlUi extends Component {
     }
 
     draw (shouldAnimate) {
-        console.log('draw()');
+        //console.log('draw()');
         this.clear()
         const _this = this
 

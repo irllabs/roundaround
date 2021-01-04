@@ -66,7 +66,7 @@ const common = {
   plugins: [
     new CopyPlugin({
       patterns: [
-        { from: 'samples', to: 'dist' }
+        { from: 'samples', to: 'samples' }
       ]
     }),
   ]
