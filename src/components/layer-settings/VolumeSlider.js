@@ -50,7 +50,7 @@ export default function VolumeSlider ({ selectedLayer, user }) {
 
         {
             value: 0,
-            label: '-48',
+            label: '-96',
         }
     ];
     //console.log('rendering volume slider', selectedLayer.id);
