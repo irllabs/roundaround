@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useEffect } from 'react'
+import React, { useState, useCallback, useEffect, useContext } from 'react'
 import { useDispatch } from "react-redux";
 import Instruments from '../../audio-engine/Instruments'
 import MenuItem from '@material-ui/core/MenuItem';
@@ -10,6 +10,8 @@ import { makeStyles } from '@material-ui/core/styles';
 import { SET_LAYER_STEPS } from '../../redux/actionTypes'
 import { changeLayerLength } from '../../utils/index'
 import AudioEngine from '../../audio-engine/AudioEngine'
+import { FirebaseContext } from '../../firebase';
+
 
 
 const useStyles = makeStyles((theme) => ({
@@ -22,15 +24,17 @@ const useStyles = makeStyles((theme) => ({
     },
 }));
 
-export default function LayerNumberOfSteps ({ selectedLayer, user }) {
+export default function LayerNumberOfSteps ({ selectedLayer, user, roundId }) {
     const dispatch = useDispatch();
     const classes = useStyles();
+    const firebase = useContext(FirebaseContext);
     const numberOfStepsOptions = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32]
     const [selectedNumberOfSteps, setSelectedNumberOfSteps] = React.useState(selectedLayer.steps.length)
     const onNumberOfStepsSelect = (event) => {
         setSelectedNumberOfSteps(event.target.value);
         let newSteps = changeLayerLength(selectedLayer, event.target.value)
         dispatch({ type: SET_LAYER_STEPS, payload: { id: selectedLayer.id, steps: newSteps, user: user.id } })
+        firebase.setSteps(roundId, selectedLayer.id, newSteps)
     };
     const numberOfStepsMenuItems = numberOfStepsOptions.map(numberOfSteps => <MenuItem value={numberOfSteps} key={numberOfSteps}>{numberOfSteps}</MenuItem>)
 

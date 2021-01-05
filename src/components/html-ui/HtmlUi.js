@@ -1,4 +1,4 @@
-import React, { Component } from 'react';
+import React, { Component, useContext } from 'react';
 import * as _ from 'lodash';
 import Hammer from 'hammerjs'
 import './HtmlUi.scss'
@@ -8,11 +8,14 @@ import { HTML_UI_Params } from '../../constants'
 import { connect } from "react-redux";
 import AudioEngine from '../../audio-engine/AudioEngine'
 import Instruments from '../../audio-engine/Instruments'
-
 import { getDefaultLayerData } from '../../utils/dummyData';
-import { TOGGLE_STEP, ADD_ROUND_LAYER, SET_STEP_PROBABILITY, SET_STEP_VELOCITY, SET_SELECTED_LAYER_ID, SET_IS_SHOWING_LAYER_SETTINGS } from '../../redux/actionTypes'
+import { TOGGLE_STEP, ADD_LAYER, SET_STEP_PROBABILITY, SET_STEP_VELOCITY, SET_SELECTED_LAYER_ID, SET_IS_SHOWING_LAYER_SETTINGS } from '../../redux/actionTypes'
+import { FirebaseContext } from '../../firebase/'
+
+
 
 class HtmlUi extends Component {
+    static contextType = FirebaseContext
     constructor (props) {
         super(props)
         this.isZooming = false
@@ -25,6 +28,7 @@ class HtmlUi extends Component {
         this.userColors = {};
         this.onWindowResizeThrottled = _.throttle(this.onWindowResize.bind(this), 1000)
         this.selectedLayerId = null;
+
     }
 
     componentDidMount () {
@@ -61,7 +65,7 @@ class HtmlUi extends Component {
     }
 
     async componentDidUpdate () {
-        //console.log('componentDidUpdate()', this.props.round)
+        console.log('componentDidUpdate()', this.props.round)
 
         // Calculate what's changed so we only redraw if necessary
         let redraw = false
@@ -169,7 +173,7 @@ class HtmlUi extends Component {
             let newStep = _.find(newSteps, { id: previousStep.id })
             if (!_.isNil(newStep)) {
                 if (!_.isEqual(previousStep, newStep)) {
-                    //    console.log('found changed step', previousStep, newStep);
+                    console.log('found changed step', previousStep, newStep);
                     this.updateStep(newStep, true)
                     AudioEngine.recalculateParts(this.props.round)
                 }
@@ -467,6 +471,12 @@ class HtmlUi extends Component {
         this.round.layers = _.sortBy(this.round.layers, 'createdAt')
     }
 
+    orderSteps () {
+        for (const layer of this.round.layers) {
+            layer.steps = _.orderBy(layer.steps, 'order')
+        }
+    }
+
     addStepEventListeners (stepGraphic) {
         const _this = this
         if (stepGraphic.isAllowedInteraction) {
@@ -616,13 +626,16 @@ class HtmlUi extends Component {
             this.updateStep(step, false)
             AudioEngine.recalculateParts(this.round)
             this.props.dispatch({ type: TOGGLE_STEP, payload: { layerId: stepGraphic.layerId, stepId: stepGraphic.id, isOn: step.isOn, user: null } })
+            console.log('this.context', this.context);
+            this.context.updateStep(this.round.id, stepGraphic.layerId, stepGraphic.id, step)
         }
     }
 
     onAddLayerClick () {
         const newLayer = getDefaultLayerData(this.props.user.id);
         newLayer.name = 'Layer ' + (this.props.round.layers.length + 1)
-        this.props.dispatch({ type: ADD_ROUND_LAYER, payload: { layer: newLayer, user: this.props.user.id } })
+        this.props.dispatch({ type: ADD_LAYER, payload: { layer: newLayer, user: this.props.user.id } })
+        this.context.createLayer(this.round.id, newLayer)
         this.highlightNewLayer = newLayer.id
         this.selectedLayerId = newLayer.id
         /* const newLayer = _.cloneDeep(this.props.round.layers[this.props.round.layers.length - 1])
@@ -694,7 +707,7 @@ class HtmlUi extends Component {
 }
 
 const mapStateToProps = state => {
-    console.log('mapStateToProps', state);
+    //console.log('mapStateToProps', state);
     return {
         round: state.round,
         user: state.user,

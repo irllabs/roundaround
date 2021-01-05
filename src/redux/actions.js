@@ -20,14 +20,14 @@ import {
     SET_STEP_VELOCITY,
     SET_STEP_PROBABILITY,
     SET_STEP_NOTE,
-    ADD_LAYER_STEP,
-    REMOVE_LAYER_STEP,
+    ADD_STEP,
+    REMOVE_STEP,
     SET_LAYER_NAME,
     SET_LAYER_GAIN,
     UPDATE_LAYER_INSTRUMENT,
-    ADD_ROUND_LAYER,
+    ADD_LAYER,
     ADD_ROUND_LAYERS,
-    REMOVE_ROUND_LAYER,
+    REMOVE_LAYER,
     SET_ROUND_NAME,
     SET_ROUND_BPM,
     SET_ROUND_ID,
@@ -43,6 +43,7 @@ import {
     SET_LAYER_CONTROLS_POSITION,
     SET_STEPS_POSITIONS,
     SET_ROUND_INFO_POSITION,
+    UPDATE_STEP
 } from "./actionTypes";
 
 export const resetRoundsStore = () => ({
@@ -128,6 +129,19 @@ export const toggleStep = (isOn, layerIndex, stepIndex, user) => ({
     payload: { isOn, layerIndex, stepIndex, user }
 })
 
+export const updateStep = (step, layerId, stepId, user) => ({
+    type: UPDATE_STEP,
+    payload: { step, layerId, stepId, user }
+})
+export const addStep = (layerId, step, user) => ({
+    type: ADD_STEP,
+    payload: { step, layerId, user }
+})
+
+export const removeStep = (layerId, stepId, user) => ({
+    type: REMOVE_STEP,
+    payload: { layerId, stepId, user }
+})
 
 export const setStepVelocity = (velocity, layerIndex, stepIndex, user) => ({
     type: SET_STEP_VELOCITY,
@@ -150,15 +164,7 @@ export const toggleLayer = (isActive, layerIndex, user) => ({
     payload: { isActive, layerIndex, user }
 })
 
-export const addLayerStep = (layerIndex, step, user) => ({
-    type: ADD_LAYER_STEP,
-    payload: { step, layerIndex, user }
-})
 
-export const removeLayerStep = (layerIndex, stepIndex, user) => ({
-    type: REMOVE_LAYER_STEP,
-    payload: { layerIndex, stepIndex, user }
-})
 
 export const setLayerSteps = (layerIndex, steps, user) => ({
     type: SET_LAYER_STEPS,
@@ -179,14 +185,14 @@ export const updateLayerInstrument = (layerIndex, instrument, user) => ({
     payload: { layerIndex, instrument, user }
 })
 
-export const addRoundLayer = (layer, user) => ({
-    type: ADD_ROUND_LAYER,
+export const addLayer = (layer, user) => ({
+    type: ADD_LAYER,
     payload: { layer, user }
 })
 
-export const removeRoundLayer = (layerIndex, user) => ({
-    type: REMOVE_ROUND_LAYER,
-    payload: { layerIndex, user }
+export const removeLayer = (id, user) => ({
+    type: REMOVE_LAYER,
+    payload: { id, user }
 })
 
 export const addRoundLayers = layers => ({

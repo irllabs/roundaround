@@ -50,7 +50,13 @@ export const changeLayerLength = (layer, newLength) => {
         } else {
             stepsToAdd = Array(difference).fill(0).map(element => getDefaultStepData());
         }
-        return [...layer.steps, ...stepsToAdd]
+        let steps = [...layer.steps, ...stepsToAdd]
+        let i = 0;
+        steps.map((step) => {
+            step.order = i++;
+        })
+        steps = _.orderBy(steps, 'order')
+        return steps
     }
 }
 
@@ -90,15 +96,18 @@ export const convertDBToPercent = (dB) => {
 
 // remove any old rounds that won't work with this version (will mutate incoming array)
 export const removeOldRounds = (rounds) => {
-    let roundsToRemove = []
-    for (const round of rounds) {
-        for (const layer of round.layers) {
-            if (_.isNil(layer.createdAt) && !_.includes(roundsToRemove, round)) {
-                roundsToRemove.push(round)
-            }
-        }
-    }
-    for (const roundToRemove of roundsToRemove) {
-        _.remove(rounds, roundToRemove)
-    }
+    /* console.log('all rounds', rounds);
+     let roundsToRemove = []
+     for (const round of rounds) {
+         if (!_.isNil(round.layers)) {
+             for (const layer of round.layers) {
+                 if (_.isNil(layer.createdAt) && !_.includes(roundsToRemove, round)) {
+                     roundsToRemove.push(round)
+                 }
+             }
+         }
+     }
+     for (const roundToRemove of roundsToRemove) {
+         _.remove(rounds, roundToRemove)
+     }*/
 }

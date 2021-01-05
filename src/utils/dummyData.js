@@ -16,7 +16,7 @@ export const getDefaultStepData = () => {
 };
 
 export const getDefaultLayerData = (userId, instrument) => {
-    return {
+    const layer = {
         "id": uuid(),
         "creator": userId || null,
         "name": "",
@@ -34,6 +34,12 @@ export const getDefaultLayerData = (userId, instrument) => {
         "steps": Array(Layer.DefaultStepsAmount).fill(null).map(() => { return getDefaultStepData() }),
         "createdAt": Date.now()
     }
+    // increase each layer createdAt time by 1 ms so they're not equal
+    let i = 0
+    layer.steps.map((step) => {
+        step.order = i++
+    })
+    return layer;
 };
 
 export const getDefaultRoundData = (userId) => {

@@ -13,7 +13,7 @@ import MailIcon from '@material-ui/icons/Mail';
 import TextField from '@material-ui/core/TextField';
 import Slider from '@material-ui/core/Slider';
 import _ from 'lodash'
-import { SET_LAYER_NAME, SET_LAYER_MUTE, SET_LAYER_PREVIEW, REMOVE_ROUND_LAYER, SET_IS_SHOWING_LAYER_SETTINGS } from '../../redux/actionTypes'
+import { SET_LAYER_NAME, SET_LAYER_MUTE, SET_LAYER_PREVIEW, REMOVE_LAYER, SET_IS_SHOWING_LAYER_SETTINGS } from '../../redux/actionTypes'
 import Box from '@material-ui/core/Box';
 import { makeStyles } from '@material-ui/core/styles';
 import { convertPercentToDB, convertDBToPercent, numberRange } from '../../utils/index'
@@ -23,9 +23,11 @@ import VolumeSlider from './VolumeSlider'
 import LayerName from './LayerName'
 import LayerInstrument from './LayerInstrument'
 import LayerNumberOfSteps from './LayerNumberOfSteps'
+import { FirebaseContext } from '../../firebase';
 
 
 class LayerSettings extends Component {
+    static contextType = FirebaseContext;
     constructor (props) {
         super(props)
     }
@@ -45,7 +47,8 @@ class LayerSettings extends Component {
     }
 
     onDeleteLayerClick () {
-        this.props.dispatch({ type: REMOVE_ROUND_LAYER, payload: { id: this.props.selectedLayer.id, user: this.props.user.id } })
+        this.props.dispatch({ type: REMOVE_LAYER, payload: { id: this.props.selectedLayer.id, user: this.props.user.id } })
+        this.context.deleteLayer(this.props.round.id, this.props.selectedLayer.id)
         this.onCloseClick()
     }
 
@@ -58,11 +61,11 @@ class LayerSettings extends Component {
             layerVolumePercent = convertDBToPercent(this.props.selectedLayer.instrument.gain)
             form = (
                 <Box display="flex" flexDirection="column" justifyContent="space-evenly" height="100%" alignItems="center">
-                    <LayerName selectedLayer={this.props.selectedLayer} user={this.props.user} />
-                    <LayerInstrument selectedLayer={this.props.selectedLayer} user={this.props.user} />
-                    <LayerNumberOfSteps selectedLayer={this.props.selectedLayer} user={this.props.user} />
+                    <LayerName selectedLayer={this.props.selectedLayer} roundId={this.props.round.id} user={this.props.user} />
+                    <LayerInstrument selectedLayer={this.props.selectedLayer} roundId={this.props.round.id} user={this.props.user} />
+                    <LayerNumberOfSteps selectedLayer={this.props.selectedLayer} roundId={this.props.round.id} user={this.props.user} />
                     <div className={`${styles.layerSettingsVolumeSlider}`}>
-                        <VolumeSlider selectedLayer={this.props.selectedLayer} user={this.props.user} />
+                        <VolumeSlider selectedLayer={this.props.selectedLayer} roundId={this.props.round.id} user={this.props.user} />
                     </div>
                     <Box display="flex" justifyContent="space-evenly">
 

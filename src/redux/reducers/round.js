@@ -4,22 +4,23 @@ import {
     SET_STEP_VELOCITY,
     SET_STEP_PROBABILITY,
     SET_STEP_NOTE,
-    ADD_LAYER_STEP,
-    REMOVE_LAYER_STEP,
+    ADD_STEP,
+    REMOVE_STEP,
     SET_LAYER_NAME,
     SET_LAYER_GAIN,
     SET_LAYER_MUTE,
     SET_LAYER_PREVIEW,
     UPDATE_LAYER_INSTRUMENT,
-    ADD_ROUND_LAYER,
+    ADD_LAYER,
     ADD_ROUND_LAYERS,
-    REMOVE_ROUND_LAYER,
+    REMOVE_LAYER,
     SET_ROUND_NAME,
     SET_ROUND_BPM,
     TOGGLE_LAYER,
     SET_LAYER_STEPS,
     SET_ROUND_ID,
-    RESET_ROUND_STORE
+    RESET_ROUND_STORE,
+    UPDATE_STEP
 } from "../actionTypes";
 import update from 'immutability-helper';
 import _ from 'lodash'
@@ -41,17 +42,7 @@ const updateStepProperty = (state, name, value, layerId, stepId, user) => {
                     }
                 }
             }
-        },
-        lastEdition: {
-            $set: {
-                unit: 'step',
-                layerId,
-                stepId
-            }
-        },
-        lastEditor: {
-            $set: user
-        },
+        }
     });
 }
 
@@ -64,6 +55,51 @@ export default function (state = initialState, action) {
         case SET_ROUND_DATA: {
             const { data } = action.payload;
             return data;
+        }
+        case UPDATE_STEP: {
+            const { step, layerId, stepId, user } = action.payload;
+            const layerIndex = _.findIndex(state.layers, { id: layerId })
+            const layer = _.find(state.layers, { id: layerId })
+            const stepIndex = _.findIndex(layer.steps, { id: stepId })
+            return update(state, {
+                layers: {
+                    [layerIndex]: {
+                        steps: {
+                            [stepIndex]: {
+                                $set: step
+                            }
+                        }
+                    }
+                }
+            });
+        }
+        case ADD_STEP: {
+            const { layerId, step, user } = action.payload;
+            const layerIndex = _.findIndex(state.layers, { id: layerId })
+            return update(state, {
+                layers: {
+                    [layerIndex]: {
+                        steps: {
+                            $push: [step]
+                        }
+                    }
+                }
+            })
+        }
+        case REMOVE_STEP: {
+            const { layerId, stepId, user } = action.payload;
+            const layerIndex = _.findIndex(state.layers, { id: layerId })
+            const layer = _.find(state.layers, { id: layerId })
+            const stepIndex = _.findIndex(layer.steps, { id: stepId })
+            return update(state, {
+                layers: {
+                    [layerIndex]: {
+                        steps: {
+                            $splice: [[stepIndex, 1]]
+                        }
+                    }
+                }
+            })
         }
         case TOGGLE_STEP: {
             const { layerId, stepId, isOn, user } = action.payload;
@@ -91,16 +127,7 @@ export default function (state = initialState, action) {
                             $set: isActive
                         }
                     }
-                },
-                lastEditor: {
-                    $set: user
-                },
-                lastEdition: {
-                    $set: {
-                        unit: 'layer',
-                        layerIndex
-                    }
-                },
+                }
             })
         }
         case SET_LAYER_STEPS: {
@@ -113,16 +140,7 @@ export default function (state = initialState, action) {
                             $set: steps
                         }
                     }
-                },
-                lastEditor: {
-                    $set: user
-                },
-                lastEdition: {
-                    $set: {
-                        unit: 'layer',
-                        layerIndex
-                    }
-                },
+                }
             })
         }
         case SET_LAYER_NAME: {
@@ -135,16 +153,7 @@ export default function (state = initialState, action) {
                             $set: name
                         }
                     }
-                },
-                lastEditor: {
-                    $set: user
-                },
-                lastEdition: {
-                    $set: {
-                        unit: 'layerControls',
-                        layerIndex
-                    }
-                },
+                }
             })
         }
         case SET_LAYER_GAIN: {
@@ -157,16 +166,7 @@ export default function (state = initialState, action) {
                             $set: value
                         }
                     }
-                },
-                lastEditor: {
-                    $set: user
-                },
-                lastEdition: {
-                    $set: {
-                        unit: 'layerControls',
-                        layerIndex
-                    }
-                },
+                }
             })
         }
         case SET_LAYER_PREVIEW: {
@@ -181,16 +181,7 @@ export default function (state = initialState, action) {
                             }
                         }
                     }
-                },
-                lastEditor: {
-                    $set: user
-                },
-                lastEdition: {
-                    $set: {
-                        unit: 'layerControls',
-                        layerIndex
-                    }
-                },
+                }
             })
         }
         case SET_LAYER_MUTE: {
@@ -205,16 +196,7 @@ export default function (state = initialState, action) {
                             }
                         }
                     }
-                },
-                lastEditor: {
-                    $set: user
-                },
-                lastEdition: {
-                    $set: {
-                        unit: 'layerControls',
-                        layerIndex
-                    }
-                },
+                }
             })
         }
         case UPDATE_LAYER_INSTRUMENT: {
@@ -227,51 +209,24 @@ export default function (state = initialState, action) {
                             $merge: instrument
                         }
                     }
-                },
-                lastEditor: {
-                    $set: user
-                },
-                lastEdition: {
-                    $set: {
-                        unit: 'layerControls',
-                        layerIndex
-                    }
-                },
+                }
             })
         }
-        case ADD_ROUND_LAYER: {
+        case ADD_LAYER: {
             const { layer, user } = action.payload;
             return update(state, {
                 layers: {
                     $push: [layer]
-                },
-                lastEditor: {
-                    $set: user
-                },
-                lastEdition: {
-                    $set: {
-                        unit: 'layer',
-                        layerIndex: state.layers.length
-                    }
-                },
+                }
             })
         }
-        case REMOVE_ROUND_LAYER: {
+        case REMOVE_LAYER: {
             const { id, user } = action.payload;
             const layerIndex = _.findIndex(state.layers, { id })
             return update(state, {
                 layers: {
                     $splice: [[layerIndex, 1]]
-                },
-                lastEditor: {
-                    $set: user
-                },
-                lastEdition: {
-                    $set: {
-                        unit: 'layer',
-                        layerIndex
-                    }
-                },
+                }
             })
         }
         case ADD_ROUND_LAYERS: {
@@ -287,15 +242,7 @@ export default function (state = initialState, action) {
             return update(state, {
                 name: {
                     $set: name
-                },
-                lastEditor: {
-                    $set: user
-                },
-                lastEdition: {
-                    $set: {
-                        unit: 'round',
-                    }
-                },
+                }
             })
         }
         case SET_ROUND_BPM: {
@@ -303,15 +250,7 @@ export default function (state = initialState, action) {
             return update(state, {
                 bpm: {
                     $set: bpm
-                },
-                lastEditor: {
-                    $set: user
-                },
-                lastEdition: {
-                    $set: {
-                        unit: 'round',
-                    }
-                },
+                }
             })
         }
         case SET_ROUND_ID: {

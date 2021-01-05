@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useEffect } from 'react'
+import React, { useState, useCallback, useEffect, useContext } from 'react'
 import { useDispatch } from "react-redux";
 import Instruments from '../../audio-engine/Instruments'
 import MenuItem from '@material-ui/core/MenuItem';
@@ -8,7 +8,7 @@ import FormControl from '@material-ui/core/FormControl';
 import Box from '@material-ui/core/Box';
 import { makeStyles } from '@material-ui/core/styles';
 import { UPDATE_LAYER_INSTRUMENT } from '../../redux/actionTypes'
-
+import { FirebaseContext } from '../../firebase';
 
 const useStyles = makeStyles((theme) => ({
     formControl: {
@@ -20,8 +20,9 @@ const useStyles = makeStyles((theme) => ({
     },
 }));
 
-export default function LayerInstrument ({ selectedLayer, user }) {
+export default function LayerInstrument ({ selectedLayer, user, roundId }) {
     const dispatch = useDispatch();
+    const firebase = useContext(FirebaseContext);
     const classes = useStyles();
     const instrumentOptions = Instruments.getInstrumentOptions()
     const [selectedInstrument, setSelectedInstrument] = React.useState(selectedLayer.instrument.sampler)
@@ -30,6 +31,7 @@ export default function LayerInstrument ({ selectedLayer, user }) {
         const defaultArticulation = Instruments.getDefaultArticulation(event.target.value)[0]
         setSelectedArticulation(defaultArticulation)
         dispatch({ type: UPDATE_LAYER_INSTRUMENT, payload: { id: selectedLayer.id, instrument: { sampler: event.target.value, sample: defaultArticulation }, user: user.id } })
+        firebase.updateLayer(roundId, selectedLayer.id, { instrument: { sampler: event.target.value, sample: defaultArticulation } })
     };
     const instrumentMenuItems = instrumentOptions.map(instrument => <MenuItem value={instrument.name} key={instrument.name}>{instrument.label}</MenuItem>)
 

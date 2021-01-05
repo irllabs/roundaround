@@ -64,11 +64,10 @@ const SessionRoute = ({
       toggleLoader(false);
       console.log('tempDoc', tempDoc)
 
-      removeOldRounds(tempDoc)
+      //removeOldRounds(tempDoc)
 
-      const currentRound = tempDoc[0];
       fromBackend = true;
-      if (!currentRound) {
+      if (tempDoc.length <= 0) {
         // create new
         console.log('create new round')
         const dummyData = getDefaultRoundData(user.uid);
@@ -81,8 +80,13 @@ const SessionRoute = ({
         setRoundData(dummyData);
         setRounds([dummyData]);
       } else {
-        setRoundData(currentRound);
-        setRounds(tempDoc);
+        const currentRound = tempDoc[0];
+        firebase.getLayers(currentRound.id).then((layers) => {
+          console.log('layers', layers);
+          currentRound.layers = layers
+          setRoundData(currentRound);
+          setRounds(tempDoc);
+        })
       }
     })
       .catch(e => {
@@ -104,13 +108,13 @@ const SessionRoute = ({
   const throttle = () => {
     throttleLock = true;
     setTimeout(() => {
-      console.log('update round')
-      firebase.db.collection('rounds')
+      console.log('update round (commented out!)', roundDataForUpdate)
+      /*firebase.db.collection('rounds')
         .doc(roundDataForUpdate.id)
         .set(roundDataForUpdate, { merge: true })
         .catch(e => {
           console.log(e);
-        })
+        })*/
       // check queue, if queue - self-repeat and eraise queue      
       if (throttleQueue) {
         throttleQueue = 0;
@@ -145,7 +149,7 @@ const SessionRoute = ({
         toggleLoader(true);
         let roundToAdd = rounds.find(x => !prevRounds.includes(x) && (x.id !== round.id));
         console.log('add round')
-        firebase.db.collection('rounds')
+        /*firebase.db.collection('rounds')
           .doc(roundToAdd.id)
           .set(roundToAdd, { merge: false })
           .then(() => {
@@ -153,7 +157,13 @@ const SessionRoute = ({
           }).catch((e) => {
             console.log(e)
             toggleLoader(false);
-          });
+          });*/
+        firebase.createRound(roundToAdd.id, roundToAdd).then(() => {
+          toggleLoader(false);
+        }).catch((e) => {
+          console.log(e)
+          toggleLoader(false);
+        })
       }
       if (prevRounds.length > rounds.length) {
         // remove round

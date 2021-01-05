@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useEffect } from 'react'
+import React, { useState, useCallback, useEffect, useContext } from 'react'
 import { connect, ReactReduxContext, Provider, useDispatch } from "react-redux";
 import Slider from '@material-ui/core/Slider';
 import _ from 'lodash'
@@ -7,12 +7,15 @@ import AudioEngine from '../../audio-engine/AudioEngine'
 import { convertPercentToDB, convertDBToPercent, numberRange } from '../../utils/index'
 import { updateLayerInstrument } from '../../redux/actions'
 import { SET_LAYER_NAME, SET_LAYER_GAIN } from '../../redux/actionTypes'
+import { FirebaseContext } from '../../firebase';
 
-export default function VolumeSlider ({ selectedLayer, user }) {
+export default function VolumeSlider ({ selectedLayer, user, roundId }) {
     const dispatch = useDispatch();
+    const firebase = useContext(FirebaseContext);
     const [sliderValue, setSliderValue] = useState(80)
     const updateVolumeState = (dB, selectedLayerId) => {
         dispatch({ type: SET_LAYER_GAIN, payload: { id: selectedLayerId, value: dB, user: user.id } })
+        firebase.updateLayer(roundId, selectedLayer.id, { gain: dB })
     }
     const updateVolumeStateThrottled = useCallback(_.throttle(function (dB, selectedLayerId) {
         updateVolumeState(dB, selectedLayerId)
