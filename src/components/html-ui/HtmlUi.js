@@ -65,7 +65,7 @@ class HtmlUi extends Component {
     }
 
     async componentDidUpdate () {
-        console.log('componentDidUpdate()', this.props.round)
+        // console.log('componentDidUpdate()', this.props.round)
 
         // Calculate what's changed so we only redraw if necessary
         let redraw = false
@@ -94,7 +94,7 @@ class HtmlUi extends Component {
                 if (this.editAllLayers) {
                     layerGraphic.isAllowedInteraction = true
                 } else {
-                    console.log('layer', _.find(this.props.round.layers, { id: layerGraphic.id }));
+                    //  console.log('layer', _.find(this.props.round.layers, { id: layerGraphic.id }));
                     layerGraphic.isAllowedInteraction = _.find(this.props.round.layers, { id: layerGraphic.id }).creator === this.props.user.id
                 }
                 this.addLayerEventListeners(layerGraphic)
@@ -173,7 +173,7 @@ class HtmlUi extends Component {
             let newStep = _.find(newSteps, { id: previousStep.id })
             if (!_.isNil(newStep)) {
                 if (!_.isEqual(previousStep, newStep)) {
-                    console.log('found changed step', previousStep, newStep);
+                    //   console.log('found changed step', previousStep, newStep);
                     this.updateStep(newStep, true)
                     AudioEngine.recalculateParts(this.props.round)
                 }
@@ -537,8 +537,8 @@ class HtmlUi extends Component {
                 delta = delta / 100
                 delta += 1
                 stepGraphic.probability = delta * stepGraphic.probabilityPanStart
-                if (stepGraphic.probability < 0.3) {
-                    stepGraphic.probability = 0.3
+                if (stepGraphic.probability < 0.1) {
+                    stepGraphic.probability = 0.1
                 } else if (stepGraphic.probability > 1) {
                     stepGraphic.probability = 1
                 }
@@ -580,10 +580,12 @@ class HtmlUi extends Component {
             const step = this.getStep(stepGraphic.id)
             step.probability = stepGraphic.probability
             this.props.dispatch({ type: SET_STEP_PROBABILITY, payload: { probability: stepGraphic.probability, layerId: stepGraphic.layerId, stepId: stepGraphic.id, user: this.props.user.id } })
+            this.context.updateStep(this.round.id, stepGraphic.layerId, stepGraphic.id, step)
         } else if (stepGraphic.isPanningY && stepGraphic.isOn) {
             const step = this.getStep(stepGraphic.id)
             step.velocity = stepGraphic.velocity
             this.props.dispatch({ type: SET_STEP_VELOCITY, payload: { velocity: stepGraphic.velocity, layerId: stepGraphic.layerId, stepId: stepGraphic.id, user: this.props.user.id } })
+            this.context.updateStep(this.round.id, stepGraphic.layerId, stepGraphic.id, step)
         }
         AudioEngine.recalculateParts(this.props.round)
         stepGraphic.isPanningX = false;
@@ -626,7 +628,7 @@ class HtmlUi extends Component {
             this.updateStep(step, false)
             AudioEngine.recalculateParts(this.round)
             this.props.dispatch({ type: TOGGLE_STEP, payload: { layerId: stepGraphic.layerId, stepId: stepGraphic.id, isOn: step.isOn, user: null } })
-            console.log('this.context', this.context);
+            // console.log('this.context', this.context);
             this.context.updateStep(this.round.id, stepGraphic.layerId, stepGraphic.id, step)
         }
     }

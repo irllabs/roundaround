@@ -85,72 +85,34 @@ class CollaborationRoute extends React.Component {
     }
 
     loadRound (round) {
-        console.log('loadRound', round);
+        //  console.log('loadRound', round);
         this.addRoundChangeListener(round.id)
         this.addLayersChangeListener(round.id)
         this.props.setRoundData(round)
-        /* const _this = this
-         this.firebase.db.collection('rounds').doc(derivativeId).onSnapshot(async (doc) => {
-             // round changes (eg bpm)
-             // todo: we don't want to reload all layers everytime the bpm changes
-             const round = await this.firebase.getRound(derivativeId)
-             this.props.setRoundData(round)
- 
-            /this.firebase.db.collection('rounds').doc(derivativeId).collection('layers').onSnapshot((layerCollectionSnapshot) => {
-                 // layer changes (not your own)
-                 console.log('on layerCollectionSnapshot', layerCollectionSnapshot.metadata.hasPendingWrites);
-                 layerCollectionSnapshot.docChanges().forEach(change => {
-                     if (change.type === 'modified') {
-                         console.log('Modified layer: ', change.doc.data());
-                         this.reloadCollaborationLayersThrottled()
-                     }
-                     if (change.type === 'added') {
-                         console.log('New layer: ', change.doc.data());
-                         this.reloadCollaborationLayersThrottled()
-                     }
-                     if (change.type === 'removed') {
-                         console.log('Removed layer: ', change.doc.data());
-                         this.reloadCollaborationLayersThrottled()
-                     }
-                 });
- 
-                 for (const layer of round.layers) {
-                     if (layer.creator !== this.props.user.id) {
- 
-                         // step changes (not your own)
-                         this.firebase.db.collection('rounds').doc(derivativeId).collection('layers').doc(layer.id).collection('steps').onSnapshot((stepCollectionSnapshot) => {
-                             console.log('on stepCollectionSnapshot', stepCollectionSnapshot.size, stepCollectionSnapshot.metadata.hasPendingWrites);
-                             this.reloadCollaborationLayersThrottled()
-                         })
-                     }
-                 }
-             })
-         })*/
-
     }
 
     addRoundChangeListener (roundId) {
         this.firebase.db.collection('rounds').doc(roundId).onSnapshot(async (doc) => {
-            console.log('### round change listener fired');
+            //   console.log('### round change listener fired');
         })
     }
 
     addLayersChangeListener (roundId) {
         const _this = this;
         this.layersChangeListenerUnsubscribe = this.firebase.db.collection('rounds').doc(roundId).collection('layers').onSnapshot((layerCollectionSnapshot) => {
-            console.log('### layer change listener fired');
+            //  console.log('### layer change listener fired');
             layerCollectionSnapshot.docChanges().forEach(change => {
                 if (change.type === 'modified') {
-                    console.log('Modified layer: ', change.doc.data());
+                    //   console.log('Modified layer: ', change.doc.data());
                     _this.reloadCollaborationLayersThrottled()
                 }
                 if (change.type === 'added') {
-                    console.log('New layer: ', change.doc.data());
+                    //  console.log('New layer: ', change.doc.data());
                     _this.addStepsChangeListener(roundId, change.doc.id)
                     _this.reloadCollaborationLayersThrottled()
                 }
                 if (change.type === 'removed') {
-                    console.log('Removed layer: ', change.doc.data());
+                    //    console.log('Removed layer: ', change.doc.data());
                     _this.removeStepsChangeListener(change.doc.id)
                     _this.reloadCollaborationLayersThrottled()
                 }
@@ -159,22 +121,22 @@ class CollaborationRoute extends React.Component {
     }
 
     addStepsChangeListener (roundId, layerId) {
-        console.log('addStepsChangeListener()', layerId);
+        //console.log('addStepsChangeListener()', layerId);
         const _this = this;
         this.removeStepsChangeListener(layerId)
         this.stepsChangeListenerUnsubscribe[layerId] = this.firebase.db.collection('rounds').doc(roundId).collection('layers').doc(layerId).collection('steps').onSnapshot((stepCollectionSnapshot) => {
-            console.log('### step change listener fired');
+            //  console.log('### step change listener fired');
             stepCollectionSnapshot.docChanges().forEach(change => {
                 if (change.type === 'modified') {
-                    console.log('Modified step: ', change.doc.data());
+                    //console.log('Modified step: ', change.doc.data());
                     _this.reloadCollaborationLayersThrottled()
                 }
                 if (change.type === 'added') {
-                    console.log('New step: ', change.doc.data());
+                    //  console.log('New step: ', change.doc.data());
                     _this.reloadCollaborationLayersThrottled()
                 }
                 if (change.type === 'removed') {
-                    console.log('Removed step: ', change.doc.data());
+                    //   console.log('Removed step: ', change.doc.data());
                     _this.reloadCollaborationLayersThrottled()
                 }
             });
@@ -183,7 +145,7 @@ class CollaborationRoute extends React.Component {
 
     removeStepsChangeListener (layerId) {
         if (!_.isNil(this.stepsChangeListenerUnsubscribe[layerId])) {
-            console.log('removing StepsChangeListener()', layerId);
+            // console.log('removing StepsChangeListener()', layerId);
             this.stepsChangeListenerUnsubscribe[layerId]()
         }
     }
@@ -191,10 +153,9 @@ class CollaborationRoute extends React.Component {
     // if any of the subcollections for a collaboration user change, trigger a (throttled) reload of all collaboration layers as there could be multiple changes
     // to do: maybe add an id to the query to make sure we don't overwrite the local round with an await result that comes in late
     async reloadCollaborationLayers () {
-        console.log('reloadCollaborationLayers()');
+        //  console.log('reloadCollaborationLayers()');
         const _this = this;
         const newRound = await this.firebase.getRound(this.props.round.id)
-        console.log('newRound', newRound);
         const newLayers = _.filter(newRound.layers, (layer) => {
             return layer.creator !== _this.props.user.id
         })
@@ -257,7 +218,7 @@ class CollaborationRoute extends React.Component {
     }
 
     handleLocalRoundUpdate (changes) {
-        console.log('handleLocalRoundUpdate()', changes);
+        //  console.log('handleLocalRoundUpdate()', changes);
         // don't run compare on changes recieved from backend to avoid infinity updates
         if (this.rounChangeFromBackend) {
             this.rounChangeFromBackend = false;
@@ -276,7 +237,7 @@ class CollaborationRoute extends React.Component {
                 this.throttle(changes);
             }
         } else {
-            console.log('no derivative, adding...');
+            //   console.log('no derivative, adding...');
             this.addDerivative()
         }
 
@@ -291,7 +252,9 @@ class CollaborationRoute extends React.Component {
         if (collaboration.derivative) {
             round = await this.firebase.getRound(collaboration.round);
         } else {
-            round = await this.firebase.createRound(collaboration.round);
+            await this.addDerivative()
+
+            //round = await this.firebase.createRound(collaboration.round);
         }
         this.loadRound(round)
 
@@ -338,7 +301,7 @@ class CollaborationRoute extends React.Component {
         const userDifference = diff(prevProps.user, this.props.user);
         const collabDifference = diff(prevProps.collaboration, this.props.collaboration);
 
-        console.log('collaboration::componentDidUpdate()', roundDifference, userDifference, collabDifference);
+        // console.log('collaboration::componentDidUpdate()', roundDifference, userDifference, collabDifference);
 
         this.handleLocalRoundUpdate(roundDifference);
         this.handleUserChanges(userDifference);
@@ -350,7 +313,7 @@ class CollaborationRoute extends React.Component {
     }
 
     togglePlay = () => {
-        console.log('toggle')
+        //console.log('toggle')
         clock.toggle();
         this.updatePlayStatus(clock.isRunning);
         this.setState({ isOn: clock.isRunning });
@@ -396,7 +359,7 @@ class CollaborationRoute extends React.Component {
     }
 
     componentWillUnmount () {
-        console.log('collaboration component getting unmounted')
+        //console.log('collaboration component getting unmounted')
         this.props.resetRaycasterStore()
         this.props.resetCameraStore()
         this.props.resetEditingModeStore()

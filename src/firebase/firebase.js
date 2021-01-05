@@ -55,13 +55,13 @@ class Firebase {
 
     // *** Firebase API ***
     getRound = async (roundId) => {
-        console.log('getRound', roundId);
+        // console.log('getRound', roundId);
         return new Promise(async (resolve, reject) => {
             try {
                 const roundSnapshot = await this.db.collection('rounds').doc(roundId).get()
                 const round = { id: roundSnapshot.id, ...roundSnapshot.data(), layers: [] }
                 round.layers = await this.getLayers(roundId)
-                console.log('got round', round);
+                //  console.log('got round', round);
                 resolve(round)
             } catch (e) {
                 console.error(e)
@@ -235,7 +235,7 @@ class Firebase {
     }
 
     updateRound = async (roundId, data) => {
-        console.log('updateRound', roundId, data)
+        //console.log('updateRound', roundId, data)
         try {
             await this.db.collection('rounds')
                 .doc(roundId)
@@ -246,7 +246,7 @@ class Firebase {
     }
 
     updateLayer = async (roundId, layerId, data) => {
-        console.log('updateLayer', roundId, data)
+        //   console.log('updateLayer', roundId, data)
         try {
             await this.db.collection('rounds')
                 .doc(roundId)
