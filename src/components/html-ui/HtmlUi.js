@@ -235,6 +235,7 @@ class HtmlUi extends Component {
 
 
         // position line
+        this.isOn = this.props.isOn
         const positionLineLength = (HTML_UI_Params.addNewLayerButtonDiameter / 2) + (HTML_UI_Params.initialLayerPadding / 2) + ((HTML_UI_Params.stepDiameter + HTML_UI_Params.layerPadding) * this.round.layers.length)
 
         const positionLineWidth = 16
