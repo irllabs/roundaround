@@ -169,6 +169,7 @@ class Firebase {
     }
 
     createRound = async (roundId, data) => {
+        console.log('createRound()', roundId, data);
         return new Promise(async (resolve, reject) => {
             let round = _.cloneDeep(data)
             const layers = [...round.layers]

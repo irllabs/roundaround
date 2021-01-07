@@ -52,7 +52,6 @@ class CollaborationRoute extends React.Component {
 
         this.finishBringRoundDialog = this.finishBringRoundDialog.bind(this);
         this.updateBringRoundConfig = this.updateBringRoundConfig.bind(this);
-        this.handleLocalRoundUpdate = this.handleLocalRoundUpdate.bind(this);
         this.reloadCollaborationLayers = this.reloadCollaborationLayers.bind(this)
         this.throttleLock = null;
         this.rounChangeFromBackend = false;
@@ -64,6 +63,7 @@ class CollaborationRoute extends React.Component {
     }
 
     componentDidMount () {
+        // console.log('CollaborationRoute::componentDidMount()', this.state.toneActivated);
         this.firebase = this.context;
         if (this.state.toneActivated) {
             this.initiateCollaboration();
@@ -74,26 +74,93 @@ class CollaborationRoute extends React.Component {
 
     async initiateCollaboration () {
         const { id } = this.props.match.params;
+        const _this = this;
+        // console.log('CollaborationRoute::initiateCollaboration()', id);
+
+        const collaboration = await this.firebase.getCollaboration(id)
+
+        // offer to bring round
+        if (
+            this.props.user.email &&
+            collaboration.creator !== this.props.user.id &&
+            !collaboration.contributors[this.props.user.id]) {
+            this.setState({ bringRoundsDialogOpened: true });
+        }
+
+        this.props.setCollaboration(collaboration);
+        if (this.props.user.id && _.isNil(collaboration.contributors[this.props.user.id])) {
+            this.updateUserInContributors();
+        }
+        // console.log('got collaboration', collaboration);
+
+        let derivativeRound;
+        if (_.isNil(collaboration.derivative)) {
+            derivativeRound = await this.createDerivative(collaboration.round)
+        } else {
+            derivativeRound = await this.firebase.getRound(collaboration.derivative)
+        }
+        // console.log('loading derivativeRound', derivativeRound);
+        this.props.setRoundData(derivativeRound)
 
         // listen for collaboration changes
         this.firebase.db.collection('collaborations').doc(id).onSnapshot((doc) => {
             const collaboration = { id: doc.id, ...doc.data() };
-            this.props.setCollaboration(collaboration);
+            if (_this.state.isOn !== collaboration.isPlaying) {
+                this.togglePlay();
+            }
+            if (_this.state)
+                this.props.setCollaboration(collaboration);
         })
 
+        //listen for round and layers changes
+        this.addRoundChangeListener(derivativeRound.id)
+        this.addLayersChangeListener(derivativeRound.id)
+
         this.props.toggleLoader(false);
+
+
+    }
+
+    async createDerivative (roundId) {
+        // console.log('createDerivative()', roundId, this.props.collaboration);
+        return new Promise(async (resolve, reject) => {
+            const round = await this.firebase.getRound(roundId)
+            const derivativeId = uuid();
+            await this.firebase.createRound(derivativeId, { ...round, id: derivativeId })
+            const derivativeRound = this.firebase.getRound(derivativeId)
+            //console.log('created derivative round', derivativeRound);
+            const collaboration = { ...this.props.collaboration, derivative: derivativeId };
+            await this.firebase.updateCollaboration(collaboration.id, collaboration);
+            this.props.setCollaboration(collaboration);
+            resolve(derivativeRound)
+        })
+    }
+
+    async addDerivative () {
+        //  console.log('addDerivative()');
+        const derivativeId = uuid();
+        const derivedRound = { ...this.props.round, id: derivativeId };
+        const round = await this.firebase.createRound(derivativeId, derivedRound)
+
+        const collaboration = { ...this.props.collaboration, derivative: derivativeId };
+        await this.firebase.updateCollaboration(collaboration.id, collaboration);
+        this.props.setCollaboration(collaboration);
+
+        console.log('loadRound 2');
+        this.loadRound(round)
+
     }
 
     loadRound (round) {
-        //  console.log('loadRound', round);
+        console.log('loadRound', round);
         this.addRoundChangeListener(round.id)
         this.addLayersChangeListener(round.id)
-        this.props.setRoundData(round)
+        //this.props.setRoundData(round)
     }
 
     addRoundChangeListener (roundId) {
         this.firebase.db.collection('rounds').doc(roundId).onSnapshot(async (doc) => {
-            //   console.log('### round change listener fired');
+            console.log('### round change listener fired');
         })
     }
 
@@ -153,7 +220,7 @@ class CollaborationRoute extends React.Component {
     // if any of the subcollections for a collaboration user change, trigger a (throttled) reload of all collaboration layers as there could be multiple changes
     // to do: maybe add an id to the query to make sure we don't overwrite the local round with an await result that comes in late
     async reloadCollaborationLayers () {
-        //  console.log('reloadCollaborationLayers()');
+        console.log('reloadCollaborationLayers()');
         const _this = this;
         const newRound = await this.firebase.getRound(this.props.round.id)
         const newLayers = _.filter(newRound.layers, (layer) => {
@@ -173,89 +240,26 @@ class CollaborationRoute extends React.Component {
         }
     }
 
-    throttle (changes) {
-        // removing last editor info, not needed?
-        delete changes.lastEdition
-        delete changes.lastEditor
-
-        this.throttleLock = true;
-        setTimeout(() => {
-            const collaboration = this.props.collaboration;
-            const derivative = {
-                ...this.props.round,
-                user: collaboration.creator,
-                id: collaboration.derivative,
-                lastEditor: this.props.user.id
-            };
-
-            //this.firebase.updateRound(collaboration.derivative, changes);
-            // check queue, if queue - self-repeat and eraise queue      
-            if (this.throttleQueue) {
-                this.throttleQueue = 0;
-                this.throttle(changes);
-            } else {
-                this.throttleLock = false;
-            }
-        }, ThrottleDelay)
-    }
-
-    async addDerivative () {
-        const derivativeId = uuid();
-
-        const collaboration = { ...this.props.collaboration, derivative: derivativeId };
-        await this.firebase.updateCollaboration(collaboration.id, collaboration);
-        this.props.setCollaboration(collaboration);
-
-        const derivedRound = { ...this.props.round, id: derivativeId };
-        const round = await this.firebase.createRound(derivativeId, derivedRound)
-        this.loadRound(round)
-    }
-
     updateUserInContributors () {
         const { collaboration, user } = this.props;
         const contributors = { ...collaboration.contributors, [user.id]: { color: user.color } }
+        collaboration.contributors = contributors
+        this.props.setCollaboration(collaboration);
         this.firebase.updateCollaboration(collaboration.id, { contributors })
-    }
-
-    handleLocalRoundUpdate (changes) {
-        //  console.log('handleLocalRoundUpdate()', changes);
-        // don't run compare on changes recieved from backend to avoid infinity updates
-        if (this.rounChangeFromBackend) {
-            this.rounChangeFromBackend = false;
-            return;
-        }
-        if (_.isEmpty(changes)) return;
-
-        const { collaboration, user } = this.props;
-
-        if (collaboration.derivative) {
-            if (this.throttleLock) {
-                this.throttleQueue = 1;
-                return;
-            } else {
-                //execute throttle
-                this.throttle(changes);
-            }
-        } else {
-            //   console.log('no derivative, adding...');
-            this.addDerivative()
-        }
-
-        if (user.id && !collaboration.contributors[user.id]) {
-            this.updateUserInContributors();
-        }
     }
 
     async initialSetup () {
         const { collaboration, user } = this.props;
+        console.log('initialSetup()', collaboration.derivative);
         let round;
-        if (collaboration.derivative) {
-            round = await this.firebase.getRound(collaboration.round);
+        if (!_.isNil(collaboration.derivative)) {
+            round = await this.firebase.getRound(collaboration.derivative);
         } else {
             await this.addDerivative()
 
             //round = await this.firebase.createRound(collaboration.round);
         }
+        console.log('loadRound 3');
         this.loadRound(round)
 
         // offer to bring round
@@ -272,40 +276,11 @@ class CollaborationRoute extends React.Component {
         }
     }
 
-    async handleCollabChanges (changes) {
-        if (_.isEmpty(changes)) return;
-
-        if ('isPlaying' in changes && this.state.isOn !== changes.isPlaying) {
-            this.togglePlay();
-        }
-
-        // first call
-        if (!this.props.round) {
-            this.initialSetup()
-        } else if ('derivative' in changes) {
-            const round = await this.firebase.getRound(changes.derivative)
-            this.loadRound(round)
-        }
-    }
-
-    handleUserChanges (changes) {
-        if (_.isEmpty(changes)) return;
-
-        if ('color' in changes) {
+    async componentDidUpdate (prevProps) {
+        const userDifference = diff(prevProps.user, this.props.user);
+        if ('color' in userDifference) {
             this.updateUserInContributors();
         }
-    }
-
-    async componentDidUpdate (prevProps) {
-        const roundDifference = diff(prevProps.round, this.props.round);
-        const userDifference = diff(prevProps.user, this.props.user);
-        const collabDifference = diff(prevProps.collaboration, this.props.collaboration);
-
-        // console.log('collaboration::componentDidUpdate()', roundDifference, userDifference, collabDifference);
-
-        this.handleLocalRoundUpdate(roundDifference);
-        this.handleUserChanges(userDifference);
-        this.handleCollabChanges(collabDifference);
     }
 
     async updatePlayStatus (isPlaying) {
