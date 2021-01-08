@@ -9,7 +9,7 @@ import { connect } from "react-redux";
 import AudioEngine from '../../audio-engine/AudioEngine'
 import Instruments from '../../audio-engine/Instruments'
 import { getDefaultLayerData } from '../../utils/dummyData';
-import { TOGGLE_STEP, ADD_LAYER, SET_STEP_PROBABILITY, SET_STEP_VELOCITY, SET_SELECTED_LAYER_ID, SET_IS_SHOWING_LAYER_SETTINGS } from '../../redux/actionTypes'
+import { TOGGLE_STEP, ADD_LAYER, SET_STEP_PROBABILITY, SET_STEP_VELOCITY, SET_SELECTED_LAYER_ID, SET_IS_SHOWING_LAYER_SETTINGS, } from '../../redux/actionTypes'
 import { FirebaseContext } from '../../firebase/'
 
 
@@ -28,7 +28,7 @@ class HtmlUi extends Component {
         this.userColors = {};
         this.onWindowResizeThrottled = _.throttle(this.onWindowResize.bind(this), 1000)
         this.selectedLayerId = null;
-
+        this.onKeypress = this.onKeypress.bind(this)
     }
 
     componentDidMount () {
@@ -37,6 +37,7 @@ class HtmlUi extends Component {
         Instruments.init()
         AudioEngine.load(this.props.round)
         window.addEventListener('resize', this.onWindowResizeThrottled)
+        window.addEventListener('keypress', this.onKeypress)
         this.addBackgroundEventListeners()
     }
 
@@ -698,6 +699,12 @@ class HtmlUi extends Component {
                 this.containerHeight
             )
             this.draw()
+        }
+    }
+
+    onKeypress (e) {
+        if (e.key === ' ' && !this.props.disableSpaceListener) {
+            this.props.togglePlay()
         }
     }
 

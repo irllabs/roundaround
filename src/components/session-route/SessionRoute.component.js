@@ -41,7 +41,8 @@ const SessionRoute = ({
   resetRaycasterStore,
   resetCameraStore,
   resetEditingModeStore,
-  resetLoaderStore
+  resetLoaderStore,
+  disableSpaceListener
 }) => {
   const [clockIsRunning, setClockIsRunning] = useState(clock.isRunning);
   const [settingsOpened, setSettingsOpened] = useState(false);
@@ -239,7 +240,7 @@ const SessionRoute = ({
             isOpen={isShowingLayerSettings}
           />
           <div className={styles.mainContainer}>
-            <HtmlUi isOn={clockIsRunning} />
+            <HtmlUi isOn={clockIsRunning} togglePlay={togglePlay} disableSpaceListener={disableSpaceListener} />
             <ControlsBar
               user={firebase.currentUser}
               isOn={clockIsRunning}
@@ -298,7 +299,8 @@ const SessionRoute = ({
 const mapStateToProps = state => {
   return {
     round: state.round,
-    rounds: state.rounds
+    rounds: state.rounds,
+    disableSpaceListener: state.display.disableSpaceListener
   };
 };
 

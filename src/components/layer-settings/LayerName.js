@@ -2,7 +2,7 @@ import React, { useState, useCallback, useEffect } from 'react'
 import TextField from '@material-ui/core/TextField';
 import _ from 'lodash'
 import { connect, ReactReduxContext, Provider, useDispatch } from "react-redux";
-import { SET_LAYER_NAME } from '../../redux/actionTypes'
+import { SET_LAYER_NAME, SET_DISABLE_SPACE_LISTENER } from '../../redux/actionTypes'
 
 export default function LayerName ({ selectedLayer, user }) {
     const dispatch = useDispatch();
@@ -17,6 +17,12 @@ export default function LayerName ({ selectedLayer, user }) {
         setTextValue(e.target.value)
         updateLayerNameStateThrottled(e.target.value, selectedLayer.id)
     }
+    const onFocus = (e) => {
+        dispatch({ type: SET_DISABLE_SPACE_LISTENER, payload: { value: true } })
+    }
+    const onLoseFocus = (e) => {
+        dispatch({ type: SET_DISABLE_SPACE_LISTENER, payload: { value: false } })
+    }
 
     useEffect(() => {
         //console.log('selectedLayer.id changed', selectedLayer.id, selectedLayer.instrument.gain);
@@ -24,7 +30,7 @@ export default function LayerName ({ selectedLayer, user }) {
     }, [selectedLayer.id])
     return (
         <div>
-            <TextField id="standard-basic" value={textValue || ''} onChange={onTextChange} />
+            <TextField id="standard-basic" value={textValue || ''} onChange={onTextChange} onFocus={onFocus} onBlur={onLoseFocus} />
         </div>
     )
 }
