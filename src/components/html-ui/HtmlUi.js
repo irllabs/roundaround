@@ -4,7 +4,7 @@ import Hammer from 'hammerjs'
 import './HtmlUi.scss'
 import { SVG } from '@svgdotjs/svg.js'
 import '@svgdotjs/svg.panzoom.js'
-import { HTML_UI_Params } from '../../constants'
+import { HTML_UI_Params, KEY_MAPPINGS } from '../../constants'
 import { connect } from "react-redux";
 import AudioEngine from '../../audio-engine/AudioEngine'
 import Instruments from '../../audio-engine/Instruments'
@@ -703,7 +703,7 @@ class HtmlUi extends Component {
     }
 
     onKeypress (e) {
-        if (e.key === ' ' && !this.props.disableSpaceListener) {
+        if (e.key === KEY_MAPPINGS.playToggle && !this.props.disableKeyListener) {
             this.props.togglePlay()
         }
     }

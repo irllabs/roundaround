@@ -384,7 +384,7 @@ class CollaborationRoute extends React.Component {
                         <div
                             className={styles.mainContainer}
                         >
-                            <HtmlUi isOn={this.state.isOn} togglePlay={this.togglePlay} disableSpaceListener={this.props.disableSpaceListener} />
+                            <HtmlUi isOn={this.state.isOn} togglePlay={this.togglePlay} disableKeyListener={this.props.disableKeyListener} />
                             <ControlsBar
                                 user={this.firebase ? this.firebase.currentUser : {}}
                                 mode="collaboration"
@@ -409,7 +409,7 @@ const mapStateToProps = state => {
         round: state.round,
         user: state.user,
         collaboration: state.collaboration,
-        disableSpaceListener: state.display.disableSpaceListener
+        disableKeyListener: state.display.disableKeyListener
     };
 };
 

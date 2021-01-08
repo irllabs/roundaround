@@ -1,7 +1,7 @@
 import {
     SET_SELECTED_LAYER_ID,
     SET_IS_SHOWING_LAYER_SETTINGS,
-    SET_DISABLE_SPACE_LISTENER
+    SET_DISABLE_KEY_LISTENER
 } from "../actionTypes";
 import update from 'immutability-helper';
 
@@ -23,9 +23,9 @@ export default function (state = initialState, action) {
                 isShowingLayerSettings: { $set: action.payload.value }
             })
         }
-        case SET_DISABLE_SPACE_LISTENER: {
+        case SET_DISABLE_KEY_LISTENER: {
             return update(state, {
-                disableSpaceListener: { $set: action.payload.value }
+                disableKeyListener: { $set: action.payload.value }
             })
         }
         default:

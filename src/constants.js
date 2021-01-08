@@ -14,6 +14,10 @@ export const HTML_UI_Params = {
     layerStrokeOpacity: 0.3
 }
 
+export const KEY_MAPPINGS = {
+    playToggle: ' '
+}
+
 
 // for change
 export const Layer = {

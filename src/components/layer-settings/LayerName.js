@@ -2,7 +2,7 @@ import React, { useState, useCallback, useEffect } from 'react'
 import TextField from '@material-ui/core/TextField';
 import _ from 'lodash'
 import { connect, ReactReduxContext, Provider, useDispatch } from "react-redux";
-import { SET_LAYER_NAME, SET_DISABLE_SPACE_LISTENER } from '../../redux/actionTypes'
+import { SET_LAYER_NAME, SET_DISABLE_KEY_LISTENER } from '../../redux/actionTypes'
 
 export default function LayerName ({ selectedLayer, user }) {
     const dispatch = useDispatch();
@@ -18,10 +18,10 @@ export default function LayerName ({ selectedLayer, user }) {
         updateLayerNameStateThrottled(e.target.value, selectedLayer.id)
     }
     const onFocus = (e) => {
-        dispatch({ type: SET_DISABLE_SPACE_LISTENER, payload: { value: true } })
+        dispatch({ type: SET_DISABLE_KEY_LISTENER, payload: { value: true } })
     }
     const onLoseFocus = (e) => {
-        dispatch({ type: SET_DISABLE_SPACE_LISTENER, payload: { value: false } })
+        dispatch({ type: SET_DISABLE_KEY_LISTENER, payload: { value: false } })
     }
 
     useEffect(() => {
