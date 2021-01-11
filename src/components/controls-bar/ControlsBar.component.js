@@ -2,6 +2,7 @@ import React, { useRef } from 'react';
 const classNames = require('classnames');
 import styles from './ControlsBar.styles.scss';
 import _ from 'lodash'
+import JitsiComponent from '../jitsi/JitsiComponent';
 
 
 const ControlsBar = ({
@@ -93,6 +94,10 @@ const ControlsBar = ({
                         Project
                     </button>
 
+                }
+                {/*
+                    user &&
+                    <JitsiComponent />*/
                 }
             </div>
         </>

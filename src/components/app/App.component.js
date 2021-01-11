@@ -19,6 +19,7 @@ import ProtectedRoute from './ProtectedRoute.components';
 import SessionRoute from '../session-route/SessionRoute.component';
 import SigninRoute from '../signin-route/SigninRoute.component';
 import CollaborationRoute from '../collaboration/collaboration-route/CollaborationRoute.component';
+import JitsiRoute from '../jitsi/JitsiRoute';
 
 import { FirebaseContext } from '../../firebase';
 
@@ -90,6 +91,7 @@ const App = ({
                         <Route path="/login" render={() => <SigninRoute onRouteReady={onRouteReady} />} />
                         <ProtectedRoute path="/session" authenticated={firebase.currentUser} component={SessionRoute} />
                         <Route path="/collaboration/:id" render={() => <CollaborationRoute />} />
+                        <Route path="/jitsi/:id" render={() => <JitsiRoute />} />
                     </Switch>
                 </Router>
             }
