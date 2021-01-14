@@ -5,6 +5,9 @@
   "targets": {
     "roundaround": {
       "hosting": {
+        "dev": [
+          "roundaround-dev"
+        ],
         "stage": [
           "roundaround-stage"
         ],

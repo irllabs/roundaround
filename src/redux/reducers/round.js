@@ -20,13 +20,15 @@ import {
     SET_LAYER_STEPS,
     SET_ROUND_ID,
     RESET_ROUND_STORE,
-    UPDATE_STEP
+    UPDATE_STEP,
+    SET_LAYER_TYPE,
+    UPDATE_LAYER_AUTOMATION_FX_ID
 } from "../actionTypes";
 import update from 'immutability-helper';
 import _ from 'lodash'
 
 const initialState = null;
-const updateStepProperty = (state, name, value, layerId, stepId, user) => {
+const updateStepProperty = (state, name, value, layerId, stepId) => {
     const layerIndex = _.findIndex(state.layers, { id: layerId })
     const layer = _.find(state.layers, { id: layerId })
     const stepIndex = _.findIndex(layer.steps, { id: stepId })
@@ -57,7 +59,7 @@ export default function (state = initialState, action) {
             return data;
         }
         case UPDATE_STEP: {
-            const { step, layerId, stepId, user } = action.payload;
+            const { step, layerId, stepId } = action.payload;
             const layerIndex = _.findIndex(state.layers, { id: layerId })
             const layer = _.find(state.layers, { id: layerId })
             const stepIndex = _.findIndex(layer.steps, { id: stepId })
@@ -74,7 +76,7 @@ export default function (state = initialState, action) {
             });
         }
         case ADD_STEP: {
-            const { layerId, step, user } = action.payload;
+            const { layerId, step } = action.payload;
             const layerIndex = _.findIndex(state.layers, { id: layerId })
             return update(state, {
                 layers: {
@@ -87,7 +89,7 @@ export default function (state = initialState, action) {
             })
         }
         case REMOVE_STEP: {
-            const { layerId, stepId, user } = action.payload;
+            const { layerId, stepId } = action.payload;
             const layerIndex = _.findIndex(state.layers, { id: layerId })
             const layer = _.find(state.layers, { id: layerId })
             const stepIndex = _.findIndex(layer.steps, { id: stepId })
@@ -102,23 +104,23 @@ export default function (state = initialState, action) {
             })
         }
         case TOGGLE_STEP: {
-            const { layerId, stepId, isOn, user } = action.payload;
-            return updateStepProperty(state, 'isOn', isOn, layerId, stepId, user);
+            const { layerId, stepId, isOn } = action.payload;
+            return updateStepProperty(state, 'isOn', isOn, layerId, stepId);
         }
         case SET_STEP_VELOCITY: {
-            const { layerId, stepId, velocity, user } = action.payload;
-            return updateStepProperty(state, 'velocity', velocity, layerId, stepId, user);
+            const { layerId, stepId, velocity } = action.payload;
+            return updateStepProperty(state, 'velocity', velocity, layerId, stepId);
         }
         case SET_STEP_PROBABILITY: {
-            const { layerId, stepId, probability, user } = action.payload;
-            return updateStepProperty(state, 'probability', probability, layerId, stepId, user);
+            const { layerId, stepId, probability } = action.payload;
+            return updateStepProperty(state, 'probability', probability, layerId, stepId);
         }
         case SET_STEP_NOTE: {
-            const { layerId, stepId, note, user } = action.payload;
-            return updateStepProperty(state, 'note', note, layerId, stepId, user);
+            const { layerId, stepId, note } = action.payload;
+            return updateStepProperty(state, 'note', note, layerId, stepId);
         }
         case TOGGLE_LAYER: {
-            const { isActive, id, user } = action.payload;
+            const { isActive, id } = action.payload;
             const layerIndex = _.findIndex(state.layers, { id })
             return update(state, {
                 layers: {
@@ -131,7 +133,7 @@ export default function (state = initialState, action) {
             })
         }
         case SET_LAYER_STEPS: {
-            const { id, steps, user } = action.payload;
+            const { id, steps } = action.payload;
             const layerIndex = _.findIndex(state.layers, { id })
             return update(state, {
                 layers: {
@@ -144,7 +146,7 @@ export default function (state = initialState, action) {
             })
         }
         case SET_LAYER_NAME: {
-            const { id, name, user } = action.payload;
+            const { id, name } = action.payload;
             const layerIndex = _.findIndex(state.layers, { id })
             return update(state, {
                 layers: {
@@ -156,8 +158,34 @@ export default function (state = initialState, action) {
                 }
             })
         }
+        case SET_LAYER_TYPE: {
+            const { id, value } = action.payload;
+            const layerIndex = _.findIndex(state.layers, { id })
+            return update(state, {
+                layers: {
+                    [layerIndex]: {
+                        type: {
+                            $set: value
+                        }
+                    }
+                }
+            })
+        }
+        case UPDATE_LAYER_AUTOMATION_FX_ID: {
+            const { id, value } = action.payload;
+            const layerIndex = _.findIndex(state.layers, { id })
+            return update(state, {
+                layers: {
+                    [layerIndex]: {
+                        automationFxId: {
+                            $set: value
+                        }
+                    }
+                }
+            })
+        }
         case SET_LAYER_GAIN: {
-            const { id, value, user } = action.payload;
+            const { id, value } = action.payload;
             const layerIndex = _.findIndex(state.layers, { id })
             return update(state, {
                 layers: {
@@ -170,7 +198,7 @@ export default function (state = initialState, action) {
             })
         }
         case SET_LAYER_PREVIEW: {
-            const { id, value, user } = action.payload;
+            const { id, value } = action.payload;
             const layerIndex = _.findIndex(state.layers, { id })
             return update(state, {
                 layers: {
@@ -185,7 +213,7 @@ export default function (state = initialState, action) {
             })
         }
         case SET_LAYER_MUTE: {
-            const { id, value, user } = action.payload;
+            const { id, value } = action.payload;
             const layerIndex = _.findIndex(state.layers, { id })
             return update(state, {
                 layers: {
@@ -200,7 +228,7 @@ export default function (state = initialState, action) {
             })
         }
         case UPDATE_LAYER_INSTRUMENT: {
-            const { id, instrument, user } = action.payload;
+            const { id, instrument } = action.payload;
             const layerIndex = _.findIndex(state.layers, { id })
             return update(state, {
                 layers: {
@@ -213,7 +241,7 @@ export default function (state = initialState, action) {
             })
         }
         case ADD_LAYER: {
-            const { layer, user } = action.payload;
+            const { layer } = action.payload;
             return update(state, {
                 layers: {
                     $push: [layer]
@@ -221,7 +249,7 @@ export default function (state = initialState, action) {
             })
         }
         case REMOVE_LAYER: {
-            const { id, user } = action.payload;
+            const { id } = action.payload;
             const layerIndex = _.findIndex(state.layers, { id })
             return update(state, {
                 layers: {
@@ -238,7 +266,7 @@ export default function (state = initialState, action) {
             })
         }
         case SET_ROUND_NAME: {
-            const { name, user } = action.payload;
+            const { name } = action.payload;
             return update(state, {
                 name: {
                     $set: name
@@ -246,7 +274,7 @@ export default function (state = initialState, action) {
             })
         }
         case SET_ROUND_BPM: {
-            const { bpm, user } = action.payload;
+            const { bpm } = action.payload;
             return update(state, {
                 bpm: {
                     $set: bpm

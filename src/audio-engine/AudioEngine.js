@@ -6,6 +6,7 @@ const AudioEngine = {
     tracks: [],
     tracksById: {},
     tracksByType: {},
+    busesByUser: {},
     master: null,
     init () {
         this.master = new Track({
@@ -14,12 +15,20 @@ const AudioEngine = {
         this.master.buildAudioChain()
     },
     async load (round) {
-        //console.log('audio engine loading round', round);
+        console.log('audio engine loading round', round);
         this.reset()
+        await this.addUser(round.user, round.userBusFx[round.user])
+        console.log('added user bus', this.busesByUser);
         for (const layer of round.layers) {
-            const track = await this.createTrack(layer, Track.TRACK_TYPE_LAYER)
+            const track = await this.createTrack(layer)
             await track.load(layer)
         }
+    },
+    async addUser (userId, userFx) {
+        console.log('addUser()', userId);
+        const userBus = await this.createTrack({ fx: userFx, id: userId, creator: userId, type: Track.TRACK_TYPE_USER })
+        //userBus.buildAudioChain()
+        this.busesByUser[userId] = userBus;
     },
     play () {
         Tone.Transport.start("+0.1");
@@ -35,11 +44,13 @@ const AudioEngine = {
         }
     },
     createTrack (trackParameters) {
-        //console.log('createTrack', trackParameters);
+        const userId = trackParameters.creator
+        const type = trackParameters.type
+        console.log('createTrack', trackParameters, userId, type);
         //  console.time('createTrack')
         let _this = this
         return new Promise(async function (resolve, reject) {
-            let track = new Track(trackParameters)
+            let track = new Track(trackParameters, type, userId)
             _this.tracks.push(track)
             _this.tracksById[track.id] = track
             if (_.isNil(_this.tracksByType[track.type])) {
@@ -47,9 +58,11 @@ const AudioEngine = {
             }
             _this.tracksByType[track.type].push(track)
 
-            await _this.tracksById[track.id].setInstrument(
-                trackParameters.instrument
-            )
+            if (type === Track.TRACK_TYPE_LAYER) {
+                await _this.tracksById[track.id].setInstrument(
+                    trackParameters.instrument
+                )
+            }
 
             // console.timeEnd('createTrack')
             resolve(track)

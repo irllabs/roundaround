@@ -17,6 +17,7 @@ import HtmlUi from '../html-ui/HtmlUi';
 import LayerSettings from '../layer-settings/LayerSettings'
 import _ from 'lodash'
 import { removeOldRounds } from '../../utils/index'
+import EffectsSidebar from '../effects-sidebar/EffectsSidebar';
 
 function usePrevious (value) {
   const ref = useRef();
@@ -251,6 +252,7 @@ const SessionRoute = ({
               toggleSidebar={toggleSidebar}
             />
           </div>
+          <EffectsSidebar />
           <LinkGenerator
             sharing={sharingLink}
             toggleSharing={toggleSharing}

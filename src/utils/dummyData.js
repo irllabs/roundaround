@@ -1,5 +1,6 @@
 import { Layer } from '../constants';
 import { uuid } from '../models/SequencerUtil';
+import Track from '../audio-engine/Track'
 
 export const refrashAllIdsInArray = (array) => {
     return array.map(item => ({ ...item, id: uuid() }))
@@ -20,6 +21,7 @@ export const getDefaultLayerData = (userId, instrument) => {
         "id": uuid(),
         "creator": userId || null,
         "name": "",
+        "type": Track.TRACK_TYPE_LAYER,
         "isActive": true,
         "isMuted": false,
         "isPreviewed": false,
@@ -64,8 +66,10 @@ export const getDefaultRoundData = (userId) => {
                 "sampler": "HitHatOpen",
                 "sample": "oh03",
             }),
-        ]
+        ],
+        userBusFx: {}
     }
+    round.userBusFx[userId] = getDefaultUserBusFx()
     // increase each layer createdAt time by 1 ms so they're not equal
     let i = 0
     round.layers.map((layer) => {
@@ -73,4 +77,50 @@ export const getDefaultRoundData = (userId) => {
         layer.createdAt += i++
     })
     return round
+}
+
+export const getDefaultUserBusFx = () => {
+    return [
+        {
+            "id": uuid(),
+            name: 'autowah',
+            order: 0,
+            isOn: true
+        },
+        {
+            "id": uuid(),
+            name: 'lowpass',
+            order: 1,
+            isOn: true
+        },
+        {
+            "id": uuid(),
+            name: 'highpass',
+            order: 2,
+            isOn: true
+        },
+        {
+            "id": uuid(),
+            name: 'delay',
+            order: 3,
+            isOn: true
+        },
+        {
+            "id": uuid(),
+            name: 'distortion',
+            order: 4,
+            isOn: true
+        },
+        {
+            "id": uuid(),
+            name: 'bitcrusher',
+            order: 5,
+            isOn: true
+        }, {
+            "id": uuid(),
+            name: 'reverb',
+            order: 6,
+            isOn: true
+        }
+    ]
 }

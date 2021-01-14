@@ -24,6 +24,9 @@ import LayerName from './LayerName'
 import LayerInstrument from './LayerInstrument'
 import LayerNumberOfSteps from './LayerNumberOfSteps'
 import { FirebaseContext } from '../../firebase';
+import LayerType from './LayerType';
+import LayerAutomation from './LayerAutomation';
+import Track from '../../audio-engine/Track'
 
 
 class LayerSettings extends Component {
@@ -54,23 +57,37 @@ class LayerSettings extends Component {
 
 
     render () {
-        //  console.log('Layer settings render()');
+        console.log('Layer settings render()', this.props.user);
+        const selectedLayer = this.props.selectedLayer
         let layerVolumePercent = 80;
         let form = '';
-        if (!_.isNil(this.props.selectedLayer)) {
-            layerVolumePercent = convertDBToPercent(this.props.selectedLayer.instrument.gain)
-            form = (
-                <Box display="flex" flexDirection="column" justifyContent="space-evenly" height="100%" alignItems="center">
-                    <LayerName selectedLayer={this.props.selectedLayer} roundId={this.props.round.id} user={this.props.user} />
-                    <LayerInstrument selectedLayer={this.props.selectedLayer} roundId={this.props.round.id} user={this.props.user} />
-                    <LayerNumberOfSteps selectedLayer={this.props.selectedLayer} roundId={this.props.round.id} user={this.props.user} />
-                    <div className={`${styles.layerSettingsVolumeSlider}`}>
-                        <VolumeSlider selectedLayer={this.props.selectedLayer} roundId={this.props.round.id} user={this.props.user} />
-                    </div>
-                    <Box display="flex" justifyContent="space-evenly">
+        if (!_.isNil(selectedLayer)) {
+            layerVolumePercent = convertDBToPercent(selectedLayer.instrument.gain)
+            let layerTypeFormItems;
+            if (selectedLayer.type === Track.TRACK_TYPE_AUTOMATION) {
+                layerTypeFormItems = (
+                    <LayerAutomation selectedLayer={selectedLayer} roundId={this.props.round.id} userId={this.props.user.id} />
+                )
+            } else {
+                layerTypeFormItems = (
+                    <>
+                        <LayerInstrument selectedLayer={selectedLayer} roundId={this.props.round.id} user={this.props.user} />
+                        <div className={`${styles.layerSettingsVolumeSlider}`}>
+                            <VolumeSlider selectedLayer={selectedLayer} roundId={this.props.round.id} user={this.props.user} />
+                        </div>
+                        <Box display="flex" justifyContent="space-evenly">
 
-                        <Button onClick={this.onMuteClick.bind(this)} variant={this.props.selectedLayer.instrument.isMuted ? 'contained' : 'outlined'} disableElevation>Mute</Button>
-                    </Box>
+                            <Button onClick={this.onMuteClick.bind(this)} variant={selectedLayer.instrument.isMuted ? 'contained' : 'outlined'} disableElevation>Mute</Button>
+                        </Box>
+                    </>
+                )
+            }
+            form = (
+                <Box display="flex" flexDirection="column" height="100%" alignItems="center" style={{ gap: '1rem' }}>
+                    <LayerName selectedLayer={selectedLayer} roundId={this.props.round.id} user={this.props.user} />
+                    <LayerType selectedLayer={selectedLayer} roundId={this.props.round.id} userId={this.props.user.id} />
+                    <LayerNumberOfSteps selectedLayer={selectedLayer} roundId={this.props.round.id} user={this.props.user} />
+                    {layerTypeFormItems}
                     <Button onClick={this.onDeleteLayerClick.bind(this)} variant="outlined" disableElevation>Delete layer</Button>
                 </Box>
             )

@@ -33,6 +33,7 @@ import { FirebaseContext } from '../../../firebase';
 import styles from './CollaborationRoute.styles.scss';
 import HtmlUi from '../../html-ui/HtmlUi';
 import LayerSettings from '../../layer-settings/LayerSettings'
+import EffectsSidebar from '../../effects-sidebar/EffectsSidebar'
 
 class CollaborationRoute extends React.Component {
     static contextType = FirebaseContext;
@@ -378,9 +379,7 @@ class CollaborationRoute extends React.Component {
                 {
                     this.props.round && this.state.toneActivated &&
                     <>
-                        <LayerSettings
-
-                        />
+                        <LayerSettings />
                         <div
                             className={styles.mainContainer}
                         >
@@ -397,6 +396,7 @@ class CollaborationRoute extends React.Component {
                             />
 
                         </div>
+                        <EffectsSidebar />
                     </>
                 }
             </>

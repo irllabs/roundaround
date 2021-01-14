@@ -1,6 +1,5 @@
 import React, { Component, useContext } from 'react';
 import * as _ from 'lodash';
-import Hammer from 'hammerjs'
 import './HtmlUi.scss'
 import { SVG } from '@svgdotjs/svg.js'
 import '@svgdotjs/svg.panzoom.js'
@@ -8,6 +7,7 @@ import { HTML_UI_Params, KEY_MAPPINGS } from '../../constants'
 import { connect } from "react-redux";
 import AudioEngine from '../../audio-engine/AudioEngine'
 import Instruments from '../../audio-engine/Instruments'
+import FX from '../../audio-engine/FX'
 import { getDefaultLayerData } from '../../utils/dummyData';
 import { TOGGLE_STEP, ADD_LAYER, SET_STEP_PROBABILITY, SET_STEP_VELOCITY, SET_SELECTED_LAYER_ID, SET_IS_SHOWING_LAYER_SETTINGS, } from '../../redux/actionTypes'
 import { FirebaseContext } from '../../firebase/'
@@ -35,6 +35,7 @@ class HtmlUi extends Component {
         this.createRound()
         AudioEngine.init()
         Instruments.init()
+        FX.init()
         AudioEngine.load(this.props.round)
         window.addEventListener('resize', this.onWindowResizeThrottled)
         window.addEventListener('keypress', this.onKeypress)
@@ -181,12 +182,22 @@ class HtmlUi extends Component {
             }
         }
 
-        // Check for instrument changes
+        // Check for layer type or instrument changes
         for (let layer of this.round.layers) {
             let newLayer = _.find(this.props.round.layers, { id: layer.id })
             if (!_.isNil(newLayer) && !_.isEqual(layer.instrument, newLayer.instrument)) {
                 // instrument has changed
                 AudioEngine.tracksById[newLayer.id].setInstrument(newLayer.instrument)
+            }
+            if (!_.isNil(newLayer) && !_.isEqual(layer.type, newLayer.type)) {
+                // type has changed
+                console.log('layer type has changed');
+                AudioEngine.tracksById[newLayer.id].setType(newLayer.type, newLayer.automationFxId)
+            }
+            if (!_.isNil(newLayer) && !_.isEqual(layer.automationFxId, newLayer.automationFxId)) {
+                // automation has changed
+                console.log('layer automation fx id has changed');
+                AudioEngine.tracksById[newLayer.id].setAutomatedFx(newLayer.automationFxId)
             }
         }
         // Check for gain changes

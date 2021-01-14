@@ -1,5 +1,20 @@
 {
-  "hosting": [{
+  "hosting": [
+    {
+    "target":"dev",
+    "public": "public",
+    "ignore": [
+      "firebase.json",
+      "**/.*",
+      "**/node_modules/**"
+    ],
+    "rewrites": [
+      {
+        "source": "**",
+        "destination": "/index.html"
+      }
+    ]
+  },{
     "target":"stage",
     "public": "public",
     "ignore": [

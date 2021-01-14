@@ -26,8 +26,6 @@ import { FirebaseContext } from '../../firebase';
 import styles from './App.styles.scss';
 import '../../styles/baseStyles.scss';
 
-import AudioEngine from '../../audio-engine/AudioEngine'
-
 const App = ({
     loaderActive,
     toggleLoader,
