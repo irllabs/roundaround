@@ -57,7 +57,7 @@ class LayerSettings extends Component {
 
 
     render () {
-        console.log('Layer settings render()', this.props.user);
+        // console.log('Layer settings render()', this.props.user);
         const selectedLayer = this.props.selectedLayer
         let layerVolumePercent = 80;
         let form = '';

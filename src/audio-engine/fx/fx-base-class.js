@@ -11,6 +11,7 @@ export default class FXBaseClass {
         this._override = false // if true will switch fx on and ignore other calls to switch it off (from automation)
     }
     dispose () {
+        console.log('FX dispose()');
         if (!_.isNil(this.fx) && !_.isNil(this.fx._context)) {
             this.fx.dispose()
         }

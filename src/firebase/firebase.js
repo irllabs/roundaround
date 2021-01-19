@@ -55,13 +55,14 @@ class Firebase {
 
     // *** Firebase API ***
     getRound = async (roundId) => {
-        // console.log('getRound', roundId);
+        console.log('getRound', roundId);
         return new Promise(async (resolve, reject) => {
             try {
                 const roundSnapshot = await this.db.collection('rounds').doc(roundId).get()
                 const round = { id: roundSnapshot.id, ...roundSnapshot.data(), layers: [] }
                 round.layers = await this.getLayers(roundId)
-                //  console.log('got round', round);
+                round.userBuses = await this.getUserBuses(roundId)
+                console.log('got round', round);
                 resolve(round)
             } catch (e) {
                 console.error(e)
@@ -125,6 +126,29 @@ class Firebase {
             }
         })
     }
+    getUserBuses = async (roundId) => {
+        return new Promise(async (resolve, reject) => {
+            let userBuses = {}
+            try {
+                const userBusesSnapshot = await this.db
+                    .collection("rounds")
+                    .doc(roundId)
+                    .collection('userBuses')
+                    .get();
+                userBusesSnapshot.forEach(userBusDoc => {
+                    let userBus = userBusDoc.data();
+                    userBus.id = userBusDoc.id;
+                    userBuses[userBus.id] = userBus;
+                })
+                resolve(userBuses)
+            }
+            catch (e) {
+                console.error(e)
+                reject(e)
+            }
+        })
+    }
+
 
     setSteps = async (roundId, layerId, steps) => {
         // first delete the current steps in the db
@@ -174,12 +198,21 @@ class Firebase {
             let round = _.cloneDeep(data)
             const layers = [...round.layers]
             delete round.layers
+            const userBuses = []
+            for (const [userId, userBus] of Object.entries(round.userBuses)) {
+                userBus.id = userId
+                userBuses.push(userBus)
+            }
+            delete round.userBuses
             try {
                 await this.db.collection('rounds')
                     .doc(roundId)
                     .set(round)
                 for (const layer of layers) {
                     await this.createLayer(roundId, layer)
+                }
+                for (const userBus of userBuses) {
+                    await this.createUserBus(roundId, userBus.id, userBus)
                 }
                 resolve(round)
             } catch (e) {
@@ -235,6 +268,22 @@ class Firebase {
         })
     }
 
+    createUserBus = async (roundId, id, userBus) => {
+        return new Promise(async (resolve, reject) => {
+            try {
+                delete userBus.id
+                await this.db.collection('rounds')
+                    .doc(roundId)
+                    .collection('userBuses')
+                    .doc(id)
+                    .set(userBus)
+                resolve()
+            } catch (e) {
+                console.error(e)
+            }
+        })
+    }
+
     updateRound = async (roundId, data) => {
         //console.log('updateRound', roundId, data)
         try {
@@ -271,6 +320,22 @@ class Firebase {
         } catch (e) {
             console.error(e)
         }
+    }
+
+    updateUserBus = async (roundId, userId, userBus) => {
+        console.log('firebase::updateUserBus()', roundId, userId, userBus);
+        return new Promise(async (resolve, reject) => {
+            try {
+                await this.db.collection('rounds')
+                    .doc(roundId)
+                    .collection('userBuses')
+                    .doc(userId)
+                    .set(userBus, { merge: true })
+                resolve()
+            } catch (e) {
+                console.error(e)
+            }
+        })
     }
 
     getCollaboration = async (collabId) => {

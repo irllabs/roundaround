@@ -7,50 +7,74 @@ import { DragIndicator } from '@material-ui/icons';
 import EffectThumbControl from './EffectThumbControl';
 import { connect } from "react-redux";
 import AudioEngine from "../../audio-engine/AudioEngine"
+import { SET_USER_BUS_FX_OVERRIDE, SET_USER_BUS_FX } from '../../redux/actionTypes'
+import { FirebaseContext } from '../../firebase';
 
 const DragHandle = sortableHandle(() => <span className={`${styles.effectsSidebarListItemDragHandle}`}><DragIndicator /></span>);
-const SortableItem = sortableElement(({ fx }) => (
+const SortableItem = sortableElement(({ fx, onSwitchOn, onSwitchOff }) => (
     <li className={`${styles.effectsSidebarListItem}`}>
         <DragHandle />
-        <EffectThumbControl label={fx.label} fxId={fx.id} userId={fx.userId} />
+        <EffectThumbControl label={toTitleCase(fx.label)} fxId={fx.id} userId={fx.userId} switchOn={onSwitchOn} switchOff={onSwitchOff} />
     </li>
 ));
 const SortableContainer = sortableContainer(({ children }) => {
     return <ul className={`${styles.effectsSidebarList}`}>{children}</ul>;
 });
 
+const toTitleCase = (str) => {
+    return str.replace(
+        /\w\S*/g,
+        function (txt) {
+            return txt.charAt(0).toUpperCase() + txt.substr(1).toLowerCase();
+        }
+    );
+}
+
 class EffectsSidebar extends Component {
+    static contextType = FirebaseContext;
     constructor (props) {
         super(props)
         this.state = {
             items: []
         }
-        this.effects = [
-            {
-                name: "tape-delay",
-                id: "123-123-123",
-                order: 0,
-                parameters: {
-                    feedback: 0.7,
-                    mix: 0.3,
-                    time: "8n"
-                },
-                isOn: false
-            }
-        ]
+        this.onSwitchOn = this.onSwitchOn.bind(this)
+        this.onSwitchOff = this.onSwitchOff.bind(this)
     }
-    componentDidUpdate () {
-        console.log('EffectsSidebar:componentDidUpdate ()', this.props.round);
-    }
+
     onSortEnd = ({ oldIndex, newIndex }) => {
-        this.setState(({ items }) => ({
+        let userBus = _.cloneDeep(this.props.round.userBuses[this.props.user.id])
+        userBus.fx = arrayMove(userBus.fx, oldIndex, newIndex)
+        for (let i = 0; i < userBus.fx.length; i++) {
+            userBus.fx[i].order = i
+        }
+        this.props.dispatch({ type: SET_USER_BUS_FX, payload: { userId: this.props.user.id, data: userBus.fx } })
+        AudioEngine.busesByUser[this.props.user.id].setFxOrder(userBus.fx)
+        this.context.updateUserBus(this.props.round.id, this.props.user.id, userBus)
+
+        /*this.setState(({ items }) => ({
             items: arrayMove(items, oldIndex, newIndex),
-        }));
+        }));*/
     };
+    onSwitchOn (fxId) {
+        AudioEngine.busesByUser[this.props.user.id].fx[fxId].override = true
+        this.props.dispatch({ type: SET_USER_BUS_FX_OVERRIDE, payload: { fxId, userId: this.props.user.id, value: true } })
+        let userBus = _.cloneDeep(this.props.round.userBuses[this.props.user.id])
+        let fx = _.find(userBus.fx, { id: fxId })
+        fx.isOverride = true
+        this.context.updateUserBus(this.props.round.id, this.props.user.id, userBus)
+    }
+    onSwitchOff (fxId) {
+        AudioEngine.busesByUser[this.props.user.id].fx[fxId].override = false
+        this.props.dispatch({ type: SET_USER_BUS_FX_OVERRIDE, payload: { fxId, userId: this.props.user.id, value: false } })
+        let userBus = _.cloneDeep(this.props.round.userBuses[this.props.user.id])
+        let fx = _.find(userBus.fx, { id: fxId })
+        fx.isOverride = false
+        this.context.updateUserBus(this.props.round.id, this.props.user.id, userBus)
+    }
     render () {
         let items = []
-        if (!_.isNil(this.props.round.userBusFx)) {
-            for (const fx of this.props.round.userBusFx[this.props.user.id]) {
+        if (!_.isNil(this.props.round.userBuses) && !_.isNil(this.props.round.userBuses[this.props.user.id])) {
+            for (const fx of this.props.round.userBuses[this.props.user.id].fx) {
                 let item = {
                     id: fx.id,
                     label: fx.name,
@@ -63,7 +87,7 @@ class EffectsSidebar extends Component {
             <div className={`${styles.effectsSidebar}`}>
                 <SortableContainer onSortEnd={this.onSortEnd} useDragHandle >
                     {items.map((fx, index) => (
-                        <SortableItem key={`item-${fx.id}`} index={index} fx={fx} />
+                        <SortableItem key={`item-${fx.id}`} index={index} fx={fx} onSwitchOff={this.onSwitchOff} onSwitchOn={this.onSwitchOn} />
                     ))}
                 </SortableContainer>
             </div>

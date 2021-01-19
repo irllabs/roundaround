@@ -23,17 +23,18 @@ const Sidebar = ({
 }) => {
   const firebase = useContext(FirebaseContext);
 
-  const onRoundSelect = (event) => {
+  const onRoundSelect = async (event) => {
     const { index, id } = event.target.dataset;
 
     //check if not selected
     if (id !== round.id) {
-      setRoundData(rounds[index]);
+      const selectedRound = await firebase.getRound(id)
+      setRoundData(selectedRound);
       // update ex round in rounds
-      const exRound = rounds.find(item => item.id === round.id);
-      const exRoundIndex = rounds.indexOf(exRound);
-      console.log('update round on round select');
-      updateRound(round, exRoundIndex)
+      //const exRound = rounds.find(item => item.id === round.id);
+      //const exRoundIndex = rounds.indexOf(exRound);
+      // console.log('update round on round select');
+      //updateRound(round, exRoundIndex)
     }
   }
 

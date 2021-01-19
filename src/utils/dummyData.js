@@ -67,9 +67,9 @@ export const getDefaultRoundData = (userId) => {
                 "sample": "oh03",
             }),
         ],
-        userBusFx: {}
+        userBuses: {}
     }
-    round.userBusFx[userId] = getDefaultUserBusFx()
+    round.userBuses[userId] = getDefaultUserBus(userId)
     // increase each layer createdAt time by 1 ms so they're not equal
     let i = 0
     round.layers.map((layer) => {
@@ -79,48 +79,49 @@ export const getDefaultRoundData = (userId) => {
     return round
 }
 
+export const getDefaultUserBus = (id) => {
+    return {
+        id,
+        fx: getDefaultUserBusFx()
+    }
+}
+
 export const getDefaultUserBusFx = () => {
     return [
         {
             "id": uuid(),
             name: 'autowah',
             order: 0,
-            isOn: true
+            isOn: true,
+            isOverride: false
         },
         {
             "id": uuid(),
             name: 'lowpass',
             order: 1,
-            isOn: true
+            isOn: true,
+            isOverride: false
         },
         {
             "id": uuid(),
             name: 'highpass',
             order: 2,
-            isOn: true
+            isOn: true,
+            isOverride: false
         },
         {
             "id": uuid(),
             name: 'delay',
             order: 3,
-            isOn: true
+            isOn: true,
+            isOverride: false
         },
         {
             "id": uuid(),
             name: 'distortion',
             order: 4,
-            isOn: true
-        },
-        {
-            "id": uuid(),
-            name: 'bitcrusher',
-            order: 5,
-            isOn: true
-        }, {
-            "id": uuid(),
-            name: 'reverb',
-            order: 6,
-            isOn: true
+            isOn: true,
+            isOverride: false
         }
     ]
 }

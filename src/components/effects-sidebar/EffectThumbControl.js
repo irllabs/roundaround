@@ -1,8 +1,9 @@
 import React, { Component } from 'react'
 import * as _ from 'lodash';
 import { SVG } from '@svgdotjs/svg.js'
-import { Lock } from '@material-ui/icons';
+import { LockOpen } from '@material-ui/icons';
 import AudioEngine from '../../audio-engine/AudioEngine'
+
 
 const thumbWidth = 80;
 const thumbHeight = 48;
@@ -22,7 +23,7 @@ export default class EffectThumbControl extends Component {
         this.container = SVG()
             .addTo(element)
             .size(thumbWidth + 40, thumbHeight)
-        this.background = this.container.rect(thumbWidth + 40, thumbHeight).fill('#222222').radius(24)
+        this.background = this.container.rect(thumbWidth + 40, thumbHeight).fill('none').radius(24)
         this.thumb = this.container.nested()
         this.thumbBackground = this.thumb.rect(thumbWidth, thumbHeight).fill('#555555').radius(24)
         //this.lock = this.container.rect(36, 36).fill('#ffffff')
@@ -87,7 +88,6 @@ export default class EffectThumbControl extends Component {
             this.dragStart = e.pageX
             this.thumbBackground.fill('#FFFFFF')
             this.label.fill('#222222')
-            console.log('adding mousemove');
             document.addEventListener('mousemove', this.onMouseMove)
             document.addEventListener('mouseup', this.onMouseUp)
         })
@@ -127,18 +127,27 @@ export default class EffectThumbControl extends Component {
         this.thumb.x(x)
     }
     switchOn () {
-        console.log('switchOn()', AudioEngine.busesByUser[this.props.userId]);
-        //this.props.dispatch({ type: SET_USER_BUS_FX_OVERRIDE, payload: { fxId:this.props.fxId, userId:this.props.userId, value:true } })
-        AudioEngine.busesByUser[this.props.userId].fx[this.props.fxId].override = true
+        this.props.switchOn(this.props.fxId)
+        //console.log('switchOn()', AudioEngine.busesByUser[this.props.userId]);
+        // AudioEngine.busesByUser[this.props.userId].fx[this.props.fxId].override = true
+        // this.props.dispatch({ type: SET_USER_BUS_FX_OVERRIDE, payload: { fxId: this.props.fxId, userId: this.props.userId, value: true } })
     }
     switchOff () {
         this.isOn = false
-        console.log('switchOff()', AudioEngine.busesByUser[this.props.userId]);
-        AudioEngine.busesByUser[this.props.userId].fx[this.props.fxId].override = false
+        this.props.switchOff(this.props.fxId)
+        //console.log('switchOff()', AudioEngine.busesByUser[this.props.userId]);
+        //AudioEngine.busesByUser[this.props.userId].fx[this.props.fxId].override = false
+        // this.props.dispatch({ type: SET_USER_BUS_FX_OVERRIDE, payload: { fxId: this.props.fxId, userId: this.props.userId, value: false } })
     }
     render () {
         return (
-            <div ref={this.thumbControlRef} style={{ display: 'flex' }}></div>
+            <div style={{ width: '120px', height: '48px', backgroundColor: '#222222', borderRadius: '24px', position: 'relative' }}>
+                <LockOpen fontSize="small" style={{ color: '#555555', position: 'absolute', right: '10px', top: '12px', zIndex: 1 }} />
+                <div style={{ zIndex: 2, position: 'absolute' }}>
+                    <div ref={this.thumbControlRef} style={{ display: 'flex', zIndex: 2 }}></div>
+                </div>
+            </div >
+
         )
     }
 }

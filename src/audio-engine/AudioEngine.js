@@ -17,15 +17,17 @@ const AudioEngine = {
     async load (round) {
         console.log('audio engine loading round', round);
         this.reset()
-        await this.addUser(round.user, round.userBusFx[round.user])
-        console.log('added user bus', this.busesByUser);
+        for (const userBus of Object.values(round.userBuses)) {
+            await this.addUser(userBus.id, userBus.fx)
+        }
+        // console.log('added user bus', this.busesByUser);
         for (const layer of round.layers) {
             const track = await this.createTrack(layer)
             await track.load(layer)
-        }
+        };
     },
     async addUser (userId, userFx) {
-        console.log('addUser()', userId);
+        //console.log('addUser()', userId);
         const userBus = await this.createTrack({ fx: userFx, id: userId, creator: userId, type: Track.TRACK_TYPE_USER })
         //userBus.buildAudioChain()
         this.busesByUser[userId] = userBus;
@@ -46,7 +48,7 @@ const AudioEngine = {
     createTrack (trackParameters) {
         const userId = trackParameters.creator
         const type = trackParameters.type
-        console.log('createTrack', trackParameters, userId, type);
+        // console.log('createTrack', trackParameters, userId, type);
         //  console.time('createTrack')
         let _this = this
         return new Promise(async function (resolve, reject) {

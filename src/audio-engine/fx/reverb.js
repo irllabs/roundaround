@@ -8,8 +8,8 @@ export default class Reverb extends FXBaseClass {
     static name = 'reverb';
     constructor (fxParameters) {
         super(fxParameters)
-        this._size = 1
-        this._mix = 0.3
+        this._size = 0.7
+        this._mix = 0.2
         this._mixBeforeBypass = this._mix
         this.label = 'Reverb'
         this.isOn = fxParameters.isOn
@@ -45,10 +45,9 @@ export default class Reverb extends FXBaseClass {
 
 
     enable () {
-        this.fx = new Tone.Reverb(this._size)
+        this.fx = new Tone.Freeverb(this._size)
         this.fx.wet.value = this._mix
         this.setBypass(true)
-        this.fx.generate() // returns a promise when IR has been generated, ignoring for now but might need to take this in to account
     }
 
     getAutomationOptions () {

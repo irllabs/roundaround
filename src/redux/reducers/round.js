@@ -22,7 +22,10 @@ import {
     RESET_ROUND_STORE,
     UPDATE_STEP,
     SET_LAYER_TYPE,
-    UPDATE_LAYER_AUTOMATION_FX_ID
+    UPDATE_LAYER_AUTOMATION_FX_ID,
+    SET_USER_BUS_FX_OVERRIDE,
+    ADD_USERBUS,
+    SET_USER_BUS_FX
 } from "../actionTypes";
 import update from 'immutability-helper';
 import _ from 'lodash'
@@ -166,6 +169,51 @@ export default function (state = initialState, action) {
                     [layerIndex]: {
                         type: {
                             $set: value
+                        }
+                    }
+                }
+            })
+        }
+
+        case ADD_USERBUS: {
+            const { userId, userBus } = action.payload;
+            return update(state, {
+                userBuses: {
+                    [userId]: {
+                        $set: userBus
+                    }
+                }
+            })
+        }
+        case SET_USER_BUS_FX_OVERRIDE: {
+            const { userId, fxId, value } = action.payload;
+            const fxIndex = _.findIndex(state.userBuses[userId].fx, { id: fxId })
+            //console.log('SET_USER_BUS_FX_OVERRIDE', userId, fxId, value, state);
+            return update(state, {
+                userBuses: {
+                    [userId]: {
+                        fx: {
+                            [fxIndex]: {
+                                isOverride: {
+                                    $set: value
+                                }
+                            }
+                        }
+                    }
+                }
+            })
+        }
+        case SET_USER_BUS_FX: {
+            const { userId, data } = action.payload;
+            // console.log('SET_USER_BUS_FX', userId, data, state);
+            return update(state, {
+                userBuses: {
+                    [userId]: {
+                        fx: {
+
+                            $set: data
+
+
                         }
                     }
                 }

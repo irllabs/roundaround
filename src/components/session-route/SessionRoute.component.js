@@ -64,7 +64,7 @@ const SessionRoute = ({
         return { id: doc.id, ...doc.data() }
       })
       toggleLoader(false);
-      console.log('tempDoc', tempDoc)
+      //console.log('tempDoc', tempDoc)
 
       //removeOldRounds(tempDoc)
 
@@ -83,10 +83,9 @@ const SessionRoute = ({
         setRounds([dummyData]);
       } else {
         const currentRound = tempDoc[0];
-        firebase.getLayers(currentRound.id).then((layers) => {
-          console.log('layers', layers);
-          currentRound.layers = layers
-          setRoundData(currentRound);
+        firebase.getRound(currentRound.id).then((round) => {
+          console.log('round', round);
+          setRoundData(round);
           setRounds(tempDoc);
         })
       }
@@ -110,7 +109,7 @@ const SessionRoute = ({
   const throttle = () => {
     throttleLock = true;
     setTimeout(() => {
-      console.log('update round (commented out!)', roundDataForUpdate)
+      //console.log('update round (commented out!)', roundDataForUpdate)
       /*firebase.db.collection('rounds')
         .doc(roundDataForUpdate.id)
         .set(roundDataForUpdate, { merge: true })
@@ -150,7 +149,7 @@ const SessionRoute = ({
         //add new to firebase
         toggleLoader(true);
         let roundToAdd = rounds.find(x => !prevRounds.includes(x) && (x.id !== round.id));
-        console.log('add round')
+        //console.log('add round')
         /*firebase.db.collection('rounds')
           .doc(roundToAdd.id)
           .set(roundToAdd, { merge: false })
@@ -171,7 +170,7 @@ const SessionRoute = ({
         // remove round
         toggleLoader(true);
         let roundToRemove = prevRounds.find(x => !rounds.includes(x));
-        console.log('remove round')
+        //console.log('remove round')
         firebase.db.collection("rounds")
           .doc(roundToRemove.id)
           .delete()
@@ -184,7 +183,7 @@ const SessionRoute = ({
 
         // check if current round is removed
         if (!rounds.includes(round)) {
-          console.log('selected round got removed');
+          // console.log('selected round got removed');
           setRoundData(rounds[0])
         }
       }

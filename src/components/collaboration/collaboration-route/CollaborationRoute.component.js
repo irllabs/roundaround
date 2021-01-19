@@ -15,7 +15,9 @@ import {
     setCollaboration,
     updateStep,
     addStep,
-    removeStep
+    removeStep,
+    addUserBus,
+    updateUserBusFxOverride
 } from "../../../redux/actions";
 import { diff } from 'deep-object-diff';
 import { ThrottleDelay } from '../../../constants';
@@ -34,6 +36,8 @@ import styles from './CollaborationRoute.styles.scss';
 import HtmlUi from '../../html-ui/HtmlUi';
 import LayerSettings from '../../layer-settings/LayerSettings'
 import EffectsSidebar from '../../effects-sidebar/EffectsSidebar'
+import { getDefaultUserBus } from '../../../utils/dummyData';
+import AudioEngine from '../../../audio-engine/AudioEngine';
 
 class CollaborationRoute extends React.Component {
     static contextType = FirebaseContext;
@@ -60,6 +64,7 @@ class CollaborationRoute extends React.Component {
         this.reloadCollaborationLayersThrottled = _.debounce(this.reloadCollaborationLayers, 1000)
         this.reloadCollaborationLayersTimer = null;
         this.layersChangeListenerUnsubscribe = null;
+        this.userBusChangeListenerUnsubscribe = null;
         this.stepsChangeListenerUnsubscribe = {}
     }
 
@@ -76,7 +81,7 @@ class CollaborationRoute extends React.Component {
     async initiateCollaboration () {
         const { id } = this.props.match.params;
         const _this = this;
-        // console.log('CollaborationRoute::initiateCollaboration()', id);
+        console.log('CollaborationRoute::initiateCollaboration()', id);
 
         const collaboration = await this.firebase.getCollaboration(id)
 
@@ -90,7 +95,10 @@ class CollaborationRoute extends React.Component {
 
         this.props.setCollaboration(collaboration);
         if (this.props.user.id && _.isNil(collaboration.contributors[this.props.user.id])) {
+            // we are a user joining an existing collaboration
+            //console.log('joining existing collaboration');
             this.updateUserInContributors();
+
         }
         // console.log('got collaboration', collaboration);
 
@@ -100,7 +108,18 @@ class CollaborationRoute extends React.Component {
         } else {
             derivativeRound = await this.firebase.getRound(collaboration.derivative)
         }
+
+
+
         // console.log('loading derivativeRound', derivativeRound);
+
+        if (_.isNil(derivativeRound.userBuses[this.props.user.id])) {
+            // console.log('adding userbus for self', this.props.user.id);
+            // await this.createUserBus(this.props.user.id)
+            derivativeRound.userBuses[this.props.user.id] = getDefaultUserBus(this.props.user.id)
+            await this.firebase.updateUserBus(derivativeRound.id, this.props.user.id, derivativeRound.userBuses[this.props.user.id])
+            // console.log('added userbus');
+        }
         this.props.setRoundData(derivativeRound)
 
         // listen for collaboration changes
@@ -116,6 +135,7 @@ class CollaborationRoute extends React.Component {
         //listen for round and layers changes
         this.addRoundChangeListener(derivativeRound.id)
         this.addLayersChangeListener(derivativeRound.id)
+        this.addUserBusChangeListener(derivativeRound.id)
 
         this.props.toggleLoader(false);
 
@@ -146,22 +166,20 @@ class CollaborationRoute extends React.Component {
         const collaboration = { ...this.props.collaboration, derivative: derivativeId };
         await this.firebase.updateCollaboration(collaboration.id, collaboration);
         this.props.setCollaboration(collaboration);
-
-        console.log('loadRound 2');
         this.loadRound(round)
 
     }
 
     loadRound (round) {
-        console.log('loadRound', round);
         this.addRoundChangeListener(round.id)
         this.addLayersChangeListener(round.id)
+        this.addUserBusChangeListener(round.id)
         //this.props.setRoundData(round)
     }
 
     addRoundChangeListener (roundId) {
         this.firebase.db.collection('rounds').doc(roundId).onSnapshot(async (doc) => {
-            console.log('### round change listener fired');
+            // console.log('### round change listener fired');
         })
     }
 
@@ -183,6 +201,31 @@ class CollaborationRoute extends React.Component {
                     //    console.log('Removed layer: ', change.doc.data());
                     _this.removeStepsChangeListener(change.doc.id)
                     _this.reloadCollaborationLayersThrottled()
+                }
+            });
+        })
+    }
+
+    addUserBusChangeListener (roundId) {
+        const _this = this;
+        // console.log('addUserBusChangeListener()', roundId);
+        this.userBusChangeListenerUnsubscribe = this.firebase.db.collection('rounds').doc(roundId).collection('userBuses').onSnapshot((userBusesCollectionSnapshot) => {
+            //  console.log('### userbus change listener fired');
+            userBusesCollectionSnapshot.docChanges().forEach(change => {
+                const userBus = change.doc.data()
+                userBus.id = change.doc.id
+                if (change.type === 'modified') {
+                    //  console.log('Modified userbus: ', change.doc.data(), _this.props.round.userBuses[userBus.id]);
+                    _this.handleUserBusChange(userBus)
+                }
+                if (change.type === 'added') {
+                    if (_.isNil(_this.props.round.userBuses[userBus.id])) {
+                        _this.props.addUserBus(userBus.id, userBus)
+                        AudioEngine.addUser(userBus.id, userBus.fx)
+                    }
+                }
+                if (change.type === 'removed') {
+                    //console.log('Removed userbus: ', change.doc.data());
                 }
             });
         })
@@ -218,10 +261,28 @@ class CollaborationRoute extends React.Component {
         }
     }
 
+    handleUserBusChange (userBus) {
+        let fxOrderChanged = false
+        for (let fx of userBus.fx) {
+            const currentFx = _.find(this.props.round.userBuses[userBus.id].fx, { id: fx.id })
+            if (!_.isEqual(fx.isOverride, currentFx.isOverride)) {
+                //  console.log('found fx override change', fx, currentFx);
+                AudioEngine.busesByUser[userBus.id].fx[fx.id].override = fx.isOverride
+                this.props.updateUserBusFxOverride(userBus.id, fx.id, fx.isOverride)
+            }
+            if (!_.isEqual(fx.order, currentFx.order)) {
+                fxOrderChanged = true
+            }
+        }
+        if (fxOrderChanged) {
+            AudioEngine.busesByUser[userBus.id].setFxOrder(userBus.fx)
+        }
+    }
+
     // if any of the subcollections for a collaboration user change, trigger a (throttled) reload of all collaboration layers as there could be multiple changes
     // to do: maybe add an id to the query to make sure we don't overwrite the local round with an await result that comes in late
     async reloadCollaborationLayers () {
-        console.log('reloadCollaborationLayers()');
+        //console.log('reloadCollaborationLayers()');
         const _this = this;
         const newRound = await this.firebase.getRound(this.props.round.id)
         const newLayers = _.filter(newRound.layers, (layer) => {
@@ -249,9 +310,17 @@ class CollaborationRoute extends React.Component {
         this.firebase.updateCollaboration(collaboration.id, { contributors })
     }
 
+    createUserBus (userId) {
+        // return new Promise((resolve, reject) => {
+        const userBus = getDefaultUserBus(userId)
+        //this.props.addUserBus(userId, userBus)
+        return this.firebase.createUserBus(this.props.round.id, userId, userBus)
+        // })
+    }
+
     async initialSetup () {
         const { collaboration, user } = this.props;
-        console.log('initialSetup()', collaboration.derivative);
+        // console.log('initialSetup()', collaboration.derivative);
         let round;
         if (!_.isNil(collaboration.derivative)) {
             round = await this.firebase.getRound(collaboration.derivative);
@@ -260,7 +329,7 @@ class CollaborationRoute extends React.Component {
 
             //round = await this.firebase.createRound(collaboration.round);
         }
-        console.log('loadRound 3');
+
         this.loadRound(round)
 
         // offer to bring round
@@ -427,6 +496,8 @@ export default connect(
         setCollaboration,
         updateStep,
         addStep,
-        removeStep
+        removeStep,
+        addUserBus,
+        updateUserBusFxOverride
     }
 )(withRouter(CollaborationRoute));

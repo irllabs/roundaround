@@ -22,9 +22,9 @@ export default class Track {
         this.setType(type)
     }
     setType (type, automationFxId) {
-        console.log('Track::setType()', type);
         this.dispose()
         this.type = type;
+        this.trackParameters.type = type
         if (this.type === Track.TRACK_TYPE_LAYER || this.type === Track.TRACK_TYPE_USER) {
             this.channel = new Tone.Channel()
             this.fx = null
@@ -46,6 +46,14 @@ export default class Track {
         }
         this.calculatePart(this.trackParameters)
     }
+    setFxOrder (updatedFxOrders) {
+        this.disconnectAudioChain()
+        for (let updatedFxOrder of updatedFxOrders) {
+            _.find(this.sortedFx, { id: updatedFxOrder.id }).order = updatedFxOrder.order
+        }
+        this.sortedFx = _.sortBy(this.sortedFx, 'order')
+        this.buildAudioChain()
+    }
     load (trackParameters) {
         this.trackParameters = trackParameters
         this.calculatePart(trackParameters)
@@ -62,13 +70,12 @@ export default class Track {
                     this.sortedFx.push(fx)
                 }
                 this.sortedFx = _.sortBy(this.sortedFx, 'order')
-                console.log('created FX', this.sortedFx);
             }
             resolve()
         })
     }
     buildAudioChain () {
-        console.log('Track::buildAudioChain()', this.type, this.id);
+        // console.log('Track::buildAudioChain()', this.type, this.id);
         if (this.type === Track.TRACK_TYPE_MASTER) {
             this.channel.toDestination()
         } else if (this.type !== Track.TRACK_TYPE_AUTOMATION) {
@@ -79,46 +86,42 @@ export default class Track {
             let onFx = _.filter(this.sortedFx, {
                 isOn: true
             })
-            console.log('onFx', onFx.length, this.sortedFx);
             if (onFx.length > 0) {
                 for (let i = 0; i < onFx.length; i++) {
-                    console.log('i', i);
                     let fx = onFx[i]
                     // connect channel to first fx
                     if (i === 0) {
+                        //   console.log('connecting channel to first fx', this.channel, 'to', fx);
                         this.channel.connect(fx.fx)
                     }
 
                     // connect previous fx to this one
                     if (i > 0) {
-                        console.log('connecting previous fx', onFx[i - 1], 'to', fx);
+                        //  console.log('connecting previous fx', onFx[i - 1], 'to', fx);
                         onFx[i - 1].fx.connect(fx.fx)
                     }
 
                     // connect last fx to user bus or master
                     if (i === onFx.length - 1) {
-                        console.log('connect last fx to user bus or master');
                         if (this.type === Track.TRACK_TYPE_LAYER) {
-                            console.log('here 1');
                             fx.fx.connect(AudioEngine.busesByUser[this.userId].channel)
                         } else if (this.type === Track.TRACK_TYPE_USER) {
-                            console.log('here 2');
+                            //  console.log('connect last fx to master', fx, 'to', AudioEngine.master.channel);
                             fx.fx.connect(AudioEngine.master.channel)
                         } else {
-                            console.log('here 3');
                             fx.fx.toDestination()
                         }
                     }
                 }
             } else {
                 if (this.type === Track.TRACK_TYPE_LAYER) {
-                    console.log('track connecting to ', AudioEngine.busesByUser[this.userId]);
+                    // console.log('track connecting to ', AudioEngine.busesByUser[this.userId]);
                     this.channel.connect(AudioEngine.busesByUser[this.userId].channel)
                 } else if (this.type === Track.TRACK_TYPE_USER) {
-                    console.log('track connecting to master');
+                    // console.log('track connecting to master');
                     this.channel.connect(AudioEngine.master.channel)
                 } else {
-                    console.log('track connecting to destination',);
+                    //  console.log('track connecting to destination',);
                     this.channel.toDestination()
                 }
             }
@@ -126,16 +129,18 @@ export default class Track {
         }
     }
     disconnectAudioChain () {
-        if (!_.isNil(this.instrument)) {
-            if (!_.isNil(this.channel._context)) {
-                this.channel.disconnect(0)
-            }
+        if (!_.isNil(this.channel) && !_.isNil(this.channel.context._context)) {
+            this.channel.disconnect(0)
+        }
+
+        if (!_.isNil(this.sortedFx)) {
             for (let fx of this.sortedFx) {
-                if (!_.isNil(fx.fx) && !_.isNil(fx.fx._context)) {
+                if (!_.isNil(fx.fx) && !_.isNil(fx.fx.context._context)) {
                     fx.fx.disconnect(0)
                 }
             }
         }
+
     }
     dispose () {
         this.disconnectAudioChain()
@@ -159,9 +164,9 @@ export default class Track {
         }
     }
     calculatePart (layer) {
+        this.trackParameters = layer
         if (!_.isNil(layer)) {
             if (this.type === Track.TRACK_TYPE_AUTOMATION) {
-                console.log('calculatePart() AUTOMATION', this.id);
                 this.automation.clearPart()
                 this.automation.loadSteps(layer.steps)
             } else {
@@ -222,7 +227,6 @@ export default class Track {
         })
     }
     setAutomatedFx (fxId) {
-        console.log('setAutomatedFx()', fxId);
         if (!_.isNil(this.automation)) {
             this.automation.setFx(fxId)
         } else {

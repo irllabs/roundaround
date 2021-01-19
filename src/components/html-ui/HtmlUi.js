@@ -219,6 +219,8 @@ class HtmlUi extends Component {
         }
 
 
+
+
         if (redraw) {
             this.clear()
             this.round = _.cloneDeep(this.props.round)

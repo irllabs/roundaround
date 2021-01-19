@@ -39,6 +39,7 @@ export default function LayerType ({ selectedLayer, userId, roundId }) {
             dispatch({ type: SET_LAYER_TYPE, payload: { id: selectedLayer.id, value: event.target.value } })
             firebase.updateLayer(roundId, selectedLayer.id, { type: event.target.value })
         } else {
+            // automation type
             const userBus = AudioEngine.busesByUser[userId]
             const defaultSelectedFx = !_.isNil(userBus.sortedFx[0]) ? userBus.sortedFx[0].id : null
             //AudioEngine.tracksById[selectedLayer.id].setType(event.target.value)

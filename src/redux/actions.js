@@ -43,7 +43,9 @@ import {
     SET_LAYER_CONTROLS_POSITION,
     SET_STEPS_POSITIONS,
     SET_ROUND_INFO_POSITION,
-    UPDATE_STEP
+    UPDATE_STEP,
+    ADD_USERBUS,
+    SET_USER_BUS_FX_OVERRIDE
 } from "./actionTypes";
 
 export const resetRoundsStore = () => ({
@@ -122,6 +124,10 @@ export const setRounds = rounds => ({
 export const updateRound = (round, roundIndex) => ({
     type: UPDATE_ROUND,
     payload: { round, roundIndex }
+})
+export const addUserBus = (userId, userBus) => ({
+    type: ADD_USERBUS,
+    payload: { userId, userBus }
 })
 
 export const toggleStep = (isOn, layerIndex, stepIndex, user) => ({
@@ -247,4 +253,9 @@ export const setLayerControlsPositions = (layerIndex, controls) => ({
 export const setRoundInfoPosition = (round) => ({
     type: SET_ROUND_INFO_POSITION,
     payload: { round }
+})
+
+export const updateUserBusFxOverride = (userId, fxId, value) => ({
+    type: SET_USER_BUS_FX_OVERRIDE,
+    payload: { userId, fxId, value }
 })
