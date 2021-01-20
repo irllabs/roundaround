@@ -1,23 +1,27 @@
 @import "~styles/index";
 .effectsSidebar{
-    width: 220px;
-    height:100vw;
-    background-color: #222222;
+    width: 200px;
+    height:100%;
+    background-color: rgba(0,0,0,0.7);
     position:absolute;
     right:0;
     top:0;
     color:white;
-    padding-top:64px;
+    display:flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-direction: column;
 }
 .effectsSidebarList{
     margin:0;
     padding:0;
+    width:100%;
 }
 .effectsSidebarListItem{
     list-style-type: none;
     padding:1rem;
     padding-left:0;
-    background-color: #333333;
+    background-color: rgba(50,50,50,0.8);
     color:white;
     border-bottom:solid 1px rgba(255,255,255,0.05);
     display:flex;

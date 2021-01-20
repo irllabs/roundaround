@@ -17,7 +17,7 @@ import {
     addStep,
     removeStep,
     addUserBus,
-    updateUserBusFxOverride
+    setUserBusFxOverride
 } from "../../../redux/actions";
 import { diff } from 'deep-object-diff';
 import { ThrottleDelay } from '../../../constants';
@@ -38,6 +38,7 @@ import LayerSettings from '../../layer-settings/LayerSettings'
 import EffectsSidebar from '../../effects-sidebar/EffectsSidebar'
 import { getDefaultUserBus } from '../../../utils/dummyData';
 import AudioEngine from '../../../audio-engine/AudioEngine';
+import JitsiComponent from '../../jitsi/JitsiComponent';
 
 class CollaborationRoute extends React.Component {
     static contextType = FirebaseContext;
@@ -268,7 +269,7 @@ class CollaborationRoute extends React.Component {
             if (!_.isEqual(fx.isOverride, currentFx.isOverride)) {
                 //  console.log('found fx override change', fx, currentFx);
                 AudioEngine.busesByUser[userBus.id].fx[fx.id].override = fx.isOverride
-                this.props.updateUserBusFxOverride(userBus.id, fx.id, fx.isOverride)
+                this.props.setUserBusFxOverride(userBus.id, fx.id, fx.isOverride)
             }
             if (!_.isEqual(fx.order, currentFx.order)) {
                 fxOrderChanged = true
@@ -466,6 +467,7 @@ class CollaborationRoute extends React.Component {
 
                         </div>
                         <EffectsSidebar />
+                        <JitsiComponent />
                     </>
                 }
             </>
@@ -478,7 +480,8 @@ const mapStateToProps = state => {
         round: state.round,
         user: state.user,
         collaboration: state.collaboration,
-        disableKeyListener: state.display.disableKeyListener
+        disableKeyListener: state.display.disableKeyListener,
+        display: state.display
     };
 };
 
@@ -498,6 +501,6 @@ export default connect(
         addStep,
         removeStep,
         addUserBus,
-        updateUserBusFxOverride
+        setUserBusFxOverride
     }
 )(withRouter(CollaborationRoute));

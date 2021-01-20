@@ -1,6 +1,7 @@
 import app from 'firebase/app';
 import 'firebase/auth';
 import 'firebase/firestore';
+import 'firebase/functions';
 import _ from 'lodash'
 
 var firebaseConfig = {
@@ -17,11 +18,16 @@ var firebaseConfig = {
 class Firebase {
     constructor () {
         app.initializeApp(firebaseConfig);
+
+        // add this for local function development
+        //app.functions().useFunctionsEmulator('http://localhost:5001')
+
         this.app = app;
         this.currentUser = null;
         this.auth = app.auth();
         this.db = app.firestore();
         this.firestore = app.firestore;
+        this.functions = app.functions()
         this.onUserUpdatedObservers = [];
 
         app.auth().onAuthStateChanged((user) => {
@@ -52,6 +58,13 @@ class Firebase {
 
     setOnUserUpdated = (callback) =>
         this.onUserUpdated = callback;
+
+
+    // *** Jitsi As A Service ***
+    getJitsiToken = async (userId, name, email, avatar) => {
+        let getJaasToken = this.functions.httpsCallable('getJaasToken');
+        return getJaasToken(userId, name, email, avatar)
+    }
 
     // *** Firebase API ***
     getRound = async (roundId) => {

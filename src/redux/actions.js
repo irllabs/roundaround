@@ -45,7 +45,9 @@ import {
     SET_ROUND_INFO_POSITION,
     UPDATE_STEP,
     ADD_USERBUS,
-    SET_USER_BUS_FX_OVERRIDE
+    SET_USER_BUS_FX,
+    SET_USER_BUS_FX_OVERRIDE,
+    SET_IS_SHOWING_VIDEO_WINDOW
 } from "./actionTypes";
 
 export const resetRoundsStore = () => ({
@@ -255,7 +257,15 @@ export const setRoundInfoPosition = (round) => ({
     payload: { round }
 })
 
-export const updateUserBusFxOverride = (userId, fxId, value) => ({
+export const setUserBusFxOverride = (userId, fxId, value) => ({
     type: SET_USER_BUS_FX_OVERRIDE,
     payload: { userId, fxId, value }
+})
+export const setUserBusFx = (userId, data) => ({
+    type: SET_USER_BUS_FX,
+    payload: { userId, data }
+})
+export const setIsShowingVideoWindow = (value) => ({
+    type: SET_IS_SHOWING_VIDEO_WINDOW,
+    payload: { value }
 })

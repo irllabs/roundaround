@@ -9,6 +9,13 @@ import { connect } from "react-redux";
 import AudioEngine from "../../audio-engine/AudioEngine"
 import { SET_USER_BUS_FX_OVERRIDE, SET_USER_BUS_FX } from '../../redux/actionTypes'
 import { FirebaseContext } from '../../firebase';
+import VideoCam from '@material-ui/icons/VideoCam';
+import { IconButton } from '@material-ui/core';
+import {
+    setIsShowingVideoWindow,
+    setUserBusFx,
+    setUserBusFxOverride
+} from "../../redux/actions";
 
 const DragHandle = sortableHandle(() => <span className={`${styles.effectsSidebarListItemDragHandle}`}><DragIndicator /></span>);
 const SortableItem = sortableElement(({ fx, onSwitchOn, onSwitchOff }) => (
@@ -39,6 +46,7 @@ class EffectsSidebar extends Component {
         }
         this.onSwitchOn = this.onSwitchOn.bind(this)
         this.onSwitchOff = this.onSwitchOff.bind(this)
+        this.onShowVideoWindowClick = this.onShowVideoWindowClick.bind(this)
     }
 
     onSortEnd = ({ oldIndex, newIndex }) => {
@@ -47,7 +55,8 @@ class EffectsSidebar extends Component {
         for (let i = 0; i < userBus.fx.length; i++) {
             userBus.fx[i].order = i
         }
-        this.props.dispatch({ type: SET_USER_BUS_FX, payload: { userId: this.props.user.id, data: userBus.fx } })
+        this.props.setUserBusFx(this.props.user.id, userBus.fx)
+        //this.props.dispatch({ type: SET_USER_BUS_FX, payload: { userId: this.props.user.id, data: userBus.fx } })
         AudioEngine.busesByUser[this.props.user.id].setFxOrder(userBus.fx)
         this.context.updateUserBus(this.props.round.id, this.props.user.id, userBus)
 
@@ -57,7 +66,8 @@ class EffectsSidebar extends Component {
     };
     onSwitchOn (fxId) {
         AudioEngine.busesByUser[this.props.user.id].fx[fxId].override = true
-        this.props.dispatch({ type: SET_USER_BUS_FX_OVERRIDE, payload: { fxId, userId: this.props.user.id, value: true } })
+        this.props.setUserBusFxOverride(this.props.user.id, fxId, true)
+        //this.props.dispatch({ type: SET_USER_BUS_FX_OVERRIDE, payload: { fxId, userId: this.props.user.id, value: true } })
         let userBus = _.cloneDeep(this.props.round.userBuses[this.props.user.id])
         let fx = _.find(userBus.fx, { id: fxId })
         fx.isOverride = true
@@ -65,11 +75,15 @@ class EffectsSidebar extends Component {
     }
     onSwitchOff (fxId) {
         AudioEngine.busesByUser[this.props.user.id].fx[fxId].override = false
-        this.props.dispatch({ type: SET_USER_BUS_FX_OVERRIDE, payload: { fxId, userId: this.props.user.id, value: false } })
+        this.props.setUserBusFxOverride(this.props.user.id, fxId, false)
+        //this.props.dispatch({ type: SET_USER_BUS_FX_OVERRIDE, payload: { fxId, userId: this.props.user.id, value: false } })
         let userBus = _.cloneDeep(this.props.round.userBuses[this.props.user.id])
         let fx = _.find(userBus.fx, { id: fxId })
         fx.isOverride = false
         this.context.updateUserBus(this.props.round.id, this.props.user.id, userBus)
+    }
+    onShowVideoWindowClick () {
+        this.props.setIsShowingVideoWindow(!this.props.display.isShowingVideoWindow)
     }
     render () {
         let items = []
@@ -85,6 +99,7 @@ class EffectsSidebar extends Component {
         }
         return (
             <div className={`${styles.effectsSidebar}`}>
+                <div><IconButton variant="outlined" style={{ color: 'white' }} onClick={this.onShowVideoWindowClick}><VideoCam /></IconButton></div>
                 <SortableContainer onSortEnd={this.onSortEnd} useDragHandle >
                     {items.map((fx, index) => (
                         <SortableItem key={`item-${fx.id}`} index={index} fx={fx} onSwitchOff={this.onSwitchOff} onSwitchOn={this.onSwitchOn} />
@@ -100,11 +115,16 @@ const mapStateToProps = state => {
         round: state.round,
         user: state.user,
         collaboration: state.collaboration,
-        selectedLayer: state.display.selectedLayer
+        selectedLayer: state.display.selectedLayer,
+        display: state.display
     };
 };
 
 
 export default connect(
-    mapStateToProps
+    mapStateToProps, {
+    setIsShowingVideoWindow,
+    setUserBusFx,
+    setUserBusFxOverride
+}
 )(EffectsSidebar);
