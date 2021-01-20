@@ -22,23 +22,9 @@ class JitsiComponent extends Component {
     }
 
     async initVideo () {
-        const roomName = this.props.collaboration.id
-
+        const roomName = this.props.roomName
         const tokenResult = await this.context.getJitsiToken(this.props.user.id, '', '', '')
-
-        console.log('token', tokenResult);
         const jwt = tokenResult.data.token;
-
-        // todo call firebase function to get jwt token for this user
-        /*const tokenResult = await axios.get('http://localhost:5001/roundaround/us-central1/getJaasToken', {
-            params: {
-                userId: this.props.user.id,
-                email: '',
-                avatar: '',
-                name: ''
-            }
-        })
-        console.log('got token', tokenResult);*/
 
         this.api = new JitsiMeetExternalAPI("8x8.vc", {
             roomName: "vpaas-magic-cookie-ed842ad0fbe8446fbfeb14c7580a7f71/" + roomName,

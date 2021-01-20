@@ -47,6 +47,44 @@ class EffectsSidebar extends Component {
         this.onSwitchOn = this.onSwitchOn.bind(this)
         this.onSwitchOff = this.onSwitchOff.bind(this)
         this.onShowVideoWindowClick = this.onShowVideoWindowClick.bind(this)
+        this.onPlayClick = this.onPlayClick.bind(this)
+        this.onShareRoundClick = this.onShareRoundClick.bind(this)
+        this.onProfileClick = this.onProfileClick.bind(this)
+        this.onProjectClick = this.onProjectClick.bind(this)
+        this.onFullscreenClick = this.onFullscreenClick.bind(this)
+    }
+
+    onPlayClick () {
+        this.props.togglePlay()
+    }
+    onShareRoundClick () {
+        this.props.shareRound()
+    }
+    onProfileClick () {
+        this.props.toggleProfile()
+    }
+    onProjectClick () {
+        this.props.toggleSidebar()
+    }
+    onFullscreenClick () {
+        var element = document.documentElement;
+        if (_.isNil(document.fullscreenElement)) {
+            if (element.requestFullscreen) {
+                element.requestFullscreen();
+            } else if (element.webkitRequestFullscreen) { /* Safari */
+                element.webkitRequestFullscreen();
+            } else if (element.msRequestFullscreen) { /* IE11 */
+                element.msRequestFullscreen();
+            }
+        } else {
+            if (document.exitFullscreen) {
+                document.exitFullscreen();
+            } else if (document.webkitExitFullscreen) { /* Safari */
+                document.webkitExitFullscreen();
+            } else if (document.msExitFullscreen) { /* IE11 */
+                document.msExitFullscreen();
+            }
+        }
     }
 
     onSortEnd = ({ oldIndex, newIndex }) => {
@@ -99,7 +137,54 @@ class EffectsSidebar extends Component {
         }
         return (
             <div className={`${styles.effectsSidebar}`}>
-                <div><IconButton variant="outlined" style={{ color: 'white' }} onClick={this.onShowVideoWindowClick}><VideoCam /></IconButton></div>
+                <div><button
+                    type="button"
+                    onClick={this.onPlayClick}
+                >
+                    {this.props.isOn ? 'Stop' : 'Start'}
+                </button>
+
+                    {
+                        this.props.mode !== 'collaboration' &&
+                        <button
+                            type="button"
+                            onClick={this.onShareRoundClick}
+                        >
+                            Share
+                        </button>
+                    }
+                    <IconButton variant="outlined" style={{ color: 'white' }} onClick={this.onShowVideoWindowClick}><VideoCam /></IconButton>
+                    {
+                        this.props.user &&
+                        <button
+                            type="button"
+                            onClick={this.onProfileClick}
+                        >
+                            Profile
+                    </button>
+                    }
+                    {
+                        this.props.user &&
+                        <button
+                            type="button"
+                            onClick={this.onFullscreenClick}
+                        >
+                            Fullscreen
+                    </button>
+                    }
+
+                    {
+                        this.props.mode !== 'collaboration' &&
+                        <button
+                            type="button"
+                            onClick={this.onProjectClick}
+                        >
+                            Project
+                    </button>
+
+                    }
+                </div>
+
                 <SortableContainer onSortEnd={this.onSortEnd} useDragHandle >
                     {items.map((fx, index) => (
                         <SortableItem key={`item-${fx.id}`} index={index} fx={fx} onSwitchOff={this.onSwitchOff} onSwitchOn={this.onSwitchOn} />

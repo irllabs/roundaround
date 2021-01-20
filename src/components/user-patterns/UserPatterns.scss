@@ -1,0 +1,18 @@
+@import "~styles/index";
+.userPatterns{
+    width: 120px;
+    height:100%;
+    background-color: rgba(0,0,0,0.7);
+    position:absolute;
+    left:0;
+    top:0;
+    color:white;
+    display:flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-direction: column;
+    padding-top:1rem;
+}
+.userPatternsContainer{
+    padding-bottom:1rem;
+}

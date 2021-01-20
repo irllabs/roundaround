@@ -75,6 +75,7 @@ class Firebase {
                 const round = { id: roundSnapshot.id, ...roundSnapshot.data(), layers: [] }
                 round.layers = await this.getLayers(roundId)
                 round.userBuses = await this.getUserBuses(roundId)
+                round.userPatterns = await this.getUserPatterns(roundId)
                 console.log('got round', round);
                 resolve(round)
             } catch (e) {
@@ -161,6 +162,28 @@ class Firebase {
             }
         })
     }
+    getUserPatterns = async (roundId) => {
+        return new Promise(async (resolve, reject) => {
+            let allUserPatterns = {}
+            try {
+                const userPatternsSnapshot = await this.db
+                    .collection("rounds")
+                    .doc(roundId)
+                    .collection('userPatterns')
+                    .get();
+                userPatternsSnapshot.forEach(userPatternsDoc => {
+                    let userPatterns = userPatternsDoc.data();
+                    userPatterns.id = userPatternsDoc.id;
+                    allUserPatterns[userPatterns.id] = userPatterns;
+                })
+                resolve(allUserPatterns)
+            }
+            catch (e) {
+                console.error(e)
+                reject(e)
+            }
+        })
+    }
 
 
     setSteps = async (roundId, layerId, steps) => {
@@ -217,6 +240,12 @@ class Firebase {
                 userBuses.push(userBus)
             }
             delete round.userBuses
+            const allUserPatterns = []
+            for (const [userId, userPatterns] of Object.entries(round.userPatterns)) {
+                userPatterns.id = userId
+                allUserPatterns.push(userPatterns)
+            }
+            delete round.userPatterns
             try {
                 await this.db.collection('rounds')
                     .doc(roundId)
@@ -226,6 +255,9 @@ class Firebase {
                 }
                 for (const userBus of userBuses) {
                     await this.createUserBus(roundId, userBus.id, userBus)
+                }
+                for (const userPatterns of allUserPatterns) {
+                    await this.saveUserPatterns(roundId, userPatterns.id, userPatterns)
                 }
                 resolve(round)
             } catch (e) {
@@ -290,6 +322,22 @@ class Firebase {
                     .collection('userBuses')
                     .doc(id)
                     .set(userBus)
+                resolve()
+            } catch (e) {
+                console.error(e)
+            }
+        })
+    }
+
+    saveUserPatterns = async (roundId, userId, userPatterns) => {
+        return new Promise(async (resolve, reject) => {
+            try {
+                delete userPatterns.id
+                await this.db.collection('rounds')
+                    .doc(roundId)
+                    .collection('userPatterns')
+                    .doc(userId)
+                    .set(userPatterns)
                 resolve()
             } catch (e) {
                 console.error(e)

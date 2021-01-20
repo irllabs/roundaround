@@ -36,9 +36,10 @@ import styles from './CollaborationRoute.styles.scss';
 import HtmlUi from '../../html-ui/HtmlUi';
 import LayerSettings from '../../layer-settings/LayerSettings'
 import EffectsSidebar from '../../effects-sidebar/EffectsSidebar'
-import { getDefaultUserBus } from '../../../utils/dummyData';
+import { getDefaultUserBus, getDefaultUserPatterns } from '../../../utils/dummyData';
 import AudioEngine from '../../../audio-engine/AudioEngine';
 import JitsiComponent from '../../jitsi/JitsiComponent';
+import UserPatterns from '../../user-patterns/UserPatterns';
 
 class CollaborationRoute extends React.Component {
     static contextType = FirebaseContext;
@@ -67,6 +68,7 @@ class CollaborationRoute extends React.Component {
         this.layersChangeListenerUnsubscribe = null;
         this.userBusChangeListenerUnsubscribe = null;
         this.stepsChangeListenerUnsubscribe = {}
+        this.collaborationId = this.props.match.params.id;
     }
 
     componentDidMount () {
@@ -115,10 +117,11 @@ class CollaborationRoute extends React.Component {
         // console.log('loading derivativeRound', derivativeRound);
 
         if (_.isNil(derivativeRound.userBuses[this.props.user.id])) {
-            // console.log('adding userbus for self', this.props.user.id);
-            // await this.createUserBus(this.props.user.id)
+            // first time joining this collaboration
             derivativeRound.userBuses[this.props.user.id] = getDefaultUserBus(this.props.user.id)
             await this.firebase.updateUserBus(derivativeRound.id, this.props.user.id, derivativeRound.userBuses[this.props.user.id])
+            derivativeRound.userPatterns[this.props.user.id] = getDefaultUserPatterns(this.props.user.id)
+            await this.firebase.saveUserPatterns(derivativeRound.id, this.props.user.id, derivativeRound.userPatterns[this.props.user.id])
             // console.log('added userbus');
         }
         this.props.setRoundData(derivativeRound)
@@ -454,20 +457,15 @@ class CollaborationRoute extends React.Component {
                             className={styles.mainContainer}
                         >
                             <HtmlUi isOn={this.state.isOn} togglePlay={this.togglePlay} disableKeyListener={this.props.disableKeyListener} />
-                            <ControlsBar
-                                user={this.firebase ? this.firebase.currentUser : {}}
-                                mode="collaboration"
-                                isOn={this.state.isOn}
-                                shareRound={this.shareRound}
-                                toggleProfile={this.toggleProfile}
-                                togglePlay={this.togglePlay}
-                                toggleSettings={this.toggleSettings}
-                                toggleSidebar={this.toggleSidebar}
-                            />
+
 
                         </div>
-                        <EffectsSidebar />
-                        <JitsiComponent />
+                        <UserPatterns />
+                        <EffectsSidebar isOn={this.state.isOn} mode="collaboration" user={this.firebase ? this.firebase.currentUser : {}} shareRound={this.shareRound} toggleProfile={this.toggleProfile}
+                            togglePlay={this.togglePlay}
+                            toggleSettings={this.toggleSettings}
+                            toggleSidebar={this.toggleSidebar} />
+                        <JitsiComponent roomName={this.collaborationId} />
                     </>
                 }
             </>

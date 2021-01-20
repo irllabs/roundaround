@@ -67,9 +67,11 @@ export const getDefaultRoundData = (userId) => {
                 "sample": "oh03",
             }),
         ],
-        userBuses: {}
+        userBuses: {},
+        userPatterns: {}
     }
     round.userBuses[userId] = getDefaultUserBus(userId)
+    round.userPatterns[userId] = getDefaultUserPatterns(userId)
     // increase each layer createdAt time by 1 ms so they're not equal
     let i = 0
     round.layers.map((layer) => {
@@ -124,4 +126,23 @@ export const getDefaultUserBusFx = () => {
             isOverride: false
         }
     ]
+}
+
+export const getDefaultUserPatterns = (id) => {
+    let userPattern = {
+        id,
+        isQueuing: '',
+        patterns: []
+    }
+    for (let i = 0; i < 8; i++) {
+        userPattern.patterns[i] = getDefaultUserPattern(i)
+    }
+    return userPattern
+}
+export const getDefaultUserPattern = (order) => {
+    return {
+        id: uuid(),
+        order,
+        state: {}
+    }
 }

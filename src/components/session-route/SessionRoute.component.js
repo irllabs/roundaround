@@ -18,6 +18,7 @@ import LayerSettings from '../layer-settings/LayerSettings'
 import _ from 'lodash'
 import { removeOldRounds } from '../../utils/index'
 import EffectsSidebar from '../effects-sidebar/EffectsSidebar';
+import UserPatterns from '../user-patterns/UserPatterns';
 
 function usePrevious (value) {
   const ref = useRef();
@@ -241,17 +242,9 @@ const SessionRoute = ({
           />
           <div className={styles.mainContainer}>
             <HtmlUi isOn={clockIsRunning} togglePlay={togglePlay} disableKeyListener={disableKeyListener} />
-            <ControlsBar
-              user={firebase.currentUser}
-              isOn={clockIsRunning}
-              shareRound={shareRound}
-              toggleProfile={toggleProfile}
-              togglePlay={togglePlay}
-              toggleSettings={toggleSettings}
-              toggleSidebar={toggleSidebar}
-            />
           </div>
-          <EffectsSidebar />
+          <UserPatterns />
+          <EffectsSidebar isOn={clockIsRunning} shareRound={shareRound} togglePlay={togglePlay} toggleProfile={toggleProfile} toggleSidebar={toggleSidebar} />
           <LinkGenerator
             sharing={sharingLink}
             toggleSharing={toggleSharing}

@@ -68,7 +68,7 @@ class HtmlUi extends Component {
     }
 
     async componentDidUpdate () {
-        // console.log('componentDidUpdate()', this.props.round)
+        console.log('componentDidUpdate()', this.props.round)
 
         // Calculate what's changed so we only redraw if necessary
         let redraw = false
@@ -385,7 +385,7 @@ class HtmlUi extends Component {
                             scale: step.velocity
                         })
                     } else {
-                        stepGraphic.animate(HTML_UI_Params.stepAnimationUpdateTime).attr({ fill: '#282c34' })
+                        stepGraphic.animate(HTML_UI_Params.stepAnimationUpdateTime).attr({ fill: '#101114' })
                     }
                 }, HTML_UI_Params.activityAnimationTime)
                 this.animateActivityIndicator(layer.creator, stepGraphic.x() + (HTML_UI_Params.stepDiameter / 2), stepGraphic.y() + (HTML_UI_Params.stepDiameter / 2))
@@ -396,7 +396,7 @@ class HtmlUi extends Component {
                         scale: step.velocity
                     })
                 } else {
-                    stepGraphic.attr({ fill: '#282c34' })
+                    stepGraphic.attr({ fill: '#101114' })
                 }
             }
         }

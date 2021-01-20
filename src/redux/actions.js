@@ -47,7 +47,8 @@ import {
     ADD_USERBUS,
     SET_USER_BUS_FX,
     SET_USER_BUS_FX_OVERRIDE,
-    SET_IS_SHOWING_VIDEO_WINDOW
+    SET_IS_SHOWING_VIDEO_WINDOW,
+    SAVE_USER_PATTERN
 } from "./actionTypes";
 
 export const resetRoundsStore = () => ({
@@ -174,9 +175,9 @@ export const toggleLayer = (isActive, layerIndex, user) => ({
 
 
 
-export const setLayerSteps = (layerIndex, steps, user) => ({
+export const setLayerSteps = (id, steps) => ({
     type: SET_LAYER_STEPS,
-    payload: { layerIndex, steps, user }
+    payload: { id, steps }
 })
 
 export const setLayerName = (layerIndex, name, user) => ({
@@ -268,4 +269,8 @@ export const setUserBusFx = (userId, data) => ({
 export const setIsShowingVideoWindow = (value) => ({
     type: SET_IS_SHOWING_VIDEO_WINDOW,
     payload: { value }
+})
+export const saveUserPattern = (userId, patternId, data) => ({
+    type: SAVE_USER_PATTERN,
+    payload: { userId, patternId, data }
 })

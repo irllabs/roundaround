@@ -25,7 +25,8 @@ import {
     UPDATE_LAYER_AUTOMATION_FX_ID,
     SET_USER_BUS_FX_OVERRIDE,
     ADD_USERBUS,
-    SET_USER_BUS_FX
+    SET_USER_BUS_FX,
+    SAVE_USER_PATTERN
 } from "../actionTypes";
 import update from 'immutability-helper';
 import _ from 'lodash'
@@ -227,6 +228,23 @@ export default function (state = initialState, action) {
                     [layerIndex]: {
                         automationFxId: {
                             $set: value
+                        }
+                    }
+                }
+            })
+        }
+        case SAVE_USER_PATTERN: {
+            const { userId, patternId, data } = action.payload;
+            const patternIndex = _.findIndex(state.userPatterns[userId].patterns, { id: patternId })
+            return update(state, {
+                userPatterns: {
+                    [userId]: {
+                        patterns: {
+                            [patternIndex]: {
+                                state: {
+                                    $set: data
+                                }
+                            }
                         }
                     }
                 }
