@@ -460,7 +460,7 @@ class CollaborationRoute extends React.Component {
 
 
                         </div>
-                        <UserPatterns />
+                        <UserPatterns shareRound={this.shareRound} mode="collaboration" />
                         <EffectsSidebar isOn={this.state.isOn} mode="collaboration" user={this.firebase ? this.firebase.currentUser : {}} shareRound={this.shareRound} toggleProfile={this.toggleProfile}
                             togglePlay={this.togglePlay}
                             toggleSettings={this.toggleSettings}

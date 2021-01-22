@@ -243,7 +243,7 @@ const SessionRoute = ({
           <div className={styles.mainContainer}>
             <HtmlUi isOn={clockIsRunning} togglePlay={togglePlay} disableKeyListener={disableKeyListener} />
           </div>
-          <UserPatterns />
+          <UserPatterns shareRound={shareRound} />
           <EffectsSidebar isOn={clockIsRunning} shareRound={shareRound} togglePlay={togglePlay} toggleProfile={toggleProfile} toggleSidebar={toggleSidebar} />
           <LinkGenerator
             sharing={sharingLink}

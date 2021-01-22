@@ -20,6 +20,7 @@ class UserPatterns extends Component {
         super(props)
         this.onLoadPattern = this.onLoadPattern.bind(this)
         this.onSavePattern = this.onSavePattern.bind(this)
+        this.onShareRoundClick = this.onShareRoundClick.bind(this)
     }
     async onLoadPattern (id) {
         console.log('onLoadPattern', id);
@@ -66,6 +67,10 @@ class UserPatterns extends Component {
         return state
     }
 
+    onShareRoundClick () {
+        this.props.shareRound()
+    }
+
 
     render () {
         let items = []
@@ -82,7 +87,23 @@ class UserPatterns extends Component {
         }
         return (
             <div className={`${styles.userPatterns}`}>
-                <div><Avatar alt="Remy Sharp" src="https://material-ui.com/static/images/avatar/1.jpg" /></div>
+                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', fontSize: '0.8rem' }}>
+                    <p style={{ marginTop: '0.5rem', marginBottom: '1.5rem' }}><strong>RoundAround</strong></p>
+                    {
+                        this.props.mode === 'collaboration' && <>
+                            <Avatar style={{ marginBottom: '0.5rem' }} alt="Remy Sharp" src="https://material-ui.com/static/images/avatar/1.jpg" />
+                            <Avatar style={{ marginBottom: '0.5rem' }} alt="Remy Sharp" src="https://material-ui.com/static/images/avatar/2.jpg" />
+                            <Avatar style={{ marginBottom: '1.5rem' }} alt="Remy Sharp" src="https://material-ui.com/static/images/avatar/3.jpg" />
+                        </>
+                    }
+                    <button
+                        type="button"
+                        onClick={this.onShareRoundClick}
+                    >
+                        Share
+                        </button>
+
+                </div>
                 <div className={`${styles.userPatternsContainer}`}>
                     {items.map((item, index) => (
                         <UserPatternThumbControl key={`item-${item.id}`} id={item.id} label={item.label} isFilled={item.isFilled} loadPattern={this.onLoadPattern} savePattern={this.onSavePattern} />

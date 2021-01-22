@@ -12,6 +12,20 @@
     justify-content: space-between;
     flex-direction: column;
 }
+.effectsSidebarTop {
+    display:flex;
+    flex-direction: row;
+    align-items: center;
+    margin-top: 1rem;
+    justify-content: space-between;
+    width:100%;
+    margin-left:3rem;
+    margin-right:2rem;
+    button{
+        margin-bottom:1rem;
+        color:#FFFFFF !important;
+    }
+}
 .effectsSidebarList{
     margin:0;
     padding:0;

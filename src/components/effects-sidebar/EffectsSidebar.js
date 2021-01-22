@@ -10,7 +10,13 @@ import AudioEngine from "../../audio-engine/AudioEngine"
 import { SET_USER_BUS_FX_OVERRIDE, SET_USER_BUS_FX } from '../../redux/actionTypes'
 import { FirebaseContext } from '../../firebase';
 import VideoCam from '@material-ui/icons/VideoCam';
+import PlayArrow from '@material-ui/icons/PlayArrow';
+import Pause from '@material-ui/icons/Pause';
+import MoreVert from '@material-ui/icons/MoreVert';
 import { IconButton } from '@material-ui/core';
+import Button from '@material-ui/core/Button';
+import Menu from '@material-ui/core/Menu';
+import MenuItem from '@material-ui/core/MenuItem';
 import {
     setIsShowingVideoWindow,
     setUserBusFx,
@@ -42,7 +48,7 @@ class EffectsSidebar extends Component {
     constructor (props) {
         super(props)
         this.state = {
-            items: []
+            menuAnchorElement: null
         }
         this.onSwitchOn = this.onSwitchOn.bind(this)
         this.onSwitchOff = this.onSwitchOff.bind(this)
@@ -52,6 +58,8 @@ class EffectsSidebar extends Component {
         this.onProfileClick = this.onProfileClick.bind(this)
         this.onProjectClick = this.onProjectClick.bind(this)
         this.onFullscreenClick = this.onFullscreenClick.bind(this)
+        this.onMenuOpenClick = this.onMenuOpenClick.bind(this)
+        this.onMenuClose = this.onMenuClose.bind(this)
     }
 
     onPlayClick () {
@@ -123,6 +131,16 @@ class EffectsSidebar extends Component {
     onShowVideoWindowClick () {
         this.props.setIsShowingVideoWindow(!this.props.display.isShowingVideoWindow)
     }
+    onMenuOpenClick (e) {
+        this.setState({
+            menuAnchorElement: e.currentTarget
+        })
+    }
+    onMenuClose (e) {
+        this.setState({
+            menuAnchorElement: null
+        })
+    }
     render () {
         let items = []
         if (!_.isNil(this.props.round.userBuses) && !_.isNil(this.props.round.userBuses[this.props.user.id])) {
@@ -137,52 +155,32 @@ class EffectsSidebar extends Component {
         }
         return (
             <div className={`${styles.effectsSidebar}`}>
-                <div><button
-                    type="button"
-                    onClick={this.onPlayClick}
-                >
-                    {this.props.isOn ? 'Stop' : 'Start'}
-                </button>
-
-                    {
-                        this.props.mode !== 'collaboration' &&
-                        <button
-                            type="button"
-                            onClick={this.onShareRoundClick}
-                        >
-                            Share
-                        </button>
-                    }
-                    <IconButton variant="outlined" style={{ color: 'white' }} onClick={this.onShowVideoWindowClick}><VideoCam /></IconButton>
-                    {
-                        this.props.user &&
-                        <button
-                            type="button"
-                            onClick={this.onProfileClick}
-                        >
-                            Profile
+                <div className={`${styles.effectsSidebarTop}`}>
+                    <button
+                        type="button"
+                        style={{ borderRadius: '24px', width: '38px', height: '38px' }}
+                        onClick={this.onPlayClick}
+                    >
+                        {this.props.isOn ? <Pause /> : <PlayArrow />}
                     </button>
-                    }
                     {
-                        this.props.user &&
-                        <button
-                            type="button"
-                            onClick={this.onFullscreenClick}
-                        >
-                            Fullscreen
-                    </button>
+                        this.props.mode === 'collaboration' &&
+                        <IconButton variant="outlined" style={{ color: 'white' }} onClick={this.onShowVideoWindowClick}><VideoCam /></IconButton>
                     }
 
-                    {
-                        this.props.mode !== 'collaboration' &&
-                        <button
-                            type="button"
-                            onClick={this.onProjectClick}
-                        >
-                            Project
-                    </button>
-
-                    }
+                    <IconButton aria-controls="simple-menu" aria-haspopup="true" onClick={this.onMenuOpenClick}>
+                        <MoreVert />
+                    </IconButton>
+                    <Menu
+                        id="simple-menu"
+                        anchorEl={this.state.menuAnchorElement}
+                        keepMounted
+                        open={Boolean(this.state.menuAnchorElement)}
+                        onClose={this.onMenuClose}
+                    >
+                        <MenuItem onClick={this.onProfileClick}>Profile</MenuItem>
+                        <MenuItem onClick={this.onProjectClick}>Project</MenuItem>
+                    </Menu>
                 </div>
 
                 <SortableContainer onSortEnd={this.onSortEnd} useDragHandle >
@@ -192,6 +190,61 @@ class EffectsSidebar extends Component {
                 </SortableContainer>
             </div>
         )
+        /* return (
+             <div className={`${styles.effectsSidebar}`}>
+                 <div className={`${styles.effectsSidebarTop}`}>
+                     <button
+                         type="button"
+                         style={{ borderRadius: '24px', width: '38px', height: '38px' }}
+                         onClick={this.onPlayClick}
+                     >
+                         {this.props.isOn ? <Pause /> : <PlayArrow />}
+                     </button>
+ 
+ 
+ 
+                     {
+                         this.props.user &&
+                         <button
+                             type="button"
+                             onClick={this.onProfileClick}
+                         >
+                             Profile
+                     </button>
+                     }
+                     {
+                         this.props.user &&
+                         <button
+                             type="button"
+                             onClick={this.onFullscreenClick}
+                         >
+                             Fullscreen
+                     </button>
+                     }
+ 
+                     {
+                         this.props.mode !== 'collaboration' &&
+                         <button
+                             type="button"
+                             onClick={this.onProjectClick}
+                         >
+                             Project
+                     </button>
+ 
+                     }
+                     {
+                         this.props.mode === 'collaboration' &&
+                         <IconButton variant="outlined" style={{ color: 'white' }} onClick={this.onShowVideoWindowClick}><VideoCam /></IconButton>
+                     }
+                 </div>
+ 
+                 <SortableContainer onSortEnd={this.onSortEnd} useDragHandle >
+                     {items.map((fx, index) => (
+                         <SortableItem key={`item-${fx.id}`} index={index} fx={fx} onSwitchOff={this.onSwitchOff} onSwitchOn={this.onSwitchOn} />
+                     ))}
+                 </SortableContainer>
+             </div>
+         )*/
     }
 }
 const mapStateToProps = state => {

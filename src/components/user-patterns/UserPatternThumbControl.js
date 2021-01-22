@@ -49,19 +49,12 @@ export default class EffectThumbControl extends Component {
         const _this = this
         this.thumb.on('touchstart', (e) => {
             e.preventDefault()
-            console.log('touchstart', e, e.touches.length - 1);
-            this.switchOn()
-            this.touchIndex = e.touches.length - 1
-            this.dragStart = e.touches[this.touchIndex].pageX
-            this.thumbBackground.fill('#FFFFFF')
-            this.label.fill('#222222')
+            this.dragStart = e.touches[0].pageX
         })
         this.thumb.on('touchmove', (e) => {
             e.preventDefault()
-            let x = e.touches[this.touchIndex].pageX - this.dragStart
-            if (this.isOn) {
-                x = (containerWidth - thumbWidth) + e.touches[this.touchIndex].pageX - this.dragStart
-            }
+            let x = e.touches[0].pageX - this.dragStart
+
             console.log('touchmove', this.touchIndex, e, 'x', x);
             if (x > containerWidth - thumbWidth) {
                 x = containerWidth - thumbWidth
@@ -76,15 +69,10 @@ export default class EffectThumbControl extends Component {
             let x = this.thumb.x()
             if (x < threshold) {
                 x = 0
-                this.isOn = false
-                this.thumbBackground.fill('#555555')
-                this.label.fill('#FFFFFF')
-                this.switchOff()
+                this.load()
             } else {
                 x = containerWidth - thumbWidth
-                this.isOn = true
-                //this.thumbBackground.fill('#555555')
-                // this.label.fill('#FFFFFF')
+                this.save()
             }
             this.thumb.x(x)
         })
