@@ -20,6 +20,8 @@ import { removeOldRounds } from '../../utils/index'
 import EffectsSidebar from '../effects-sidebar/EffectsSidebar';
 import UserPatterns from '../user-patterns/UserPatterns';
 
+const minimumRoundDataVersion = 1;
+
 function usePrevious (value) {
   const ref = useRef();
   useEffect(() => {
@@ -65,9 +67,11 @@ const SessionRoute = ({
         return { id: doc.id, ...doc.data() }
       })
       toggleLoader(false);
-      //console.log('tempDoc', tempDoc)
+      console.log('tempDoc', tempDoc)
 
-      //removeOldRounds(tempDoc)
+      removeOldRounds(tempDoc, minimumRoundDataVersion)
+
+      console.log('tempDoc after removing old versions', tempDoc);
 
       fromBackend = true;
       if (tempDoc.length <= 0) {
@@ -83,6 +87,7 @@ const SessionRoute = ({
         setRoundData(dummyData);
         setRounds([dummyData]);
       } else {
+        console.log('loading round', tempDoc[0]);
         const currentRound = tempDoc[0];
         firebase.getRound(currentRound.id).then((round) => {
           console.log('round', round);

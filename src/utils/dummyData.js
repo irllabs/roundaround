@@ -48,6 +48,7 @@ export const getDefaultRoundData = (userId) => {
     const round = {
         "user": userId || null,
         "id": uuid(),
+        "dataVersion": 1,
         "bpm": 120,
         "name": "Default Round",
         "layers": [

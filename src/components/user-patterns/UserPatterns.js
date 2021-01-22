@@ -18,15 +18,33 @@ class UserPatterns extends Component {
     static contextType = FirebaseContext;
     constructor (props) {
         super(props)
+        this.state = {
+            selectedPattern: null,
+        }
+        this.selectedPatternNeedsSaving = false
         this.onLoadPattern = this.onLoadPattern.bind(this)
         this.onSavePattern = this.onSavePattern.bind(this)
         this.onShareRoundClick = this.onShareRoundClick.bind(this)
     }
     async onLoadPattern (id) {
-        console.log('onLoadPattern', id);
+        // console.log('onLoadPattern', id);
         const pattern = _.find(this.props.round.userPatterns[this.props.user.id].patterns, { id })
-        if (!_.isNil(pattern)) {
-            console.log('loading state', pattern);
+        if (!_.isEmpty(pattern.state)) {
+            //console.log('loading state', pattern);
+
+            this.setState({ selectedPattern: pattern.id, selectedPatternNeedsSaving: false })
+
+            // check if we have layers in the round not referenced in the pattern then set all steps in that layer to off
+            for (const existingLayer of this.props.round.layers) {
+                if (_.isNil(_.find(pattern.state.layers, { id: existingLayer.id })) && existingLayer.creator === this.props.user.id) {
+                    let existingLayerClone = _.cloneDeep(existingLayer)
+                    for (const step of existingLayerClone.steps) {
+                        step.isOn = false
+                    }
+                    pattern.state.layers.push(existingLayerClone)
+                }
+            }
+
             // save to store first so UI updates straight away
             for (const layer of pattern.state.layers) {
                 const layerExists = _.find(this.props.round.layers, { id: layer.id })
@@ -34,21 +52,23 @@ class UserPatterns extends Component {
                     this.props.setLayerSteps(layer.id, layer.steps)
                 }
             }
+
             // now save to firebase
             for (const layer of pattern.state.layers) {
                 // todo handle edge cases - eg layer been deleted
                 const layerExists = _.find(this.props.round.layers, { id: layer.id })
                 if (!_.isNil(layerExists)) {
-                    this.context.setSteps(this.props.round.id, layer.id, layer.steps)
+                    this.context.updateLayer(this.props.round.id, layer.id, { steps: layer.steps })
                 }
             }
         }
     }
     onSavePattern (id) {
-        console.log('onSavePattern', id);
+        //console.log('onSavePattern', id);
         // save all steps for this user
+        this.setState({ selectedPattern: id, selectedPatternNeedsSaving: false })
         const state = this.getCurrentState(this.props.user.id)
-        console.log('saving state', state);
+        // console.log('saving state', state);
         this.props.saveUserPattern(this.props.user.id, id, state)
         this.context.saveUserPatterns(this.props.round.id, this.props.user.id, this.props.round.userPatterns[this.props.user.id])
     }
@@ -73,6 +93,18 @@ class UserPatterns extends Component {
 
 
     render () {
+        let selectedPatternNeedsSaving = false;
+        if (!_.isNil(this.state.selectedPattern)) {
+            const pattern = _.find(this.props.round.userPatterns[this.props.user.id].patterns, { id: this.state.selectedPattern })
+            for (const layer of this.props.round.layers) {
+                const patternLayer = _.find(pattern.state.layers, { id: layer.id })
+                if (!_.isNil(patternLayer)) {
+                    if (!_.isEqual(layer.steps, patternLayer.steps)) {
+                        selectedPatternNeedsSaving = true
+                    }
+                }
+            }
+        }
         let items = []
         if (!_.isNil(this.props.round.userPatterns) && !_.isNil(this.props.round.userPatterns[this.props.user.id])) {
             for (const pattern of this.props.round.userPatterns[this.props.user.id].patterns) {
@@ -106,7 +138,7 @@ class UserPatterns extends Component {
                 </div>
                 <div className={`${styles.userPatternsContainer}`}>
                     {items.map((item, index) => (
-                        <UserPatternThumbControl key={`item-${item.id}`} id={item.id} label={item.label} isFilled={item.isFilled} loadPattern={this.onLoadPattern} savePattern={this.onSavePattern} />
+                        <UserPatternThumbControl key={`item-${item.id}`} id={item.id} label={item.label} isFilled={item.isFilled} isSelected={item.id === this.state.selectedPattern} needsSaving={selectedPatternNeedsSaving} loadPattern={this.onLoadPattern} savePattern={this.onSavePattern} />
                     ))}
                 </div>
             </div>

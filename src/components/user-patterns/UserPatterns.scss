@@ -16,3 +16,9 @@
 .userPatternsContainer{
     padding-bottom:1rem;
 }
+.userPatternThumb{
+    cursor: pointer;
+}
+.userPatternThumbText {
+    pointer-events: none;
+}

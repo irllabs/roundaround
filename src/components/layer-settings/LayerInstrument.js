@@ -40,7 +40,7 @@ export default function LayerInstrument ({ selectedLayer, user, roundId }) {
     const onArticulationSelect = (event) => {
         setSelectedArticulation(event.target.value);
         dispatch({ type: UPDATE_LAYER_INSTRUMENT, payload: { id: selectedLayer.id, instrument: { sample: event.target.value }, user: user.id } })
-
+        firebase.updateLayer(roundId, selectedLayer.id, { instrument: { sample: event.target.value } })
     };
     const articulationMenuItems = articulationOptions.map(articulation => <MenuItem value={articulation.name} key={articulation.name}>{articulation.name}</MenuItem>)
     useEffect(() => {

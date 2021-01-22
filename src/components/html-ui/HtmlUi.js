@@ -68,7 +68,7 @@ class HtmlUi extends Component {
     }
 
     async componentDidUpdate () {
-        console.log('componentDidUpdate()', this.props.round)
+        // console.log('componentDidUpdate()', this.props.round)
 
         // Calculate what's changed so we only redraw if necessary
         let redraw = false
@@ -596,12 +596,14 @@ class HtmlUi extends Component {
             const step = this.getStep(stepGraphic.id)
             step.probability = stepGraphic.probability
             this.props.dispatch({ type: SET_STEP_PROBABILITY, payload: { probability: stepGraphic.probability, layerId: stepGraphic.layerId, stepId: stepGraphic.id, user: this.props.user.id } })
-            this.context.updateStep(this.round.id, stepGraphic.layerId, stepGraphic.id, step)
+            this.saveLayer(stepGraphic.layerId)
+            //this.context.updateStep(this.round.id, stepGraphic.layerId, stepGraphic.id, step)
         } else if (stepGraphic.isPanningY && stepGraphic.isOn) {
             const step = this.getStep(stepGraphic.id)
             step.velocity = stepGraphic.velocity
             this.props.dispatch({ type: SET_STEP_VELOCITY, payload: { velocity: stepGraphic.velocity, layerId: stepGraphic.layerId, stepId: stepGraphic.id, user: this.props.user.id } })
-            this.context.updateStep(this.round.id, stepGraphic.layerId, stepGraphic.id, step)
+            this.saveLayer(stepGraphic.layerId)
+            //this.context.updateStep(this.round.id, stepGraphic.layerId, stepGraphic.id, step)
         }
         AudioEngine.recalculateParts(this.props.round)
         stepGraphic.isPanningX = false;
@@ -611,6 +613,10 @@ class HtmlUi extends Component {
         setTimeout(() => {
             this.isPanning = false
         }, 100)
+    }
+
+    saveLayer (id) {
+        this.context.updateLayer(this.round.id, id, _.find(this.round.layers, { id }))
     }
 
     removeAllStepEventListeners () {
@@ -645,7 +651,8 @@ class HtmlUi extends Component {
             AudioEngine.recalculateParts(this.round)
             this.props.dispatch({ type: TOGGLE_STEP, payload: { layerId: stepGraphic.layerId, stepId: stepGraphic.id, isOn: step.isOn, user: null } })
             // console.log('this.context', this.context);
-            this.context.updateStep(this.round.id, stepGraphic.layerId, stepGraphic.id, step)
+            this.saveLayer(stepGraphic.layerId)
+            //this.context.updateStep(this.round.id, stepGraphic.layerId, stepGraphic.id, step)
         }
     }
 

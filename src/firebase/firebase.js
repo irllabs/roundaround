@@ -96,15 +96,8 @@ class Firebase {
                 layerSnapshot.forEach(layerDoc => {
                     let layer = layerDoc.data();
                     layer.id = layerDoc.id;
-                    layer.steps = []
                     layers.push(layer);
                 })
-
-                for (const layer of layers) {
-                    layer.steps = await this.getSteps(roundId, layer.id)
-
-                }
-
 
                 resolve(layers)
             }
@@ -115,31 +108,31 @@ class Firebase {
         })
     }
 
-    getSteps = async (roundId, layerId) => {
-        return new Promise(async (resolve, reject) => {
-            let steps = []
-            try {
-                const stepSnapshot = await this.db
-                    .collection("rounds")
-                    .doc(roundId)
-                    .collection('layers')
-                    .doc(layerId)
-                    .collection('steps')
-                    .get();
-                stepSnapshot.forEach(stepDoc => {
-                    let step = stepDoc.data();
-                    step.id = stepDoc.id;
-                    steps.push(step);
-                })
-                steps = _.orderBy(steps, 'order')
-                resolve(steps)
-            }
-            catch (e) {
-                console.error(e)
-                reject(e)
-            }
-        })
-    }
+    /* getSteps = async (roundId, layerId) => {
+         return new Promise(async (resolve, reject) => {
+             let steps = []
+             try {
+                 const stepSnapshot = await this.db
+                     .collection("rounds")
+                     .doc(roundId)
+                     .collection('layers')
+                     .doc(layerId)
+                     .collection('steps')
+                     .get();
+                 stepSnapshot.forEach(stepDoc => {
+                     let step = stepDoc.data();
+                     step.id = stepDoc.id;
+                     steps.push(step);
+                 })
+                 steps = _.orderBy(steps, 'order')
+                 resolve(steps)
+             }
+             catch (e) {
+                 console.error(e)
+                 reject(e)
+             }
+         })
+     }*/
     getUserBuses = async (roundId) => {
         return new Promise(async (resolve, reject) => {
             let userBuses = {}
@@ -186,7 +179,7 @@ class Firebase {
     }
 
 
-    setSteps = async (roundId, layerId, steps) => {
+    /*setSteps = async (roundId, layerId, steps) => {
         // first delete the current steps in the db
         await this.deleteSteps(roundId, layerId)
         // add steps
@@ -202,7 +195,7 @@ class Firebase {
             .doc(layerId)
             .collection('steps')
         return this.deleteCollection(ref)
-    }
+    }*/
 
     deleteCollection = async (collectionRef) => {
         return this.deleteQueryBatch(this.db, collectionRef.limit(64));
@@ -224,7 +217,7 @@ class Firebase {
     }
 
     deleteLayer = async (roundId, layerId) => {
-        await this.deleteSteps(roundId, layerId)
+        // await this.deleteSteps(roundId, layerId)
         this.db.collection('rounds').doc(roundId).collection('layers').doc(layerId).delete()
     }
 
@@ -269,26 +262,12 @@ class Firebase {
     createLayer = async (roundId, layerData) => {
         return new Promise(async (resolve, reject) => {
             let layer = _.cloneDeep(layerData)
-            const steps = [...layer.steps]
-            delete layer.steps
             try {
                 await this.db.collection('rounds')
                     .doc(roundId)
                     .collection('layers')
                     .doc(layer.id)
                     .set(layer)
-                let batch = this.db.batch()
-                for (const step of steps) {
-                    let stepRef = this.db.collection('rounds')
-                        .doc(roundId)
-                        .collection('layers')
-                        .doc(layer.id)
-                        .collection('steps')
-                        .doc(step.id)
-                    batch.set(stepRef, step)
-                    //this.createStep(roundId, layer.id, step)
-                }
-                await batch.commit()
                 resolve()
             } catch (e) {
                 console.error(e)
@@ -296,22 +275,22 @@ class Firebase {
         })
     }
 
-    createStep = async (roundId, layerId, step) => {
-        return new Promise(async (resolve, reject) => {
-            try {
-                await this.db.collection('rounds')
-                    .doc(roundId)
-                    .collection('layers')
-                    .doc(layerId)
-                    .collection('steps')
-                    .doc(step.id)
-                    .set(step)
-                resolve()
-            } catch (e) {
-                console.error(e)
-            }
-        })
-    }
+    /* createStep = async (roundId, layerId, step) => {
+         return new Promise(async (resolve, reject) => {
+             try {
+                 await this.db.collection('rounds')
+                     .doc(roundId)
+                     .collection('layers')
+                     .doc(layerId)
+                     .collection('steps')
+                     .doc(step.id)
+                     .set(step)
+                 resolve()
+             } catch (e) {
+                 console.error(e)
+             }
+         })
+     }*/
 
     createUserBus = async (roundId, id, userBus) => {
         return new Promise(async (resolve, reject) => {
@@ -369,7 +348,7 @@ class Firebase {
         }
     }
 
-    updateStep = async (roundId, layerId, stepId, step) => {
+    /*updateStep = async (roundId, layerId, stepId, step) => {
         try {
             await this.db.collection('rounds')
                 .doc(roundId)
@@ -381,7 +360,7 @@ class Firebase {
         } catch (e) {
             console.error(e)
         }
-    }
+    }*/
 
     updateUserBus = async (roundId, userId, userBus) => {
         console.log('firebase::updateUserBus()', roundId, userId, userBus);

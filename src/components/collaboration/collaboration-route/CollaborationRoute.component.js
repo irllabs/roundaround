@@ -473,6 +473,8 @@ class CollaborationRoute extends React.Component {
     }
 }
 
+/** */
+
 const mapStateToProps = state => {
     return {
         round: state.round,

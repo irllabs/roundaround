@@ -13,7 +13,7 @@ import MailIcon from '@material-ui/icons/Mail';
 import TextField from '@material-ui/core/TextField';
 import Slider from '@material-ui/core/Slider';
 import _ from 'lodash'
-import { SET_LAYER_NAME, SET_LAYER_MUTE, SET_LAYER_PREVIEW, REMOVE_LAYER, SET_IS_SHOWING_LAYER_SETTINGS } from '../../redux/actionTypes'
+import { SET_LAYER_NAME, SET_LAYER_MUTE, SET_LAYER_PREVIEW, REMOVE_LAYER, SET_IS_SHOWING_LAYER_SETTINGS, SET_LAYER_STEPS } from '../../redux/actionTypes'
 import Box from '@material-ui/core/Box';
 import { makeStyles } from '@material-ui/core/styles';
 import { convertPercentToDB, convertDBToPercent, numberRange } from '../../utils/index'
@@ -55,6 +55,14 @@ class LayerSettings extends Component {
         this.onCloseClick()
     }
 
+    onClearStepsClick () {
+        let selectedLayerClone = _.cloneDeep(this.props.selectedLayer)
+        for (let step of selectedLayerClone.steps) {
+            step.isOn = false
+        }
+        this.props.dispatch({ type: SET_LAYER_STEPS, payload: { id: selectedLayerClone.id, steps: selectedLayerClone.steps } })
+        this.context.updateLayer(this.props.round.id, selectedLayerClone.id, { steps: selectedLayerClone.steps })
+    }
 
     render () {
         // console.log('Layer settings render()', this.props.user);
@@ -88,6 +96,7 @@ class LayerSettings extends Component {
                     <LayerType selectedLayer={selectedLayer} roundId={this.props.round.id} userId={this.props.user.id} />
                     <LayerNumberOfSteps selectedLayer={selectedLayer} roundId={this.props.round.id} user={this.props.user} />
                     {layerTypeFormItems}
+                    <Button onClick={this.onClearStepsClick.bind(this)} variant="outlined" disableElevation>Clear steps</Button>
                     <Button onClick={this.onDeleteLayerClick.bind(this)} variant="outlined" disableElevation>Delete layer</Button>
                 </Box>
             )
