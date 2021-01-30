@@ -49,6 +49,7 @@
     "irlui": "git+https://git@batchku@dev.azure.com/batchku/irlui/_git/irlui",
     "lodash": "^4.17.19",
     "postcss": "^8.2.1",
+    "qrcode": "^1.4.4",
     "react": "^16.13.1",
     "react-color": "^2.18.1",
     "react-dom": "^16.13.1",

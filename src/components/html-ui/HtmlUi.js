@@ -1,6 +1,6 @@
 import React, { Component, useContext } from 'react';
 import * as _ from 'lodash';
-import './HtmlUi.scss'
+import styles from './HtmlUi.scss'
 import { SVG } from '@svgdotjs/svg.js'
 import '@svgdotjs/svg.panzoom.js'
 import { HTML_UI_Params, KEY_MAPPINGS } from '../../constants'
@@ -80,6 +80,11 @@ class HtmlUi extends Component {
             AudioEngine.load(this.props.round)
             this.draw()
             return
+        }
+
+        if (this.round.bpm !== this.props.round.bpm) {
+            this.round.bpm = this.props.round.bpm
+            this.reclaculateIndicatorAnimation()
         }
 
         // User profile color changed
@@ -254,10 +259,10 @@ class HtmlUi extends Component {
         const positionLineLength = (HTML_UI_Params.addNewLayerButtonDiameter / 2) + (HTML_UI_Params.initialLayerPadding / 2) + ((HTML_UI_Params.stepDiameter + HTML_UI_Params.layerPadding) * this.round.layers.length)
 
         const positionLineWidth = 16
-        const positionLineTime = 2000
+        const positionLineTime = (60 / this.round.bpm) * 4000
         this.positionLine = this.container.rect(positionLineWidth, positionLineLength).fill('#666666')
         this.positionLine.move((this.containerWidth / 2) - (positionLineWidth / 2), (this.containerHeight / 2) - positionLineLength)
-        this.positionLine.animate({ duration: positionLineTime }).ease('-').transform({ rotate: 360, relative: true, origin: 'bottom center' }).loop()
+        this.positionLineAnimation = this.positionLine.animate({ duration: positionLineTime }).ease('-').transform({ rotate: 360, relative: true, origin: 'bottom center' }).loop()
         if (!this.isOn) {
             this.positionLine.timeline().pause()
         } else {
@@ -325,6 +330,19 @@ class HtmlUi extends Component {
         }
     }
 
+    reclaculateIndicatorAnimation () {
+        if (!_.isNil(this.positionLineAnimation)) {
+            this.positionLineAnimation.unschedule()
+        }
+        const positionLineTime = (60 / this.round.bpm) * 4000
+        this.positionLineAnimation = this.positionLine.animate({ duration: positionLineTime }).ease('-').transform({ rotate: 360, relative: true, origin: 'bottom center' }).loop()
+        if (!this.isOn) {
+            this.positionLine.timeline().pause()
+        } else {
+            this.positionLine.timeline().seek(AudioEngine.getPositionMilliseconds())
+        }
+    }
+
     addLayer (layer, order, shouldAnimate = true) {
         // console.log('addLayer', layer);
         let animateTime = shouldAnimate ? 600 : 0
@@ -342,6 +360,7 @@ class HtmlUi extends Component {
         } else {
             layerGraphic.animate(animateTime).stroke({ opacity: HTML_UI_Params.layerStrokeOpacity })
         }
+        layerGraphic.addClass(styles.layerGraphic)
         this.addLayerEventListeners(layerGraphic)
         this.layerGraphics.push(layerGraphic)
 
@@ -361,7 +380,7 @@ class HtmlUi extends Component {
             stepGraphic.layerId = layer.id
             stepGraphic.id = step.id
             stepGraphic.isAllowedInteraction = layer.creator === this.props.user.id
-            stepGraphic.addClass('step')
+            stepGraphic.addClass(styles.stepGraphic)
             this.stepGraphics.push(stepGraphic)
             this.updateStep(step)
             this.addStepEventListeners(stepGraphic)
@@ -402,14 +421,16 @@ class HtmlUi extends Component {
         }
     }
 
-    highlightLayer (layerGraphic) {
-        this.unhighlightAllLayers()
+    highlightLayer (layerGraphic, unhighlightExceptLayerId) {
+        this.unhighlightAllLayers(unhighlightExceptLayerId)
         layerGraphic.animate().stroke({ opacity: HTML_UI_Params.layerStrokeOpacity * 2 })
     }
 
-    unhighlightAllLayers () {
+    unhighlightAllLayers (exceptLayerId) {
         this.layerGraphics.map((layerGraphic) => {
-            layerGraphic.animate().stroke({ opacity: HTML_UI_Params.layerStrokeOpacity })
+            if (layerGraphic.id !== exceptLayerId) {
+                layerGraphic.animate().stroke({ opacity: HTML_UI_Params.layerStrokeOpacity })
+            }
         })
     }
 
@@ -471,8 +492,40 @@ class HtmlUi extends Component {
         if (layerGraphic.isAllowedInteraction) {
             layerGraphic.click(function (e) {
                 e.stopPropagation()
+                //_this.onLayerClicked(layerGraphic.id)
+            })
+            layerGraphic.on('mousedown', function (e) {
+                e.stopPropagation()
                 _this.onLayerClicked(layerGraphic.id)
             })
+            layerGraphic.on('mouseover', function (e) {
+                e.stopPropagation()
+                _this.onLayerOver(layerGraphic)
+            })
+            layerGraphic.on('mouseout', function (e) {
+                e.stopPropagation()
+                _this.onLayerOut(layerGraphic)
+            })
+            layerGraphic.on('touchstart', (e) => {
+                _this.onLayerTouchStart(layerGraphic, e)
+            })
+            layerGraphic.on('touchend', (e) => {
+                _this.onLayerTouchEnd(layerGraphic, e)
+            })
+        }
+    }
+    onLayerTouchStart (layerGraphic, e) {
+        console.log('onLayerTouchStart');
+        e.preventDefault()
+        const _this = this
+        this.layerTouchTimer = setTimeout(() => {
+            this.onLayerClicked(layerGraphic.id)
+        }, 500)
+    }
+    onLayerTouchEnd (layerGraphic) {
+        console.log('onLayerTouchEnd');
+        if (this.layerTouchTimer) {
+            clearTimeout(this.layerTouchTimer)
         }
     }
     onLayerClicked (layerId) {
@@ -480,6 +533,12 @@ class HtmlUi extends Component {
         this.props.dispatch({ type: SET_SELECTED_LAYER_ID, payload: { layerId } })
         this.props.dispatch({ type: SET_IS_SHOWING_LAYER_SETTINGS, payload: { value: true } })
         this.highlightLayer(_.find(this.layerGraphics, { id: layerId }))
+    }
+    onLayerOver (layerGraphic) {
+        this.highlightLayer(layerGraphic, this.selectedLayerId)
+    }
+    onLayerOut (layerGraphic) {
+        this.unhighlightAllLayers(this.selectedLayerId)
     }
 
     orderLayers () {
@@ -512,6 +571,13 @@ class HtmlUi extends Component {
                     _this.container.off('mouseup')
                     _this.onStepDragEnd(stepGraphic)
                 })
+            })
+
+            stepGraphic.on('mouseover', (e) => {
+                _this.highlightStep(stepGraphic)
+            })
+            stepGraphic.on('mouseout', (e) => {
+                _this.unhighlightStep(stepGraphic)
             })
             stepGraphic.on('touchstart', (e) => {
                 _this.onStepDragStart(stepGraphic, e.touches[0].pageX, e.touches[0].pageY)
@@ -615,6 +681,17 @@ class HtmlUi extends Component {
         }, 100)
     }
 
+    highlightStep (stepGraphic) {
+        const layer = _.find(this.props.round.layers, { id: stepGraphic.layerId })
+        stepGraphic.animate(HTML_UI_Params.stepAnimationUpdateTime).attr({ fill: this.userColors[layer.creator], 'fill-opacity': 1 })
+    }
+    unhighlightStep (stepGraphic) {
+        const step = this.getStep(stepGraphic.id)
+        if (!step.isOn) {
+            stepGraphic.animate(HTML_UI_Params.stepAnimationUpdateTime).attr({ fill: '#101114', 'fill-opacity': 1 })
+        }
+    }
+
     saveLayer (id) {
         this.context.updateLayer(this.round.id, id, _.find(this.round.layers, { id }))
     }
@@ -690,6 +767,7 @@ class HtmlUi extends Component {
             //console.log('click outside');
             _this.unhighlightAllLayers()
             this.props.dispatch({ type: SET_IS_SHOWING_LAYER_SETTINGS, payload: { value: false } })
+            this.selectedLayerId = null
         })
     }
     getUserColors () {

@@ -1,33 +1,67 @@
 import React, { Component } from 'react'
-import styles from './UserPatterns.scss'
 import _ from 'lodash'
 import { connect } from "react-redux";
-import AudioEngine from "../../audio-engine/AudioEngine"
-import { SET_USER_BUS_FX_OVERRIDE, SET_USER_BUS_FX } from '../../redux/actionTypes'
+import PropTypes from 'prop-types';
+import { withStyles } from '@material-ui/styles';
+import Box from '@material-ui/core/Box';
+import PatternThumbControl from './PatternThumbControl'
 import { FirebaseContext } from '../../firebase';
-import Group from '@material-ui/icons/Group';
-import Share from '@material-ui/icons/Share';
-import { IconButton } from '@material-ui/core';
-import { Avatar } from '@material-ui/core';
 import {
     saveUserPattern,
-    setLayerSteps,
-    setIsShowingVideoWindow
+    setLayerSteps
 } from "../../redux/actions";
-import UserPatternThumbControl from './UserPatternThumbControl'
+import ChevronLeftIcon from '@material-ui/icons/ChevronLeft';
 
-class UserPatterns extends Component {
+const styles = theme => ({
+    root: {
+        width: '120px',
+        height: 'calc(100% - 64px)',
+        position: 'absolute',
+        left: '0',
+        top: '64px',
+        borderTop: 'solid 1px rgba(255,255,255,0.1)',
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        justifyContent: 'flex-end',
+        paddingBottom: '0.5rem',
+        backgroundColor: 'rgba(53,53,53,0.8)',
+        transition: 'left 0.4s',
+    },
+    isMinimized: {
+        left: '-120px'
+    },
+    minimizeButton: {
+        backgroundColor: 'rgba(53,53,53,0.8)',
+        width: '32px',
+        height: '32px',
+        position: 'absolute',
+        right: '-40px',
+        bottom: '16px',
+        borderRadius: '16px',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        transition: 'transform 0.4s',
+        cursor: 'pointer'
+    },
+    minimizeButtonIsMinimized: {
+        transform: 'rotateY(180deg)'
+    }
+})
+
+class PatternsSidebar extends Component {
     static contextType = FirebaseContext;
     constructor (props) {
         super(props)
         this.state = {
             selectedPattern: null,
+            isMinimized: false
         }
         this.selectedPatternNeedsSaving = false
         this.onLoadPattern = this.onLoadPattern.bind(this)
         this.onSavePattern = this.onSavePattern.bind(this)
-        this.onShareRoundClick = this.onShareRoundClick.bind(this)
-        this.onShowVideoWindowClick = this.onShowVideoWindowClick.bind(this)
+        this.onMinimizeClick = this.onMinimizeClick.bind(this)
     }
     async onLoadPattern (id) {
         // console.log('onLoadPattern', id);
@@ -75,6 +109,9 @@ class UserPatterns extends Component {
         this.props.saveUserPattern(this.props.user.id, id, state)
         this.context.saveUserPatterns(this.props.round.id, this.props.user.id, this.props.round.userPatterns[this.props.user.id])
     }
+    onMinimizeClick () {
+        this.setState({ isMinimized: !this.state.isMinimized })
+    }
 
     getCurrentState (userId) {
         const userLayers = _.filter(this.props.round.layers, { creator: userId })
@@ -89,17 +126,8 @@ class UserPatterns extends Component {
         }
         return state
     }
-
-    onShareRoundClick () {
-        this.props.shareRound()
-    }
-
-    onShowVideoWindowClick () {
-        this.props.setIsShowingVideoWindow(!this.props.display.isShowingVideoWindow)
-    }
-
-
     render () {
+        const { classes } = this.props;
         let selectedPatternNeedsSaving = false;
         if (!_.isNil(this.state.selectedPattern)) {
             const pattern = _.find(this.props.round.userPatterns[this.props.user.id].patterns, { id: this.state.selectedPattern })
@@ -124,59 +152,24 @@ class UserPatterns extends Component {
                 items.push(item)
             }
         }
-        const isShowingVideoWindow = this.props.display.isShowingVideoWindow
-        let videoWindowButtonStyles = {
-            borderRadius: '24px', width: '38px', height: '38px', backgroundColor: '#000000', color: '#ffffff', marginBottom: '1rem'
-        }
-        if (isShowingVideoWindow) {
-            videoWindowButtonStyles.backgroundColor = '#ffffff'
-            videoWindowButtonStyles.color = '#000000'
-        }
+        const isMinimizedClass = this.state.isMinimized ? classes.isMinimized : '';
+        const buttonIsMinimizedClass = this.state.isMinimized ? classes.minimizeButtonIsMinimized : '';
         return (
-            <div className={`${styles.userPatterns}`}>
-                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', fontSize: '0.8rem' }}>
-                    <p style={{ marginTop: '0.5rem', marginBottom: '1.5rem' }}><strong>RoundAround</strong></p>
-                    {
-                        this.props.mode === 'collaboration' && <>
-                            <Avatar style={{ marginBottom: '0.5rem' }} alt="Remy Sharp" src="https://material-ui.com/static/images/avatar/1.jpg" />
-                            <Avatar style={{ marginBottom: '0.5rem' }} alt="Remy Sharp" src="https://material-ui.com/static/images/avatar/2.jpg" />
-                            <Avatar style={{ marginBottom: '1.5rem' }} alt="Remy Sharp" src="https://material-ui.com/static/images/avatar/3.jpg" />
-                        </>
-                    }
-                    <div style={{ display: 'flex', flexDirection: 'row', width: '100%', justifyContent: 'space-evenly' }}>
-                        <button
-                            type="button"
-                            style={{ borderRadius: '24px', width: '38px', height: '38px' }}
-                            onClick={this.onShareRoundClick}
-                        >
-                            <Share style={{ width: '24px' }} />
-                        </button>
-                        {
-                            this.props.mode === 'collaboration' &&
-                            <>
-                                <button
-                                    type="button"
-                                    style={videoWindowButtonStyles}
-                                    onClick={this.onShowVideoWindowClick}
-                                >
-                                    <Group />
-                                </button>
-
-                            </>
-                        }
-
-                    </div>
-
-                </div>
-                <div className={`${styles.userPatternsContainer}`}>
+            <Box className={classes.root + ' ' + isMinimizedClass}>
+                <div className={classes.patternsContainer}>
                     {items.map((item, index) => (
-                        <UserPatternThumbControl key={`item-${item.id}`} id={item.id} label={item.label} isFilled={item.isFilled} isSelected={item.id === this.state.selectedPattern} needsSaving={selectedPatternNeedsSaving} loadPattern={this.onLoadPattern} savePattern={this.onSavePattern} />
+                        <PatternThumbControl key={`item-${item.id}`} id={item.id} label={item.label} isFilled={item.isFilled} isSelected={item.id === this.state.selectedPattern} needsSaving={selectedPatternNeedsSaving} loadPattern={this.onLoadPattern} savePattern={this.onSavePattern} />
                     ))}
                 </div>
-            </div>
+                <Box className={classes.minimizeButton + ' ' + buttonIsMinimizedClass} onClick={this.onMinimizeClick}><ChevronLeftIcon size="small" /></Box>
+            </Box>
         )
     }
 }
+PatternsSidebar.propTypes = {
+    classes: PropTypes.object.isRequired,
+};
+
 const mapStateToProps = state => {
     //console.log('mapStateToProps', state);
     return {
@@ -192,7 +185,6 @@ const mapStateToProps = state => {
 export default connect(
     mapStateToProps, {
     saveUserPattern,
-    setLayerSteps,
-    setIsShowingVideoWindow
+    setLayerSteps
 }
-)(UserPatterns);
+)(withStyles(styles)(PatternsSidebar));

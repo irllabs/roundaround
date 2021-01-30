@@ -12,22 +12,22 @@ const ProfileComponent = ({
     setUser
 }) => {
     const firebase = useContext(FirebaseContext);
-    const userData = firebase.currentUser ? JSON.parse(firebase.currentUser.displayName) : {};
+    //const userData = firebase.currentUser ? JSON.parse(firebase.currentUser.displayName) : {};
     const [color, setColor] = useState(user.color || getRandomColor());
-    
+
     const handleChangeComplete = (color) => {
         setColor(color.hex);
         firebase.currentUser.updateProfile({
             displayName: JSON.stringify({ ...userData, color: color.hex })
         }).then(function () {
-            console.log('set user', {...user, color: color.hex})
-            setUser({...user, color: color.hex});
+            console.log('set user', { ...user, color: color.hex })
+            setUser({ ...user, color: color.hex });
             console.log('profile color updated: ', color.hex)
         }).catch(e => {
             console.error(e)
         })
     };
-    
+
     const handleChange = (color) => {
         setColor(color.hex);
     }

@@ -40,6 +40,9 @@ import { getDefaultUserBus, getDefaultUserPatterns } from '../../../utils/dummyD
 import AudioEngine from '../../../audio-engine/AudioEngine';
 import JitsiComponent from '../../jitsi/JitsiComponent';
 import UserPatterns from '../../user-patterns/UserPatterns';
+import TopBar from '../../top-bar/TopBar';
+import Header from '../../header/Header';
+import PatternsSidebar from '../../patterns-sidebar/PatternsSidebar';
 
 class CollaborationRoute extends React.Component {
     static contextType = FirebaseContext;
@@ -460,20 +463,21 @@ class CollaborationRoute extends React.Component {
 
 
                         </div>
-                        <UserPatterns shareRound={this.shareRound} mode="collaboration" />
+                        <PatternsSidebar shareRound={this.shareRound} mode="collaboration" />
                         <EffectsSidebar isOn={this.state.isOn} mode="collaboration" user={this.firebase ? this.firebase.currentUser : {}} shareRound={this.shareRound} toggleProfile={this.toggleProfile}
                             togglePlay={this.togglePlay}
                             toggleSettings={this.toggleSettings}
                             toggleSidebar={this.toggleSidebar} />
-                        <JitsiComponent roomName={this.collaborationId} />
+                        <Header togglePlay={this.togglePlay} isPlaying={this.state.isOn} />
                     </>
                 }
+
             </>
         )
     }
 }
 
-/** */
+/** <JitsiComponent roomName={this.collaborationId} />*/
 
 const mapStateToProps = state => {
     return {

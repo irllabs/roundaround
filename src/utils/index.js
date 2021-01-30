@@ -100,7 +100,7 @@ export const removeOldRounds = (rounds, minimumRoundDataVersion) => {
     console.log('all rounds', rounds);
     let roundsToRemove = []
     for (const round of rounds) {
-        if (_.isNil(round.version) || round.version < minimumRoundDataVersion) {
+        if (_.isNil(round.dataVersion) || round.dataVersion < minimumRoundDataVersion) {
             roundsToRemove.push(round)
         }
     }

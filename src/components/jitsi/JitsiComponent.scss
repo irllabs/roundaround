@@ -1,12 +1,13 @@
 .videoWindow{
     z-index: 4;
     position: absolute;
-    bottom:0px;
-
+    top:0px;
+    transition: left 0.4s;
 }
 .videoWindowOpen{
-    left:calc(50vw - 200px);
+    //left:calc(50vw - 300px);
+    left:120px;
 }
 .videoWindowClosed{
-    right:-650px !important;
+    left:-650px !important;
 }

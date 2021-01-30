@@ -1,37 +1,88 @@
 import React, { Component } from 'react'
-import styles from './EffectsSidebar.scss'
-import { sortableContainer, sortableElement, sortableHandle } from 'react-sortable-hoc';
-import _ from 'lodash'
-import arrayMove from 'array-move'
-import { DragIndicator } from '@material-ui/icons';
-import EffectThumbControl from './EffectThumbControl';
+import PropTypes from 'prop-types';
+import { withStyles } from '@material-ui/styles';
+import Box from '@material-ui/core/Box';
 import { connect } from "react-redux";
 import AudioEngine from "../../audio-engine/AudioEngine"
-import { SET_USER_BUS_FX_OVERRIDE, SET_USER_BUS_FX } from '../../redux/actionTypes'
 import { FirebaseContext } from '../../firebase';
-import VideoCam from '@material-ui/icons/VideoCam';
-import PlayArrow from '@material-ui/icons/PlayArrow';
-import Pause from '@material-ui/icons/Pause';
-import MoreVert from '@material-ui/icons/MoreVert';
-import { IconButton } from '@material-ui/core';
-import Button from '@material-ui/core/Button';
-import Menu from '@material-ui/core/Menu';
-import MenuItem from '@material-ui/core/MenuItem';
 import {
-    setIsShowingVideoWindow,
     setUserBusFx,
     setUserBusFxOverride
 } from "../../redux/actions";
+import { sortableContainer, sortableElement, sortableHandle } from 'react-sortable-hoc';
+import arrayMove from 'array-move'
+import { DragIndicator } from '@material-ui/icons';
+import EffectThumbControl from './EffectThumbControl';
+import ChevronRightIcon from '@material-ui/icons/ChevronRight';
 
-const DragHandle = sortableHandle(() => <span className={`${styles.effectsSidebarListItemDragHandle}`}><DragIndicator /></span>);
-const SortableItem = sortableElement(({ fx, onSwitchOn, onSwitchOff }) => (
-    <li className={`${styles.effectsSidebarListItem}`}>
-        <DragHandle />
+const styles = theme => ({
+    root: {
+        width: '200px',
+        height: 'calc(100% - 64px)',
+        position: 'absolute',
+        right: '0',
+        top: '64px',
+        borderTop: 'solid 1px rgba(255,255,255,0.1)',
+        backgroundColor: 'rgba(53,53,53,0.8)',
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        justifyContent: 'flex-end',
+        transition: 'right 0.4s',
+    },
+    isMinimized: {
+        right: '-200px'
+    },
+    minimizeButton: {
+        backgroundColor: 'rgba(53,53,53,0.8)',
+        width: '32px',
+        height: '32px',
+        position: 'absolute',
+        left: '-40px',
+        bottom: '16px',
+        borderRadius: '16px',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        transition: 'transform 0.4s',
+        cursor: 'pointer'
+    },
+    minimizeButtonIsMinimized: {
+        transform: 'rotateY(180deg)'
+    },
+    effectsSidebarList: {
+        margin: '0',
+        padding: '0',
+        width: '100%'
+    },
+    effectsSidebarListItem: {
+        listStyleType: 'none',
+        padding: '1rem',
+        paddingLeft: '0',
+        backgroundColor: '',
+        color: 'white',
+        borderTop: 'solid 1px rgba(255, 255, 255, 0.1)',
+        display: 'flex',
+        alignItems: 'center',
+    },
+    effectsSidebarListItemDragHandle: {
+        paddingLeft: '1rem',
+        paddingRight: '1rem',
+        display: 'flex',
+        cursor: 'move',
+        color: '#ededed'
+    }
+})
+
+const DragHandle = sortableHandle(({ classes }) => <span className={classes.effectsSidebarListItemDragHandle}><DragIndicator /></span>);
+const SortableItem = sortableElement(({ fx, onSwitchOn, onSwitchOff, classes }) => (
+    <li className={classes.effectsSidebarListItem}>
+        <DragHandle classes={classes} />
         <EffectThumbControl label={toTitleCase(fx.label)} fxId={fx.id} userId={fx.userId} switchOn={onSwitchOn} switchOff={onSwitchOff} />
     </li>
 ));
-const SortableContainer = sortableContainer(({ children }) => {
-    return <ul className={`${styles.effectsSidebarList}`}>{children}</ul>;
+const SortableContainer = sortableContainer(({ children, classes }) => {
+    return <ul className={classes.effectsSidebarList}>{children}</ul>;
 });
 
 const toTitleCase = (str) => {
@@ -43,58 +94,23 @@ const toTitleCase = (str) => {
     );
 }
 
+
 class EffectsSidebar extends Component {
     static contextType = FirebaseContext;
     constructor (props) {
         super(props)
         this.state = {
-            menuAnchorElement: null
+            menuAnchorElement: null,
+            isMinimized: false
         }
         this.onSwitchOn = this.onSwitchOn.bind(this)
         this.onSwitchOff = this.onSwitchOff.bind(this)
-        this.onShowVideoWindowClick = this.onShowVideoWindowClick.bind(this)
-        this.onPlayClick = this.onPlayClick.bind(this)
-        this.onShareRoundClick = this.onShareRoundClick.bind(this)
-        this.onProfileClick = this.onProfileClick.bind(this)
-        this.onProjectClick = this.onProjectClick.bind(this)
-        this.onFullscreenClick = this.onFullscreenClick.bind(this)
-        this.onMenuOpenClick = this.onMenuOpenClick.bind(this)
-        this.onMenuClose = this.onMenuClose.bind(this)
+        this.onMinimizeClick = this.onMinimizeClick.bind(this)
     }
 
     onPlayClick () {
         this.props.togglePlay()
     }
-    onShareRoundClick () {
-        this.props.shareRound()
-    }
-    onProfileClick () {
-        this.props.toggleProfile()
-    }
-    onProjectClick () {
-        this.props.toggleSidebar()
-    }
-    onFullscreenClick () {
-        var element = document.documentElement;
-        if (_.isNil(document.fullscreenElement)) {
-            if (element.requestFullscreen) {
-                element.requestFullscreen();
-            } else if (element.webkitRequestFullscreen) { /* Safari */
-                element.webkitRequestFullscreen();
-            } else if (element.msRequestFullscreen) { /* IE11 */
-                element.msRequestFullscreen();
-            }
-        } else {
-            if (document.exitFullscreen) {
-                document.exitFullscreen();
-            } else if (document.webkitExitFullscreen) { /* Safari */
-                document.webkitExitFullscreen();
-            } else if (document.msExitFullscreen) { /* IE11 */
-                document.msExitFullscreen();
-            }
-        }
-    }
-
     onSortEnd = ({ oldIndex, newIndex }) => {
         let userBus = _.cloneDeep(this.props.round.userBuses[this.props.user.id])
         userBus.fx = arrayMove(userBus.fx, oldIndex, newIndex)
@@ -128,20 +144,11 @@ class EffectsSidebar extends Component {
         fx.isOverride = false
         this.context.updateUserBus(this.props.round.id, this.props.user.id, userBus)
     }
-    onShowVideoWindowClick () {
-        this.props.setIsShowingVideoWindow(!this.props.display.isShowingVideoWindow)
-    }
-    onMenuOpenClick (e) {
-        this.setState({
-            menuAnchorElement: e.currentTarget
-        })
-    }
-    onMenuClose (e) {
-        this.setState({
-            menuAnchorElement: null
-        })
+    onMinimizeClick () {
+        this.setState({ isMinimized: !this.state.isMinimized })
     }
     render () {
+        const { classes } = this.props;
         let items = []
         if (!_.isNil(this.props.round.userBuses) && !_.isNil(this.props.round.userBuses[this.props.user.id])) {
             for (const fx of this.props.round.userBuses[this.props.user.id].fx) {
@@ -153,100 +160,24 @@ class EffectsSidebar extends Component {
                 items.push(item)
             }
         }
+        const isMinimizedClass = this.state.isMinimized ? classes.isMinimized : '';
+        const buttonIsMinimizedClass = this.state.isMinimized ? classes.minimizeButtonIsMinimized : '';
         return (
-            <div className={`${styles.effectsSidebar}`}>
-                <div className={`${styles.effectsSidebarTop}`}>
-                    <button
-                        type="button"
-                        style={{ borderRadius: '24px', width: '38px', height: '38px' }}
-                        onClick={this.onPlayClick}
-                    >
-                        {this.props.isOn ? <Pause /> : <PlayArrow />}
-                    </button>
-                    {
-                        this.props.mode === 'collaboration' &&
-                        <IconButton variant="outlined" style={{ color: 'white' }} onClick={this.onShowVideoWindowClick}><VideoCam /></IconButton>
-                    }
-
-                    <IconButton aria-controls="simple-menu" aria-haspopup="true" onClick={this.onMenuOpenClick}>
-                        <MoreVert />
-                    </IconButton>
-                    <Menu
-                        id="simple-menu"
-                        anchorEl={this.state.menuAnchorElement}
-                        keepMounted
-                        open={Boolean(this.state.menuAnchorElement)}
-                        onClose={this.onMenuClose}
-                    >
-                        <MenuItem onClick={this.onProfileClick}>Profile</MenuItem>
-                        <MenuItem onClick={this.onProjectClick}>Project</MenuItem>
-                    </Menu>
-                </div>
-
-                <SortableContainer onSortEnd={this.onSortEnd} useDragHandle >
+            <Box className={classes.root + ' ' + isMinimizedClass}>
+                <SortableContainer onSortEnd={this.onSortEnd} useDragHandle classes={classes} >
                     {items.map((fx, index) => (
-                        <SortableItem key={`item-${fx.id}`} index={index} fx={fx} onSwitchOff={this.onSwitchOff} onSwitchOn={this.onSwitchOn} />
+                        <SortableItem classes={classes} key={`item-${fx.id}`} index={index} fx={fx} onSwitchOff={this.onSwitchOff} onSwitchOn={this.onSwitchOn} />
                     ))}
                 </SortableContainer>
-            </div>
+                <Box className={classes.minimizeButton + ' ' + buttonIsMinimizedClass} onClick={this.onMinimizeClick}><ChevronRightIcon size="small" /></Box>
+            </Box>
         )
-        /* return (
-             <div className={`${styles.effectsSidebar}`}>
-                 <div className={`${styles.effectsSidebarTop}`}>
-                     <button
-                         type="button"
-                         style={{ borderRadius: '24px', width: '38px', height: '38px' }}
-                         onClick={this.onPlayClick}
-                     >
-                         {this.props.isOn ? <Pause /> : <PlayArrow />}
-                     </button>
- 
- 
- 
-                     {
-                         this.props.user &&
-                         <button
-                             type="button"
-                             onClick={this.onProfileClick}
-                         >
-                             Profile
-                     </button>
-                     }
-                     {
-                         this.props.user &&
-                         <button
-                             type="button"
-                             onClick={this.onFullscreenClick}
-                         >
-                             Fullscreen
-                     </button>
-                     }
- 
-                     {
-                         this.props.mode !== 'collaboration' &&
-                         <button
-                             type="button"
-                             onClick={this.onProjectClick}
-                         >
-                             Project
-                     </button>
- 
-                     }
-                     {
-                         this.props.mode === 'collaboration' &&
-                         <IconButton variant="outlined" style={{ color: 'white' }} onClick={this.onShowVideoWindowClick}><VideoCam /></IconButton>
-                     }
-                 </div>
- 
-                 <SortableContainer onSortEnd={this.onSortEnd} useDragHandle >
-                     {items.map((fx, index) => (
-                         <SortableItem key={`item-${fx.id}`} index={index} fx={fx} onSwitchOff={this.onSwitchOff} onSwitchOn={this.onSwitchOn} />
-                     ))}
-                 </SortableContainer>
-             </div>
-         )*/
     }
 }
+EffectsSidebar.propTypes = {
+    classes: PropTypes.object.isRequired,
+};
+
 const mapStateToProps = state => {
     //console.log('mapStateToProps', state);
     return {
@@ -258,11 +189,9 @@ const mapStateToProps = state => {
     };
 };
 
-
 export default connect(
     mapStateToProps, {
-    setIsShowingVideoWindow,
     setUserBusFx,
     setUserBusFxOverride
 }
-)(EffectsSidebar);
+)(withStyles(styles)(EffectsSidebar));

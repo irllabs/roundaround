@@ -25,6 +25,8 @@ import { FirebaseContext } from '../../firebase';
 
 import styles from './App.styles.scss';
 import '../../styles/baseStyles.scss';
+import { createMuiTheme, ThemeProvider } from '@material-ui/core/styles';
+import CssBaseline from '@material-ui/core/CssBaseline';
 
 const App = ({
     loaderActive,
@@ -34,10 +36,45 @@ const App = ({
 }) => {
     const firebase = useContext(FirebaseContext);
 
+    const theme = React.useMemo(
+        () =>
+            createMuiTheme({
+                palette: {
+                    type: 'dark',
+                    primary: {
+                        dark: '#AAAAAA',
+                        main: '#EAEAEA',
+                        light: '#FFFFFF'
+                    },
+                    secondary: {
+                        dark: '#333333',
+                        main: '#474747',
+                        light: '#C1C1C1'
+                    },
+                    text: {
+                        primary: '#EAEAEA'
+                    },
+                    action: {
+                        active: '#EAEAEA'
+                    }
+                },
+                shape: {
+                    borderRadius: 32
+                },
+                typography: {
+                    button: {
+                        textTransform: 'none'
+                    }
+                }
+            }),
+        [],
+    );
+
     useEffect(() => {
         toggleLoader(true);
         firebase.onUserUpdatedObservers.push((fbUser) => {
             if (firebase.currentUser) {
+                console.log('firebase.currentUser', firebase.currentUser);
                 const userData = JSON.parse(firebase.currentUser.displayName);
                 console.log('user: ', user)
                 setUser({ ...user, id: fbUser.uid, email: fbUser.email, ...userData });
@@ -72,28 +109,31 @@ const App = ({
     }
 
     return (
-        <div className={styles.container} >
-            <Loader
-                className={styles.loader}
-                type="Puff"
-                color="#00BFFF"
-                height={100}
-                width={100}
-                visible={loaderActive}
-            />
-            {
-                user &&
-                <Router>
-                    <Switch>
-                        <Redirect exact from='/' to='/login' />
-                        <Route path="/login" render={() => <SigninRoute onRouteReady={onRouteReady} />} />
-                        <ProtectedRoute path="/session" authenticated={firebase.currentUser} component={SessionRoute} />
-                        <Route path="/collaboration/:id" render={() => <CollaborationRoute />} />
-                        <Route path="/jitsi/:id" render={() => <JitsiRoute />} />
-                    </Switch>
-                </Router>
-            }
-        </div>
+        <ThemeProvider theme={theme}>
+            <CssBaseline />
+            <div className={styles.container} >
+                <Loader
+                    className={styles.loader}
+                    type="Puff"
+                    color="#00BFFF"
+                    height={100}
+                    width={100}
+                    visible={loaderActive}
+                />
+                {
+                    user &&
+                    <Router>
+                        <Switch>
+                            <Redirect exact from='/' to='/login' />
+                            <Route path="/login" render={() => <SigninRoute onRouteReady={onRouteReady} />} />
+                            <ProtectedRoute path="/session" authenticated={firebase.currentUser} component={SessionRoute} />
+                            <Route path="/collaboration/:id" render={() => <CollaborationRoute />} />
+                            <Route path="/jitsi/:id" render={() => <JitsiRoute />} />
+                        </Switch>
+                    </Router>
+                }
+            </div>
+        </ThemeProvider>
     )
 }
 

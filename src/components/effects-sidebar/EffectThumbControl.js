@@ -25,7 +25,8 @@ export default class EffectThumbControl extends Component {
             .size(thumbWidth + 40, thumbHeight)
         this.background = this.container.rect(thumbWidth + 40, thumbHeight).fill('none').radius(24)
         this.thumb = this.container.nested()
-        this.thumbBackground = this.thumb.rect(thumbWidth, thumbHeight).fill('#555555').radius(24)
+        this.thumb.x(containerWidth - thumbWidth)
+        this.thumbBackground = this.thumb.rect(thumbWidth, thumbHeight).fill('#474747').radius(24)
         //this.lock = this.container.rect(36, 36).fill('#ffffff')
         //this.lock.svg('<svg xmlns="http://www.w3.org/2000/svg" height="24" viewBox="0 0 24 24" width="24"><path d="M0 0h24v24H0z" fill="none"/><path d="M18 8h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zm-6 9c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2zm3.1-9H8.9V6c0-1.71 1.39-3.1 3.1-3.1 1.71 0 3.1 1.39 3.1 3.1v2z"/></svg>')
         this.label = this.thumb.plain(this.props.label)
@@ -34,7 +35,7 @@ export default class EffectThumbControl extends Component {
             size: 14,
             weight: 600
         })
-        this.label.fill('#FFFFFF')
+        this.label.fill('#EAEAEA')
         this.label.x((thumbWidth / 2) - (this.label.node.getBBox().width / 2))
         this.label.y((thumbHeight / 2) - (this.label.node.getBBox().height / 2))
         this.addEventListeners()
@@ -43,20 +44,21 @@ export default class EffectThumbControl extends Component {
         const _this = this
         this.thumb.on('touchstart', (e) => {
             e.preventDefault()
-            console.log('touchstart', e, e.touches.length - 1);
+            // console.log('touchstart', e, e.touches.length - 1);
             this.switchOn()
             this.touchIndex = e.touches.length - 1
             this.dragStart = e.touches[this.touchIndex].pageX
-            this.thumbBackground.fill('#FFFFFF')
+            this.thumbBackground.fill('#EAEAEA')
             this.label.fill('#222222')
         })
         this.thumb.on('touchmove', (e) => {
             e.preventDefault()
             let x = e.touches[this.touchIndex].pageX - this.dragStart
-            if (this.isOn) {
+            if (!this.isOn) {
+                //  x = (containerWidth - thumbWidth) + e.touches[this.touchIndex].pageX - this.dragStart
                 x = (containerWidth - thumbWidth) + e.touches[this.touchIndex].pageX - this.dragStart
             }
-            console.log('touchmove', this.touchIndex, e, 'x', x);
+            //      console.log('touchmove', this.touchIndex, e, 'x', x);
             if (x > containerWidth - thumbWidth) {
                 x = containerWidth - thumbWidth
             } else if (x < 0) {
@@ -68,16 +70,16 @@ export default class EffectThumbControl extends Component {
             e.preventDefault()
             const threshold = (containerWidth - thumbWidth) / 2
             let x = this.thumb.x()
-            if (x < threshold) {
-                x = 0
+            if (x > threshold) {
+                x = containerWidth - thumbWidth
                 this.isOn = false
-                this.thumbBackground.fill('#555555')
-                this.label.fill('#FFFFFF')
+                this.thumbBackground.fill('#474747')
+                this.label.fill('#EAEAEA')
                 this.switchOff()
             } else {
-                x = containerWidth - thumbWidth
+                x = 0
                 this.isOn = true
-                //this.thumbBackground.fill('#555555')
+                //this.thumbBackground.fill('#474747')
                 // this.label.fill('#FFFFFF')
             }
             this.thumb.x(x)
@@ -86,7 +88,7 @@ export default class EffectThumbControl extends Component {
             e.preventDefault()
             this.switchOn()
             this.dragStart = e.pageX
-            this.thumbBackground.fill('#FFFFFF')
+            this.thumbBackground.fill('#EAEAEA')
             this.label.fill('#222222')
             document.addEventListener('mousemove', this.onMouseMove)
             document.addEventListener('mouseup', this.onMouseUp)
@@ -95,7 +97,7 @@ export default class EffectThumbControl extends Component {
     onMouseMove (e) {
         e.preventDefault()
         let x = e.pageX - this.dragStart
-        if (this.isOn) {
+        if (!this.isOn) {
             x = (containerWidth - thumbWidth) + e.pageX - this.dragStart
         }
         if (x > containerWidth - thumbWidth) {
@@ -112,16 +114,16 @@ export default class EffectThumbControl extends Component {
 
         const threshold = (containerWidth - thumbWidth) / 2
         let x = this.thumb.x()
-        if (x < threshold) {
-            x = 0
+        if (x > threshold) {
+            x = containerWidth - thumbWidth
             this.isOn = false;
             this.switchOff()
-            this.thumbBackground.fill('#555555')
-            this.label.fill('#FFFFFF')
+            this.thumbBackground.fill('#474747')
+            this.label.fill('#EAEAEA')
         } else {
-            x = containerWidth - thumbWidth
+            x = 0
             this.isOn = true
-            //this.thumbBackground.fill('#555555')
+            //this.thumbBackground.fill('#474747')
             // this.label.fill('#FFFFFF')
         }
         this.thumb.x(x)
@@ -141,8 +143,8 @@ export default class EffectThumbControl extends Component {
     }
     render () {
         return (
-            <div style={{ width: '120px', height: '48px', backgroundColor: '#222222', borderRadius: '24px', position: 'relative' }}>
-                <LockOpen fontSize="small" style={{ color: '#555555', position: 'absolute', right: '10px', top: '12px', zIndex: 1 }} />
+            <div style={{ width: '120px', height: '48px', backgroundColor: 'rgba(0,0,0,0.5)', borderRadius: '24px', position: 'relative' }}>
+                <LockOpen fontSize="small" style={{ color: '#474747', position: 'absolute', left: '10px', top: '12px', zIndex: 1 }} />
                 <div style={{ zIndex: 2, position: 'absolute' }}>
                     <div ref={this.thumbControlRef} style={{ display: 'flex', zIndex: 2 }}></div>
                 </div>

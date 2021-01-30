@@ -17,6 +17,7 @@ const AudioEngine = {
     async load (round) {
         console.log('audio engine loading round', round);
         this.reset()
+        this.setTempo(round.bpm)
         for (const userBus of Object.values(round.userBuses)) {
             await this.addUser(userBus.id, userBus.fx)
         }
@@ -91,8 +92,12 @@ const AudioEngine = {
     },
     getPositionMilliseconds () {
         return Math.round(Tone.Transport.seconds * 1000)
+    },
+    setTempo (bpm) {
+        Tone.Transport.bpm.value = bpm
+    },
+    setSwing (swing) {
+
     }
-
-
 }
 export default AudioEngine

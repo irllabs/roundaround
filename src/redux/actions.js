@@ -48,7 +48,9 @@ import {
     SET_USER_BUS_FX,
     SET_USER_BUS_FX_OVERRIDE,
     SET_IS_SHOWING_VIDEO_WINDOW,
-    SAVE_USER_PATTERN
+    SAVE_USER_PATTERN,
+    SET_IS_SHOWING_RENAME_DIALOG,
+    SET_IS_SHOWING_DELETE_ROUND_DIALOG
 } from "./actionTypes";
 
 export const resetRoundsStore = () => ({
@@ -211,12 +213,12 @@ export const addRoundLayers = layers => ({
 
 export const setRoundName = (name, user) => ({
     type: SET_ROUND_NAME,
-    payload: { name, user }
+    payload: { name }
 })
 
-export const setRoundBpm = (bpm, user) => ({
+export const setRoundBpm = (bpm) => ({
     type: SET_ROUND_BPM,
-    payload: { bpm, user }
+    payload: { bpm }
 })
 
 export const setUser = user => ({
@@ -273,4 +275,12 @@ export const setIsShowingVideoWindow = (value) => ({
 export const saveUserPattern = (userId, patternId, data) => ({
     type: SAVE_USER_PATTERN,
     payload: { userId, patternId, data }
+})
+export const setIsShowingRenameDialog = (value) => ({
+    type: SET_IS_SHOWING_RENAME_DIALOG,
+    payload: { value }
+})
+export const setIsShowingDeleteRoundDialog = (value) => ({
+    type: SET_IS_SHOWING_DELETE_ROUND_DIALOG,
+    payload: { value }
 })

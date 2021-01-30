@@ -1,17 +1,18 @@
 @import "~styles/index";
 .userPatterns{
     width: 120px;
-    height:100%;
+    height:calc(100vh - 64px);
     background-color: rgba(0,0,0,0.7);
     position:absolute;
     left:0;
-    top:0;
+    top:64px;
     color:white;
     display:flex;
     align-items: center;
     justify-content: space-between;
     flex-direction: column;
     padding-top:1rem;
+    z-index:5;
 }
 .userPatternsContainer{
     padding-bottom:1rem;

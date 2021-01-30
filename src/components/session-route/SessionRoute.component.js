@@ -2,7 +2,7 @@ import React, { useState, useEffect, useContext, useRef } from 'react';
 import * as Tone from 'tone';
 import { withRouter } from 'react-router-dom';
 import { connect } from "react-redux";
-import { setRoundData, setRounds, toggleLoader, resetRoundsStore, resetRaycasterStore, resetCameraStore, resetEditingModeStore, resetLoaderStore } from "../../redux/actions";
+import { setRoundData, setRounds, toggleLoader, resetRoundsStore, resetRaycasterStore, resetCameraStore, resetEditingModeStore, resetLoaderStore, setIsShowingRenameDialog, setIsShowingDeleteRoundDialog } from "../../redux/actions";
 import { ThrottleDelay } from '../../constants';
 import { getDefaultRoundData } from '../../utils/dummyData';
 import ControlsBar from '../controls-bar/ControlsBar.component';
@@ -19,8 +19,12 @@ import _ from 'lodash'
 import { removeOldRounds } from '../../utils/index'
 import EffectsSidebar from '../effects-sidebar/EffectsSidebar';
 import UserPatterns from '../user-patterns/UserPatterns';
+import PatternsSidebar from '../patterns-sidebar/PatternsSidebar';
+import Header from '../header/Header'
+import RenameDialog from '../RenameDialog';
+import DeleteRoundDialog from '../DeleteRoundDialog';
 
-const minimumRoundDataVersion = 1;
+const minimumRoundDataVersion = 1.2;
 
 function usePrevious (value) {
   const ref = useRef();
@@ -46,7 +50,11 @@ const SessionRoute = ({
   resetCameraStore,
   resetEditingModeStore,
   resetLoaderStore,
-  disableKeyListener
+  disableKeyListener,
+  setIsShowingRenameDialog,
+  isShowingRenameDialog,
+  isShowingDeleteRoundDialog,
+  setIsShowingDeleteRoundDialog
 }) => {
   const [clockIsRunning, setClockIsRunning] = useState(clock.isRunning);
   const [settingsOpened, setSettingsOpened] = useState(false);
@@ -78,12 +86,13 @@ const SessionRoute = ({
         // create new
         console.log('create new round')
         const dummyData = getDefaultRoundData(user.uid);
-        firebase.db.collection('rounds')
+        /*firebase.db.collection('rounds')
           .doc(dummyData.id)
           .set(dummyData, { merge: false })
           .catch(e => {
             console.log(e);
-          })
+          })*/
+        firebase.createRound(dummyData.id, dummyData)
         setRoundData(dummyData);
         setRounds([dummyData]);
       } else {
@@ -227,6 +236,10 @@ const SessionRoute = ({
     setProfileOpened(!profileOpened)
   }
 
+  const logout = () => {
+    firebase.doSignOut()
+  }
+
   return (
     <>
       <Modal
@@ -248,13 +261,16 @@ const SessionRoute = ({
           <div className={styles.mainContainer}>
             <HtmlUi isOn={clockIsRunning} togglePlay={togglePlay} disableKeyListener={disableKeyListener} />
           </div>
-          <UserPatterns shareRound={shareRound} />
-          <EffectsSidebar isOn={clockIsRunning} shareRound={shareRound} togglePlay={togglePlay} toggleProfile={toggleProfile} toggleSidebar={toggleSidebar} />
+          <PatternsSidebar shareRound={shareRound} />
+          <EffectsSidebar isOn={clockIsRunning} togglePlay={togglePlay} toggleProfile={toggleProfile} toggleSidebar={toggleSidebar} />
           <LinkGenerator
             sharing={sharingLink}
             toggleSharing={toggleSharing}
             round={round}
           />
+          <Header togglePlay={togglePlay} logout={logout} isPlaying={clockIsRunning} shareRound={shareRound} setIsShowingRenameDialog={setIsShowingRenameDialog} setIsShowingDeleteRoundDialog={setIsShowingDeleteRoundDialog} />
+          <RenameDialog isOpen={isShowingRenameDialog} setIsOpen={setIsShowingRenameDialog} />
+          <DeleteRoundDialog isOpen={isShowingDeleteRoundDialog} setIsOpen={setIsShowingDeleteRoundDialog} />
         </>
       }
     </>
@@ -299,7 +315,9 @@ const mapStateToProps = state => {
   return {
     round: state.round,
     rounds: state.rounds,
-    disableKeyListener: state.display.disableKeyListener
+    disableKeyListener: state.display.disableKeyListener,
+    isShowingRenameDialog: state.display.isShowingRenameDialog,
+    isShowingDeleteRoundDialog: state.display.isShowingDeleteRoundDialog,
   };
 };
 
@@ -313,6 +331,8 @@ export default connect(
     resetRaycasterStore,
     resetCameraStore,
     resetEditingModeStore,
-    resetLoaderStore
+    resetLoaderStore,
+    setIsShowingRenameDialog,
+    setIsShowingDeleteRoundDialog
   }
 )(withRouter(SessionRoute));

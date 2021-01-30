@@ -216,9 +216,19 @@ class Firebase {
         })
     }
 
+    deleteRound = async (round) => {
+        return new Promise(async (resolve, reject) => {
+            for (const layer of round.layers) {
+                await this.deleteLayer(round.id, layer.id)
+            }
+            await this.db.collection('rounds').doc(round.id).delete()
+            resolve()
+        })
+    }
+
     deleteLayer = async (roundId, layerId) => {
         // await this.deleteSteps(roundId, layerId)
-        this.db.collection('rounds').doc(roundId).collection('layers').doc(layerId).delete()
+        return this.db.collection('rounds').doc(roundId).collection('layers').doc(layerId).delete()
     }
 
     createRound = async (roundId, data) => {
@@ -325,11 +335,12 @@ class Firebase {
     }
 
     updateRound = async (roundId, data) => {
-        //console.log('updateRound', roundId, data)
+        console.log('updateRound', roundId, data)
         try {
             await this.db.collection('rounds')
                 .doc(roundId)
                 .set(data, { merge: true })
+            console.log('updated round');
         } catch (e) {
             console.error(e)
         }

@@ -2,7 +2,9 @@ import {
     SET_SELECTED_LAYER_ID,
     SET_IS_SHOWING_LAYER_SETTINGS,
     SET_DISABLE_KEY_LISTENER,
-    SET_IS_SHOWING_VIDEO_WINDOW
+    SET_IS_SHOWING_VIDEO_WINDOW,
+    SET_IS_SHOWING_RENAME_DIALOG,
+    SET_IS_SHOWING_DELETE_ROUND_DIALOG
 } from "../actionTypes";
 import update from 'immutability-helper';
 
@@ -10,7 +12,9 @@ const initialState = {
     selectedLayerId: null,
     isShowingLayerSettings: false,
     disableSpaceListener: false,
-    isShowingVideoWindow: true
+    isShowingVideoWindow: true,
+    isShowingRenameDialog: false,
+    isShowingDeleteRoundDialog: false,
 };
 
 export default function (state = initialState, action) {
@@ -33,6 +37,16 @@ export default function (state = initialState, action) {
         case SET_DISABLE_KEY_LISTENER: {
             return update(state, {
                 disableKeyListener: { $set: action.payload.value }
+            })
+        }
+        case SET_IS_SHOWING_RENAME_DIALOG: {
+            return update(state, {
+                isShowingRenameDialog: { $set: action.payload.value }
+            })
+        }
+        case SET_IS_SHOWING_DELETE_ROUND_DIALOG: {
+            return update(state, {
+                isShowingDeleteRoundDialog: { $set: action.payload.value }
             })
         }
         default:
