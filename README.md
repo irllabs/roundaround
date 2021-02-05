@@ -11,7 +11,7 @@ Feature of the sequencer are:
 - Back-end: Firebase, leverage real-time database for all collaborative editing features
 - Audio engine: [Tone.js](https://tonejs.github.io/#:~:text=js-,Tone.,of%20the%20Web%20Audio%20API.)
 - Synthesis: Sample based
-- Graphics: [threejs](https://threejs.org/)
+- Graphics: [svg.js](https://svgjs.com/docs/3.0/)
 
 Reference:
 - Simple radial multi-layer simple sequencer: https://tylerbisson.com/Groove-Pizzeria/
@@ -25,6 +25,6 @@ Reference:
 
 
 ## Local Development
-- `npm install`  
-- `npm start`  
-- navigate to [http://localhost:3001](http://localhost:3001)
+- `yarn`  
+- `yarn start`  
+- navigate to [http://localhost:3000](http://localhost:3000)
