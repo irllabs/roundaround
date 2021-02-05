@@ -1,4 +1,4 @@
-"use strict";
+
 import _ from "lodash";
 import BassDrum from './instruments/BassDrum'
 import HiHatClosed from './instruments/HiHatClosed'
@@ -32,7 +32,7 @@ const Instruments = {
             TomToms
         ];
         for (let instrumentClass of classes) {
-            this.instrumentClasses[instrumentClass.name] = instrumentClass;
+            this.instrumentClasses[instrumentClass.instrumentName] = instrumentClass;
         }
     },
     create (instrumentName, articulation) {

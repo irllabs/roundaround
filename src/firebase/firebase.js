@@ -3,6 +3,7 @@ import 'firebase/auth';
 import 'firebase/firestore';
 import 'firebase/functions';
 import _ from 'lodash'
+import firebase from 'firebase'
 
 var firebaseConfig = {
     apiKey: "AIzaSyAuU25cV2Asaz_eKpyQGo_8mfpp_QhzwLk",
@@ -17,7 +18,10 @@ var firebaseConfig = {
 
 class Firebase {
     constructor () {
-        app.initializeApp(firebaseConfig);
+        if (!firebase.apps.length) {
+            app.initializeApp(firebaseConfig);
+        }
+
 
         // add this for local function development
         //app.functions().useFunctionsEmulator('http://localhost:5001')
@@ -31,33 +35,91 @@ class Firebase {
         this.onUserUpdatedObservers = [];
 
         app.auth().onAuthStateChanged((user) => {
+            console.log('onAuthStateChanged', user);
             if (user) {
                 this.currentUser = user;
                 this.onUserUpdatedObservers.map(observer => observer(user));
             } else {
                 // No user is signed in.
                 this.currentUser = null;
-                this.onUserUpdatedObservers.map(observer => observer({}));
+                this.onUserUpdatedObservers.map(observer => observer(null));
             }
         });
     }
 
+
+    // User
+    loadUser = (id) => {
+        console.log('firebase::loadUser()', id);
+        return new Promise(async (resolve, reject) => {
+            try {
+                const userSnapshot = await this.db.collection('users').doc(id).get()
+                if (userSnapshot.exists) {
+                    resolve({ id: userSnapshot.id, ...userSnapshot.data() })
+                } else {
+                    resolve(null)
+                }
+            } catch (e) {
+                console.error(e)
+            }
+        })
+    }
+
+    createUser = (userData) => {
+        return new Promise(async (resolve, reject) => {
+            let user = _.cloneDeep(userData)
+            delete user.id
+            try {
+                await this.db.collection('users')
+                    .doc(userData.id)
+                    .set(user)
+                resolve()
+            } catch (e) {
+                console.error(e)
+            }
+        })
+
+    }
+
+    updateUser = (id, userData) => {
+        return new Promise(async (resolve, reject) => {
+            let user = _.cloneDeep(userData)
+            delete user.id
+            try {
+                await this.db.collection('users')
+                    .doc(id)
+                    .set(user, { merge: true })
+                resolve()
+            } catch (e) {
+                console.error(e)
+            }
+        })
+
+    }
+
+    signOut = () => this.auth.signOut();
+
+
     // *** Auth API ***
-    doCreateUserWithEmailAndPassword = (email, password) =>
-        this.auth.createUserWithEmailAndPassword(email, password);
+    /* doCreateUserWithEmailAndPassword = (email, password) =>
+         this.auth.createUserWithEmailAndPassword(email, password);
+ 
+     doSignInWithEmailAndPassword = (email, password) =>
+         this.auth.signInWithEmailAndPassword(email, password);
+ 
+     doSignOut = () => this.auth.signOut();
+ 
+     doPasswordReset = email => this.auth.sendPasswordResetEmail(email);
+ 
+     doPasswordUpdate = password =>
+         this.auth.currentUser.updatePassword(password);
+ 
+     setOnUserUpdated = (callback) =>
+         this.onUserUpdated = callback;*/
 
-    doSignInWithEmailAndPassword = (email, password) =>
-        this.auth.signInWithEmailAndPassword(email, password);
 
-    doSignOut = () => this.auth.signOut();
 
-    doPasswordReset = email => this.auth.sendPasswordResetEmail(email);
 
-    doPasswordUpdate = password =>
-        this.auth.currentUser.updatePassword(password);
-
-    setOnUserUpdated = (callback) =>
-        this.onUserUpdated = callback;
 
 
     // *** Jitsi As A Service ***
@@ -67,6 +129,31 @@ class Firebase {
     }
 
     // *** Firebase API ***
+    getRoundsList = (userId, minimumVersion = 1) => {
+        console.log('getRoundsList', userId, minimumVersion);
+        return new Promise(async (resolve, reject) => {
+            let rounds = []
+            try {
+                const roundsSnapshot = await this.db
+                    .collection("rounds")
+                    .where('createdBy', '==', userId)
+                    .get();
+                roundsSnapshot.forEach(roundDoc => {
+                    let round = roundDoc.data();
+                    round.id = roundDoc.id;
+                    if (round.dataVersion >= minimumVersion) {
+                        rounds.push(round);
+                    }
+                })
+
+                resolve(rounds)
+            }
+            catch (e) {
+                console.error(e)
+                reject(e)
+            }
+        })
+    }
     getRound = async (roundId) => {
         console.log('getRound', roundId);
         return new Promise(async (resolve, reject) => {
@@ -231,8 +318,8 @@ class Firebase {
         return this.db.collection('rounds').doc(roundId).collection('layers').doc(layerId).delete()
     }
 
-    createRound = async (roundId, data) => {
-        console.log('createRound()', roundId, data);
+    createRound = async (data) => {
+        console.log('createRound()', data);
         return new Promise(async (resolve, reject) => {
             let round = _.cloneDeep(data)
             const layers = [...round.layers]
@@ -249,18 +336,19 @@ class Firebase {
                 allUserPatterns.push(userPatterns)
             }
             delete round.userPatterns
+            round.createdAt = Date.now()
             try {
                 await this.db.collection('rounds')
-                    .doc(roundId)
+                    .doc(data.id)
                     .set(round)
                 for (const layer of layers) {
-                    await this.createLayer(roundId, layer)
+                    await this.createLayer(data.id, layer)
                 }
                 for (const userBus of userBuses) {
-                    await this.createUserBus(roundId, userBus.id, userBus)
+                    await this.createUserBus(data.id, userBus.id, userBus)
                 }
                 for (const userPatterns of allUserPatterns) {
-                    await this.saveUserPatterns(roundId, userPatterns.id, userPatterns)
+                    await this.saveUserPatterns(data.id, userPatterns.id, userPatterns)
                 }
                 resolve(round)
             } catch (e) {
@@ -303,14 +391,15 @@ class Firebase {
      }*/
 
     createUserBus = async (roundId, id, userBus) => {
+        let userBusClone = _.cloneDeep(userBus)
+        delete userBusClone.id
         return new Promise(async (resolve, reject) => {
             try {
-                delete userBus.id
                 await this.db.collection('rounds')
                     .doc(roundId)
                     .collection('userBuses')
                     .doc(id)
-                    .set(userBus)
+                    .set(userBusClone)
                 resolve()
             } catch (e) {
                 console.error(e)
@@ -319,14 +408,15 @@ class Firebase {
     }
 
     saveUserPatterns = async (roundId, userId, userPatterns) => {
+        let userPatternsClone = _.cloneDeep(userPatterns)
         return new Promise(async (resolve, reject) => {
             try {
-                delete userPatterns.id
+                delete userPatternsClone.id
                 await this.db.collection('rounds')
                     .doc(roundId)
                     .collection('userPatterns')
                     .doc(userId)
-                    .set(userPatterns)
+                    .set(userPatternsClone)
                 resolve()
             } catch (e) {
                 console.error(e)

@@ -1,4 +1,4 @@
-'use strict';
+
 import * as Tone from 'tone';
 import Instruments from './Instruments';
 import _ from 'lodash'
@@ -36,6 +36,15 @@ export default class Track {
             this.createFX(this.trackParameters.fx).then(() => {
                 _this.buildAudioChain()
             })
+
+            // todo fix this better, for some reason fx are not bypassing correctly to start with
+            setTimeout(() => {
+                // bypass all effects
+                console.log('fx hack todo: fix this');
+                for (const effect of _this.sortedFx) {
+                    effect.setBypass(true)
+                }
+            }, 3000);
         } else if (this.type === Track.TRACK_TYPE_MASTER) {
             this.channel = new Tone.Gain()
         } else if (this.type === Track.TRACK_TYPE_AUTOMATION) {
@@ -82,6 +91,7 @@ export default class Track {
             this.disconnectAudioChain()
             if (!_.isNil(this.instrument)) {
                 this.instrument.connect(this.channel)
+                //this.instrument.instrument.toDestination()
             }
             let onFx = _.filter(this.sortedFx, {
                 isOn: true
@@ -223,6 +233,7 @@ export default class Track {
             }
             // _this.calculatePart()
             _this.instrument.setVolume(_this.channel.volume.value)
+
             resolve(_this.instrument)
         })
     }

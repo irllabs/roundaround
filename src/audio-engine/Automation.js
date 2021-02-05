@@ -1,8 +1,8 @@
-'use strict';
+
 import * as Tone from 'tone';
-const Note = require('@tonaljs/note')
 import _ from 'lodash'
 import AudioEngine from '../audio-engine/AudioEngine'
+const Note = require('@tonaljs/note')
 
 export default class Automation {
     constructor (fxId, userId) {

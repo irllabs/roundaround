@@ -10,9 +10,8 @@ import MenuList from '@material-ui/core/MenuList';
 import ExpandMoreIcon from '@material-ui/icons/ExpandMore';
 import { makeStyles } from '@material-ui/core/styles';
 import _ from 'lodash'
-import round from '../../redux/reducers/round';
-import { uuid } from '../../models/SequencerUtil';
-import { setRoundData } from '../../redux/actions';
+import { uuid } from '../../utils/index';
+import { setRound, setIsShowingRenameDialog, setIsShowingDeleteRoundDialog, setSelectedRoundId } from '../../redux/actions';
 import { FirebaseContext } from '../../firebase';
 
 const useStyles = makeStyles((theme) => ({
@@ -27,7 +26,7 @@ const useStyles = makeStyles((theme) => ({
     }
 }));
 
-function ProjectName ({ name, setIsShowingRenameDialog, setIsShowingDeleteRoundDialog, setRoundData, round }) {
+function ProjectName ({ name, setIsShowingRenameDialog, setIsShowingDeleteRoundDialog, setRound, round, setSelectedRoundId }) {
     const classes = useStyles();
     const [open, setOpen] = React.useState(false);
     const anchorRef = React.useRef(null);
@@ -35,30 +34,34 @@ function ProjectName ({ name, setIsShowingRenameDialog, setIsShowingDeleteRoundD
 
     const handleToggle = () => {
         setOpen((prevOpen) => !prevOpen);
+        setSelectedRoundId(round.id)
     };
 
     const handleClose = (event) => {
         if (anchorRef.current && anchorRef.current.contains(event.target)) {
             return;
         }
-
+        anchorRef.current.blur()
+        setSelectedRoundId(null)
         setOpen(false);
     };
 
     const onRenameClick = () => {
         setOpen(false);
+        setSelectedRoundId(round.id)
         setIsShowingRenameDialog(true)
     }
     const onDeleteClick = () => {
         setOpen(false)
+        setSelectedRoundId(round.id)
         setIsShowingDeleteRoundDialog(true)
     }
     const onDuplicateClick = () => {
         let clonedRound = _.cloneDeep(round)
         clonedRound.id = uuid()
         clonedRound.name += ' (duplicate)'
-        firebase.createRound(clonedRound.id, clonedRound)
-        setRoundData(clonedRound)
+        firebase.createRound(clonedRound)
+        setRound(clonedRound)
         setOpen(false)
     }
 
@@ -123,67 +126,9 @@ const mapStateToProps = state => {
 export default connect(
     mapStateToProps,
     {
-        setRoundData
+        setRound,
+        setIsShowingDeleteRoundDialog,
+        setIsShowingRenameDialog,
+        setSelectedRoundId
     }
 )(ProjectName);
-
-
-
-
-
-
-
-
-
-/*import React, { useState, useEffect, useCallback, useContext, createRef } from 'react';
-import { Edit } from '@material-ui/icons';
-import TextField from '@material-ui/core/TextField';
-
-export default function ProjectName ({ name, roundId }) {
-    const [isInEditMode, setIsInEditMode] = useState(false)
-    const textInput = createRef()
-    const onNameClick = () => {
-        setIsInEditMode(true)
-        textInput.current.focus()
-    }
-    const [textValue, setTextValue] = useState(name)
-    const updateProjectNameState = (name, selectedLayerId) => {
-        //dispatch({ type: SET_LAYER_NAME, payload: { id: selectedLayerId, name, user: user.id } })
-    }
-    const updateLayerNameStateThrottled = useCallback(_.throttle(function (name) {
-        updateProjectNameState(name)
-    }, 1000), []);
-    const onTextChange = (e) => {
-        setTextValue(e.target.value)
-        updateProjectNameStateThrottled(e.target.value)
-    }
-    const onFocus = (e) => {
-        //  dispatch({ type: SET_DISABLE_KEY_LISTENER, payload: { value: true } })
-    }
-    const onLoseFocus = (e) => {
-        //dispatch({ type: SET_DISABLE_KEY_LISTENER, payload: { value: false } })
-        setIsInEditMode(false)
-    }
-
-    useEffect(() => {
-
-    }, [])
-
-    return (
-        <div>
-            {  !isInEditMode &&
-                <div onClick={onNameClick}>
-                    {name}
-                    <Edit style={{ fontSize: 14, marginLeft: "0.5rem" }} />
-                </div>
-            }
-            {  isInEditMode &&
-                <>
-                    <TextField ref={textInput} variant="outlined" size="small" value={textValue || ''} onChange={onTextChange} onFocus={onFocus} onBlur={onLoseFocus} />
-
-                </>
-            }
-        </div>
-    )
-}
-*/

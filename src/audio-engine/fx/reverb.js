@@ -1,11 +1,10 @@
-'use strict';
+
 import FXBaseClass from './fx-base-class';
 import _ from 'lodash';
 import * as Tone from 'tone';
-import { numberRange } from '../../utils/index'
 
 export default class Reverb extends FXBaseClass {
-    static name = 'reverb';
+    static fxName = 'reverb';
     constructor (fxParameters) {
         super(fxParameters)
         this._size = 0.7

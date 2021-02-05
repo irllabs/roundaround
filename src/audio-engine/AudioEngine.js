@@ -15,28 +15,46 @@ const AudioEngine = {
         this.master.buildAudioChain()
     },
     async load (round) {
-        console.log('audio engine loading round', round);
+        //console.log('audio engine loading round', round);
         this.reset()
         this.setTempo(round.bpm)
+        if (!_.isNil(round.swing)) {
+            this.setSwing(round.swing)
+        }
         for (const userBus of Object.values(round.userBuses)) {
             await this.addUser(userBus.id, userBus.fx)
         }
-        // console.log('added user bus', this.busesByUser);
         for (const layer of round.layers) {
             const track = await this.createTrack(layer)
             await track.load(layer)
         };
+        //console.log('audio engine finsihed loading round');
     },
     async addUser (userId, userFx) {
-        //console.log('addUser()', userId);
-        const userBus = await this.createTrack({ fx: userFx, id: userId, creator: userId, type: Track.TRACK_TYPE_USER })
-        //userBus.buildAudioChain()
-        this.busesByUser[userId] = userBus;
+        return new Promise(async (resolve, reject) => {
+            //console.log('addUser()', userId);
+            const userBus = await this.createTrack({ fx: userFx, id: userId, createdBy: userId, type: Track.TRACK_TYPE_USER })
+            //userBus.buildAudioChain()
+            this.busesByUser[userId] = userBus;
+            resolve()
+        })
     },
     play () {
+        this.startAudioContext()
         Tone.Transport.start("+0.1");
         Tone.Transport.loop = true
         Tone.Transport.loopEnd = '1:0:0'
+    },
+    stop () {
+        Tone.Transport.stop()
+    },
+    startAudioContext () {
+        if (Tone.context.state !== 'running') {
+            Tone.context.resume();
+        }
+    },
+    isOn () {
+        return Tone.Transport.state === 'started'
     },
     // assumes tracks haven't changed, just the steps
     recalculateParts (round, layerId = null) {
@@ -47,13 +65,13 @@ const AudioEngine = {
         }
     },
     createTrack (trackParameters) {
-        const userId = trackParameters.creator
+        const userId = trackParameters.createdBy
         const type = trackParameters.type
         // console.log('createTrack', trackParameters, userId, type);
-        //  console.time('createTrack')
         let _this = this
         return new Promise(async function (resolve, reject) {
             let track = new Track(trackParameters, type, userId)
+
             _this.tracks.push(track)
             _this.tracksById[track.id] = track
             if (_.isNil(_this.tracksByType[track.type])) {
@@ -66,8 +84,6 @@ const AudioEngine = {
                     trackParameters.instrument
                 )
             }
-
-            // console.timeEnd('createTrack')
             resolve(track)
         })
     },
@@ -97,7 +113,7 @@ const AudioEngine = {
         Tone.Transport.bpm.value = bpm
     },
     setSwing (swing) {
-
+        Tone.Transport.swing = swing / 100
     }
 }
 export default AudioEngine
