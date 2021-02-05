@@ -1,16 +1,15 @@
-import React, { useRef, useState, Component } from 'react'
-import { connect, ReactReduxContext, Provider, useDispatch } from "react-redux";
+import React, { Component } from 'react'
+import { connect } from "react-redux";
 import { Drawer } from '@material-ui/core';
 import Button from '@material-ui/core/Button';
 import _ from 'lodash'
-import { SET_LAYER_NAME, SET_LAYER_MUTE, SET_LAYER_PREVIEW, REMOVE_LAYER, SET_IS_SHOWING_LAYER_SETTINGS, SET_LAYER_STEPS } from '../../../redux/actionTypes'
+import { SET_LAYER_MUTE, REMOVE_LAYER, SET_IS_SHOWING_LAYER_SETTINGS, SET_LAYER_STEPS } from '../../../redux/actionTypes'
 import Box from '@material-ui/core/Box';
 import { withStyles } from '@material-ui/core/styles';
 //import { convertPercentToDB, convertDBToPercent, numberRange } from '../../../utils/index'
 import AudioEngine from '../../../audio-engine/AudioEngine'
 
 import VolumeSlider from './VolumeSlider'
-import LayerName from './LayerName'
 import LayerInstrument from './LayerInstrument'
 import LayerNumberOfSteps from './LayerNumberOfSteps'
 import { FirebaseContext } from '../../../firebase';
@@ -33,9 +32,6 @@ const styles = theme => ({
 
 class LayerSettings extends Component {
     static contextType = FirebaseContext;
-    constructor (props) {
-        super(props)
-    }
 
     onCloseClick () {
         this.props.dispatch({ type: SET_IS_SHOWING_LAYER_SETTINGS, payload: { value: false } })
@@ -70,7 +66,6 @@ class LayerSettings extends Component {
         // console.log('Layer settings render()', this.props.user);
         const { classes } = this.props
         const selectedLayer = this.props.selectedLayer
-        let layerVolumePercent = 80;
         let form = '';
         if (!_.isNil(selectedLayer)) {
             //layerVolumePercent = convertDBToPercent(selectedLayer.instrument.gain)

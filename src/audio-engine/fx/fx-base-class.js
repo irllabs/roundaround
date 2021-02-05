@@ -12,7 +12,7 @@ export default class FXBaseClass {
 
     }
     dispose () {
-        console.log('FX dispose()');
+        // console.log('FX dispose()');
         if (!_.isNil(this.fx) && !_.isNil(this.fx._context)) {
             this.fx.dispose()
         }

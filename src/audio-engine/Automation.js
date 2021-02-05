@@ -2,7 +2,6 @@
 import * as Tone from 'tone';
 import _ from 'lodash'
 import AudioEngine from '../audio-engine/AudioEngine'
-const Note = require('@tonaljs/note')
 
 export default class Automation {
     constructor (fxId, userId) {

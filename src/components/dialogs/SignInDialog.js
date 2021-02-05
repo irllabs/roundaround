@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useContext, useRef } from 'react';
+import React, { useState, useContext, useRef } from 'react';
 import { connect } from "react-redux";
 import DialogTitle from '@material-ui/core/DialogTitle';
 import Dialog from '@material-ui/core/Dialog';
@@ -50,7 +50,7 @@ const styles = makeStyles({
     }
 })
 
-const SignInDialog = ({ isShowingSignInDialog, setIsShowingSignInDialog, setSignUpDisplayName, setUser, setRounds }) => {
+const SignInDialog = ({ isShowingSignInDialog, setIsShowingSignInDialog, setSignUpDisplayName, setUser, setRounds, redirectAfterSignIn }) => {
     const firebaseContext = useContext(FirebaseContext);
     const onClose = () => {
         setIsShowingEmailForm(false)
@@ -90,6 +90,7 @@ const SignInDialog = ({ isShowingSignInDialog, setIsShowingSignInDialog, setSign
                 }
                 console.log('creating user', user);
                 await firebaseContext.createUser(user)
+
             }
         } catch (e) {
             console.log('error logging in');
@@ -277,7 +278,8 @@ const SignInDialog = ({ isShowingSignInDialog, setIsShowingSignInDialog, setSign
 const mapStateToProps = state => {
     return {
         user: state.user,
-        isShowingSignInDialog: state.display.isShowingSignInDialog
+        isShowingSignInDialog: state.display.isShowingSignInDialog,
+        redirectAfterSignIn: state.display.redirectAfterSignIn
     };
 };
 

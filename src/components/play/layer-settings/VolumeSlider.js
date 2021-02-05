@@ -1,10 +1,9 @@
 import React, { useState, useCallback, useEffect, useContext } from 'react'
-import { connect, ReactReduxContext, Provider, useDispatch } from "react-redux";
+import { useDispatch } from "react-redux";
 import Slider from '@material-ui/core/Slider';
 import _ from 'lodash'
 import AudioEngine from '../../../audio-engine/AudioEngine'
 import { convertPercentToDB, convertDBToPercent } from '../../../utils/index'
-import { updateLayerInstrument } from '../../../redux/actions'
 import { SET_LAYER_GAIN } from '../../../redux/actionTypes'
 import { FirebaseContext } from '../../../firebase';
 import { makeStyles } from '@material-ui/core/styles';
@@ -25,6 +24,7 @@ export default function VolumeSlider ({ selectedLayer, user, roundId }) {
         dispatch({ type: SET_LAYER_GAIN, payload: { id: selectedLayerId, value: dB, user: user.id } })
         firebase.updateLayer(roundId, selectedLayer.id, { gain: dB })
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     const updateVolumeStateThrottled = useCallback(_.throttle(function (dB, selectedLayerId) {
         updateVolumeState(dB, selectedLayerId)
     }, 2000), []);
@@ -38,6 +38,7 @@ export default function VolumeSlider ({ selectedLayer, user, roundId }) {
     useEffect(() => {
         //console.log('selectedLayer.id changed', selectedLayer.id, selectedLayer.instrument.gain);
         setSliderValue(convertDBToPercent(selectedLayer.gain))
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [selectedLayer.id])
 
     const verticalSliderMarks = [

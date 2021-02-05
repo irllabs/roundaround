@@ -33,6 +33,7 @@ function SwingSlider ({ round, setRoundSwing }) {
         setRoundSwing(swing)
         firebase.updateRound(round.id, { swing })
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     const updateSwingStateThrottled = useCallback(_.throttle(function (swing) {
         updateSwingState(swing)
     }, 2000), []);

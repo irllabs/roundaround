@@ -1,5 +1,4 @@
 import React, { Component } from 'react'
-import * as _ from 'lodash';
 import { SVG } from '@svgdotjs/svg.js'
 import { Save } from '@material-ui/icons';
 import PropTypes from 'prop-types';
@@ -35,12 +34,8 @@ class PatternThumbControl extends Component {
         this.thumb = this.container.nested()
         this.thumb.addClass(this.props.classes.button)
         this.thumbBackground = this.thumb.rect(thumbWidth, thumbHeight).radius(24)
-        //this.thumbBackground.addClass(PatternThumb)
         this.updateThumbFill()
-        //this.lock = this.container.rect(36, 36).fill('#ffffff')
-        //this.lock.svg('<svg xmlns="http://www.w3.org/2000/svg" height="24" viewBox="0 0 24 24" width="24"><path d="M0 0h24v24H0z" fill="none"/><path d="M18 8h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zm-6 9c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2zm3.1-9H8.9V6c0-1.71 1.39-3.1 3.1-3.1 1.71 0 3.1 1.39 3.1 3.1v2z"/></svg>')
         this.label = this.thumb.plain(this.props.label)
-        //this.label.addClass(styles.userPatternThumbText)
         this.label.font({
             family: 'Arial',
             size: 14,
@@ -63,11 +58,9 @@ class PatternThumbControl extends Component {
         this.addEventListeners()
     }
     componentDidUpdate () {
-        // console.log('userPatternThumbControl::componentDidUpdate()', this.props.isSelected)
         this.updateThumbFill()
     }
     updateThumbFill () {
-        //console.log('updateThumbFill() this.isAnimating', this.isAnimating);
         if (!this.isAnimating) {
             if (this.props.isFilled) {
                 this.thumbBackground.stroke('none')
@@ -83,7 +76,6 @@ class PatternThumbControl extends Component {
         }
     }
     addEventListeners () {
-        const _this = this
         this.thumb.on('touchstart', (e) => {
             e.preventDefault()
             this.dragStart = e.touches[0].pageX
@@ -196,7 +188,6 @@ class PatternThumbControl extends Component {
         }).animate({ duration: 1000 }).attr({
             fill: '#999999'
         }).after(() => {
-            console.log('finished save animation');
             _this.isAnimating = false
             _this.updateThumbFill()
         })

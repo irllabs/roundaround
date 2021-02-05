@@ -62,7 +62,7 @@ const Instruments = {
     },
     getInstrumentOptions (channelName) {
         let options = [];
-        for (let [key, instrument] of Object.entries(this.instrumentClasses)) {
+        for (let [, instrument] of Object.entries(this.instrumentClasses)) {
             options.push({
                 label: instrument.label,
                 name: instrument.instrumentName,

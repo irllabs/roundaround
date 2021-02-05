@@ -1,6 +1,5 @@
-import React, { useState, useCallback, useEffect, useContext } from 'react'
+import React, { useEffect, useContext } from 'react'
 import { useDispatch } from "react-redux";
-import Instruments from '../../../audio-engine/Instruments'
 import MenuItem from '@material-ui/core/MenuItem';
 import Select from '@material-ui/core/Select';
 import InputLabel from '@material-ui/core/InputLabel';
@@ -8,7 +7,6 @@ import FormControl from '@material-ui/core/FormControl';
 import Box from '@material-ui/core/Box';
 import { makeStyles } from '@material-ui/core/styles';
 import { SET_LAYER_TYPE, UPDATE_LAYER_AUTOMATION_FX_ID } from '../../../redux/actionTypes'
-import { changeLayerLength } from '../../../utils/index'
 import AudioEngine from '../../../audio-engine/AudioEngine'
 import { FirebaseContext } from '../../../firebase';
 import Track from '../../../audio-engine/Track'
@@ -25,14 +23,12 @@ const useStyles = makeStyles((theme) => ({
 }));
 
 export default function LayerType ({ selectedLayer, userId, roundId }) {
-    console.log('LayerType', selectedLayer);
     const dispatch = useDispatch();
     const classes = useStyles();
     const firebase = useContext(FirebaseContext);
     const typeOptions = [{ value: Track.TRACK_TYPE_LAYER, label: 'Notes' }, { value: Track.TRACK_TYPE_AUTOMATION, label: 'Automation' }]
     const [selectedType, setSelectedType] = React.useState(selectedLayer.type)
     const onTypeSelect = (event) => {
-        console.log('onTypeSelect()', event.target.value);
         setSelectedType(event.target.value);
         if (event.target.value === Track.TRACK_TYPE_LAYER) {
             // AudioEngine.tracksById[selectedLayer.id].setType(event.target.value)
@@ -53,6 +49,7 @@ export default function LayerType ({ selectedLayer, userId, roundId }) {
 
     useEffect(() => {
         setSelectedType(selectedLayer.type)
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [selectedLayer.id])
     return (
         <div>

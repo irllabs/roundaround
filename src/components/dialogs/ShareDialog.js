@@ -8,7 +8,6 @@ import Button from '@material-ui/core/Button';
 import TextField from '@material-ui/core/TextField';
 import { makeStyles } from '@material-ui/core/styles';
 import QRCode from 'qrcode'
-import { useHistory } from "react-router-dom";
 import { setIsShowingShareDialog, setRoundShortLink } from '../../redux/actions'
 import _ from 'lodash'
 
@@ -40,16 +39,14 @@ const styles = makeStyles({
 
 const ShareDialog = ({ round, isShowingShareDialog, setIsShowingShareDialog, setRoundShortLink }) => {
     const firebase = useContext(FirebaseContext);
-    const [link, setLink] = useState({ link: '', long_url: '' });
-    const QRCanvas = useRef(null)
     const textField = useRef(null)
-    const history = useHistory();
     const [shortLink, setShortLink] = useState(round ? round.shortLink : '')
 
     useEffect(() => {
         if (isShowingShareDialog) {
             draw()
         }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [isShowingShareDialog])
 
     const draw = async () => {
@@ -69,10 +66,10 @@ const ShareDialog = ({ round, isShowingShareDialog, setIsShowingShareDialog, set
         }
 
         setTimeout(() => {
-            console.log('rendering QR code');
+            //console.log('rendering QR code');
             QRCode.toCanvas(document.getElementById('QRCanvas'), fullUrl, function (error) {
                 if (error) console.error(error)
-                console.log('success!');
+                // console.log('success!');
             })
 
         }, 100)
@@ -108,9 +105,6 @@ const ShareDialog = ({ round, isShowingShareDialog, setIsShowingShareDialog, set
         setIsShowingShareDialog(false)
     }
 
-    const onGoClick = () => {
-        window.location = link.link
-    }
     const onCopyClick = () => {
         const textFieldComponent = textField.current;
         const inputElement = textFieldComponent.querySelectorAll("input")[0]

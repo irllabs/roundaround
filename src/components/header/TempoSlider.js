@@ -33,6 +33,7 @@ function TempoSlider ({ round, setRoundBpm }) {
         setRoundBpm(bpm)
         firebase.updateRound(round.id, { bpm })
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     const updateTempoStateThrottled = useCallback(_.throttle(function (bpm) {
         updateTempoState(bpm)
     }, 2000), []);

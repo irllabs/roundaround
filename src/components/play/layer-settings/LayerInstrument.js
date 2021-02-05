@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useEffect, useContext } from 'react'
+import React, { useEffect, useContext } from 'react'
 import { useDispatch } from "react-redux";
 import Instruments from '../../../audio-engine/Instruments'
 import MenuItem from '@material-ui/core/MenuItem';
@@ -26,11 +26,9 @@ export default function LayerInstrument ({ selectedLayer, user, roundId }) {
     const firebase = useContext(FirebaseContext);
     const classes = useStyles();
     const instrumentOptions = Instruments.getInstrumentOptions()
-    console.log('LAyerInstruments instrumentOptions', instrumentOptions);
     const [selectedInstrument, setSelectedInstrument] = React.useState(selectedLayer.instrument.sampler)
     const onInstrumentSelect = (event) => {
         setSelectedInstrument(event.target.value);
-        console.log('onInstrumentSelect()', event.target.value);
         const defaultArticulation = Instruments.getDefaultArticulation(event.target.value)[0]
         setSelectedArticulation(defaultArticulation)
         dispatch({ type: UPDATE_LAYER_INSTRUMENT, payload: { id: selectedLayer.id, instrument: { sampler: event.target.value, sample: defaultArticulation }, user: user.id } })
@@ -49,6 +47,7 @@ export default function LayerInstrument ({ selectedLayer, user, roundId }) {
     useEffect(() => {
         setSelectedInstrument(selectedLayer.instrument.sampler)
         setSelectedArticulation(selectedLayer.instrument.sample)
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [selectedLayer.id])
     return (
         <div>

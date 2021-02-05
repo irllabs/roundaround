@@ -24,7 +24,6 @@ export default class Distortion extends FXBaseClass {
     }
     setMix (value, time) {
         this._mix = value
-        console.log('distortion setMix', value);
         if (this.isOn) {
             if (!_.isNil(time)) {
                 this.fx.wet.setValueAtTime(value, time)
@@ -34,7 +33,6 @@ export default class Distortion extends FXBaseClass {
         }
     }
     setBypass (value, time) {
-        console.log('distortion setBypass', value, this._override);
         if (value === true && !this._override) {
             // set mix to 0 rather than turn off so that we can do this rapidly without needing to rebuild the audio chain
             if (this._mix > 0) {

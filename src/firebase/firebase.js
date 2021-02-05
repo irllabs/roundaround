@@ -22,7 +22,6 @@ class Firebase {
             app.initializeApp(firebaseConfig);
         }
 
-
         // add this for local function development
         //app.functions().useFunctionsEmulator('http://localhost:5001')
 
@@ -35,7 +34,7 @@ class Firebase {
         this.onUserUpdatedObservers = [];
 
         app.auth().onAuthStateChanged((user) => {
-            console.log('onAuthStateChanged', user);
+            // console.log('onAuthStateChanged', user);
             if (user) {
                 this.currentUser = user;
                 this.onUserUpdatedObservers.map(observer => observer(user));
@@ -50,7 +49,7 @@ class Firebase {
 
     // User
     loadUser = (id) => {
-        console.log('firebase::loadUser()', id);
+        // console.log('firebase::loadUser()', id);
         return new Promise(async (resolve, reject) => {
             try {
                 const userSnapshot = await this.db.collection('users').doc(id).get()
@@ -99,29 +98,6 @@ class Firebase {
 
     signOut = () => this.auth.signOut();
 
-
-    // *** Auth API ***
-    /* doCreateUserWithEmailAndPassword = (email, password) =>
-         this.auth.createUserWithEmailAndPassword(email, password);
- 
-     doSignInWithEmailAndPassword = (email, password) =>
-         this.auth.signInWithEmailAndPassword(email, password);
- 
-     doSignOut = () => this.auth.signOut();
- 
-     doPasswordReset = email => this.auth.sendPasswordResetEmail(email);
- 
-     doPasswordUpdate = password =>
-         this.auth.currentUser.updatePassword(password);
- 
-     setOnUserUpdated = (callback) =>
-         this.onUserUpdated = callback;*/
-
-
-
-
-
-
     // *** Jitsi As A Service ***
     getJitsiToken = async (userId, name, email, avatar) => {
         let getJaasToken = this.functions.httpsCallable('getJaasToken');
@@ -130,7 +106,7 @@ class Firebase {
 
     // *** Firebase API ***
     getRoundsList = (userId, minimumVersion = 1) => {
-        console.log('getRoundsList', userId, minimumVersion);
+        //   console.log('getRoundsList', userId, minimumVersion);
         return new Promise(async (resolve, reject) => {
             let rounds = []
             try {
@@ -155,7 +131,7 @@ class Firebase {
         })
     }
     getRound = async (roundId) => {
-        console.log('getRound', roundId);
+        // console.log('getRound', roundId);
         return new Promise(async (resolve, reject) => {
             try {
                 const roundSnapshot = await this.db.collection('rounds').doc(roundId).get()
@@ -163,7 +139,7 @@ class Firebase {
                 round.layers = await this.getLayers(roundId)
                 round.userBuses = await this.getUserBuses(roundId)
                 round.userPatterns = await this.getUserPatterns(roundId)
-                console.log('got round', round);
+                //  console.log('got round', round);
                 resolve(round)
             } catch (e) {
                 console.error(e)
@@ -195,31 +171,6 @@ class Firebase {
         })
     }
 
-    /* getSteps = async (roundId, layerId) => {
-         return new Promise(async (resolve, reject) => {
-             let steps = []
-             try {
-                 const stepSnapshot = await this.db
-                     .collection("rounds")
-                     .doc(roundId)
-                     .collection('layers')
-                     .doc(layerId)
-                     .collection('steps')
-                     .get();
-                 stepSnapshot.forEach(stepDoc => {
-                     let step = stepDoc.data();
-                     step.id = stepDoc.id;
-                     steps.push(step);
-                 })
-                 steps = _.orderBy(steps, 'order')
-                 resolve(steps)
-             }
-             catch (e) {
-                 console.error(e)
-                 reject(e)
-             }
-         })
-     }*/
     getUserBuses = async (roundId) => {
         return new Promise(async (resolve, reject) => {
             let userBuses = {}
@@ -266,24 +217,6 @@ class Firebase {
     }
 
 
-    /*setSteps = async (roundId, layerId, steps) => {
-        // first delete the current steps in the db
-        await this.deleteSteps(roundId, layerId)
-        // add steps
-        for (const step of steps) {
-            this.createStep(roundId, layerId, step)
-        }
-    }
-
-    deleteSteps = async (roundId, layerId) => {
-        const ref = this.db.collection("rounds")
-            .doc(roundId)
-            .collection('layers')
-            .doc(layerId)
-            .collection('steps')
-        return this.deleteCollection(ref)
-    }*/
-
     deleteCollection = async (collectionRef) => {
         return this.deleteQueryBatch(this.db, collectionRef.limit(64));
     }
@@ -314,12 +247,11 @@ class Firebase {
     }
 
     deleteLayer = async (roundId, layerId) => {
-        // await this.deleteSteps(roundId, layerId)
         return this.db.collection('rounds').doc(roundId).collection('layers').doc(layerId).delete()
     }
 
     createRound = async (data) => {
-        console.log('createRound()', data);
+        //  console.log('createRound()', data);
         return new Promise(async (resolve, reject) => {
             let round = _.cloneDeep(data)
             const layers = [...round.layers]
@@ -373,23 +305,6 @@ class Firebase {
         })
     }
 
-    /* createStep = async (roundId, layerId, step) => {
-         return new Promise(async (resolve, reject) => {
-             try {
-                 await this.db.collection('rounds')
-                     .doc(roundId)
-                     .collection('layers')
-                     .doc(layerId)
-                     .collection('steps')
-                     .doc(step.id)
-                     .set(step)
-                 resolve()
-             } catch (e) {
-                 console.error(e)
-             }
-         })
-     }*/
-
     createUserBus = async (roundId, id, userBus) => {
         let userBusClone = _.cloneDeep(userBus)
         delete userBusClone.id
@@ -425,12 +340,12 @@ class Firebase {
     }
 
     updateRound = async (roundId, data) => {
-        console.log('updateRound', roundId, data)
+        // console.log('updateRound', roundId, data)
         try {
             await this.db.collection('rounds')
                 .doc(roundId)
                 .set(data, { merge: true })
-            console.log('updated round');
+            //   console.log('updated round');
         } catch (e) {
             console.error(e)
         }
@@ -449,22 +364,8 @@ class Firebase {
         }
     }
 
-    /*updateStep = async (roundId, layerId, stepId, step) => {
-        try {
-            await this.db.collection('rounds')
-                .doc(roundId)
-                .collection('layers')
-                .doc(layerId)
-                .collection('steps')
-                .doc(stepId)
-                .set(step)
-        } catch (e) {
-            console.error(e)
-        }
-    }*/
-
     updateUserBus = async (roundId, userId, userBus) => {
-        console.log('firebase::updateUserBus()', roundId, userId, userBus);
+        // console.log('firebase::updateUserBus()', roundId, userId, userBus);
         return new Promise(async (resolve, reject) => {
             try {
                 await this.db.collection('rounds')

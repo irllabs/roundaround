@@ -1,6 +1,5 @@
-import React, { Component, useContext } from 'react';
+import React, { Component } from 'react';
 import * as _ from 'lodash';
-//import styles from './HtmlUi.scss'
 import { SVG } from '@svgdotjs/svg.js'
 import '@svgdotjs/svg.panzoom.js'
 import { HTML_UI_Params, KEY_MAPPINGS } from '../../utils/constants'
@@ -443,7 +442,9 @@ class PlayUI extends Component {
         } else {
             layerGraphic.animate(animateTime).stroke({ opacity: HTML_UI_Params.layerStrokeOpacity })
         }
-        layerGraphic.addClass(this.props.classes.button)
+        if (layerGraphic.isAllowedInteraction) {
+            layerGraphic.addClass(this.props.classes.button)
+        }
         this.addLayerEventListeners(layerGraphic)
         this.layerGraphics.push(layerGraphic)
 
@@ -464,7 +465,9 @@ class PlayUI extends Component {
             stepGraphic.id = step.id
             stepGraphic.isAllowedInteraction = layer.createdBy === this.props.user.id
             stepGraphic.userColor = this.userColors[layer.createdBy]
-            stepGraphic.addClass(this.props.classes.button)
+            if (layer.createdBy === this.props.user.id) {
+                stepGraphic.addClass(this.props.classes.button)
+            }
             this.stepGraphics.push(stepGraphic)
             this.updateStep(step)
             this.addStepEventListeners(stepGraphic)
@@ -512,12 +515,11 @@ class PlayUI extends Component {
     }
 
     unhighlightAllLayers (exceptLayerId) {
-        this.layerGraphics.map((layerGraphic) => {
+        for (const layerGraphic of this.layerGraphics) {
             if (layerGraphic.id !== exceptLayerId) {
-                //layerGraphic.animate().stroke({ opacity: HTML_UI_Params.layerStrokeOpacity })
                 layerGraphic.stroke({ opacity: HTML_UI_Params.layerStrokeOpacity })
             }
-        })
+        }
     }
 
     cacheStepLayers () {
@@ -603,7 +605,6 @@ class PlayUI extends Component {
         }
     }
     onLayerTouchStart (layerGraphic, e) {
-        console.log('onLayerTouchStart');
         e.preventDefault()
         const _this = this
         this.layerTouchTimer = setTimeout(() => {
@@ -611,7 +612,6 @@ class PlayUI extends Component {
         }, 500)
     }
     onLayerTouchEnd (layerGraphic) {
-        console.log('onLayerTouchEnd');
         if (this.layerTouchTimer) {
             clearTimeout(this.layerTouchTimer)
         }
@@ -632,7 +632,6 @@ class PlayUI extends Component {
     orderLayers () {
         // order layers
         this.round.layers = _.sortBy(this.round.layers, 'createdAt')
-
         let myLayers = _.filter(this.round.layers, { createdBy: this.props.user.id })
         myLayers = _.sortBy(myLayers, 'createdAt')
         myLayers.reverse()
@@ -640,7 +639,6 @@ class PlayUI extends Component {
             return layer.createdBy !== this.props.user.id
         })
         collaboratorLayers = _.sortBy(collaboratorLayers, ['createdBy', 'createdAt'])
-        console.log('myLayers', myLayers, 'collaboratorLayers', collaboratorLayers);
         this.round.layers = [...myLayers, ...collaboratorLayers]
     }
 

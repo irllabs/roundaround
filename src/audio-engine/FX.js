@@ -37,7 +37,6 @@ const FX = {
         return this.fxClasses[name].ui
     },
     getIcon (name) {
-        console.log('FX::getIcon', name, this.fxClasses);
         let fxClass = this.fxClasses[name]
         if (!_.isNil(fxClass)) {
             return this.fxClasses[name].icon

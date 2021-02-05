@@ -123,7 +123,7 @@ class PlayRoute extends Component {
         // Round
         this.context.db.collection('rounds').doc(this.props.round.id).onSnapshot(async (doc) => {
             const updatedRound = doc.data()
-            console.log('### round change listener fired', this.props.round, updatedRound);
+            // console.log('### round change listener fired', this.props.round, updatedRound);
             if (_.isNull(this.props.round)) {
                 // probably deleted round
                 _this.props.history.push('/rounds')
@@ -131,13 +131,13 @@ class PlayRoute extends Component {
             }
             if (!this.isDisposing) {
                 if (!_.isEqual(_this.props.round.currentUsers, updatedRound.currentUsers)) {
-                    console.log('new user added or removed');
+                    //    console.log('new user added or removed');
                     let users = []
                     for (const userId of updatedRound.currentUsers) {
                         let user = await _this.context.loadUser(userId)
                         users.push(user)
                     }
-                    console.log('setUsers()', users);
+                    //    console.log('setUsers()', users);
                     _this.props.setUsers(users)
                     _this.props.setRoundCurrentUsers(updatedRound.currentUsers)
                     _this.addUsersListeners()
@@ -172,7 +172,7 @@ class PlayRoute extends Component {
                     if (layer.createdBy !== _this.props.user.id) {
                         _this.reloadCollaborationLayersThrottled()
                     } else {
-                        console.log('ignoring own firebase change');
+                        // console.log('ignoring own firebase change');
                     }
                 }
                 if (change.type === 'added') {
@@ -210,7 +210,7 @@ class PlayRoute extends Component {
     }
 
     removeFirebaseListeners () {
-        console.log('removeFirebaseListeners()');
+        //console.log('removeFirebaseListeners()');
         if (!_.isNil(this.layersChangeListenerUnsubscribe)) {
             this.layersChangeListenerUnsubscribe();
         }
@@ -226,7 +226,7 @@ class PlayRoute extends Component {
         const _this = this;
         for (const user of this.props.users) {
             let userListenerUnsubscribe = this.context.db.collection('users').doc(user.id).onSnapshot((doc) => {
-                console.log('### user change listener fired');
+                //    console.log('### user change listener fired');
                 _this.loadUsers()
             })
             this.usersChangeListenersUnsubscribe.push(userListenerUnsubscribe)
@@ -239,7 +239,7 @@ class PlayRoute extends Component {
             let user = await this.context.loadUser(userId)
             users.push(user)
         }
-        console.log('setUsers()', users);
+        // console.log('setUsers()', users);
         this.props.setUsers(users)
         this.props.setRoundCurrentUsers(this.props.round.currentUsers)
     }
@@ -273,7 +273,7 @@ class PlayRoute extends Component {
     // if any of the subcollections for a collaboration user change, trigger a (throttled) reload of all collaboration layers as there could be multiple changes
     // to do: maybe add an id to the query to make sure we don't overwrite the local round with an await result that comes in late
     async reloadCollaborationLayers () {
-        console.log('reloadCollaborationLayers()');
+        //console.log('reloadCollaborationLayers()');
         const _this = this;
         if (!_.isNil(this.props.round)) {
             const newRound = await this.context.getRound(this.props.round.id)
@@ -283,7 +283,7 @@ class PlayRoute extends Component {
             const oldLayers = _.filter(this.props.round.layers, (layer) => {
                 return layer.createdBy !== _this.props.user.id
             })
-            console.log('comparing layers', _.isEqual(newLayers, oldLayers));
+            // console.log('comparing layers', _.isEqual(newLayers, oldLayers));
             if (!_.isEqual(newLayers, oldLayers)) {
                 const userLayers = _.filter(this.props.round.layers, (layer) => {
                     return layer.createdBy === _this.props.user.id
@@ -301,7 +301,7 @@ class PlayRoute extends Component {
         window.addEventListener('touchstart', this.startAudioContext)
     }
     startAudioContext () {
-        console.log('startAudioContext()');
+        //console.log('startAudioContext()');
         AudioEngine.startAudioContext()
         this.removeStartAudioContextListener()
     }
@@ -337,6 +337,9 @@ class PlayRoute extends Component {
         )
     }
 }
+PlayRoute.propTypes = {
+    classes: PropTypes.object.isRequired,
+};
 const mapStateToProps = state => {
     return {
         round: state.round,

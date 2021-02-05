@@ -11,7 +11,7 @@ import { FirebaseContext } from '../../firebase';
 
 
 const playButtonStyles = makeStyles(function (theme) {
-    console.log('creating play button styles', theme)
+    // console.log('creating play button styles', theme)
     return {
         root: {
             backgroundColor: theme.palette.secondary.main,

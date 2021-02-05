@@ -9,9 +9,9 @@ import {
     setUserBusFx,
     setUserBusFxOverride
 } from "../../redux/actions";
-import { sortableContainer, sortableElement, sortableHandle } from 'react-sortable-hoc';
+//import { sortableContainer, sortableElement, sortableHandle } from 'react-sortable-hoc';
 import arrayMove from 'array-move'
-import { DragIndicator } from '@material-ui/icons';
+//import { DragIndicator } from '@material-ui/icons';
 import EffectThumbControl from './EffectThumbControl';
 import ChevronRightIcon from '@material-ui/icons/ChevronRight';
 import _ from 'lodash'
@@ -79,7 +79,7 @@ const styles = theme => ({
     }
 })
 
-const DragHandle = sortableHandle(({ classes }) => <span className={classes.effectsSidebarListItemDragHandle}><DragIndicator /></span>);
+/*const DragHandle = sortableHandle(({ classes }) => <span className={classes.effectsSidebarListItemDragHandle}><DragIndicator /></span>);
 const SortableItem = sortableElement(({ fx, onSwitchOn, onSwitchOff, classes }) => (
     <li className={classes.effectsSidebarListItem}>
         <DragHandle classes={classes} />
@@ -88,7 +88,7 @@ const SortableItem = sortableElement(({ fx, onSwitchOn, onSwitchOff, classes }) 
 ));
 const SortableContainer = sortableContainer(({ children, classes }) => {
     return <ul className={classes.effectsSidebarList}>{children}</ul>;
-});
+});*/
 
 const toTitleCase = (str) => {
     return str.replace(
@@ -195,7 +195,6 @@ EffectsSidebar.propTypes = {
 };
 
 const mapStateToProps = state => {
-    //console.log('mapStateToProps', state);
     return {
         round: state.round,
         user: state.user,

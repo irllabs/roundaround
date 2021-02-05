@@ -1,7 +1,7 @@
 import React, { useState, useCallback, useEffect } from 'react'
 import TextField from '@material-ui/core/TextField';
 import _ from 'lodash'
-import { connect, ReactReduxContext, Provider, useDispatch } from "react-redux";
+import { useDispatch } from "react-redux";
 import { SET_LAYER_NAME, SET_DISABLE_KEY_LISTENER } from '../../../redux/actionTypes'
 
 export default function LayerName ({ selectedLayer, user }) {
@@ -10,6 +10,7 @@ export default function LayerName ({ selectedLayer, user }) {
     const updateLayerNameState = (name, selectedLayerId) => {
         dispatch({ type: SET_LAYER_NAME, payload: { id: selectedLayerId, name, user: user.id } })
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     const updateLayerNameStateThrottled = useCallback(_.throttle(function (name, selectedLayerId) {
         updateLayerNameState(name, selectedLayerId)
     }, 1000), []);
@@ -25,8 +26,8 @@ export default function LayerName ({ selectedLayer, user }) {
     }
 
     useEffect(() => {
-        //console.log('selectedLayer.id changed', selectedLayer.id, selectedLayer.instrument.gain);
         setTextValue(selectedLayer.name)
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [selectedLayer.id])
     return (
         <div>

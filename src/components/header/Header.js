@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useContext } from 'react'
+import React, { useEffect, useContext } from 'react'
 import { connect } from "react-redux";
 import Button from '@material-ui/core/Button';
 import IconButton from '@material-ui/core/IconButton';
@@ -61,19 +61,8 @@ function Header ({ user, users, round, setUser, setIsShowingSignInDialog, redire
     const location = useLocation();
     const isPlayMode = location.pathname.includes('/play/') ? true : false
 
-    const [isUsingJitsi, setIsUsingJitsi] = useState(false)
-
     const onSignInClick = () => {
         setIsShowingSignInDialog(true)
-    }
-
-    const onJoinJitsiClick = () => {
-        setIsUsingJitsi(true)
-    }
-
-    const onLeaveJitsiClick = () => {
-        setIsUsingJitsi(false)
-
     }
 
     const onShareClick = () => {
@@ -92,6 +81,10 @@ function Header ({ user, users, round, setUser, setIsShowingSignInDialog, redire
                     //  } else {
                     const rounds = await firebaseContext.getRoundsList(user.id, 1.5)
                     setRounds(rounds)
+                    if (!_.isNil(redirectAfterSignIn)) {
+                        location.push(redirectAfterSignIn)
+                        setRedirectAfterSignIn(null)
+                    }
                     // }
                 } else {
                     console.log('ignoring auth change, probably signing up');
@@ -103,6 +96,7 @@ function Header ({ user, users, round, setUser, setIsShowingSignInDialog, redire
                 }
             }
         })
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [])
 
     return (

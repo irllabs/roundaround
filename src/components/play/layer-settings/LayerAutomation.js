@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useEffect, useContext } from 'react'
+import React, { useEffect, useContext } from 'react'
 import { useDispatch } from "react-redux";
 import MenuItem from '@material-ui/core/MenuItem';
 import Select from '@material-ui/core/Select';
@@ -32,28 +32,14 @@ export default function LayerAutomation ({ selectedLayer, userId, roundId }) {
 
     const [selectedFX, setSelectedFX] = React.useState(!_.isNil(selectedLayer.automationFxId) ? selectedLayer.automationFxId : defaultSelectedFx)
     const onFXSelect = (event) => {
-        console.log('onFXSelect', event.target.value);
         setSelectedFX(event.target.value);
-        // const defaultArticulation = Instruments.getDefaultArticulation(event.target.value)[0]
-        // setSelectedArticulation(defaultArticulation)
         dispatch({ type: UPDATE_LAYER_AUTOMATION_FX_ID, payload: { id: selectedLayer.id, value: event.target.value } })
         firebase.updateLayer(roundId, selectedLayer.id, { automationFxId: event.target.value })
     };
     const fxMenuItems = userBus.sortedFx.map(fx => <MenuItem value={fx.id} key={fx.id}>{fx.label}</MenuItem>)
-
-    console.log('fxMenuItems', fxMenuItems);
-
-    /* const articulationOptions = Instruments.getInstrumentArticulationOptions(selectedLayer.instrument.sampler)
-     const [selectedArticulation, setSelectedArticulation] = React.useState(selectedLayer.instrument.sample)
-     const onArticulationSelect = (event) => {
-         setSelectedArticulation(event.target.value);
-         dispatch({ type: UPDATE_LAYER_INSTRUMENT, payload: { id: selectedLayer.id, instrument: { sample: event.target.value }, user: user.id } })
-     
-     };
-     const articulationMenuItems = articulationOptions.map(articulation => <MenuItem value={articulation.name} key={articulation.name}>{articulation.name}</MenuItem>)
-     */
     useEffect(() => {
         setSelectedFX(!_.isNil(selectedLayer.automationFxId) ? selectedLayer.automationFxId : defaultSelectedFx)
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [selectedLayer.id])
     return (
         <div>

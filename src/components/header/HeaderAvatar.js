@@ -11,8 +11,6 @@ import MenuList from '@material-ui/core/MenuList';
 import Divider from '@material-ui/core/Divider';
 import { makeStyles } from '@material-ui/core/styles';
 import IconButton from '@material-ui/core/IconButton';
-import FullscreenIcon from '@material-ui/icons/Fullscreen';
-import ListItemIcon from '@material-ui/core/ListItemIcon';
 import _ from 'lodash'
 import { FirebaseContext } from '../../firebase';
 import {
@@ -96,7 +94,6 @@ function HeaderAvatar ({ user, users, setUser, setRounds, shouldShowMenu, setUse
     }
 
     const getInitials = (name) => {
-        console.log('getInitials()', user);
         let initials = '??'
         if (!_.isNil(name)) {
             const nameParts = name.split(' ')
@@ -113,7 +110,6 @@ function HeaderAvatar ({ user, users, setUser, setRounds, shouldShowMenu, setUse
     }
 
     const onColorChosen = ({ hex }) => {
-        console.log('hex', hex);
         setUserColor(hex)
         firebaseContext.updateUser(user.id, { color: hex })
         let usersClone = _.cloneDeep(users)

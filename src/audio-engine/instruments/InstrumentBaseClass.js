@@ -4,7 +4,6 @@ import { numberRange } from '../../utils';
 import _ from 'lodash'
 import { randomBool } from '../../utils/index'
 const Note = require('@tonaljs/note')
-//import sample from '../samples/sample.wav'
 
 export default class InstrumentBaseClass {
     constructor (name, articulations, folder) {
@@ -46,11 +45,11 @@ export default class InstrumentBaseClass {
             }
             let sampleMap = _this.getSampleMap()
             _this.sampleMap = _.cloneDeep(sampleMap)
-            console.log('instrument load()', sampleMap)
+            //  console.log('instrument load()', sampleMap)
             if (!_.isNil(sampleMap)) {
                 await _this.loadSamples(sampleMap)
             }
-            console.log('instrument finished loading');
+            //    console.log('instrument finished loading');
             resolve()
         })
     }

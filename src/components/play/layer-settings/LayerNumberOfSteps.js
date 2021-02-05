@@ -1,6 +1,5 @@
-import React, { useState, useCallback, useEffect, useContext } from 'react'
+import React, { useEffect, useContext } from 'react'
 import { useDispatch } from "react-redux";
-import Instruments from '../../../audio-engine/Instruments'
 import MenuItem from '@material-ui/core/MenuItem';
 import Select from '@material-ui/core/Select';
 import InputLabel from '@material-ui/core/InputLabel';
@@ -9,7 +8,6 @@ import Box from '@material-ui/core/Box';
 import { makeStyles } from '@material-ui/core/styles';
 import { SET_LAYER_STEPS } from '../../../redux/actionTypes'
 import { changeLayerLength } from '../../../utils/index'
-import AudioEngine from '../../../audio-engine/AudioEngine'
 import { FirebaseContext } from '../../../firebase';
 
 
@@ -41,6 +39,7 @@ export default function LayerNumberOfSteps ({ selectedLayer, user, roundId }) {
 
     useEffect(() => {
         setSelectedNumberOfSteps(selectedLayer.steps.length)
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [selectedLayer.id])
     return (
         <div>

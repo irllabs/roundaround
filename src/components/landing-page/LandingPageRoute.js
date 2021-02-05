@@ -6,7 +6,6 @@ import Button from '@material-ui/core/Button';
 import { connect } from "react-redux";
 import _ from 'lodash';
 import { setIsShowingSignInDialog, setRedirectAfterSignIn } from '../../redux/actions'
-import SignInDialog from '../dialogs/SignInDialog'
 
 const styles = theme => ({
     root: {

@@ -40,7 +40,7 @@ export default class Track {
             // todo fix this better, for some reason fx are not bypassing correctly to start with
             setTimeout(() => {
                 // bypass all effects
-                console.log('fx hack todo: fix this');
+                // console.log('fx hack todo: fix this');
                 for (const effect of _this.sortedFx) {
                     effect.setBypass(true)
                 }
@@ -73,7 +73,7 @@ export default class Track {
             if (!_.isNil(fxList)) {
                 this.fx = {}
                 this.sortedFx = []
-                for (let [fxId, fxObject] of Object.entries(fxList)) {
+                for (let [, fxObject] of Object.entries(fxList)) {
                     let fx = await FX.create(fxObject)
                     this.fx[fx.id] = fx
                     this.sortedFx.push(fx)

@@ -36,7 +36,7 @@ function RenameDialog ({ selectedRoundId, round, rounds, setRoundName, setIsShow
         } else {
             setDisableKeyListener(false)
         }
-    }, [isShowingRenameDialog])
+    }, [isShowingRenameDialog, setDisableKeyListener])
     return (
         <Dialog open={isShowingRenameDialog} onClose={handleClose} aria-labelledby="form-dialog-title">
             <DialogTitle id="form-dialog-title">Rename</DialogTitle>
