@@ -65,7 +65,7 @@ const Instruments = {
         for (let [key, instrument] of Object.entries(this.instrumentClasses)) {
             options.push({
                 label: instrument.label,
-                name: instrument.name,
+                name: instrument.instrumentName,
                 articulations: instrument.articulations
             });
         }
@@ -92,6 +92,7 @@ const Instruments = {
         return this.instrumentClasses[instrumentName].articulations[articulation];
     },
     getDefaultArticulation (instrumentName) {
+        console.log('Instruments::getDefaultArticulation() instrumentName', instrumentName, this.instrumentClasses);
         return !_.isNil(this.instrumentClasses[instrumentName].defaultArticulation)
             ? this.instrumentClasses[instrumentName].defaultArticulation
             : "none";

@@ -2,23 +2,23 @@ import React, { Component } from 'react'
 import * as _ from 'lodash';
 import { SVG } from '@svgdotjs/svg.js'
 import { Save } from '@material-ui/icons';
+import PropTypes from 'prop-types';
+import { withStyles } from '@material-ui/styles';
 
 const thumbWidth = 48;
 const thumbHeight = 48;
 const containerWidth = thumbWidth + 40
 
 const styles = theme => ({
-    root: {
-        width: '120px',
-        height: '100%',
-        position: 'absolute',
-        left: '0',
-        top: '64px',
-        borderTop: 'solid 1px rgba(255,255,255,0.1)'
+    button: {
+        cursor: 'pointer',
+        '&:hover': {
+            opacity: 0.8
+        }
     },
 })
 
-export default class EffectThumbControl extends Component {
+class PatternThumbControl extends Component {
     constructor (props) {
         super(props);
         this.thumbControlRef = React.createRef();
@@ -33,6 +33,7 @@ export default class EffectThumbControl extends Component {
             .size(thumbWidth + 40, thumbHeight)
         this.background = this.container.rect(thumbWidth + 40, thumbHeight).fill('none').radius(24)
         this.thumb = this.container.nested()
+        this.thumb.addClass(this.props.classes.button)
         this.thumbBackground = this.thumb.rect(thumbWidth, thumbHeight).radius(24)
         //this.thumbBackground.addClass(PatternThumb)
         this.updateThumbFill()
@@ -219,3 +220,7 @@ export default class EffectThumbControl extends Component {
         )
     }
 }
+PatternThumbControl.propTypes = {
+    classes: PropTypes.object.isRequired,
+};
+export default (withStyles(styles)(PatternThumbControl))

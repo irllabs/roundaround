@@ -26,9 +26,11 @@ export default function LayerInstrument ({ selectedLayer, user, roundId }) {
     const firebase = useContext(FirebaseContext);
     const classes = useStyles();
     const instrumentOptions = Instruments.getInstrumentOptions()
+    console.log('LAyerInstruments instrumentOptions', instrumentOptions);
     const [selectedInstrument, setSelectedInstrument] = React.useState(selectedLayer.instrument.sampler)
     const onInstrumentSelect = (event) => {
         setSelectedInstrument(event.target.value);
+        console.log('onInstrumentSelect()', event.target.value);
         const defaultArticulation = Instruments.getDefaultArticulation(event.target.value)[0]
         setSelectedArticulation(defaultArticulation)
         dispatch({ type: UPDATE_LAYER_INSTRUMENT, payload: { id: selectedLayer.id, instrument: { sampler: event.target.value, sample: defaultArticulation }, user: user.id } })

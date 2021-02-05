@@ -12,6 +12,17 @@ import { getDefaultLayerData } from '../../utils/defaultData';
 import { TOGGLE_STEP, ADD_LAYER, SET_STEP_PROBABILITY, SET_STEP_VELOCITY, SET_SELECTED_LAYER_ID, SET_IS_SHOWING_LAYER_SETTINGS, SET_IS_PLAYING } from '../../redux/actionTypes'
 import { FirebaseContext } from '../../firebase/'
 import * as Tone from 'tone';
+import { withStyles } from '@material-ui/styles';
+import PropTypes from 'prop-types';
+
+const styles = theme => ({
+    button: {
+        cursor: 'pointer'
+    },
+    buttonIcon: {
+        pointerEvents: 'none'
+    }
+})
 
 class PlayUI extends Component {
     static contextType = FirebaseContext
@@ -292,12 +303,19 @@ class PlayUI extends Component {
         this.activityIndicator = this.container.circle(HTML_UI_Params.activityIndicatorDiameter).fill({ color: '#fff', opacity: 0 })
 
         // add layer button
-        this.addLayerButton = this.container.circle(HTML_UI_Params.addNewLayerButtonDiameter).attr({ fill: '#fff' })
+        this.addLayerButton = this.container.circle(HTML_UI_Params.addNewLayerButtonDiameter).attr({ fill: '#1B1B1B' }).stroke({ width: 1, color: this.userColors[this.props.user.id], dasharray: '5,5' })
         this.addLayerButton.x((this.containerWidth / 2) - (HTML_UI_Params.addNewLayerButtonDiameter / 2))
         this.addLayerButton.y((this.containerHeight / 2) - (HTML_UI_Params.addNewLayerButtonDiameter / 2))
         this.addLayerButton.click(() => {
             _this.onAddLayerClick()
         })
+        this.addLayerButton.addClass(this.props.classes.button)
+        //this.addLayerButton.svg('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="white" width="18px" height="18px"><path d="M0 0h24v24H0z" fill="white"/><path fill="white" d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/></svg>')
+        this.addLayerButtonIcon = this.container.nested()
+        this.addLayerButtonIcon.svg('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="' + this.userColors[this.props.user.id] + '" width="48px" height="48px"><path d="M0 0h24v24H0z" fill="none"/><path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/></svg>')
+        this.addLayerButtonIcon.x((this.containerWidth / 2) - 24)
+        this.addLayerButtonIcon.y((this.containerHeight / 2) - 25)
+        this.addLayerButtonIcon.addClass(this.props.classes.buttonIcon)
 
         this.stepModal = this.container.nested()
         this.stepModalBackground = this.stepModal.rect(122, 52).fill({ color: '#000', opacity: 0.7 }).radius(4)
@@ -425,7 +443,7 @@ class PlayUI extends Component {
         } else {
             layerGraphic.animate(animateTime).stroke({ opacity: HTML_UI_Params.layerStrokeOpacity })
         }
-        // layerGraphic.addClass(styles.layerGraphic)
+        layerGraphic.addClass(this.props.classes.button)
         this.addLayerEventListeners(layerGraphic)
         this.layerGraphics.push(layerGraphic)
 
@@ -446,7 +464,7 @@ class PlayUI extends Component {
             stepGraphic.id = step.id
             stepGraphic.isAllowedInteraction = layer.createdBy === this.props.user.id
             stepGraphic.userColor = this.userColors[layer.createdBy]
-            //stepGraphic.addClass(styles.stepGraphic)
+            stepGraphic.addClass(this.props.classes.button)
             this.stepGraphics.push(stepGraphic)
             this.updateStep(step)
             this.addStepEventListeners(stepGraphic)
@@ -900,6 +918,9 @@ class PlayUI extends Component {
         )
     }
 }
+PlayUI.propTypes = {
+    classes: PropTypes.object.isRequired,
+};
 
 const mapStateToProps = state => {
     //console.log('mapStateToProps', state);
@@ -914,4 +935,4 @@ const mapStateToProps = state => {
 
 export default connect(
     mapStateToProps
-)(PlayUI);
+)(withStyles(styles)(PlayUI));
