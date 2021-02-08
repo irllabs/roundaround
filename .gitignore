@@ -2,7 +2,7 @@
 node_modules
 
 # Ignore application build files
-dist
+build
 
 # Ignore NPM generated package-lock.json
 package-lock.json
