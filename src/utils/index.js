@@ -1,34 +1,36 @@
-import { Limits } from '../constants';
-import { getDefaultStepData } from './dummyData';
+/* eslint-disable eqeqeq */
+import { getDefaultRoundData, getDefaultStepData } from './defaultData'
+import { Limits, Colors } from './constants'
 import _ from 'lodash'
 
+export const createRound = (userId) => {
+    return getDefaultRoundData(userId)
+}
+
+export const uuid = () => {
+    return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, c => {
+        // eslint-disable-next-line no-mixed-operators
+        const r = Math.random() * 16 | 0, v = c == 'x' ? r : (r & 0x3 | 0x8);
+        return v.toString(16);
+    });
+}
+
+export const numberRange = (value, inMin, inMax, outMin, outMax) => {
+    return ((value - inMin) * (outMax - outMin)) / (inMax - inMin) + outMin
+}
+
+export const randomBool = (probability = 0.5) => {
+    return Math.random() < probability
+}
+
+export const randomItem = (items) => {
+    return items[Math.floor(Math.random() * items.length)]
+}
 
 export const getRandomColor = () => {
-    return '#' + Math.floor(Math.random() * 16777215).toString(16);
+    return randomItem(Colors)
+    // return '#' + Math.floor(Math.random() * 16777215).toString(16);
 }
-
-export function paths (root) {
-    let paths = [];
-    let nodes = [{
-        obj: root,
-        path: []
-    }];
-    while (nodes.length > 0) {
-        let n = nodes.pop();
-        Object.keys(n.obj).forEach(k => {
-            if (typeof n.obj[k] === 'object') {
-                let path = n.path.concat(k);
-                paths.push(path);
-                nodes.unshift({
-                    obj: n.obj[k],
-                    path: path
-                });
-            }
-        });
-    }
-    return paths;
-}
-
 export const changeLayerLength = (layer, newLength) => {
     const amount = layer.steps.length;
     let difference = newLength - amount;
@@ -61,14 +63,6 @@ export const changeLayerLength = (layer, newLength) => {
     }
 }
 
-export const numberRange = (value, inMin, inMax, outMin, outMax) => {
-    return ((value - inMin) * (outMax - outMin)) / (inMax - inMin) + outMin
-}
-
-export const randomBool = (probability = 0.5) => {
-    return Math.random() < probability
-}
-
 export const convertPercentToDB = (percent) => {
     let dB;
     if (percent > 60) {
@@ -93,18 +87,4 @@ export const convertDBToPercent = (dB) => {
         percent = numberRange(dB, -48, -6, 0, 60)
     }
     return percent;
-}
-
-// remove any old rounds that won't work with this version (will mutate incoming array)
-export const removeOldRounds = (rounds, minimumRoundDataVersion) => {
-    console.log('all rounds', rounds);
-    let roundsToRemove = []
-    for (const round of rounds) {
-        if (_.isNil(round.dataVersion) || round.dataVersion < minimumRoundDataVersion) {
-            roundsToRemove.push(round)
-        }
-    }
-    for (const roundToRemove of roundsToRemove) {
-        _.remove(rounds, roundToRemove)
-    }
 }

@@ -1,13 +1,8 @@
-'use strict';
 const functions = require('firebase-functions');
 const admin = require('firebase-admin');
 var jwt = require('jsonwebtoken');
 admin.initializeApp();
 const fs = require('fs');
-
-exports.testFunction = functions.https.onCall((req, res) => {
-    return { data: 'hi' }
-});
 
 exports.getJaasToken = functions.https.onCall((data, context) => {
     try {
@@ -15,7 +10,8 @@ exports.getJaasToken = functions.https.onCall((data, context) => {
         const expireTime = startTime + (12 * 3600);
         const header = {
             "alg": "RS256",
-            "kid": "vpaas-magic-cookie-ed842ad0fbe8446fbfeb14c7580a7f71/9fbc49",
+            //"kid": "vpaas-magic-cookie-ed842ad0fbe8446fbfeb14c7580a7f71/9fbc49",
+            "kid": "vpaas-magic-cookie-6e18748a3e614d5696744abf547dd11c/ec8a8c",
             "typ": "JWT"
         };
         let payload = {
@@ -39,9 +35,10 @@ exports.getJaasToken = functions.https.onCall((data, context) => {
             "iss": "chat",
             "nbf": startTime,
             "room": "*",
-            "sub": "vpaas-magic-cookie-ed842ad0fbe8446fbfeb14c7580a7f71"
+            //"sub": "vpaas-magic-cookie-ed842ad0fbe8446fbfeb14c7580a7f71"
+            "sub": "vpaas-magic-cookie-6e18748a3e614d5696744abf547dd11c"
         };
-        var privateKey = fs.readFileSync('jaasauth.key');
+        var privateKey = fs.readFileSync('jaasauth.pk');
         var token = jwt.sign(payload, privateKey, { algorithm: 'RS256', header });
 
         return { token };

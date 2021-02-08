@@ -1,11 +1,10 @@
-'use strict';
+
 import FXBaseClass from './fx-base-class';
 import _ from 'lodash';
 import * as Tone from 'tone';
-import { numberRange } from '../../utils/index'
 
 export default class Bitcrusher extends FXBaseClass {
-    static name = 'bitcrusher';
+    static fxName = 'bitcrusher';
     constructor (fxParameters) {
         super(fxParameters)
         this._bits = 4

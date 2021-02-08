@@ -1,4 +1,4 @@
-'use strict';
+import _ from 'lodash'
 export default class FXBaseClass {
     constructor (fxParameters) {
         this.id = fxParameters.id
@@ -9,9 +9,10 @@ export default class FXBaseClass {
         this.order = fxParameters.order
         this.fx = null
         this._override = false // if true will switch fx on and ignore other calls to switch it off (from automation)
+
     }
     dispose () {
-        console.log('FX dispose()');
+        // console.log('FX dispose()');
         if (!_.isNil(this.fx) && !_.isNil(this.fx._context)) {
             this.fx.dispose()
         }

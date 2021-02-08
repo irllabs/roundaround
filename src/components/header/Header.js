@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { useEffect, useContext } from 'react'
 import { connect } from "react-redux";
 import Button from '@material-ui/core/Button';
 import IconButton from '@material-ui/core/IconButton';
@@ -10,14 +10,17 @@ import { makeStyles } from '@material-ui/core/styles';
 import ShareIcon from '@material-ui/icons/Share';
 import ArrowBackIosIcon from '@material-ui/icons/ArrowBackIos';
 import PlayButton from './PlayButton';
-import HeaderMenu from './HeaderMenu';
 import { useLocation } from 'react-router-dom'
-import ProjectName from './ProjectName';
-import HeaderAvatars from './HeaderAvatars';
+import { setUser, setIsShowingSignInDialog, setRedirectAfterSignIn, setRounds, setUserDisplayName, setSignUpDisplayName, setIsShowingShareDialog } from '../../redux/actions'
 import _ from 'lodash'
-import { setIsShowingRenameDialog } from "../../redux/actions";
+import HeaderAvatar from './HeaderAvatar'
+import JitsiComponent from '../play/JitsiComponent';
+import ProjectName from './ProjectName'
+import HeaderMenu from './HeaderMenu';
+import { FirebaseContext } from '../../firebase';
 
-const headerStyles = makeStyles({
+
+const headerStyles = makeStyles((theme) => ({
     root: {
         height: '64px',
         width: '100%',
@@ -28,57 +31,129 @@ const headerStyles = makeStyles({
         paddingLeft: '1rem',
         paddingRight: '1rem',
         position: 'fixed',
-        top: 0,
         zIndex: 4,
-        backgroundColor: 'rgba(53,53,53,0.8)'
+        backgroundColor: 'rgba(47,47,47,0.9)',
     },
     rightSide: {
-        display: 'flex'
+        display: 'flex',
+        alignItems: 'center'
     },
     rightSideChild: {
         marginRight: '1rem',
+    },
+    roundAroundLogoButton: {
+        fontWeight: 600
+    },
+    avatars: {
+        display: 'flex',
+        marginRight: '1rem',
+        alignItems: 'center'
+    },
+    avatar: {
+        position: 'relative',
+
     }
-})
+}))
 
-
-
-const Header = ({ togglePlay, isPlaying, round, logout, shareRound, collaboration, setIsShowingRenameDialog, setIsShowingDeleteRoundDialog }) => {
+function Header ({ user, users, round, setUser, setIsShowingSignInDialog, redirectAfterSignIn, setRedirectAfterSignIn, rounds, setRounds, signupDisplayName, setIsShowingShareDialog }) {
+    const firebaseContext = useContext(FirebaseContext);
     const classes = headerStyles();
     const location = useLocation();
-    const isPlayMode = true;//location.pathname === '/play' ? true : false
-    const onPlayClick = () => {
-        console.log('onPlayClick', collaboration);
-        togglePlay()
+    const isPlayMode = location.pathname.includes('/play/') ? true : false
+
+    const onSignInClick = () => {
+        setIsShowingSignInDialog(true)
     }
-    const onBackClick = () => {
-        logout()
+
+    const onShareClick = () => {
+        setIsShowingShareDialog(true)
     }
-    console.log('Header rendering', round.name, collaboration);
+
+    useEffect(() => {
+        firebaseContext.onUserUpdatedObservers.push(async (authUser) => {
+            if (!_.isNil(authUser)) {
+                // see if this user exists in users collection, if not then we're probably in the middle of signing up so ignore
+                let user = await firebaseContext.loadUser(authUser.uid)
+                if (!_.isNil(user)) {
+                    setUser(user)
+                    //if (!user.emailVerified) {
+                    //   console.log('need to verify email');
+                    //  } else {
+                    const rounds = await firebaseContext.getRoundsList(user.id, 1.5)
+                    setRounds(rounds)
+                    if (!_.isNil(redirectAfterSignIn)) {
+                        location.push(redirectAfterSignIn)
+                        setRedirectAfterSignIn(null)
+                    }
+                    // }
+                } else {
+                    console.log('ignoring auth change, probably signing up');
+                }
+            } else {
+                console.log('signed out', location.pathname);
+                if (location.pathname !== '/') {
+                    setIsShowingSignInDialog(true)
+                }
+            }
+        })
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [])
+
     return (
-        <Box className={classes.root}>
+
+        <Box className={classes.root} bgcolor={"background.default"}>
             {isPlayMode &&
                 <>
                     <div>
-                        <IconButton to="/" component={Link} onClick={onBackClick}>
+                        <IconButton to="/rounds" component={Link}>
                             <ArrowBackIosIcon />
                         </IconButton>
                     </div>
                     <div>
-                        <div><ProjectName name={round.name} setIsShowingRenameDialog={setIsShowingRenameDialog} setIsShowingDeleteRoundDialog={setIsShowingDeleteRoundDialog} /></div>
+                        {
+                            round &&
+                            <div><ProjectName name={round.name} /></div>
+                        }
+                        {
+                            _.isNil(round) &&
+                            <div>Loading...</div>
+
+                        }
                     </div>
                     <Box className={classes.rightSide} >
-                        <HeaderAvatars users={_.isNil(collaboration) ? {} : collaboration.contributors} />
-                        <Button className={classes.rightSideChild} variant="contained" color="secondary" disableElevation startIcon={<ShareIcon />} onClick={shareRound}>Share</Button>
-                        <PlayButton className={classes.rightSideChild} onPlayClick={onPlayClick} isPlaying={isPlaying} />
-                        <HeaderMenu />
+                        <Box className={classes.avatars}>
+                            {
+                                users.map((currentUser) => (
+                                    <HeaderAvatar className={classes.avatar} key={currentUser.id} user={currentUser} users={users} shouldShowMenu={!_.isNil(user) && (currentUser.id === user.id)} />
+                                ))
+                            }
+                        </Box>
+                        <JitsiComponent />
+                        <div>
+                            <Button className={classes.rightSideChild} onClick={onShareClick} variant="contained" color="secondary" disableElevation startIcon={<ShareIcon />}>Share</Button>
+                        </div>
+                        <div>
+                            <PlayButton className={classes.rightSideChild} />
+                        </div>
+                        <div>
+                            <HeaderMenu />
+                        </div>
                     </Box>
                 </>
             }
             {!isPlayMode &&
                 <>
                     <div></div>
-                    <div><strong>RoundAround</strong></div>
-                    <div>Sign in</div>
+                    <div><Button className={classes.roundAroundLogoButton} component={Link} to="/">RoundAround</Button></div>
+                    {
+                        user &&
+                        <HeaderAvatar user={user} users={users} shouldShowMenu={true} />
+                    }
+                    {
+                        !user &&
+                        <Button variant="contained" color="secondary" disableElevation onClick={onSignInClick}>Sign in</Button>
+                    }
+
                 </>
             }
 
@@ -88,13 +163,23 @@ const Header = ({ togglePlay, isPlaying, round, logout, shareRound, collaboratio
 }
 const mapStateToProps = state => {
     return {
-        round: state.round,
-        collaboration: state.collaboration
+        user: state.user,
+        users: state.users,
+        redirectAfterSignIn: state.display.redirectAfterSignIn,
+        signupDisplayName: state.display.signupDisplayName,
+        rounds: state.rounds,
+        round: state.round
     };
 };
 export default connect(
     mapStateToProps,
     {
-        setIsShowingRenameDialog
+        setUser,
+        setUserDisplayName,
+        setSignUpDisplayName,
+        setIsShowingSignInDialog,
+        setRedirectAfterSignIn,
+        setRounds,
+        setIsShowingShareDialog
     }
 )(Header);

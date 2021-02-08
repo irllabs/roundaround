@@ -1,5 +1,6 @@
+/* eslint-disable import/no-anonymous-default-export */
 import {
-    SET_ROUND_DATA,
+    SET_ROUND,
     TOGGLE_STEP,
     SET_STEP_VELOCITY,
     SET_STEP_PROBABILITY,
@@ -16,17 +17,20 @@ import {
     REMOVE_LAYER,
     SET_ROUND_NAME,
     SET_ROUND_BPM,
+    SET_ROUND_SWING,
     TOGGLE_LAYER,
     SET_LAYER_STEPS,
     SET_ROUND_ID,
-    RESET_ROUND_STORE,
     UPDATE_STEP,
     SET_LAYER_TYPE,
     UPDATE_LAYER_AUTOMATION_FX_ID,
     SET_USER_BUS_FX_OVERRIDE,
     ADD_USERBUS,
     SET_USER_BUS_FX,
-    SAVE_USER_PATTERN
+    SAVE_USER_PATTERN,
+    SET_IS_PLAYING,
+    SET_ROUND_SHORTLINK,
+    SET_ROUND_CURRENT_USERS
 } from "../actionTypes";
 import update from 'immutability-helper';
 import _ from 'lodash'
@@ -54,13 +58,12 @@ const updateStepProperty = (state, name, value, layerId, stepId) => {
 
 export default function (state = initialState, action) {
     switch (action.type) {
-        case RESET_ROUND_STORE: {
-            console.log('reset');
-            return initialState;
-        }
-        case SET_ROUND_DATA: {
-            const { data } = action.payload;
-            return data;
+        case SET_ROUND: {
+            return update(state, {
+                $set: action.payload.value
+            }
+            )
+
         }
         case UPDATE_STEP: {
             const { step, layerId, stepId } = action.payload;
@@ -332,10 +335,10 @@ export default function (state = initialState, action) {
             })
         }
         case SET_ROUND_NAME: {
-            const { name } = action.payload;
+            const { value } = action.payload;
             return update(state, {
                 name: {
-                    $set: name
+                    $set: value
                 }
             })
         }
@@ -347,11 +350,43 @@ export default function (state = initialState, action) {
                 }
             })
         }
+        case SET_ROUND_SWING: {
+            const { swing } = action.payload;
+            return update(state, {
+                swing: {
+                    $set: swing
+                }
+            })
+        }
         case SET_ROUND_ID: {
             const { id } = action.payload;
             return update(state, {
                 id: {
                     $set: id
+                }
+            })
+        }
+        case SET_IS_PLAYING: {
+            const { value } = action.payload;
+            return update(state, {
+                isPlaying: {
+                    $set: value
+                }
+            })
+        }
+        case SET_ROUND_SHORTLINK: {
+            const { value } = action.payload;
+            return update(state, {
+                shortLink: {
+                    $set: value
+                }
+            })
+        }
+        case SET_ROUND_CURRENT_USERS: {
+            const { value } = action.payload;
+            return update(state, {
+                currentUsers: {
+                    $set: value
                 }
             })
         }

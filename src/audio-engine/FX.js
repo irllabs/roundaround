@@ -5,6 +5,7 @@ import Distortion from '../audio-engine/fx/distortion';
 import Bitcrusher from '../audio-engine/fx/bitcrusher';
 import Autowah from '../audio-engine/fx/autowah';
 import Reverb from '../audio-engine/fx/reverb';
+import _ from 'lodash'
 
 const FX = {
     fxClasses: {},
@@ -13,7 +14,7 @@ const FX = {
     init () {
         let classes = [Lowpass, Delay, Highpass, Distortion, Bitcrusher, Autowah, Reverb]
         for (let fxClass of classes) {
-            this.fxClasses[fxClass.name] = fxClass
+            this.fxClasses[fxClass.fxName] = fxClass
         }
     },
     create (fxParameters) {
@@ -34,6 +35,13 @@ const FX = {
     },
     getUI (name) {
         return this.fxClasses[name].ui
+    },
+    getIcon (name) {
+        let fxClass = this.fxClasses[name]
+        if (!_.isNil(fxClass)) {
+            return this.fxClasses[name].icon
+        }
+        return null
     }
 }
 export default FX

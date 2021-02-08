@@ -1,10 +1,9 @@
-'use strict';
+
 import * as Tone from 'tone';
 import { numberRange } from '../../utils';
-const Note = require('@tonaljs/note')
 import _ from 'lodash'
 import { randomBool } from '../../utils/index'
-//import sample from '../samples/sample.wav'
+const Note = require('@tonaljs/note')
 
 export default class InstrumentBaseClass {
     constructor (name, articulations, folder) {
@@ -50,6 +49,7 @@ export default class InstrumentBaseClass {
             if (!_.isNil(sampleMap)) {
                 await _this.loadSamples(sampleMap)
             }
+            //    console.log('instrument finished loading');
             resolve()
         })
     }
@@ -57,16 +57,21 @@ export default class InstrumentBaseClass {
         let _this = this
         return new Promise(function (resolve, reject) {
             _this.dispose()
-            _this.instrument = new Tone.Sampler(sampleMap, {
-                onload: function () {
-                    _this.updateParameters(_this.parameters)
-                    if (!_.isNil(_this.connectedToChannel)) {
-                        _this.instrument.connect(_this.connectedToChannel)
+            try {
+                _this.instrument = new Tone.Sampler(sampleMap, {
+                    onload: function () {
+                        _this.updateParameters(_this.parameters)
+                        if (!_.isNil(_this.connectedToChannel)) {
+                            _this.instrument.connect(_this.connectedToChannel)
+                        }
+                        _this.loaded()
+                        resolve()
                     }
-                    _this.loaded()
-                    resolve()
-                }
-            })
+                })
+            } catch (e) {
+                console.log('error loading samples', e);
+            }
+
         })
     }
     loaded () {

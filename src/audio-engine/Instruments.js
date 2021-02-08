@@ -1,4 +1,4 @@
-"use strict";
+
 import _ from "lodash";
 import BassDrum from './instruments/BassDrum'
 import HiHatClosed from './instruments/HiHatClosed'
@@ -32,7 +32,7 @@ const Instruments = {
             TomToms
         ];
         for (let instrumentClass of classes) {
-            this.instrumentClasses[instrumentClass.name] = instrumentClass;
+            this.instrumentClasses[instrumentClass.instrumentName] = instrumentClass;
         }
     },
     create (instrumentName, articulation) {
@@ -62,10 +62,10 @@ const Instruments = {
     },
     getInstrumentOptions (channelName) {
         let options = [];
-        for (let [key, instrument] of Object.entries(this.instrumentClasses)) {
+        for (let [, instrument] of Object.entries(this.instrumentClasses)) {
             options.push({
                 label: instrument.label,
-                name: instrument.name,
+                name: instrument.instrumentName,
                 articulations: instrument.articulations
             });
         }
@@ -92,6 +92,7 @@ const Instruments = {
         return this.instrumentClasses[instrumentName].articulations[articulation];
     },
     getDefaultArticulation (instrumentName) {
+        console.log('Instruments::getDefaultArticulation() instrumentName', instrumentName, this.instrumentClasses);
         return !_.isNil(this.instrumentClasses[instrumentName].defaultArticulation)
             ? this.instrumentClasses[instrumentName].defaultArticulation
             : "none";
