@@ -8,11 +8,12 @@ import AudioEngine from '../../audio-engine/AudioEngine'
 import Instruments from '../../audio-engine/Instruments'
 import FX from '../../audio-engine/FX'
 import { getDefaultLayerData } from '../../utils/defaultData';
-import { TOGGLE_STEP, ADD_LAYER, SET_STEP_PROBABILITY, SET_STEP_VELOCITY, SET_SELECTED_LAYER_ID, SET_IS_SHOWING_LAYER_SETTINGS, SET_IS_PLAYING } from '../../redux/actionTypes'
+import { TOGGLE_STEP, ADD_LAYER, SET_SELECTED_LAYER_ID, SET_IS_SHOWING_LAYER_SETTINGS, SET_IS_PLAYING, UPDATE_STEP } from '../../redux/actionTypes'
 import { FirebaseContext } from '../../firebase/'
 import * as Tone from 'tone';
 import { withStyles } from '@material-ui/styles';
 import PropTypes from 'prop-types';
+import { numberRange } from '../../utils/index'
 
 const styles = theme => ({
     button: {
@@ -218,12 +219,12 @@ class PlayUI extends Component {
             }
             if (!_.isNil(newLayer) && !_.isEqual(layer.type, newLayer.type)) {
                 // type has changed
-                console.log('layer type has changed');
+                //console.log('layer type has changed');
                 AudioEngine.tracksById[newLayer.id].setType(newLayer.type, newLayer.automationFxId)
             }
             if (!_.isNil(newLayer) && !_.isEqual(layer.automationFxId, newLayer.automationFxId)) {
                 // automation has changed
-                console.log('layer automation fx id has changed');
+                //  console.log('layer automation fx id has changed');
                 AudioEngine.tracksById[newLayer.id].setAutomatedFx(newLayer.automationFxId)
             }
         }
@@ -317,14 +318,30 @@ class PlayUI extends Component {
         this.addLayerButtonIcon.addClass(this.props.classes.buttonIcon)
 
         this.stepModal = this.container.nested()
-        this.stepModalBackground = this.stepModal.rect(122, 52).fill({ color: '#000', opacity: 0.7 }).radius(4)
-        this.stepModalText = this.stepModal.text('')
-        this.stepModalText.fill('#fff')
-        this.stepModalText.font({
+        this.stepModalBackground = this.stepModal.rect(HTML_UI_Params.stepModalDimensions, HTML_UI_Params.stepModalDimensions).fill({ color: '#000', opacity: 0.8 }).radius(HTML_UI_Params.stepModalThumbDiameter / 2)
+
+        this.stepModalProbabilityText = this.stepModal.text('Probability')
+        this.stepModalProbabilityText.fill('#545454')
+        this.stepModalProbabilityText.font({
             size: 16,
             weight: 500
         })
-        this.stepModalText.x(8)
+        this.stepModalProbabilityText.x(HTML_UI_Params.stepModalDimensions - 135)
+        this.stepModalProbabilityText.y(HTML_UI_Params.stepModalDimensions - 30)
+
+        this.stepModalVelocityText = this.stepModal.text('Velocity')
+        this.stepModalVelocityText.fill('#545454')
+        this.stepModalVelocityText.font({
+            size: 16,
+            weight: 500
+        })
+        this.stepModalVelocityText.transform({ rotate: 270 })
+        this.stepModalVelocityText.x(120 - HTML_UI_Params.stepModalDimensions)
+        this.stepModalVelocityText.y(0)
+
+        this.stepModalThumb = this.stepModal.circle(HTML_UI_Params.stepModalThumbDiameter)
+        this.stepModalThumb.fill(this.userColors[this.props.user.id])
+
         this.stepModal.hide()
 
         if (!_.isNil(this.highlightNewLayer)) {
@@ -476,7 +493,7 @@ class PlayUI extends Component {
     }
 
     updateStep (step, showActivityIndicator = false) {
-        //console.log('updateStep', step);
+        //  console.log('updateStep', step);
         if (!_.isEmpty(this.stepGraphics) && !_.isNil(step)) {
             const layer = this.stepLayerDictionary[step.id]
             const stepGraphic = _.find(this.stepGraphics, { id: step.id })
@@ -488,7 +505,7 @@ class PlayUI extends Component {
                     if (step.isOn) {
                         stepGraphic.animate(HTML_UI_Params.stepAnimationUpdateTime).attr({ fill: _this.userColors[layer.createdBy], 'fill-opacity': step.probability })
                         stepGraphic.animate(HTML_UI_Params.stepAnimationUpdateTime).transform({
-                            scale: step.velocity
+                            scale: numberRange(step.velocity, 0, 1, 0.5, 1)
                         })
                     } else {
                         stepGraphic.animate(HTML_UI_Params.stepAnimationUpdateTime).attr({ fill: '#101114' })
@@ -496,13 +513,14 @@ class PlayUI extends Component {
                 }, HTML_UI_Params.activityAnimationTime)
                 this.animateActivityIndicator(layer.createdBy, stepGraphic.x() + (HTML_UI_Params.stepDiameter / 2), stepGraphic.y() + (HTML_UI_Params.stepDiameter / 2))
             } else {
+                //console.log('updateStep()', step.isOn);
                 if (step.isOn) {
                     stepGraphic.attr({ fill: _this.userColors[layer.createdBy], 'fill-opacity': step.probability })
                     stepGraphic.transform({
-                        scale: step.velocity
+                        scale: numberRange(step.velocity, 0, 1, 0.5, 1)
                     })
                 } else {
-                    stepGraphic.attr({ fill: '#101114' })
+                    stepGraphic.attr({ fill: '#101114', 'fill-opacity': 1 })
                 }
             }
         }
@@ -651,21 +669,163 @@ class PlayUI extends Component {
     addStepEventListeners (stepGraphic) {
         const _this = this
         if (stepGraphic.isAllowedInteraction) {
-            stepGraphic.click(function (e) {
-                e.stopPropagation()
-                _this.onStepClick(stepGraphic)
-            })
             stepGraphic.on('mousedown', (e) => {
                 e.stopPropagation()
-                _this.onStepDragStart(stepGraphic, e.pageX, e.pageY)
+                e.preventDefault()
+                _this.startStepMoveTimer(stepGraphic, e.pageX, e.pageY)
+
+                _this.container.on('mouseup', (e) => {
+                    e.stopPropagation()
+                    _this.container.off('mousemove')
+                    _this.container.off('mouseup')
+                    _this.hideStepModal()
+                    if (!_.isNil(_this.stepMoveTimer)) {
+                        // timer has not expired, so interpret as a click
+                        _this.clearShowStepModalTimer()
+                        _this.onStepClick(stepGraphic)
+                    } else {
+                        _this.onStepDragEnd(stepGraphic)
+                    }
+                })
+            })
+            stepGraphic.on('touchstart', (e) => {
+                e.stopPropagation()
+                e.preventDefault()
+                _this.startStepMoveTimer(stepGraphic, e.touches[0].pageX, e.touches[0].pageY)
+            })
+
+            stepGraphic.on('touchend', (e) => {
+                _this.hideStepModal()
+                if (!_.isNil(_this.stepMoveTimer)) {
+                    // timer has not expired, so interpret as a click
+                    _this.clearShowStepModalTimer()
+                    _this.onStepClick(stepGraphic)
+                } else {
+                    _this.onStepDragEnd(stepGraphic)
+                }
+            })
+            stepGraphic.on('touchmove', (e) => {
+                _this.onStepDragMove(stepGraphic, e.touches[0].pageX, e.touches[0].pageY)
+            })
+
+        }
+    }
+    startStepMoveTimer (stepGraphic, x, y) {
+        const _this = this
+        this.clearShowStepModalTimer()
+        this.stepMoveTimer = setTimeout(function () {
+            const step = _this.getStep(stepGraphic.id)
+            if (step.isOn) {
+                _this.showStepModal(stepGraphic, x, y)
+            }
+        }, 500)
+    }
+
+    showStepModal (stepGraphic, pageX, pageY) {
+        this.clearShowStepModalTimer()
+        this.stepModal.show()
+        stepGraphic.startX = pageX
+        stepGraphic.startY = pageY
+        const step = this.getStep(stepGraphic.id)
+        stepGraphic.isOn = step.isOn
+        stepGraphic.probabilityPanStart = stepGraphic.probability = step.probability;
+        stepGraphic.velocityPanStart = stepGraphic.velocity = step.velocity;
+        this.updateStepModal(stepGraphic)
+        const _this = this
+        this.container.on('mousemove', (e) => {
+            e.preventDefault()
+            _this.onStepDragMove(stepGraphic, e.pageX, e.pageY)
+        })
+
+    }
+
+    hideStepModal () {
+        this.stepModal.hide()
+    }
+
+    clearShowStepModalTimer () {
+        // console.log('clearShowStepModalTimer', this.stepMoveTimer);
+        clearTimeout(this.stepMoveTimer)
+        this.stepMoveTimer = null
+    }
+
+    onStepDragMove (stepGraphic, x, y) {
+        let deltaX = x - stepGraphic.startX
+        let deltaY = y - stepGraphic.startY
+        //console.log('onStepDragMove', this.isZooming, stepGraphic.isOn, deltaX, deltaY, stepGraphic.isPanningX);
+        if (!this.isZooming && stepGraphic.isOn) {
+            if (deltaX < -100) {
+                deltaX = -100
+            }
+            deltaX = deltaX / 100
+            stepGraphic.probability = stepGraphic.probabilityPanStart + deltaX
+            if (stepGraphic.probability < 0) {
+                stepGraphic.probability = 0
+            } else if (stepGraphic.probability > 1) {
+                stepGraphic.probability = 1
+            }
+
+            if (deltaY < -100) {
+                deltaY = -100
+            }
+            deltaY = deltaY / -100
+            //delta += 1
+            //stepGraphic.velocity = delta * stepGraphic.velocityPanStart;
+            stepGraphic.velocity = stepGraphic.velocityPanStart + deltaY;
+            if (stepGraphic.velocity < 0) {
+                stepGraphic.velocity = 0
+            } else if (stepGraphic.velocity > 1) {
+                stepGraphic.velocity = 1
+            }
+
+            stepGraphic.transform({
+                scale: numberRange(stepGraphic.velocity, 0, 1, 0.5, 1)
+            })
+            stepGraphic.fill({ opacity: stepGraphic.probability })
+            this.updateStepModal(stepGraphic)
+        }
+    }
+
+    onStepDragEnd (stepGraphic) {
+        if (stepGraphic.isOn) {
+            const step = this.getStep(stepGraphic.id)
+            step.probability = _.round(stepGraphic.probability, 1)
+            // this.props.dispatch({ type: SET_STEP_PROBABILITY, payload: { probability: step.probability, layerId: stepGraphic.layerId, stepId: stepGraphic.id, user: this.props.user.id } })
+            step.velocity = _.round(stepGraphic.velocity, 1)
+            // this.props.dispatch({ type: SET_STEP_VELOCITY, payload: { velocity: step.velocity, layerId: stepGraphic.layerId, stepId: stepGraphic.id, user: this.props.user.id } })
+            this.props.dispatch({ type: UPDATE_STEP, payload: { step: step, layerId: stepGraphic.layerId } })
+            this.saveLayer(stepGraphic.layerId)
+        }
+        AudioEngine.recalculateParts(this.props.round)
+    }
+
+
+    /*addStepEventListeners (stepGraphic) {
+        const _this = this
+        if (stepGraphic.isAllowedInteraction) {
+            stepGraphic.on('mousedown', (e) => {
+                e.stopPropagation()
+                e.preventDefault()
+                _this.startStepMoveTimer(stepGraphic, e.pageX, e.pageY)
+
                 _this.container.on('mousemove', (e) => {
+                    e.preventDefault()
+                    if (!this.stepIsPanning) {
+                        _this.onStepDragStart(stepGraphic, e.pageX, e.pageY)
+                    }
                     _this.onStepDragMove(stepGraphic, e.pageX, e.pageY)
                 })
                 _this.container.on('mouseup', (e) => {
                     e.stopPropagation()
                     _this.container.off('mousemove')
                     _this.container.off('mouseup')
-                    _this.onStepDragEnd(stepGraphic)
+                    clearTimeout(_this.stepMoveTimer)
+                    console.log('mouseup', this.stepIsPanning);
+                    if (this.stepIsPanning) {
+                        _this.onStepDragEnd(stepGraphic)
+                    } else {
+                        _this.onStepClick(stepGraphic)
+                    }
                 })
             })
 
@@ -688,8 +848,16 @@ class PlayUI extends Component {
         }
     }
 
+    startStepMoveTimer (stepGraphic, x, y) {
+        const _this = this
+        this.stepMoveTimer = setTimeout(function () {
+            _this.onStepDragStart(stepGraphic, x, y)
+        }, 1000)
+    }
+
     onStepDragStart (stepGraphic, x, y) {
-        // console.log('onStepDragStart', x, y);
+        console.log('onStepDragStart', stepGraphic, x, y,);
+        clearTimeout(this.stepMoveTimer)
         this.stepIsPanning = true
         stepGraphic.startX = x
         stepGraphic.startY = y
@@ -703,79 +871,59 @@ class PlayUI extends Component {
         }
     }
     onStepDragMove (stepGraphic, x, y) {
-        const deltaX = x - stepGraphic.startX
-        const deltaY = y - stepGraphic.startY
+        let deltaX = x - stepGraphic.startX
+        let deltaY = y - stepGraphic.startY
         //console.log('onStepDragMove', this.isZooming, stepGraphic.isOn, deltaX, deltaY, stepGraphic.isPanningX);
         if (!this.isZooming && stepGraphic.isOn) {
-            if (stepGraphic.isPanningX) {
-                let delta = deltaX
-                if (delta < -100) {
-                    delta = -100
-                }
-                delta = delta / 100
-                delta += 1
-                stepGraphic.probability = delta * stepGraphic.probabilityPanStart
-                if (stepGraphic.probability < 0.1) {
-                    stepGraphic.probability = 0.1
-                } else if (stepGraphic.probability > 1) {
-                    stepGraphic.probability = 1
-                }
-
-                stepGraphic.fill({ opacity: stepGraphic.probability })
-                this.updateStepModal(stepGraphic)
-            } else if (stepGraphic.isPanningY) {
-                let delta = deltaY
-                if (delta < -100) {
-                    delta = -100
-                }
-                delta = delta / -100
-                delta += 1
-                stepGraphic.velocity = delta * stepGraphic.velocityPanStart;
-                if (stepGraphic.velocity < 0.5) {
-                    stepGraphic.velocity = 0.5
-                } else if (stepGraphic.velocity > 1) {
-                    stepGraphic.velocity = 1
-                }
-                stepGraphic.transform({
-                    scale: stepGraphic.velocity
-                })
-                this.updateStepModal(stepGraphic)
-
-            } else {
-                // console.log('not panning yet', deltaX, deltaY);
-                if (Math.abs(deltaY) > 20) {
-                    stepGraphic.isPanningY = true
-                    this.isPanning = true
-                } else if (Math.abs(deltaX) > 20) {
-                    stepGraphic.isPanningX = true
-                    this.isPanning = true
-                }
+            if (deltaX < -100) {
+                deltaX = -100
             }
+            deltaX = deltaX / 100
+            stepGraphic.probability = stepGraphic.probabilityPanStart + deltaX
+            if (stepGraphic.probability < 0) {
+                stepGraphic.probability = 0
+            } else if (stepGraphic.probability > 1) {
+                stepGraphic.probability = 1
+            }
+
+            if (deltaY < -100) {
+                deltaY = -100
+            }
+            deltaY = deltaY / -100
+            //delta += 1
+            //stepGraphic.velocity = delta * stepGraphic.velocityPanStart;
+            stepGraphic.velocity = stepGraphic.velocityPanStart + deltaY;
+            if (stepGraphic.velocity < 0) {
+                stepGraphic.velocity = 0
+            } else if (stepGraphic.velocity > 1) {
+                stepGraphic.velocity = 1
+            }
+
+            stepGraphic.transform({
+                scale: numberRange(stepGraphic.velocity, 0, 1, 0.5, 1)
+            })
+            stepGraphic.fill({ opacity: stepGraphic.probability })
+            this.updateStepModal(stepGraphic)
         }
     }
     onStepDragEnd (stepGraphic) {
-        if (stepGraphic.isPanningX && stepGraphic.isOn) {
+        if (stepGraphic.isOn) {
             const step = this.getStep(stepGraphic.id)
             step.probability = stepGraphic.probability
-            this.props.dispatch({ type: SET_STEP_PROBABILITY, payload: { probability: stepGraphic.probability, layerId: stepGraphic.layerId, stepId: stepGraphic.id, user: this.props.user.id } })
-            this.saveLayer(stepGraphic.layerId)
-            //this.context.updateStep(this.round.id, stepGraphic.layerId, stepGraphic.id, step)
-        } else if (stepGraphic.isPanningY && stepGraphic.isOn) {
-            const step = this.getStep(stepGraphic.id)
             step.velocity = stepGraphic.velocity
+            this.props.dispatch({ type: SET_STEP_PROBABILITY, payload: { probability: stepGraphic.probability, layerId: stepGraphic.layerId, stepId: stepGraphic.id, user: this.props.user.id } })
             this.props.dispatch({ type: SET_STEP_VELOCITY, payload: { velocity: stepGraphic.velocity, layerId: stepGraphic.layerId, stepId: stepGraphic.id, user: this.props.user.id } })
             this.saveLayer(stepGraphic.layerId)
+            this.stepIsPanning = false
             //this.context.updateStep(this.round.id, stepGraphic.layerId, stepGraphic.id, step)
         }
         AudioEngine.recalculateParts(this.props.round)
-        stepGraphic.isPanningX = false;
-        stepGraphic.isPanningY = false;
         this.stepIsPanning = false
         this.stepModal.hide()
         setTimeout(() => {
             this.isPanning = false
         }, 100)
-    }
+    }*/
 
     highlightStep (stepGraphic) {
         const layer = _.find(this.props.round.layers, { id: stepGraphic.layerId })
@@ -812,23 +960,27 @@ class PlayUI extends Component {
     }
 
     updateStepModal (stepGraphic) {
-        this.stepModalText.text('Velocity: ' + _.round(stepGraphic.velocity, 1) + '\nProbability: ' + _.round(stepGraphic.probability, 1))
-        this.stepModal.x(stepGraphic.x())
-        this.stepModal.y(stepGraphic.y() - 100)
+        //  console.log('updateStepModal', stepGraphic.probability, stepGraphic.velocity);
+        //this.stepModalText.text('Velocity: ' + _.round(stepGraphic.velocity, 1) + '\nProbability: ' + _.round(stepGraphic.probability, 1))
+        this.stepModal.x(stepGraphic.x() - ((HTML_UI_Params.stepModalDimensions / 2) - HTML_UI_Params.stepDiameter / 2))
+        this.stepModal.y(stepGraphic.y() - ((HTML_UI_Params.stepModalDimensions / 2) - HTML_UI_Params.stepDiameter / 2))
+        this.stepModalThumb.x(stepGraphic.probability * (HTML_UI_Params.stepModalDimensions - HTML_UI_Params.stepModalThumbDiameter))
+        this.stepModalThumb.y((1 - stepGraphic.velocity) * (HTML_UI_Params.stepModalDimensions - HTML_UI_Params.stepModalThumbDiameter))
     }
 
     onStepClick (stepGraphic) {
         let step = this.getStep(stepGraphic.id)
-        if (!this.isPanning) {
-            // update internal round so that it doesn't trigger another update when we receive a change after the dispatch
-            step.isOn = !step.isOn
-            this.updateStep(step, false)
-            AudioEngine.recalculateParts(this.round)
-            this.props.dispatch({ type: TOGGLE_STEP, payload: { layerId: stepGraphic.layerId, stepId: stepGraphic.id, isOn: step.isOn, user: null } })
-            // console.log('this.context', this.context);
-            this.saveLayer(stepGraphic.layerId)
-            //this.context.updateStep(this.round.id, stepGraphic.layerId, stepGraphic.id, step)
-        }
+        // console.log('onStepClick', step);
+
+        // update internal round so that it doesn't trigger another update when we receive a change after the dispatch
+        step.isOn = !step.isOn
+        this.updateStep(step, false)
+        AudioEngine.recalculateParts(this.round)
+        this.props.dispatch({ type: TOGGLE_STEP, payload: { layerId: stepGraphic.layerId, stepId: stepGraphic.id, isOn: step.isOn, user: null } })
+        // console.log('this.context', this.context);
+        this.saveLayer(stepGraphic.layerId)
+        //this.context.updateStep(this.round.id, stepGraphic.layerId, stepGraphic.id, step)
+
     }
 
     onAddLayerClick () {

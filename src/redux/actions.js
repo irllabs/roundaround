@@ -24,7 +24,8 @@ import {
     SET_USER_COLOR,
     SET_ROUND_BPM,
     SET_ROUND_SWING,
-    SET_SELECTED_ROUND_ID
+    SET_SELECTED_ROUND_ID,
+    UPDATE_STEP
 } from './actionTypes'
 
 // User
@@ -137,6 +138,10 @@ export const setRoundBpm = (bpm) => ({
 export const setRoundSwing = (swing) => ({
     type: SET_ROUND_SWING,
     payload: { swing }
+})
+export const updateStep = (data) => ({
+    type: UPDATE_STEP,
+    payload: data
 })
 // Layer
 export const setLayerSteps = (id, steps) => ({

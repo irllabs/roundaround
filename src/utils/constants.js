@@ -11,7 +11,9 @@ export const HTML_UI_Params = {
     stepAnimationUpdateTime: 200,
     stepStrokeWidth: 6,
     layerStrokeMax: 48,
-    layerStrokeOpacity: 0.3
+    layerStrokeOpacity: 0.3,
+    stepModalDimensions: 200,
+    stepModalThumbDiameter: 32
 }
 
 export const Colors = ['#f44336', '#e91e63', '#9c27b0', '#673ab7', '#3f51b5', '#2196f3', '#00bcd4', '#009688', '#4caf50', '#8bc34a', '#cddc39', '#ffeb3b', '#ffc107', '#ff9800', '#ff5722']

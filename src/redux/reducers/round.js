@@ -66,16 +66,16 @@ export default function (state = initialState, action) {
 
         }
         case UPDATE_STEP: {
-            const { step, layerId, stepId } = action.payload;
+            const { step, layerId } = action.payload;
             const layerIndex = _.findIndex(state.layers, { id: layerId })
             const layer = _.find(state.layers, { id: layerId })
-            const stepIndex = _.findIndex(layer.steps, { id: stepId })
+            const stepIndex = _.findIndex(layer.steps, { id: step.id })
             return update(state, {
                 layers: {
                     [layerIndex]: {
                         steps: {
                             [stepIndex]: {
-                                $set: step
+                                $merge: step
                             }
                         }
                     }
