@@ -88,9 +88,9 @@ const SignInDialog = ({ isShowingSignInDialog, setIsShowingSignInDialog, setSign
                     color: getRandomColor(),
                     isGuest: false,
                 }
-                console.log('creating user', user);
+                //console.log('creating user', user);
                 await firebaseContext.createUser(user)
-
+                setUser(user)
             }
         } catch (e) {
             console.log('error logging in');
