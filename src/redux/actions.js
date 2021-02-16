@@ -25,7 +25,8 @@ import {
     SET_ROUND_BPM,
     SET_ROUND_SWING,
     SET_SELECTED_ROUND_ID,
-    UPDATE_STEP
+    UPDATE_STEP,
+    SET_IS_SHOWING_ORIENTATION_DIALOG
 } from './actionTypes'
 
 // User
@@ -89,6 +90,10 @@ export const setDisableKeyListener = (value) => ({
 })
 export const setSelectedRoundId = (value) => ({
     type: SET_SELECTED_ROUND_ID,
+    payload: { value }
+})
+export const setIsShowingOrientationDialog = (value) => ({
+    type: SET_IS_SHOWING_ORIENTATION_DIALOG,
     payload: { value }
 })
 

@@ -2,6 +2,7 @@ import React, { Component } from 'react'
 import PropTypes from 'prop-types';
 import { withStyles } from '@material-ui/styles';
 import Box from '@material-ui/core/Box';
+import Container from '@material-ui/core/Container';
 import Button from '@material-ui/core/Button';
 import { connect } from "react-redux";
 import _ from 'lodash';
@@ -10,11 +11,10 @@ import { setIsShowingSignInDialog, setRedirectAfterSignIn } from '../../redux/ac
 const styles = theme => ({
     root: {
         paddingTop: '64px',
-        height: '100%',
-        width: '100%',
-        display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
+        height: '100%',
+        display: 'flex'
     },
     container: {
         display: 'flex',
@@ -60,7 +60,7 @@ class LandingPageRoute extends Component {
         const { classes } = this.props;
         return (
             <>
-                <Box className={classes.root}>
+                <Container className={classes.root}>
                     <Box className={classes.container}>
                         <Box className={classes.left}>
                             <h1>Gather around, make music, and have fun.</h1>
@@ -72,7 +72,7 @@ class LandingPageRoute extends Component {
                             </Box>
                         </Box>
                     </Box>
-                </Box>
+                </Container>
 
             </>
         )

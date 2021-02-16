@@ -14,6 +14,7 @@ import AudioEngine from '../../audio-engine/AudioEngine'
 import ShareDialog from '../dialogs/ShareDialog'
 import { getDefaultUserBus, getDefaultUserPatterns } from '../../utils/defaultData'
 import LayerSettings from './layer-settings/LayerSettings';
+import OrientationDialog from '../dialogs/OrientationDialog';
 
 const styles = theme => ({
     root: {
@@ -333,6 +334,7 @@ class PlayRoute extends Component {
                 <EffectsSidebar />
                 <ShareDialog />
                 <LayerSettings />
+                <OrientationDialog />
             </Box>
         )
     }

@@ -8,7 +8,7 @@ import AudioEngine from '../../audio-engine/AudioEngine'
 import Instruments from '../../audio-engine/Instruments'
 import FX from '../../audio-engine/FX'
 import { getDefaultLayerData } from '../../utils/defaultData';
-import { TOGGLE_STEP, ADD_LAYER, SET_SELECTED_LAYER_ID, SET_IS_SHOWING_LAYER_SETTINGS, SET_IS_PLAYING, UPDATE_STEP } from '../../redux/actionTypes'
+import { TOGGLE_STEP, ADD_LAYER, SET_SELECTED_LAYER_ID, SET_IS_SHOWING_LAYER_SETTINGS, SET_IS_PLAYING, UPDATE_STEP, SET_IS_SHOWING_ORIENTATION_DIALOG } from '../../redux/actionTypes'
 import { FirebaseContext } from '../../firebase/'
 import * as Tone from 'tone';
 import { withStyles } from '@material-ui/styles';
@@ -51,6 +51,11 @@ class PlayUI extends Component {
         window.addEventListener('resize', this.onWindowResizeThrottled)
         window.addEventListener('keypress', this.onKeypress)
         this.addBackgroundEventListeners()
+        if (this.getOrientation() === 'portrait') {
+            this.showOrientationDialog()
+        } else {
+            this.hideOrientationDialog()
+        }
     }
 
     async componentWillUnmount () {
@@ -246,9 +251,6 @@ class PlayUI extends Component {
             }
         }
 
-
-
-
         if (redraw) {
             this.clear()
             this.round = _.cloneDeep(this.props.round)
@@ -267,7 +269,7 @@ class PlayUI extends Component {
     }
 
     draw (shouldAnimate) {
-        //console.log('draw()');
+        console.log('draw()', this.containerWidth, this.containerheight);
         this.clear()
         const _this = this
 
@@ -1029,22 +1031,44 @@ class PlayUI extends Component {
     }
 
     onWindowResize (e) {
-        if (!_.isNil(this.container)) {
-            this.containerWidth = Math.max(document.documentElement.clientWidth || 0, window.innerWidth || 0)
-            this.containerHeight = Math.max(document.documentElement.clientHeight || 0, window.innerHeight || 0)
-            const roundElement = document.getElementById('round')
-            roundElement.style.width = this.containerWidth + 'px'
-            roundElement.style.height = this.containerHeight + 'px'
-            let currentViewBox = this.container.viewbox()
-            this.container.size(this.containerWidth, this.containerHeight)
-            this.container.viewbox(
-                0,
-                currentViewBox.y,
-                this.containerWidth,
-                this.containerHeight
-            )
-            this.draw()
+        const _this = this
+        // some devices report incorrect orientation strightaway, however after around 500ms it seems to be correct.
+        setTimeout(() => {
+            const orientation = _this.getOrientation()
+            if (orientation === 'portrait') {
+                _this.showOrientationDialog()
+            } else {
+                _this.hideOrientationDialog()
+            }
+            if (!_.isNil(_this.container)) {
+                _this.containerWidth = Math.max(window.screen.width || 0, window.innerWidth || 0)
+                _this.containerheight = Math.max(window.screen.height || 0, window.innerHeight || 0)
+
+                const roundElement = document.getElementById('round')
+                roundElement.style.width = _this.containerWidth + 'px'
+                roundElement.style.height = _this.containerHeight + 'px'
+                let currentViewBox = _this.container.viewbox()
+                _this.container.size(this.containerWidth, this.containerHeight)
+                _this.container.viewbox(
+                    0,
+                    currentViewBox.y,
+                    _this.containerWidth,
+                    _this.containerHeight
+                )
+                _this.draw()
+            }
+        }, 500);
+    }
+
+    getOrientation () {
+        let orientation;
+        if (window.orientation === 0 || window.orientation === 180) {
+            orientation = 'portrait'
+        } else {
+            orientation = 'landscape'
         }
+        // console.log('getOrientation', orientation);
+        return orientation
     }
 
     onKeypress (e) {
@@ -1059,6 +1083,14 @@ class PlayUI extends Component {
                 this.props.dispatch({ type: SET_IS_PLAYING, payload: { value: true } })
             }
         }
+    }
+
+    showOrientationDialog () {
+        this.props.dispatch({ type: SET_IS_SHOWING_ORIENTATION_DIALOG, payload: { value: true } })
+    }
+
+    hideOrientationDialog () {
+        this.props.dispatch({ type: SET_IS_SHOWING_ORIENTATION_DIALOG, payload: { value: false } })
     }
 
     render () {

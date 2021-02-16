@@ -97,6 +97,8 @@ function Header ({ user, users, round, setUser, setIsShowingSignInDialog, redire
             }
         })
         // eslint-disable-next-line react-hooks/exhaustive-deps
+
+
     }, [])
 
     return (

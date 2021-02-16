@@ -10,7 +10,8 @@ import {
     SET_IS_SHOWING_DELETE_ROUND_DIALOG,
     SET_IS_SHOWING_SHARE_DIALOG,
     SET_DISABLE_KEY_LISTENER,
-    SET_SELECTED_ROUND_ID
+    SET_SELECTED_ROUND_ID,
+    SET_IS_SHOWING_ORIENTATION_DIALOG
 } from "../actionTypes";
 import update from 'immutability-helper';
 
@@ -24,7 +25,8 @@ const initialState = {
     isShowingDeleteRoundDialog: false,
     isShowingShareDialog: false,
     disableKeyListener: false,
-    selectedRoundId: null
+    selectedRoundId: null,
+    isShowingOrientationDialog: false
 };
 
 export default function (state = initialState, action) {
@@ -82,6 +84,11 @@ export default function (state = initialState, action) {
         case SET_SELECTED_ROUND_ID: {
             return update(state, {
                 selectedRoundId: { $set: action.payload.value }
+            })
+        }
+        case SET_IS_SHOWING_ORIENTATION_DIALOG: {
+            return update(state, {
+                isShowingOrientationDialog: { $set: action.payload.value }
             })
         }
         default:
