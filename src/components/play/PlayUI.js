@@ -43,6 +43,8 @@ class PlayUI extends Component {
     }
 
     componentDidMount () {
+        // register this component with parent so we can do some instant updates bypassing redux for speed
+        this.props.childRef(this)
         this.createRound()
         AudioEngine.init()
         Instruments.init()
@@ -251,6 +253,16 @@ class PlayUI extends Component {
             }
         }
 
+        // Check for layer time offset changes
+        for (let layer of this.round.layers) {
+            let newLayer = _.find(this.props.round.layers, { id: layer.id })
+            if (!_.isNil(newLayer) && !_.isEqual(layer.timeOffset, newLayer.timeOffset)) {
+                // timeOffset has changed
+                console.log('timeOffset changed', newLayer.timeOffset);
+                AudioEngine.recalculateParts(this.props.round)
+            }
+        }
+
         if (redraw) {
             this.clear()
             this.round = _.cloneDeep(this.props.round)
@@ -455,6 +467,7 @@ class PlayUI extends Component {
         layerGraphic.x(xOffset)
         layerGraphic.y(yOffset)
         layerGraphic.id = layer.id
+        layerGraphic.order = order
         layerGraphic.isAllowedInteraction = layer.createdBy === this.props.user.id
         if (layer.id === this.selectedLayerId) {
             layerGraphic.animate().stroke({ opacity: HTML_UI_Params.layerStrokeOpacity * 2 })
@@ -471,6 +484,8 @@ class PlayUI extends Component {
         const stepSize = (2 * Math.PI) / layer.steps.length;
         const radius = layerDiameter / 2;
         let angle = Math.PI / -2; // start at -90 degrees so first step is at top
+        const angleOffset = (((Math.PI * 2) / layer.steps.length) * (layer.timeOffset / 100))
+        angle += angleOffset
         for (let step of layer.steps) {
             const x = Math.round(layerDiameter / 2 + radius * Math.cos(angle) - HTML_UI_Params.stepDiameter / 2) + xOffset;
             const y = Math.round(layerDiameter / 2 + radius * Math.sin(angle) - HTML_UI_Params.stepDiameter / 2) + yOffset;
@@ -548,6 +563,28 @@ class PlayUI extends Component {
             for (let step of layer.steps) {
                 this.stepLayerDictionary[step.id] = layer
             }
+        }
+    }
+
+    adjustLayerTimeOffset (id, percent) {
+        //console.log('adjustLayerTimeOffset', id, percent, this.stepGraphics);
+        let stepGraphics = _.filter(this.stepGraphics, { layerId: id })
+        const layer = _.find(this.round.layers, { id })
+        const layerGraphic = _.find(this.layerGraphics, { id })
+        const layerDiameter = HTML_UI_Params.addNewLayerButtonDiameter + HTML_UI_Params.initialLayerPadding + ((HTML_UI_Params.stepDiameter + HTML_UI_Params.layerPadding + HTML_UI_Params.layerPadding + HTML_UI_Params.stepDiameter) * (layerGraphic.order + 1))
+        const xOffset = (this.containerWidth / 2) - (layerDiameter / 2)
+        const yOffset = (this.containerHeight / 2) - (layerDiameter / 2)
+        const stepSize = (2 * Math.PI) / layer.steps.length;
+        const radius = layerDiameter / 2;
+        let angle = Math.PI / -2; // start at -90 degrees so first step is at top
+        const angleOffset = (((Math.PI * 2) / layer.steps.length) * (percent / 100))
+        angle += angleOffset
+        for (let stepGraphic of stepGraphics) {
+            const x = Math.round(layerDiameter / 2 + radius * Math.cos(angle) - HTML_UI_Params.stepDiameter / 2) + xOffset;
+            const y = Math.round(layerDiameter / 2 + radius * Math.sin(angle) - HTML_UI_Params.stepDiameter / 2) + yOffset;
+            stepGraphic.x(x)
+            stepGraphic.y(y)
+            angle += stepSize
         }
     }
 

@@ -184,24 +184,32 @@ export default class Track {
                     return
                 }
                 this.instrument.clearPart()
-                this.notes = this.convertStepsToNotes(layer.steps)
+                this.notes = this.convertStepsToNotes(layer.steps, layer.timeOffset)
                 _.sortBy(this.notes, 'time')
                 this.instrument.loadPart(this.notes, false)
 
             }
         }
     }
-    convertStepsToNotes (steps) {
+    convertStepsToNotes (steps, timeOffsetPercent) {
         const PPQ = Tone.Transport.PPQ
         const totalTicks = PPQ * 4
         const ticksPerStep = Math.round(totalTicks / steps.length)
+        if (_.isNil(timeOffsetPercent)) {
+            timeOffsetPercent = 0
+        }
+        const ticksOffset = Math.round((timeOffsetPercent / 100) * ticksPerStep)
         //  console.log('convertStepsToNotes()', steps, PPQ, ticksPerStep);
         let notes = []
         for (let i = 0; i < steps.length; i++) {
             let step = steps[i]
             if (step.isOn) {
+                let time = (i * ticksPerStep) + ticksOffset
+                if (time < 0) {
+                    time += totalTicks
+                }
                 const note = {
-                    time: i * ticksPerStep,
+                    time,
                     duration: ticksPerStep,
                     midi: 60,
                     velocity: Number(step.velocity),

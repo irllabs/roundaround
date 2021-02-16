@@ -16,6 +16,7 @@ import { FirebaseContext } from '../../../firebase';
 import LayerType from './LayerType';
 import LayerAutomation from './LayerAutomation';
 import Track from '../../../audio-engine/Track'
+import LayerTimeOffset from './LayerTimeOffset'
 
 const styles = theme => ({
     root: {
@@ -93,6 +94,7 @@ class LayerSettings extends Component {
 
                     <LayerType selectedLayer={selectedLayer} roundId={this.props.round.id} userId={this.props.user.id} />
                     <LayerNumberOfSteps selectedLayer={selectedLayer} roundId={this.props.round.id} user={this.props.user} />
+                    <LayerTimeOffset selectedLayer={selectedLayer} roundId={this.props.round.id} user={this.props.user} playUIRef={this.props.playUIRef} />
                     {layerTypeFormItems}
                     <Button onClick={this.onClearStepsClick.bind(this)} variant="outlined" disableElevation>Clear steps</Button>
                     <Button onClick={this.onDeleteLayerClick.bind(this)} variant="outlined" disableElevation>Delete layer</Button>

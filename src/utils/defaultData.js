@@ -22,6 +22,7 @@ export const getDefaultLayerData = (userId, instrument) => {
         "createdBy": userId || null,
         "name": "",
         "type": 'TRACK_TYPE_LAYER',
+        "timeOffset": 0,
         "isActive": true,
         "isMuted": false,
         "isPreviewed": false,

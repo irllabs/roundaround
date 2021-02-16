@@ -1,4 +1,4 @@
-import React, { Component } from 'react'
+import React, { Component, createRef } from 'react'
 import PlayUI from './PlayUI'
 import PatternsSidebar from './PatternsSidebar'
 import PropTypes from 'prop-types';
@@ -44,6 +44,7 @@ class PlayRoute extends Component {
         this.reloadCollaborationLayers = this.reloadCollaborationLayers.bind(this)
         this.startAudioContext = this.startAudioContext.bind(this)
         this.reloadCollaborationLayersThrottled = _.debounce(this.reloadCollaborationLayers, 1000)
+        this.playUIRef = null;
     }
     componentDidMount () {
         //console.log('PlayRoute::componentDidMount()', this.props.user, this.isLoadingRound, this.hasLoadedRound, this.props.round);
@@ -310,6 +311,10 @@ class PlayRoute extends Component {
         window.removeEventListener('touchstart', this.startAudioContext)
     }
 
+    adjustLayerTimingInstant (id, percent) {
+        this.playUIRef.adjustLayerTiming(id, percent)
+    }
+
     render () {
         //  console.log('PlayRoute::render()', this.props.round);
         const { classes, round } = this.props;
@@ -317,7 +322,7 @@ class PlayRoute extends Component {
             <Box className={classes.root}>
                 {
                     !_.isNil(round) &&
-                    <PlayUI />
+                    <PlayUI childRef={ref => (this.playUIRef = ref)} />
                 }
                 {
                     _.isNil(round) &&
@@ -333,7 +338,7 @@ class PlayRoute extends Component {
                 <PatternsSidebar />
                 <EffectsSidebar />
                 <ShareDialog />
-                <LayerSettings />
+                <LayerSettings playUIRef={this.playUIRef} />
                 <OrientationDialog />
             </Box>
         )

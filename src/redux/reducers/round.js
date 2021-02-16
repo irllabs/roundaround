@@ -30,7 +30,8 @@ import {
     SAVE_USER_PATTERN,
     SET_IS_PLAYING,
     SET_ROUND_SHORTLINK,
-    SET_ROUND_CURRENT_USERS
+    SET_ROUND_CURRENT_USERS,
+    SET_LAYER_TIME_OFFSET
 } from "../actionTypes";
 import update from 'immutability-helper';
 import _ from 'lodash'
@@ -172,6 +173,19 @@ export default function (state = initialState, action) {
                 layers: {
                     [layerIndex]: {
                         type: {
+                            $set: value
+                        }
+                    }
+                }
+            })
+        }
+        case SET_LAYER_TIME_OFFSET: {
+            const { id, value } = action.payload;
+            const layerIndex = _.findIndex(state.layers, { id })
+            return update(state, {
+                layers: {
+                    [layerIndex]: {
+                        timeOffset: {
                             $set: value
                         }
                     }
