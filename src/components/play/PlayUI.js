@@ -42,14 +42,11 @@ class PlayUI extends Component {
         this.onOutsideClick = this.onOutsideClick.bind(this)
     }
 
-    componentDidMount () {
+    async componentDidMount () {
         // register this component with parent so we can do some instant updates bypassing redux for speed
         this.props.childRef(this)
+
         this.createRound()
-        AudioEngine.init()
-        Instruments.init()
-        FX.init()
-        AudioEngine.load(this.props.round)
         window.addEventListener('resize', this.onWindowResizeThrottled)
         window.addEventListener('keypress', this.onKeypress)
         this.addBackgroundEventListeners()

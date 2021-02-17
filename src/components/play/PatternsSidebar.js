@@ -9,7 +9,8 @@ import { FirebaseContext } from '../../firebase';
 import {
     saveUserPattern,
     setLayerSteps,
-    updateLayer
+    updateLayer,
+    updateLayers
 } from "../../redux/actions";
 import ChevronLeftIcon from '@material-ui/icons/ChevronLeft';
 
@@ -65,10 +66,10 @@ class PatternsSidebar extends Component {
         this.onMinimizeClick = this.onMinimizeClick.bind(this)
     }
     async onLoadPattern (id) {
-        console.log('onLoadPattern', id);
+        // console.log('onLoadPattern', id);
         const pattern = _.find(this.props.round.userPatterns[this.props.user.id].patterns, { id })
         if (!_.isEmpty(pattern.state)) {
-            //console.log('loading state', pattern);
+            // console.log('loading state', pattern);
 
             this.setState({ selectedPattern: pattern.id, selectedPatternNeedsSaving: false })
 
@@ -87,18 +88,22 @@ class PatternsSidebar extends Component {
             for (const layer of pattern.state.layers) {
                 const layerExists = _.find(this.props.round.layers, { id: layer.id })
                 if (!_.isNil(layerExists)) {
-                    console.log('changing layer state', layer.id, layer);
+                    //  console.log('changing layer state', layer.id, layer);
                     //this.props.setLayerSteps(layer.id, layer.steps)
                     this.props.updateLayer(layer.id, layer)
                 }
             }
+
+
+            // this.props.updateLayers(pattern.state.layers)
+            // console.log('after round update', this.props.round);
 
             // now save to firebase
             for (const layer of pattern.state.layers) {
                 // todo handle edge cases - eg layer been deleted
                 const layerExists = _.find(this.props.round.layers, { id: layer.id })
                 if (!_.isNil(layerExists)) {
-                    this.context.updateLayer(this.props.round.id, layer.id, { steps: layer.steps })
+                    this.context.updateLayer(this.props.round.id, layer.id, layer)
                 }
             }
         }
@@ -108,7 +113,7 @@ class PatternsSidebar extends Component {
         // save all steps for this user
         this.setState({ selectedPattern: id, selectedPatternNeedsSaving: false })
         const state = this.getCurrentState(this.props.user.id)
-        console.log('saving state', state);
+        //  console.log('saving state', state);
         this.props.saveUserPattern(this.props.user.id, id, state)
         this.context.saveUserPatterns(this.props.round.id, this.props.user.id, this.props.round.userPatterns[this.props.user.id])
     }
@@ -193,6 +198,7 @@ export default connect(
     mapStateToProps, {
     saveUserPattern,
     setLayerSteps,
-    updateLayer
+    updateLayer,
+    updateLayers
 }
 )(withStyles(styles)(PatternsSidebar));

@@ -27,7 +27,8 @@ import {
     SET_SELECTED_ROUND_ID,
     UPDATE_STEP,
     SET_IS_SHOWING_ORIENTATION_DIALOG,
-    UPDATE_LAYER
+    UPDATE_LAYER,
+    UPDATE_LAYERS
 } from './actionTypes'
 
 // User
@@ -112,6 +113,10 @@ export const setRoundShortLink = (value) => ({
 export const setRound = (value) => ({
     type: SET_ROUND,
     payload: { value }
+})
+export const updateLayers = (layers) => ({
+    type: UPDATE_LAYERS,
+    payload: { layers }
 })
 export const setIsPlaying = (value) => ({
     type: SET_IS_PLAYING,

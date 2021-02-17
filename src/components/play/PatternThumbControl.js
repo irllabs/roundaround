@@ -179,8 +179,10 @@ class PatternThumbControl extends Component {
         const _this = this
 
         this.props.savePattern(this.props.id)
+
         this.thumbBackground.animate({ delay: 500, duration: 400, when: 'now' }).attr({
-            fill: '#ffffff'
+            fill: '#ffffff',
+            stroke: 'none'
         }).after(() => {
             this.arrowContainer.hide()
             this.saveContainer.hide()

@@ -9,27 +9,35 @@ const AudioEngine = {
     busesByUser: {},
     master: null,
     init () {
-        this.master = new Track({
-            fx: []
-        }, Track.TRACK_TYPE_MASTER)
-        this.master.buildAudioChain()
+        const _this = this
+        return new Promise(async (resolve, reject) => {
+            _this.master = new Track({
+                fx: []
+            }, Track.TRACK_TYPE_MASTER)
+            _this.master.buildAudioChain()
+            resolve()
+        })
     },
     async load (round) {
-        //console.log('audio engine loading round', round);
-        this.round = round
-        this.reset()
-        this.setTempo(round.bpm)
-        if (!_.isNil(round.swing)) {
-            this.setSwing(round.swing)
-        }
-        for (const userBus of Object.values(round.userBuses)) {
-            await this.addUser(userBus.id, userBus.fx)
-        }
-        for (const layer of round.layers) {
-            const track = await this.createTrack(layer)
-            await track.load(layer)
-        };
-        //console.log('audio engine finsihed loading round');
+        console.log('audio engine loading round', round);
+        const _this = this
+        return new Promise(async (resolve, reject) => {
+            _this.round = round
+            _this.reset()
+            _this.setTempo(round.bpm)
+            if (!_.isNil(round.swing)) {
+                _this.setSwing(round.swing)
+            }
+            for (const userBus of Object.values(round.userBuses)) {
+                await _this.addUser(userBus.id, userBus.fx)
+            }
+            for (const layer of round.layers) {
+                const track = await _this.createTrack(layer)
+                await track.load(layer)
+            };
+            console.log('audio engine finsihed loading round');
+            resolve()
+        })
     },
     async addUser (userId, userFx) {
         return new Promise(async (resolve, reject) => {
@@ -59,6 +67,7 @@ const AudioEngine = {
     },
     // assumes tracks haven't changed, just the steps
     recalculateParts (round, layerId = null) {
+        console.log('AudioEngine::recalculateParts()');
         if (!_.isNil(round)) {
             this.round = round
             for (let layer of round.layers) {

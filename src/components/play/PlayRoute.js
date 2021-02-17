@@ -11,6 +11,8 @@ import { connect } from "react-redux";
 import { FirebaseContext } from '../../firebase';
 import { setRound, setUsers, setIsPlaying, setUserBusFxOverride, addUserBus, setRoundCurrentUsers, setRoundBpm, setRoundSwing } from '../../redux/actions'
 import AudioEngine from '../../audio-engine/AudioEngine'
+import Instruments from '../../audio-engine/Instruments'
+import FX from '../../audio-engine/FX'
 import ShareDialog from '../dialogs/ShareDialog'
 import { getDefaultUserBus, getDefaultUserPatterns } from '../../utils/defaultData'
 import LayerSettings from './layer-settings/LayerSettings';
@@ -110,6 +112,15 @@ class PlayRoute extends Component {
             const user = await this.context.loadUser(currentUser)
             currentUsers.push(user)
         }
+
+        // load audio
+        await AudioEngine.init()
+        Instruments.init()
+        FX.init()
+        console.log('PlayRoute loading audio engine');
+        await AudioEngine.load(round)
+        console.log('PlayRoute finished loading audio engine');
+
         this.props.setUsers(currentUsers)
         this.props.setRound(round)
         this.hasLoadedRound = true

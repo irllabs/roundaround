@@ -1,6 +1,7 @@
 /* eslint-disable import/no-anonymous-default-export */
 import {
     SET_ROUND,
+    UPDATE_LAYERS,
     TOGGLE_STEP,
     SET_STEP_VELOCITY,
     SET_STEP_PROBABILITY,
@@ -67,6 +68,20 @@ export default function (state = initialState, action) {
             }
             )
 
+        }
+
+        case UPDATE_LAYERS: {
+            const { layers } = action.payload;
+            let layersUpdate = {}
+            for (let i = 0; i < layers.length; i++) {
+                layersUpdate[i] = {
+
+                    $merge: layers[i]
+                }
+            }
+            return update(state, {
+                layers: layersUpdate
+            });
         }
         case UPDATE_STEP: {
             const { step, layerId } = action.payload;
@@ -349,6 +364,7 @@ export default function (state = initialState, action) {
                 }
             })
         }
+
         case ADD_LAYER: {
             const { layer } = action.payload;
             return update(state, {

@@ -84,7 +84,7 @@ export default class Track {
         })
     }
     buildAudioChain () {
-        // console.log('Track::buildAudioChain()', this.type, this.id);
+        console.log('Track::buildAudioChain()', this.type, this.id);
         if (this.type === Track.TRACK_TYPE_MASTER) {
             this.channel.toDestination()
         } else if (this.type !== Track.TRACK_TYPE_AUTOMATION) {
@@ -265,14 +265,23 @@ export default class Track {
         this.automation = new Automation(fxId, userId)
     }
     setVolume (value) {
-        console.log('Track::setVolume()', value);
-        this.channel.volume.value = value
+        //console.log('Track::setVolume()', value);
+        const _this = this
+        // temporary hack, todo investigate why this is necessary (when loading a preset the volume sometimes doesn't update)
+        setTimeout(() => {
+            _this.channel.volume.value = value
+        }, 300)
     }
     setSolo (value) {
         this.channel.solo = value
     }
     setMute (value) {
-        this.channel.mute = value
+        // console.log('Track::setMute()', value);
+        const _this = this
+        // temporary hack, todo investigate why this is necessary (when loading a preset the mute sometimes doesn't work)
+        setTimeout(() => {
+            _this.channel.mute = value
+        }, 300)
     }
     async setMixerSettings (settings) {
         let _this = this
@@ -288,6 +297,7 @@ export default class Track {
         })
     }
     async setFXIsOn (fxId, value) {
+        console.log('setFXIsOn', fxId, value);
         this.disconnectAudioChain()
         this.fx[fxId].isOn = value
         this.buildAudioChain()
