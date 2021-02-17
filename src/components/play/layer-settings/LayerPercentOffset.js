@@ -7,7 +7,7 @@ import Box from '@material-ui/core/Box';
 import { makeStyles } from '@material-ui/core/styles';
 import { FirebaseContext } from '../../../firebase';
 import _ from 'lodash'
-import { SET_LAYER_TIME_OFFSET } from '../../../redux/actionTypes'
+import { SET_LAYER_PERCENT_OFFSET } from '../../../redux/actionTypes'
 
 
 const useStyles = makeStyles((theme) => ({
@@ -20,30 +20,30 @@ const useStyles = makeStyles((theme) => ({
     },
 }));
 
-export default function LayerTimeOffset ({ selectedLayer, user, roundId, playUIRef }) {
+export default function LayerPercentOffset ({ selectedLayer, user, roundId, playUIRef }) {
     const dispatch = useDispatch();
     const classes = useStyles();
     const firebase = useContext(FirebaseContext);
-    const [sliderValue, setSliderValue] = useState(selectedLayer.timeOffset || 0)
+    const [sliderValue, setSliderValue] = useState(selectedLayer.percentOffset || 0)
 
-    const updateLayerTimeOffsetState = (ms, selectedLayerId) => {
-        dispatch({ type: SET_LAYER_TIME_OFFSET, payload: { id: selectedLayerId, value: ms } })
-        firebase.updateLayer(roundId, selectedLayer.id, { timeOffset: ms })
+    const updateLayerPercentOffsetState = (percent, selectedLayerId) => {
+        dispatch({ type: SET_LAYER_PERCENT_OFFSET, payload: { id: selectedLayerId, value: percent } })
+        firebase.updateLayer(roundId, selectedLayer.id, { percentOffset: percent })
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    const updateLayerTimeOffsetStateThrottled = useCallback(_.throttle(function (ms, selectedLayerId) {
-        updateLayerTimeOffsetState(ms, selectedLayerId)
+    const updateLayerPercentOffsetStateThrottled = useCallback(_.throttle(function (percent, selectedLayerId) {
+        updateLayerPercentOffsetState(percent, selectedLayerId)
     }, 1000), []);
 
-    const onSliderChange = (e, ms) => {
-        setSliderValue(ms)
-        updateLayerTimeOffsetStateThrottled(ms, selectedLayer.id)
+    const onSliderChange = (e, percent) => {
+        setSliderValue(percent)
+        updateLayerPercentOffsetStateThrottled(percent, selectedLayer.id)
         // Update UI directly for performance reasons (instead of going via redux)
-        playUIRef.adjustLayerOffset(selectedLayer.id, selectedLayer.percentOffset, ms)
+        playUIRef.adjustLayerOffset(selectedLayer.id, percent, selectedLayer.timeOffset)
     }
 
     useEffect(() => {
-        setSliderValue(selectedLayer.timeOffset || 0)
+        setSliderValue(selectedLayer.percentOffset || 0)
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [selectedLayer.id])
     return (
@@ -51,9 +51,9 @@ export default function LayerTimeOffset ({ selectedLayer, user, roundId, playUIR
             <Box display="flex" flexDirection="column">
                 <FormControl className={classes.formControl}>
                     <Typography id="continuous-slider" variant="caption" gutterBottom>
-                        Time Offset (ms)
+                        Time Offset (%)
                     </Typography>
-                    <Slider value={sliderValue} min={-50} max={50} valueLabelDisplay="auto" onChange={onSliderChange} aria-labelledby="continuous-slider" />
+                    <Slider value={sliderValue} min={-100} max={100} valueLabelDisplay="auto" onChange={onSliderChange} aria-labelledby="continuous-slider" />
                 </FormControl>
             </Box>
 

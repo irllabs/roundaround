@@ -93,7 +93,7 @@ class PlayUI extends Component {
     }
 
     async componentDidUpdate () {
-        // console.log('componentDidUpdate()', this.props.round)
+        console.log('componentDidUpdate()', this.props.round)
 
         // Calculate what's changed so we only redraw if necessary
         let redraw = false
@@ -111,6 +111,7 @@ class PlayUI extends Component {
             this.round.bpm = this.props.round.bpm
             AudioEngine.setTempo(this.round.bpm)
             this.reclaculateIndicatorAnimation()
+            this.adjustAllLayerOffsets()
         }
 
         // User profile color changed
@@ -239,7 +240,7 @@ class PlayUI extends Component {
         for (let layer of this.round.layers) {
             let newLayer = _.find(this.props.round.layers, { id: layer.id })
             if (!_.isNil(newLayer) && !_.isEqual(layer.gain, newLayer.gain)) {
-                // gain has changed
+                console.log('gain has changed', newLayer.gain)
                 AudioEngine.tracksById[newLayer.id].setVolume(newLayer.gain)
             }
         }
@@ -248,7 +249,7 @@ class PlayUI extends Component {
         for (let layer of this.round.layers) {
             let newLayer = _.find(this.props.round.layers, { id: layer.id })
             if (!_.isNil(newLayer) && !_.isEqual(layer.isMuted, newLayer.isMuted)) {
-                // mute has changed
+                console.log('mute has changed', newLayer.isMuted)
                 AudioEngine.tracksById[newLayer.id].setMute(newLayer.isMuted)
             }
         }
@@ -257,9 +258,14 @@ class PlayUI extends Component {
         for (let layer of this.round.layers) {
             let newLayer = _.find(this.props.round.layers, { id: layer.id })
             if (!_.isNil(newLayer) && !_.isEqual(layer.timeOffset, newLayer.timeOffset)) {
-                // timeOffset has changed
-                console.log('timeOffset changed', newLayer.timeOffset);
+                console.log('timeOffset has changed')
                 AudioEngine.recalculateParts(this.props.round)
+                this.adjustLayerOffset(newLayer.id, newLayer.percentOffset, newLayer.timeOffset)
+            }
+            if (!_.isNil(newLayer) && !_.isEqual(layer.percentOffset, newLayer.percentOffset)) {
+                console.log('percentOffset has changed')
+                AudioEngine.recalculateParts(this.props.round)
+                this.adjustLayerOffset(newLayer.id, newLayer.percentOffset, newLayer.timeOffset)
             }
         }
 
@@ -484,8 +490,11 @@ class PlayUI extends Component {
         const stepSize = (2 * Math.PI) / layer.steps.length;
         const radius = layerDiameter / 2;
         let angle = Math.PI / -2; // start at -90 degrees so first step is at top
-        const angleOffset = (((Math.PI * 2) / layer.steps.length) * (layer.timeOffset / 100))
-        angle += angleOffset
+        const anglePercentOffset = this.ticksToRadians(this.ticksPerStep(layer.steps.length) * (layer.percentOffset / 100))
+        const angleTimeOffset = this.ticksToRadians(this.msToTicks(layer.timeOffset))
+        //const angleOffset = (((Math.PI * 2) / layer.steps.length) * (layer.timeOffset / 100))
+        angle += anglePercentOffset
+        angle += angleTimeOffset
         for (let step of layer.steps) {
             const x = Math.round(layerDiameter / 2 + radius * Math.cos(angle) - HTML_UI_Params.stepDiameter / 2) + xOffset;
             const y = Math.round(layerDiameter / 2 + radius * Math.sin(angle) - HTML_UI_Params.stepDiameter / 2) + yOffset;
@@ -566,10 +575,16 @@ class PlayUI extends Component {
         }
     }
 
-    adjustLayerTimeOffset (id, percent) {
-        //console.log('adjustLayerTimeOffset', id, percent, this.stepGraphics);
-        let stepGraphics = _.filter(this.stepGraphics, { layerId: id })
+    adjustAllLayerOffsets () {
+        for (const layer of this.round.layers) {
+            this.adjustLayerOffset(layer.id, layer.percentOffset, layer.timeOffset)
+        }
+    }
+
+    adjustLayerOffset (id, percentOffset, timeOffset) {
+        // console.log('adjustLayerTimeOffset', layer., percent, this.stepGraphics);
         const layer = _.find(this.round.layers, { id })
+        let stepGraphics = _.filter(this.stepGraphics, { layerId: id })
         const layerGraphic = _.find(this.layerGraphics, { id })
         const layerDiameter = HTML_UI_Params.addNewLayerButtonDiameter + HTML_UI_Params.initialLayerPadding + ((HTML_UI_Params.stepDiameter + HTML_UI_Params.layerPadding + HTML_UI_Params.layerPadding + HTML_UI_Params.stepDiameter) * (layerGraphic.order + 1))
         const xOffset = (this.containerWidth / 2) - (layerDiameter / 2)
@@ -577,8 +592,11 @@ class PlayUI extends Component {
         const stepSize = (2 * Math.PI) / layer.steps.length;
         const radius = layerDiameter / 2;
         let angle = Math.PI / -2; // start at -90 degrees so first step is at top
-        const angleOffset = (((Math.PI * 2) / layer.steps.length) * (percent / 100))
-        angle += angleOffset
+        // const angleOffset = (((Math.PI * 2) / layer.steps.length) * (percent / 100))
+        const anglePercentOffset = this.ticksToRadians(this.ticksPerStep(layer.steps.length) * (percentOffset / 100))
+        const angleTimeOffset = this.ticksToRadians(this.msToTicks(timeOffset))
+        angle += anglePercentOffset
+        angle += angleTimeOffset
         for (let stepGraphic of stepGraphics) {
             const x = Math.round(layerDiameter / 2 + radius * Math.cos(angle) - HTML_UI_Params.stepDiameter / 2) + xOffset;
             const y = Math.round(layerDiameter / 2 + radius * Math.sin(angle) - HTML_UI_Params.stepDiameter / 2) + yOffset;
@@ -586,6 +604,26 @@ class PlayUI extends Component {
             stepGraphic.y(y)
             angle += stepSize
         }
+    }
+
+    ticksPerStep (numberOfSteps) {
+        const PPQ = Tone.Transport.PPQ
+        const totalTicks = PPQ * 4
+        return Math.round(totalTicks / numberOfSteps)
+    }
+
+    ticksToRadians (ticks) {
+        const PPQ = Tone.Transport.PPQ
+        const totalTicks = PPQ * 4
+        return ((Math.PI * 2) / totalTicks) * ticks
+    }
+
+    msToTicks (ms) {
+        const BPM = Tone.Transport.bpm.value
+        const PPQ = Tone.Transport.PPQ
+        const msPerBeat = 60000 / BPM
+        const msPerTick = msPerBeat / PPQ
+        return Math.round(ms / msPerTick)
     }
 
     drawAvatars () {

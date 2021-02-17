@@ -26,7 +26,8 @@ import {
     SET_ROUND_SWING,
     SET_SELECTED_ROUND_ID,
     UPDATE_STEP,
-    SET_IS_SHOWING_ORIENTATION_DIALOG
+    SET_IS_SHOWING_ORIENTATION_DIALOG,
+    UPDATE_LAYER
 } from './actionTypes'
 
 // User
@@ -152,4 +153,8 @@ export const updateStep = (data) => ({
 export const setLayerSteps = (id, steps) => ({
     type: SET_LAYER_STEPS,
     payload: { id, steps }
+})
+export const updateLayer = (id, data) => ({
+    type: UPDATE_LAYER,
+    payload: { id, data }
 })

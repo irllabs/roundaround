@@ -1,6 +1,5 @@
 
 import * as Tone from 'tone';
-import { numberRange } from '../../utils';
 import _ from 'lodash'
 import { randomBool } from '../../utils/index'
 const Note = require('@tonaljs/note')
@@ -13,7 +12,6 @@ export default class InstrumentBaseClass {
         this.articulations = articulations
         this.folder = folder
         this.instrument = null
-        this.volume = 1
     }
     dispose () {
         if (!_.isNil(this.instrument) && !_.isNil(this.instrument._context)) {
@@ -149,9 +147,5 @@ export default class InstrumentBaseClass {
     }
     triggerRelease (pitch) {
         this.instrument.triggerRelease(Note.fromMidi(pitch))
-    }
-    setVolume (value) {
-        let percent = numberRange(value, -48, 6, 0, 1)
-        this.volume = percent
     }
 }

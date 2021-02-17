@@ -16,6 +16,7 @@ const AudioEngine = {
     },
     async load (round) {
         //console.log('audio engine loading round', round);
+        this.round = round
         this.reset()
         this.setTempo(round.bpm)
         if (!_.isNil(round.swing)) {
@@ -58,9 +59,14 @@ const AudioEngine = {
     },
     // assumes tracks haven't changed, just the steps
     recalculateParts (round, layerId = null) {
-        for (let layer of round.layers) {
-            if (_.isNil(layerId) || layerId === layer.id) {
-                this.tracksById[layer.id].calculatePart(layer)
+        if (!_.isNil(round)) {
+            this.round = round
+            for (let layer of round.layers) {
+                if (_.isNil(layerId) || layerId === layer.id) {
+                    if (!_.isNil(this.tracksById[layer.id])) {
+                        this.tracksById[layer.id].calculatePart(layer)
+                    }
+                }
             }
         }
     },
@@ -111,6 +117,8 @@ const AudioEngine = {
     },
     setTempo (bpm) {
         Tone.Transport.bpm.value = bpm
+        // need to recalculate parts because absolute time offset needs to be recalculated
+        this.recalculateParts(this.round)
     },
     setSwing (swing) {
         Tone.Transport.swing = swing / 100

@@ -8,7 +8,8 @@ import PatternThumbControl from './PatternThumbControl'
 import { FirebaseContext } from '../../firebase';
 import {
     saveUserPattern,
-    setLayerSteps
+    setLayerSteps,
+    updateLayer
 } from "../../redux/actions";
 import ChevronLeftIcon from '@material-ui/icons/ChevronLeft';
 
@@ -86,8 +87,9 @@ class PatternsSidebar extends Component {
             for (const layer of pattern.state.layers) {
                 const layerExists = _.find(this.props.round.layers, { id: layer.id })
                 if (!_.isNil(layerExists)) {
-                    console.log('changing layer state', layer.id, layer.steps);
-                    this.props.setLayerSteps(layer.id, layer.steps)
+                    console.log('changing layer state', layer.id, layer);
+                    //this.props.setLayerSteps(layer.id, layer.steps)
+                    this.props.updateLayer(layer.id, layer)
                 }
             }
 
@@ -106,7 +108,7 @@ class PatternsSidebar extends Component {
         // save all steps for this user
         this.setState({ selectedPattern: id, selectedPatternNeedsSaving: false })
         const state = this.getCurrentState(this.props.user.id)
-        // console.log('saving state', state);
+        console.log('saving state', state);
         this.props.saveUserPattern(this.props.user.id, id, state)
         this.context.saveUserPatterns(this.props.round.id, this.props.user.id, this.props.round.userPatterns[this.props.user.id])
     }
@@ -121,7 +123,11 @@ class PatternsSidebar extends Component {
         for (const layer of userLayers) {
             let stateLayer = {
                 id: layer.id,
-                steps: layer.steps
+                steps: layer.steps,
+                gain: layer.gain,
+                isMuted: layer.isMuted,
+                timeOffset: layer.timeOffset,
+                percentOffset: layer.percentOffset
             }
             state.layers.push(stateLayer)
         }
@@ -186,6 +192,7 @@ const mapStateToProps = state => {
 export default connect(
     mapStateToProps, {
     saveUserPattern,
-    setLayerSteps
+    setLayerSteps,
+    updateLayer
 }
 )(withStyles(styles)(PatternsSidebar));

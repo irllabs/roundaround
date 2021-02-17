@@ -184,27 +184,28 @@ export default class Track {
                     return
                 }
                 this.instrument.clearPart()
-                this.notes = this.convertStepsToNotes(layer.steps, layer.timeOffset)
+                this.notes = this.convertStepsToNotes(layer.steps, layer.percentOffset, layer.timeOffset)
                 _.sortBy(this.notes, 'time')
                 this.instrument.loadPart(this.notes, false)
 
             }
         }
     }
-    convertStepsToNotes (steps, timeOffsetPercent) {
+    convertStepsToNotes (steps, percentOffset, timeOffset) {
         const PPQ = Tone.Transport.PPQ
         const totalTicks = PPQ * 4
         const ticksPerStep = Math.round(totalTicks / steps.length)
-        if (_.isNil(timeOffsetPercent)) {
-            timeOffsetPercent = 0
+        if (_.isNil(percentOffset)) {
+            percentOffset = 0
         }
-        const ticksOffset = Math.round((timeOffsetPercent / 100) * ticksPerStep)
-        //  console.log('convertStepsToNotes()', steps, PPQ, ticksPerStep);
+        const percentOffsetTicks = Math.round((percentOffset / 100) * ticksPerStep)
+        const timeOffsetTicks = this.msToTicks(timeOffset)
+        //console.log('convertStepsToNotes()', 'percentOffsetTicks', percentOffsetTicks, 'timeOffsetTicks', timeOffsetTicks);
         let notes = []
         for (let i = 0; i < steps.length; i++) {
             let step = steps[i]
             if (step.isOn) {
-                let time = (i * ticksPerStep) + ticksOffset
+                let time = (i * ticksPerStep) + percentOffsetTicks + timeOffsetTicks
                 if (time < 0) {
                     time += totalTicks
                 }
@@ -220,6 +221,13 @@ export default class Track {
         }
         // console.log('notes', notes);
         return notes
+    }
+    msToTicks (ms) {
+        const BPM = Tone.Transport.bpm.value
+        const PPQ = Tone.Transport.PPQ
+        const msPerBeat = 60000 / BPM
+        const msPerTick = msPerBeat / PPQ
+        return Math.round(ms / msPerTick)
     }
     async setInstrument (instrument) {
         // console.time('setInstrument')
@@ -240,7 +248,7 @@ export default class Track {
                 _this.instrument.loadPart(_this.notes, false)
             }
             // _this.calculatePart()
-            _this.instrument.setVolume(_this.channel.volume.value)
+            //_this.instrument.setVolume(_this.channel.volume.value)
 
             resolve(_this.instrument)
         })
@@ -257,10 +265,8 @@ export default class Track {
         this.automation = new Automation(fxId, userId)
     }
     setVolume (value) {
+        console.log('Track::setVolume()', value);
         this.channel.volume.value = value
-        if (!_.isNil(this.instrument)) {
-            this.instrument.setVolume(value)
-        }
     }
     setSolo (value) {
         this.channel.solo = value

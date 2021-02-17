@@ -16,6 +16,7 @@ import { FirebaseContext } from '../../../firebase';
 import LayerType from './LayerType';
 import LayerAutomation from './LayerAutomation';
 import Track from '../../../audio-engine/Track'
+import LayerPercentOffset from './LayerPercentOffset'
 import LayerTimeOffset from './LayerTimeOffset'
 
 const styles = theme => ({
@@ -43,7 +44,7 @@ class LayerSettings extends Component {
     }
 
     onMuteClick () {
-        const isMuted = !this.props.selectedLayer.instrument.isMuted
+        const isMuted = !this.props.selectedLayer.isMuted
         AudioEngine.tracksById[this.props.selectedLayer.id].setMute(isMuted)
         this.props.dispatch({ type: SET_LAYER_MUTE, payload: { id: this.props.selectedLayer.id, value: isMuted, user: this.props.user.id } })
     }
@@ -84,7 +85,7 @@ class LayerSettings extends Component {
                         </div>
                         <Box display="flex" justifyContent="space-evenly">
 
-                            <Button onClick={this.onMuteClick.bind(this)} variant={selectedLayer.instrument.isMuted ? 'contained' : 'outlined'} disableElevation>Mute</Button>
+                            <Button onClick={this.onMuteClick.bind(this)} variant={selectedLayer.isMuted ? 'contained' : 'outlined'} disableElevation>Mute</Button>
                         </Box>
                     </>
                 )
@@ -94,6 +95,7 @@ class LayerSettings extends Component {
 
                     <LayerType selectedLayer={selectedLayer} roundId={this.props.round.id} userId={this.props.user.id} />
                     <LayerNumberOfSteps selectedLayer={selectedLayer} roundId={this.props.round.id} user={this.props.user} />
+                    <LayerPercentOffset selectedLayer={selectedLayer} roundId={this.props.round.id} user={this.props.user} playUIRef={this.props.playUIRef} />
                     <LayerTimeOffset selectedLayer={selectedLayer} roundId={this.props.round.id} user={this.props.user} playUIRef={this.props.playUIRef} />
                     {layerTypeFormItems}
                     <Button onClick={this.onClearStepsClick.bind(this)} variant="outlined" disableElevation>Clear steps</Button>
@@ -120,7 +122,7 @@ class LayerSettings extends Component {
 const mapStateToProps = state => {
     //  console.log('mapStateToProps', state);
     let selectedLayer = null;
-    if (!_.isNil(state.display.selectedLayerId)) {
+    if (!_.isNil(state.display.selectedLayerId) && !_.isNil(state.round) && !_.isNil(state.round.layers)) {
         selectedLayer = _.find(state.round.layers, { id: state.display.selectedLayerId })
     }
     return {

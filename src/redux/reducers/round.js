@@ -31,7 +31,9 @@ import {
     SET_IS_PLAYING,
     SET_ROUND_SHORTLINK,
     SET_ROUND_CURRENT_USERS,
-    SET_LAYER_TIME_OFFSET
+    SET_LAYER_TIME_OFFSET,
+    SET_LAYER_PERCENT_OFFSET,
+    UPDATE_LAYER
 } from "../actionTypes";
 import update from 'immutability-helper';
 import _ from 'lodash'
@@ -192,6 +194,19 @@ export default function (state = initialState, action) {
                 }
             })
         }
+        case SET_LAYER_PERCENT_OFFSET: {
+            const { id, value } = action.payload;
+            const layerIndex = _.findIndex(state.layers, { id })
+            return update(state, {
+                layers: {
+                    [layerIndex]: {
+                        percentOffset: {
+                            $set: value
+                        }
+                    }
+                }
+            })
+        }
 
         case ADD_USERBUS: {
             const { userId, userBus } = action.payload;
@@ -301,11 +316,11 @@ export default function (state = initialState, action) {
             return update(state, {
                 layers: {
                     [layerIndex]: {
-                        instrument: {
-                            isMuted: {
-                                $set: value
-                            }
+
+                        isMuted: {
+                            $set: value
                         }
+
                     }
                 }
             })
@@ -319,6 +334,17 @@ export default function (state = initialState, action) {
                         instrument: {
                             $merge: instrument
                         }
+                    }
+                }
+            })
+        }
+        case UPDATE_LAYER: {
+            const { id, data } = action.payload;
+            const layerIndex = _.findIndex(state.layers, { id })
+            return update(state, {
+                layers: {
+                    [layerIndex]: {
+                        $merge: data
                     }
                 }
             })
