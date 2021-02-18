@@ -67,10 +67,10 @@ function App ({ setUser, setRounds, setIsShowingSignInDialog }) {
             <Route path="/play" component={PlayRoute} />
             <Route path="/" component={LandingPageRoute} />
           </Switch>
+          <SignInDialog />
+          <RenameDialog />
+          <DeleteRoundDialog />
         </Router>
-        <SignInDialog />
-        <RenameDialog />
-        <DeleteRoundDialog />
       </ThemeProvider>
     </div>
   );

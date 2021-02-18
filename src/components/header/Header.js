@@ -1,12 +1,13 @@
-import React, { useEffect, useContext } from 'react'
+import React, { Component, useEffect, useContext } from 'react'
+import PropTypes from 'prop-types';
 import { connect } from "react-redux";
 import Button from '@material-ui/core/Button';
 import IconButton from '@material-ui/core/IconButton';
 import Box from '@material-ui/core/Box';
 import {
-    Link
+    Link, withRouter
 } from "react-router-dom";
-import { makeStyles } from '@material-ui/core/styles';
+import { withStyles } from '@material-ui/core/styles';
 import ShareIcon from '@material-ui/icons/Share';
 import ArrowBackIosIcon from '@material-ui/icons/ArrowBackIos';
 import PlayButton from './PlayButton';
@@ -18,9 +19,9 @@ import JitsiComponent from '../play/JitsiComponent';
 import ProjectName from './ProjectName'
 import HeaderMenu from './HeaderMenu';
 import { FirebaseContext } from '../../firebase';
+import { getRandomColor } from '../../utils/index'
 
-
-const headerStyles = makeStyles((theme) => ({
+const styles = theme => ({
     root: {
         height: '64px',
         width: '100%',
@@ -53,116 +54,143 @@ const headerStyles = makeStyles((theme) => ({
         position: 'relative',
 
     }
-}))
+})
 
-function Header ({ user, users, round, setUser, setIsShowingSignInDialog, redirectAfterSignIn, setRedirectAfterSignIn, rounds, setRounds, signupDisplayName, setIsShowingShareDialog }) {
-    const firebaseContext = useContext(FirebaseContext);
-    const classes = headerStyles();
-    const location = useLocation();
-    const isPlayMode = location.pathname.includes('/play/') ? true : false
-
-    const onSignInClick = () => {
-        setIsShowingSignInDialog(true)
+class Header extends Component {
+    static contextType = FirebaseContext;
+    constructor (props) {
+        super(props);
+        this.onSignInClick = this.onSignInClick.bind(this)
+        this.onShareClick = this.onShareClick.bind(this)
     }
 
-    const onShareClick = () => {
-        setIsShowingShareDialog(true)
-    }
-
-    useEffect(() => {
-        firebaseContext.onUserUpdatedObservers.push(async (authUser) => {
+    componentDidMount () {
+        const _this = this
+        _this.context.onUserUpdatedObservers.push(async (authUser) => {
             if (!_.isNil(authUser)) {
                 // see if this user exists in users collection, if not then we're probably in the middle of signing up so ignore
-                let user = await firebaseContext.loadUser(authUser.uid)
+                let user = await _this.context.loadUser(authUser.uid)
                 if (!_.isNil(user)) {
-                    setUser(user)
+                    _this.props.setUser(user)
                     //if (!user.emailVerified) {
                     //   console.log('need to verify email');
                     //  } else {
-                    const rounds = await firebaseContext.getRoundsList(user.id, 1.5)
-                    setRounds(rounds)
-                    if (!_.isNil(redirectAfterSignIn)) {
-                        location.push(redirectAfterSignIn)
-                        setRedirectAfterSignIn(null)
-                    }
+                    const rounds = await _this.context.getRoundsList(user.id, 1.5)
+                    _this.props.setRounds(rounds)
+
                     // }
                 } else {
-                    console.log('ignoring auth change, probably signing up');
+                    ///console.log('ignoring auth change, probably signing up');
+                    //new user, create user document
+                    user = {
+                        displayName: authUser.displayName,
+                        email: authUser.email,
+                        avatar: authUser.photoURL,
+                        id: authUser.uid,
+                        color: getRandomColor(),
+                        isGuest: false,
+                    }
+                    //console.log('creating user', user);
+                    await _this.context.createUser(user)
+                    _this.props.setUser(user)
+                }
+                // console.log('redirectAfterSignIn', _this.props.redirectAfterSignIn);
+                if (!_.isNil(_this.props.redirectAfterSignIn)) {
+                    _this.redirect()
                 }
             } else {
-                console.log('signed out', location.pathname);
-                if (location.pathname !== '/') {
-                    setIsShowingSignInDialog(true)
+                // console.log('signed out', _this.props.location.pathname);
+                if (_this.props.location.pathname !== '/') {
+                    _this.props.history.push('/')
+                    _this.props.setIsShowingSignInDialog(true)
                 }
             }
         })
-        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }
 
+    redirect = () => {
+        // console.log('redirect', this.props.redirectAfterSignIn);
+        this.props.history.push(this.props.redirectAfterSignIn)
+        this.props.setRedirectAfterSignIn(null)
+    }
 
-    }, [])
+    onSignInClick = () => {
+        this.props.setIsShowingSignInDialog(true)
+    }
 
-    return (
+    onShareClick = () => {
+        this.props.setIsShowingShareDialog(true)
+    }
 
-        <Box className={classes.root} bgcolor={"background.default"}>
-            {isPlayMode &&
-                <>
-                    <div>
-                        <IconButton to="/rounds" component={Link}>
-                            <ArrowBackIosIcon />
-                        </IconButton>
-                    </div>
-                    <div>
-                        {
-                            round &&
-                            <div><ProjectName name={round.name} /></div>
-                        }
-                        {
-                            _.isNil(round) &&
-                            <div>Loading...</div>
-
-                        }
-                    </div>
-                    <Box className={classes.rightSide} >
-                        <Box className={classes.avatars}>
+    render () {
+        const { classes, location, round, users, user } = this.props;
+        const isPlayMode = location.pathname.includes('/play/') ? true : false
+        return (
+            <Box className={classes.root} bgcolor={"background.default"}>
+                {isPlayMode &&
+                    <>
+                        <div>
+                            <IconButton to="/rounds" component={Link}>
+                                <ArrowBackIosIcon />
+                            </IconButton>
+                        </div>
+                        <div>
                             {
-                                users.map((currentUser) => (
-                                    <HeaderAvatar className={classes.avatar} key={currentUser.id} user={currentUser} users={users} shouldShowMenu={!_.isNil(user) && (currentUser.id === user.id)} />
-                                ))
+                                round &&
+                                <div><ProjectName name={round.name} /></div>
                             }
+                            {
+                                _.isNil(round) &&
+                                <div>Loading...</div>
+
+                            }
+                        </div>
+                        <Box className={classes.rightSide} >
+                            <Box className={classes.avatars}>
+                                {
+                                    users.map((currentUser) => (
+                                        <HeaderAvatar className={classes.avatar} key={currentUser.id} user={currentUser} users={users} shouldShowMenu={!_.isNil(user) && (currentUser.id === user.id)} />
+                                    ))
+                                }
+                            </Box>
+                            <JitsiComponent />
+                            <div>
+                                <Button className={classes.rightSideChild} onClick={this.onShareClick} variant="contained" color="secondary" disableElevation startIcon={<ShareIcon />}>Share</Button>
+                            </div>
+                            <div>
+                                <PlayButton className={classes.rightSideChild} />
+                            </div>
+                            <div>
+                                <HeaderMenu />
+                            </div>
                         </Box>
-                        <JitsiComponent />
-                        <div>
-                            <Button className={classes.rightSideChild} onClick={onShareClick} variant="contained" color="secondary" disableElevation startIcon={<ShareIcon />}>Share</Button>
-                        </div>
-                        <div>
-                            <PlayButton className={classes.rightSideChild} />
-                        </div>
-                        <div>
-                            <HeaderMenu />
-                        </div>
-                    </Box>
-                </>
-            }
-            {!isPlayMode &&
-                <>
-                    <div></div>
-                    <div><Button className={classes.roundAroundLogoButton} component={Link} to="/">RoundAround</Button></div>
-                    {
-                        user &&
-                        <HeaderAvatar user={user} users={users} shouldShowMenu={true} />
-                    }
-                    {
-                        !user &&
-                        <Button variant="contained" color="secondary" disableElevation onClick={onSignInClick}>Sign in</Button>
-                    }
+                    </>
+                }
+                {!isPlayMode &&
+                    <>
+                        <div></div>
+                        <div><Button className={classes.roundAroundLogoButton} component={Link} to="/">RoundAround</Button></div>
+                        {
+                            user &&
+                            <HeaderAvatar user={user} users={users} shouldShowMenu={true} />
+                        }
+                        {
+                            !user &&
+                            <Button variant="contained" color="secondary" disableElevation onClick={this.onSignInClick}>Sign in</Button>
+                        }
 
-                </>
-            }
+                    </>
+                }
 
 
-        </Box >
-    )
+            </Box >
+        )
+    }
 }
+Header.propTypes = {
+    classes: PropTypes.object.isRequired,
+};
+
 const mapStateToProps = state => {
     return {
         user: state.user,
@@ -173,6 +201,7 @@ const mapStateToProps = state => {
         round: state.round
     };
 };
+
 export default connect(
     mapStateToProps,
     {
@@ -184,4 +213,4 @@ export default connect(
         setRounds,
         setIsShowingShareDialog
     }
-)(Header);
+)(withRouter((withStyles(styles)(Header))));

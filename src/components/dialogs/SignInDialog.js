@@ -7,11 +7,12 @@ import TextField from '@material-ui/core/TextField';
 import Box from '@material-ui/core/Box';
 import Button from '@material-ui/core/Button';
 import { makeStyles } from '@material-ui/core/styles';
-import { setIsShowingSignInDialog, setSignUpDisplayName, setUser, setRounds } from '../../redux/actions'
+import { setIsShowingSignInDialog, setSignUpDisplayName, setUser, setRounds, setRedirectAfterSignIn } from '../../redux/actions'
 import { FirebaseContext } from '../../firebase';
 import firebase from "firebase/app";
 import ArrowBackIcon from '@material-ui/icons/ArrowBack';
 import { getRandomColor } from '../../utils/index'
+import { useLocation } from 'react-router-dom'
 
 import _ from 'lodash'
 
@@ -50,8 +51,9 @@ const styles = makeStyles({
     }
 })
 
-const SignInDialog = ({ isShowingSignInDialog, setIsShowingSignInDialog, setSignUpDisplayName, setUser, setRounds, redirectAfterSignIn }) => {
+const SignInDialog = ({ isShowingSignInDialog, setIsShowingSignInDialog, setSignUpDisplayName, setUser, setRounds, redirectAfterSignIn, setRedirectAfterSignIn }) => {
     const firebaseContext = useContext(FirebaseContext);
+    const location = useLocation();
     const onClose = () => {
         setIsShowingEmailForm(false)
         setIsShowingEmailSignupForm(false)
@@ -77,7 +79,7 @@ const SignInDialog = ({ isShowingSignInDialog, setIsShowingSignInDialog, setSign
         try {
             const authResult = await firebaseContext.auth.signInWithPopup(provider)
             const authUser = authResult.user
-            let user = await firebaseContext.loadUser(authUser.uid)
+            /*let user = await firebaseContext.loadUser(authUser.uid)
             if (_.isNil(user)) {
                 //new user, create user document
                 user = {
@@ -92,8 +94,12 @@ const SignInDialog = ({ isShowingSignInDialog, setIsShowingSignInDialog, setSign
                 await firebaseContext.createUser(user)
                 setUser(user)
             }
+            if (!_.isNil(redirectAfterSignIn)) {
+                location.push(redirectAfterSignIn)
+                setRedirectAfterSignIn(null)
+            }*/
         } catch (e) {
-            console.log('error logging in');
+            console.log('error logging in', e);
         }
     }
 
@@ -289,7 +295,8 @@ export default connect(
         setIsShowingSignInDialog,
         setSignUpDisplayName,
         setUser,
-        setRounds
+        setRounds,
+        setRedirectAfterSignIn
     }
 )(SignInDialog);
 
