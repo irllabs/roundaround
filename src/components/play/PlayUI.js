@@ -35,6 +35,7 @@ class PlayUI extends Component {
         this.round = null; // local copy of round, prevent mutating store.
         this.isOn = false
         this.editAllLayers = false
+        this.swipeToggleActive = false
         this.userColors = {};
         this.onWindowResizeThrottled = _.throttle(this.onWindowResize.bind(this), 1000)
         this.selectedLayerId = null;
@@ -308,7 +309,7 @@ class PlayUI extends Component {
               this.positionLine.timeline().seek(AudioEngine.getPositionMilliseconds())
           }*/
         // draw layers
-        this.stepGrahpics = []
+        this.stepGraphics = []
         this.layerGraphics = []
         let i = 0
         for (const layer of this.round.layers) {
@@ -432,7 +433,7 @@ class PlayUI extends Component {
             }
         }
 
-        if (!_.isNil(this.stepGrahpics)) {
+        if (!_.isNil(this.stepGraphics)) {
             for (let stepGraphic of this.stepGraphics) {
                 stepGraphic.clear()
             }
@@ -741,22 +742,43 @@ class PlayUI extends Component {
     }
 
     addStepEventListeners (stepGraphic) {
+        console.log('addStepEventListeners');
+        this.removeStepEventListeners(stepGraphic)
         const _this = this
         if (stepGraphic.isAllowedInteraction) {
             stepGraphic.on('mousedown', (e) => {
+                console.log('mousedown');
                 e.stopPropagation()
                 e.preventDefault()
+                _this.swipeToggleActive = false
                 _this.startStepMoveTimer(stepGraphic, e.pageX, e.pageY)
+                stepGraphic.on('mouseout', (e) => {
+                    console.log('mouseout');
+                    if (!_.isNil(_this.stepMoveTimer)) {
+                        // we've swiped / dragged out of the step, toggle this step and listen for mouseovers on all other steps
+                        // add listener to layergraphic to cancel swiping
+                        _this.swipeToggleActive = true
+                        _this.onStepClick(stepGraphic)
+                        _this.addStepSwipeListeners(stepGraphic)
+                        // _this.addStepSwipeCancelListener(stepGraphic)
+                    }
+
+                })
 
                 _this.container.on('mouseup', (e) => {
                     e.stopPropagation()
+                    _this.removeStepSwipeListeners()
                     _this.container.off('mousemove')
                     _this.container.off('mouseup')
+
                     _this.hideStepModal()
+                    console.log('mouseup', '_this.stepMoveTimer', _this.stepMoveTimer, '_this.swipeToggleActive', _this.swipeToggleActive);
                     if (!_.isNil(_this.stepMoveTimer)) {
                         // timer has not expired, so interpret as a click
                         _this.clearShowStepModalTimer()
-                        _this.onStepClick(stepGraphic)
+                        if (!_this.swipeToggleActive) {
+                            _this.onStepClick(stepGraphic)
+                        }
                     } else {
                         _this.onStepDragEnd(stepGraphic)
                     }
@@ -784,12 +806,18 @@ class PlayUI extends Component {
 
         }
     }
+    removeStepEventListeners (stepGraphic) {
+        stepGraphic.off('mousedown')
+        stepGraphic.off('touchstart')
+        stepGraphic.off('touchend')
+        stepGraphic.off('touchmove')
+    }
     startStepMoveTimer (stepGraphic, x, y) {
         const _this = this
         this.clearShowStepModalTimer()
         this.stepMoveTimer = setTimeout(function () {
             const step = _this.getStep(stepGraphic.id)
-            if (step.isOn) {
+            if (step.isOn && !_this.swipeToggleActive) {
                 _this.showStepModal(stepGraphic, x, y)
             }
         }, 500)
@@ -821,6 +849,39 @@ class PlayUI extends Component {
         // console.log('clearShowStepModalTimer', this.stepMoveTimer);
         clearTimeout(this.stepMoveTimer)
         this.stepMoveTimer = null
+    }
+
+    addStepSwipeListeners (originalStepGraphic) {
+        console.log('addStepSwipeListeners', this);
+        this.removeStepSwipeListeners()
+        const _this = this
+        for (const stepGraphic of this.stepGraphics) {
+            if (stepGraphic.layerId === originalStepGraphic.layerId) {
+                console.log('adding mouseover');
+                stepGraphic.on('mouseover', (e) => {
+                    console.log('on stepGraphic mouseover');
+                    _this.onStepClick(stepGraphic)
+                })
+            }
+        }
+    }
+
+    removeStepSwipeListeners () {
+        for (const stepGraphic of this.stepGraphics) {
+            stepGraphic.off('mouseout')
+            stepGraphic.off('mouseover')
+        }
+    }
+
+    addStepSwipeCancelListener (stepGraphic) {
+        const layerGraphic = _.find(this.layerGraphics, { id: stepGraphic.layerId })
+        const _this = this
+        layerGraphic.on('mouseout', (e) => {
+            console.log('layerGraphic mouseout');
+            _this.swipeToggleActive = false
+            _this.removeStepSwipeListeners()
+            layerGraphic.off('mouseout')
+        })
     }
 
     onStepDragMove (stepGraphic, x, y) {
@@ -1044,7 +1105,7 @@ class PlayUI extends Component {
 
     onStepClick (stepGraphic) {
         let step = this.getStep(stepGraphic.id)
-        // console.log('onStepClick', step);
+        console.log('onStepClick', step);
 
         // update internal round so that it doesn't trigger another update when we receive a change after the dispatch
         step.isOn = !step.isOn
