@@ -84,7 +84,7 @@ export default class Track {
         })
     }
     buildAudioChain () {
-        console.log('Track::buildAudioChain()', this.type, this.id);
+        //  console.log('Track::buildAudioChain()', this.type, this.id);
         if (this.type === Track.TRACK_TYPE_MASTER) {
             this.channel.toDestination()
         } else if (this.type !== Track.TRACK_TYPE_AUTOMATION) {
@@ -297,7 +297,7 @@ export default class Track {
         })
     }
     async setFXIsOn (fxId, value) {
-        console.log('setFXIsOn', fxId, value);
+        // console.log('setFXIsOn', fxId, value);
         this.disconnectAudioChain()
         this.fx[fxId].isOn = value
         this.buildAudioChain()

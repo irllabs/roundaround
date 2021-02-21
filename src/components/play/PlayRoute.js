@@ -117,9 +117,9 @@ class PlayRoute extends Component {
         await AudioEngine.init()
         Instruments.init()
         FX.init()
-        console.log('PlayRoute loading audio engine');
+        //console.log('PlayRoute loading audio engine');
         await AudioEngine.load(round)
-        console.log('PlayRoute finished loading audio engine');
+        // console.log('PlayRoute finished loading audio engine');
 
         this.props.setUsers(currentUsers)
         this.props.setRound(round)

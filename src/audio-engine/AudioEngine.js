@@ -19,7 +19,7 @@ const AudioEngine = {
         })
     },
     async load (round) {
-        console.log('audio engine loading round', round);
+        // console.log('audio engine loading round', round);
         const _this = this
         return new Promise(async (resolve, reject) => {
             _this.round = round
@@ -35,7 +35,7 @@ const AudioEngine = {
                 const track = await _this.createTrack(layer)
                 await track.load(layer)
             };
-            console.log('audio engine finsihed loading round');
+            //  console.log('audio engine finsihed loading round');
             resolve()
         })
     },
@@ -67,7 +67,7 @@ const AudioEngine = {
     },
     // assumes tracks haven't changed, just the steps
     recalculateParts (round, layerId = null) {
-        console.log('AudioEngine::recalculateParts()');
+        // console.log('AudioEngine::recalculateParts()');
         if (!_.isNil(round)) {
             this.round = round
             for (let layer of round.layers) {

@@ -91,7 +91,7 @@ class PlayUI extends Component {
     }
 
     async componentDidUpdate () {
-        console.log('componentDidUpdate()', this.props.round)
+        // console.log('componentDidUpdate()', this.props.round)
 
         // Calculate what's changed so we only redraw if necessary
         let redraw = false
@@ -222,6 +222,7 @@ class PlayUI extends Component {
             if (!_.isNil(newLayer) && !_.isEqual(layer.instrument, newLayer.instrument)) {
                 // instrument has changed
                 AudioEngine.tracksById[newLayer.id].setInstrument(newLayer.instrument)
+                this.updateLayerLabelText(layer.id, newLayer.instrument.sampler)
             }
             if (!_.isNil(newLayer) && !_.isEqual(layer.type, newLayer.type)) {
                 // type has changed
@@ -238,7 +239,7 @@ class PlayUI extends Component {
         for (let layer of this.round.layers) {
             let newLayer = _.find(this.props.round.layers, { id: layer.id })
             if (!_.isNil(newLayer) && !_.isEqual(layer.gain, newLayer.gain)) {
-                console.log('gain has changed', newLayer.gain)
+                //  console.log('gain has changed', newLayer.gain)
                 AudioEngine.tracksById[newLayer.id].setVolume(newLayer.gain)
             }
         }
@@ -247,7 +248,7 @@ class PlayUI extends Component {
         for (let layer of this.round.layers) {
             let newLayer = _.find(this.props.round.layers, { id: layer.id })
             if (!_.isNil(newLayer) && !_.isEqual(layer.isMuted, newLayer.isMuted)) {
-                console.log('mute has changed', newLayer.isMuted)
+                //  console.log('mute has changed', newLayer.isMuted)
                 AudioEngine.tracksById[newLayer.id].setMute(newLayer.isMuted)
             }
         }
@@ -256,12 +257,12 @@ class PlayUI extends Component {
         for (let layer of this.round.layers) {
             let newLayer = _.find(this.props.round.layers, { id: layer.id })
             if (!_.isNil(newLayer) && !_.isEqual(layer.timeOffset, newLayer.timeOffset)) {
-                console.log('timeOffset has changed')
+                // console.log('timeOffset has changed')
                 AudioEngine.recalculateParts(this.props.round)
                 this.adjustLayerOffset(newLayer.id, newLayer.percentOffset, newLayer.timeOffset)
             }
             if (!_.isNil(newLayer) && !_.isEqual(layer.percentOffset, newLayer.percentOffset)) {
-                console.log('percentOffset has changed')
+                //  console.log('percentOffset has changed')
                 AudioEngine.recalculateParts(this.props.round)
                 this.adjustLayerOffset(newLayer.id, newLayer.percentOffset, newLayer.timeOffset)
             }
@@ -285,7 +286,7 @@ class PlayUI extends Component {
     }
 
     draw (shouldAnimate) {
-        console.log('draw()', this.containerWidth, this.containerheight);
+        // console.log('draw()', this.containerWidth, this.containerheight);
         this.clear()
         const _this = this
 
@@ -484,6 +485,8 @@ class PlayUI extends Component {
         this.addLayerEventListeners(layerGraphic)
         this.layerGraphics.push(layerGraphic)
 
+
+
         // draw steps
         const stepSize = (2 * Math.PI) / layer.steps.length;
         const radius = layerDiameter / 2;
@@ -493,6 +496,12 @@ class PlayUI extends Component {
         //const angleOffset = (((Math.PI * 2) / layer.steps.length) * (layer.timeOffset / 100))
         angle += anglePercentOffset
         angle += angleTimeOffset
+        let layerLabelString = layer.instrument.sampler
+        if (layerLabelString.length > 5) {
+            layerLabelString = layerLabelString.substring(0, 5) + '...'
+        }
+        layerGraphic.layerLabel = this.container.plain(layerLabelString)
+        layerGraphic.firstStep = null;
         for (let step of layer.steps) {
             const x = Math.round(layerDiameter / 2 + radius * Math.cos(angle) - HTML_UI_Params.stepDiameter / 2) + xOffset;
             const y = Math.round(layerDiameter / 2 + radius * Math.sin(angle) - HTML_UI_Params.stepDiameter / 2) + yOffset;
@@ -512,8 +521,26 @@ class PlayUI extends Component {
             this.stepGraphics.push(stepGraphic)
             this.updateStep(step)
             this.addStepEventListeners(stepGraphic)
+            if (_.isNil(layerGraphic.firstStep)) {
+                layerGraphic.firstStep = stepGraphic
+            }
         }
+        layerGraphic.labelYOffset = 32 * (anglePercentOffset + angleTimeOffset)
+        this.updateLayerLabel(layerGraphic)
 
+    }
+    updateLayerLabel (layerGraphic) {
+        layerGraphic.layerLabel.x(layerGraphic.firstStep.x() + HTML_UI_Params.stepDiameter + 8)
+        layerGraphic.layerLabel.y(layerGraphic.firstStep.y() + ((HTML_UI_Params.stepDiameter / 2) - 6) + layerGraphic.labelYOffset)
+    }
+
+    updateLayerLabelText (layerId, text) {
+        if (text.length > 5) {
+            text = text.substring(0, 5) + '...'
+        }
+        let layerGraphic = _.find(this.layerGraphics, { id: layerId })
+        layerGraphic.layerLabel.text(text)
+        this.updateLayerLabel(layerGraphic)
     }
 
     updateStep (step, showActivityIndicator = false) {
@@ -595,13 +622,19 @@ class PlayUI extends Component {
         const angleTimeOffset = this.ticksToRadians(this.msToTicks(timeOffset))
         angle += anglePercentOffset
         angle += angleTimeOffset
+        layerGraphic.firstStep = null
         for (let stepGraphic of stepGraphics) {
             const x = Math.round(layerDiameter / 2 + radius * Math.cos(angle) - HTML_UI_Params.stepDiameter / 2) + xOffset;
             const y = Math.round(layerDiameter / 2 + radius * Math.sin(angle) - HTML_UI_Params.stepDiameter / 2) + yOffset;
             stepGraphic.x(x)
             stepGraphic.y(y)
             angle += stepSize
+            if (_.isNil(layerGraphic.firstStep)) {
+                layerGraphic.firstStep = stepGraphic
+            }
         }
+        layerGraphic.labelYOffset = 32 * (anglePercentOffset + angleTimeOffset)
+        this.updateLayerLabel(layerGraphic)
     }
 
     ticksPerStep (numberOfSteps) {
