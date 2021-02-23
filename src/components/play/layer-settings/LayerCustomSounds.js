@@ -11,7 +11,10 @@ import AudioEngine from '../../../audio-engine/AudioEngine'
 import AudioRecorder from '../../../audio-engine/AudioRecorder'
 import VUMeter from './VUMeter';
 import _ from 'lodash'
-import { UPDATE_LAYER_INSTRUMENT } from '../../../redux/actionTypes'
+import { UPDATE_LAYER_INSTRUMENT, SET_IS_PLAYING } from '../../../redux/actionTypes'
+import { FirebaseContext } from '../../../firebase'
+import { getDefaultSample } from '../../../utils/defaultData'
+import CustomSamples from '../../../audio-engine/CustomSamples'
 
 
 const styles = theme => ({
@@ -31,6 +34,7 @@ const styles = theme => ({
 })
 
 class LayerCustomSounds extends Component {
+    static contextType = FirebaseContext
     constructor (props) {
         super(props)
         this.state = {
@@ -44,30 +48,28 @@ class LayerCustomSounds extends Component {
         this.onRecordLevel = this.onRecordLevel.bind(this)
         this.onCountDown = this.onCountDown.bind(this)
         this.onRecordingStarted = this.onRecordingStarted.bind(this)
+        this.onRecordingFinished = this.onRecordingFinished.bind(this)
     }
     async onRecordClick () {
         if (!this.state.isInRecordMode) {
-
+            console.log('onRecordClick', AudioEngine.isOn);
+            if (!AudioEngine.isOn()) {
+                AudioEngine.play()
+                this.props.dispatch({ type: SET_IS_PLAYING, payload: { value: true } })
+            }
             AudioRecorder.start(
                 {
                     levelCallback: this.onRecordLevel,
                     countdownCallack: this.onCountDown,
-                    recordingStartedCallback: this.onRecordingStarted
+                    recordingStartedCallback: this.onRecordingStarted,
+                    recordingFinishedCallback: this.onRecordingFinished
                 })
             this.setState({ recordButtonText: 'Ready...' })
         } else {
-            const sampleId = await AudioRecorder.stop()
-            this.setState({
-                recordButtonText: 'Record',
-                isRecording: false,
-                isInRecordMode: false
-            })
-            this.props.dispatch({ type: UPDATE_LAYER_INSTRUMENT, payload: { id: this.props.selectedLayer.id, instrument: { sampler: 'custom', sample: sampleId }, user: this.props.user.id } })
+            AudioRecorder.stop()
         }
         this.setState({
             isInRecordMode: !this.state.isInRecordMode,
-
-
         })
     }
     onCountDown (value) {
@@ -80,6 +82,39 @@ class LayerCustomSounds extends Component {
     }
     onRecordingStarted () {
         this.setState({ isRecording: true, recordButtonText: 'Recording' })
+    }
+    async onRecordingFinished (blob) {
+        console.log('recording finsished');
+        this.setState({
+            recordButtonText: 'Record',
+            isRecording: false,
+            isInRecordMode: false
+        })
+
+        let sample = getDefaultSample()
+
+        // create local reference to this blob for local use
+        sample.localURL = URL.createObjectURL(blob)
+
+        // add to local custom sample cache
+        CustomSamples.add(sample)
+
+        // update state with new sample
+        this.props.dispatch({ type: UPDATE_LAYER_INSTRUMENT, payload: { id: this.props.selectedLayer.id, instrument: { sampler: 'custom', sample: sample.id }, user: this.props.user.id } })
+
+
+        // upload blob to firebase
+        const metadata = {
+            contentType: 'audio/wav',
+        };
+        const _this = this
+        const fileRef = this.context.storage.ref().child(sample.id + '.wav')
+        let snapshot = await fileRef.put(blob, metadata)
+
+        let downloadURL = await snapshot.ref.getDownloadURL()
+        console.log('Uploaded blob!', downloadURL);
+        sample.remoteURL = downloadURL
+        await _this.context.createSample(sample)
     }
 
     render () {

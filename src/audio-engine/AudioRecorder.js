@@ -3,6 +3,16 @@ import Track from './Track';
 import _ from 'lodash'
 import { numberRange } from '../utils/index'
 import AudioEngine from './AudioEngine'
+import MediaRecorder from 'opus-media-recorder';
+
+// opus-media-recorder options
+const workerOptions = {
+    encoderWorkerFactory: function () {
+        return new Worker(process.env.PUBLIC_URL + '/opus-media-recorder/encoderWorker.umd.js')
+    },
+    OggOpusEncoderWasmPath: process.env.PUBLIC_URL + '/opus-media-recorder/OggOpusEncoder.wasm',
+    WebMOpusEncoderWasmPath: process.env.PUBLIC_URL + '/opus-media-recorder/WebMOpusEncoder.wasm',
+};
 
 const AudioRecorder = {
     async start ({ levelCallback, countdownCallack, recordingStartedCallback, recordingFinishedCallback }) {
@@ -11,6 +21,7 @@ const AudioRecorder = {
         this.recordingStartedCallback = recordingStartedCallback
         this.recordingFinishedCallback = recordingFinishedCallback
         AudioEngine.startAudioContext()
+
         this.inputMeter = new Tone.Meter();
         this.mic = new Tone.UserMedia().connect(this.inputMeter);
         const _this = this
@@ -42,18 +53,25 @@ const AudioRecorder = {
     scheduleCountdown () {
         let _this = this
         this.hasBegunCountdown = false
+        this.hasBegunRecording = false
         this.scheduleCountdownEvent = new Tone.ToneEvent(function () {
             if (!_this.hasBegunCountdown) {
                 console.log('first 0 event');
                 _this.hasBegunCountdown = true
                 _this.startCountdown()
-            } else {
+            } else if (!_this.hasBegunRecording) {
                 // second time we've passed 0, start recording
                 console.log('second 0 event');
+                _this.hasBegunRecording = true
                 _this.countDownPart.dispose()
-                _this.scheduleCountdownEvent.dispose()
+
                 _this.recordingStartedCallback()
                 _this.startRecording()
+            } else {
+                // third time we've passed 0, stop the recording
+                console.log('third 0 event');
+                _this.scheduleCountdownEvent.dispose()
+                _this.stop()
             }
         });
         this.scheduleCountdownEvent.start("0m");
@@ -99,26 +117,60 @@ const AudioRecorder = {
         _this.countdownCallack(4)
     },
     async stop () {
-        return new Promise(async (resolve, reject) => {
-            let sampleId = null
-            if (!_.isNil(this.mic)) {
-                this.mic.close()
-                clearInterval(this.inputMeterInterval)
-            }
-            if (!_.isNil(this.recorder)) {
-                const recording = await this.recorder.stop()
-                const url = URL.createObjectURL(recording);
-                // todo upload file to firebase to get sample id
-                sampleId = url
-            }
-            resolve(sampleId)
-        })
+        console.log('AudioRecorder::stop()');
+        this.hasBegunCountdown = false
+        this.hasBegunRecording = false
+        if (!_.isNil(this.mic)) {
+            this.mic.close()
+            clearInterval(this.inputMeterInterval)
+        }
+        if (!_.isNil(this.recorder)) {
+            this.recorder.stop()
+        }
+
     },
     startRecording () {
         console.log('startRecording()');
-        this.recorder = new Tone.Recorder();
-        this.mic.connect(this.recorder)
-        this.recorder.start();
+        const _this = this
+
+        console.log('start recording called');
+        this.chunks = []
+        navigator.mediaDevices.getUserMedia({ audio: true }).then(stream => {
+            const options = { mimeType: 'audio/wav' }
+            _this.recorder = new MediaRecorder(stream, options, workerOptions);
+            // this.setState({ state: 'inactive' });
+            _this.recorder.start();
+
+            _this.recorder.addEventListener('dataavailable', (e) => {
+                console.log('Recording stopped, data available');
+                _this.chunks.push(e.data)
+            });
+            _this.recorder.addEventListener('start', (e) => {
+                console.log('start');
+                //this.setState({ state: 'recording' });
+            })
+            _this.recorder.addEventListener('stop', (e) => {
+                console.log('stop');
+                // this.setState({ state: 'inactive' });
+                let blob = new Blob(_this.chunks, {
+                    type: 'audio/wav'
+                })
+                _this.recordingFinishedCallback(blob)
+            })
+            _this.recorder.addEventListener('pause', (e) => {
+                console.log('pause');
+                // this.setState({ state: 'paused' });
+            })
+            _this.recorder.addEventListener('resume', (e) => {
+                console.log('resume');
+                // this.setState({ state: 'recording' });
+            })
+            _this.recorder.addEventListener('error', (e) => {
+                console.log('error');
+            })
+        });
+
+
     }
 }
 export default AudioRecorder

@@ -202,6 +202,7 @@ export default class Track {
         const timeOffsetTicks = this.msToTicks(timeOffset)
         //console.log('convertStepsToNotes()', 'percentOffsetTicks', percentOffsetTicks, 'timeOffsetTicks', timeOffsetTicks);
         let notes = []
+        let previousNote = null;
         for (let i = 0; i < steps.length; i++) {
             let step = steps[i]
             if (step.isOn) {
@@ -209,7 +210,7 @@ export default class Track {
                 if (time < 0) {
                     time += totalTicks
                 }
-                const note = {
+                let note = {
                     time,
                     duration: ticksPerStep,
                     midi: 60,
@@ -217,9 +218,13 @@ export default class Track {
                     probability: step.probability
                 }
                 notes.push(note)
+                previousNote = note
+            } else if (!_.isNil(previousNote)) {
+                // step not on so increase duration of previous note
+                previousNote.duration += ticksPerStep
             }
         }
-        // console.log('notes', notes);
+        console.log('notes', notes);
         return notes
     }
     msToTicks (ms) {

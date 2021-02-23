@@ -152,3 +152,9 @@ export const getDefaultUserPattern = (order) => {
         state: {}
     }
 }
+export const getDefaultSample = () => {
+    return {
+        id: uuid(),
+        name: 'Recording'
+    }
+}

@@ -17,6 +17,7 @@ import ShareDialog from '../dialogs/ShareDialog'
 import { getDefaultUserBus, getDefaultUserPatterns } from '../../utils/defaultData'
 import LayerSettings from './layer-settings/LayerSettings';
 import OrientationDialog from '../dialogs/OrientationDialog';
+import CustomSamples from '../../audio-engine/CustomSamples';
 
 const styles = theme => ({
     root: {
@@ -114,6 +115,7 @@ class PlayRoute extends Component {
         }
 
         // load audio
+        CustomSamples.init(this.context)
         await AudioEngine.init()
         Instruments.init()
         FX.init()

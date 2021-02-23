@@ -86,6 +86,7 @@ export default function VolumeSlider ({ selectedLayer, user, roundId }) {
                 max={100}
                 aria-labelledby="vertical-slider"
                 //marks={verticalSliderMarks}
+                valueLabelDisplay="auto"
                 onChange={onSliderChange}
             />
         </Box>

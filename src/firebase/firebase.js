@@ -31,6 +31,7 @@ class Firebase {
         this.db = app.firestore();
         this.firestore = app.firestore;
         this.functions = app.functions()
+        this.storage = app.storage()
         this.onUserUpdatedObservers = [];
 
         app.auth().onAuthStateChanged((user) => {
@@ -316,6 +317,37 @@ class Firebase {
                     .doc(id)
                     .set(userBusClone)
                 resolve()
+            } catch (e) {
+                console.error(e)
+            }
+        })
+    }
+
+    createSample = async (sample) => {
+        let sampleClone = _.cloneDeep(sample)
+        delete sampleClone.id
+        delete sampleClone.localURL
+        return new Promise(async (resolve, reject) => {
+            try {
+                await this.db.collection('samples')
+                    .doc(sample.id)
+                    .set(sampleClone)
+                resolve()
+            } catch (e) {
+                console.error(e)
+            }
+        })
+    }
+
+    getSample = async (id) => {
+        return new Promise(async (resolve, reject) => {
+            try {
+                const snapshot = await this.db.collection('samples').doc(id).get()
+                if (snapshot.exists) {
+                    resolve({ id: snapshot.id, ...snapshot.data() })
+                } else {
+                    resolve(null)
+                }
             } catch (e) {
                 console.error(e)
             }
