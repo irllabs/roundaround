@@ -7,11 +7,17 @@ import { convertPercentToDB, convertDBToPercent } from '../../../utils/index'
 import { SET_LAYER_GAIN } from '../../../redux/actionTypes'
 import { FirebaseContext } from '../../../firebase';
 import { makeStyles } from '@material-ui/core/styles';
+import { Typography } from '@material-ui/core';
+import { Box } from '@material-ui/core';
 
 const styles = makeStyles(function (theme) {
     return {
         root: {
-            height: 150
+            width: '100%',
+            padding: theme.spacing(1)
+        },
+        slider: {
+            width: '100%'
         }
     }
 })
@@ -70,17 +76,18 @@ export default function VolumeSlider ({ selectedLayer, user, roundId }) {
     //console.log('rendering volume slider', selectedLayer.id);
     return (
 
-        <div className={classes.root}>
+        <Box className={classes.root}>
+            <Typography variant="caption">Volume</Typography>
             <Slider
-
-                orientation="vertical"
+                className={classes.slider}
+                orientation="horizontal"
                 value={sliderValue}
                 min={0}
                 max={100}
                 aria-labelledby="vertical-slider"
-                marks={verticalSliderMarks}
+                //marks={verticalSliderMarks}
                 onChange={onSliderChange}
             />
-        </div>
+        </Box>
     )
 }

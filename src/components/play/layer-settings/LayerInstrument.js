@@ -11,6 +11,9 @@ import { UPDATE_LAYER_INSTRUMENT } from '../../../redux/actionTypes'
 import { FirebaseContext } from '../../../firebase';
 
 const useStyles = makeStyles((theme) => ({
+    root: {
+        width: '100%'
+    },
     formControl: {
         margin: theme.spacing(1),
         minWidth: 188,
@@ -50,30 +53,27 @@ export default function LayerInstrument ({ selectedLayer, user, roundId }) {
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [selectedLayer.id])
     return (
-        <div>
-            <Box display="flex" flexDirection="column">
-                <FormControl className={classes.formControl}>
-                    <InputLabel htmlFor="instrument-select-label">Instrument</InputLabel>
-                    <Select
-                        value={selectedInstrument}
-                        onChange={onInstrumentSelect}
-                        labelId="instrument-select-label"
-                    >
-                        {instrumentMenuItems}
-                    </Select>
-                </FormControl>
-                <FormControl className={classes.formControl}>
-                    <InputLabel htmlFor="articulation-select-label">Sound</InputLabel>
-                    <Select
-                        value={selectedArticulation}
-                        onChange={onArticulationSelect}
-                        labelId="articulation-select-label"
-                    >
-                        {articulationMenuItems}
-                    </Select>
-                </FormControl>
-            </Box>
-
-        </div>
+        <Box className={classes.root} display="flex" flexDirection="column">
+            <FormControl className={classes.formControl}>
+                <InputLabel htmlFor="instrument-select-label">Instrument</InputLabel>
+                <Select
+                    value={selectedInstrument}
+                    onChange={onInstrumentSelect}
+                    labelId="instrument-select-label"
+                >
+                    {instrumentMenuItems}
+                </Select>
+            </FormControl>
+            <FormControl className={classes.formControl}>
+                <InputLabel htmlFor="articulation-select-label">Sound</InputLabel>
+                <Select
+                    value={selectedArticulation}
+                    onChange={onArticulationSelect}
+                    labelId="articulation-select-label"
+                >
+                    {articulationMenuItems}
+                </Select>
+            </FormControl>
+        </Box>
     )
 }

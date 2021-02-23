@@ -13,6 +13,9 @@ import { FirebaseContext } from '../../../firebase';
 
 
 const useStyles = makeStyles((theme) => ({
+    root: {
+        width: '100%'
+    },
     formControl: {
         margin: theme.spacing(1),
         minWidth: 188,
@@ -42,20 +45,17 @@ export default function LayerNumberOfSteps ({ selectedLayer, user, roundId }) {
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [selectedLayer.id])
     return (
-        <div>
-            <Box display="flex" flexDirection="column">
-                <FormControl className={classes.formControl}>
-                    <InputLabel htmlFor="number-of-steps-select-label">Number of steps</InputLabel>
-                    <Select
-                        value={selectedNumberOfSteps}
-                        onChange={onNumberOfStepsSelect}
-                        labelId="number-of-steps-select-label"
-                    >
-                        {numberOfStepsMenuItems}
-                    </Select>
-                </FormControl>
-            </Box>
-
-        </div>
+        <Box className={classes.root} display="flex" flexDirection="column">
+            <FormControl className={classes.formControl}>
+                <InputLabel htmlFor="number-of-steps-select-label">Number of steps</InputLabel>
+                <Select
+                    value={selectedNumberOfSteps}
+                    onChange={onNumberOfStepsSelect}
+                    labelId="number-of-steps-select-label"
+                >
+                    {numberOfStepsMenuItems}
+                </Select>
+            </FormControl>
+        </Box>
     )
 }

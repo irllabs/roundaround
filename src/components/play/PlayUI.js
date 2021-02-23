@@ -221,6 +221,7 @@ class PlayUI extends Component {
             let newLayer = _.find(this.props.round.layers, { id: layer.id })
             if (!_.isNil(newLayer) && !_.isEqual(layer.instrument, newLayer.instrument)) {
                 // instrument has changed
+                console.log('instrument has changed', newLayer.instrument);
                 AudioEngine.tracksById[newLayer.id].setInstrument(newLayer.instrument)
                 this.updateLayerLabelText(layer.id, newLayer.instrument.sampler)
             }

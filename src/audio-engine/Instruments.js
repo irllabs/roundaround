@@ -12,6 +12,7 @@ import Cymbal from './instruments/Cymbal'
 import Maracas from './instruments/Maracas'
 import Rimshot from './instruments/Rimshot'
 import TomToms from './instruments/TomToms'
+import Custom from './instruments/Custom'
 
 const Instruments = {
     instrumentClasses: {},
@@ -29,7 +30,8 @@ const Instruments = {
             Cymbal,
             Maracas,
             Rimshot,
-            TomToms
+            TomToms,
+            Custom
         ];
         for (let instrumentClass of classes) {
             this.instrumentClasses[instrumentClass.instrumentName] = instrumentClass;

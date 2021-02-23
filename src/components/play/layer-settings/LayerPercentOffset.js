@@ -11,6 +11,9 @@ import { SET_LAYER_PERCENT_OFFSET } from '../../../redux/actionTypes'
 
 
 const useStyles = makeStyles((theme) => ({
+    root: {
+        width: '100%'
+    },
     formControl: {
         margin: theme.spacing(1),
         minWidth: 188,
@@ -47,16 +50,14 @@ export default function LayerPercentOffset ({ selectedLayer, user, roundId, play
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [selectedLayer.id])
     return (
-        <div>
-            <Box display="flex" flexDirection="column">
-                <FormControl className={classes.formControl}>
-                    <Typography id="continuous-slider" variant="caption" gutterBottom>
-                        Time Offset (%)
-                    </Typography>
-                    <Slider value={sliderValue} min={-100} max={100} valueLabelDisplay="auto" onChange={onSliderChange} aria-labelledby="continuous-slider" />
-                </FormControl>
-            </Box>
 
-        </div>
+        <Box className={classes.root} display="flex" flexDirection="column">
+            <FormControl className={classes.formControl}>
+                <Typography id="continuous-slider" variant="caption" gutterBottom>
+                    Time Offset (%)
+                    </Typography>
+                <Slider value={sliderValue} min={-100} max={100} valueLabelDisplay="auto" onChange={onSliderChange} aria-labelledby="continuous-slider" />
+            </FormControl>
+        </Box>
     )
 }

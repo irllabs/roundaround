@@ -13,6 +13,9 @@ import Track from '../../../audio-engine/Track'
 import _ from 'lodash'
 
 const useStyles = makeStyles((theme) => ({
+    root: {
+        width: '100%'
+    },
     formControl: {
         margin: theme.spacing(1),
         minWidth: 188,
@@ -52,20 +55,20 @@ export default function LayerType ({ selectedLayer, userId, roundId }) {
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [selectedLayer.id])
     return (
-        <div>
-            <Box display="flex" flexDirection="column">
-                <FormControl className={classes.formControl}>
-                    <InputLabel htmlFor="layer-type-select-label">Layer type</InputLabel>
-                    <Select
-                        value={selectedType}
-                        onChange={onTypeSelect}
-                        labelId="layer-type-select-label"
-                    >
-                        {typeMenuItems}
-                    </Select>
-                </FormControl>
-            </Box>
 
-        </div>
+        <Box className={classes.root} display="flex" flexDirection="column">
+            <FormControl className={classes.formControl}>
+                <InputLabel htmlFor="layer-type-select-label">Layer type</InputLabel>
+                <Select
+                    value={selectedType}
+                    onChange={onTypeSelect}
+                    labelId="layer-type-select-label"
+                >
+                    {typeMenuItems}
+                </Select>
+            </FormControl>
+        </Box>
+
+
     )
 }

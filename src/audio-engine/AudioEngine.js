@@ -1,6 +1,7 @@
 import * as Tone from 'tone';
 import Track from './Track';
 import _ from 'lodash'
+import { numberRange } from '../utils/index'
 
 const AudioEngine = {
     tracks: [],
@@ -132,5 +133,6 @@ const AudioEngine = {
     setSwing (swing) {
         Tone.Transport.swing = swing / 100
     }
+
 }
 export default AudioEngine

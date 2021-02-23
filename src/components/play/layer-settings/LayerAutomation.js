@@ -12,6 +12,10 @@ import AudioEngine from '../../../audio-engine/AudioEngine'
 import _ from 'lodash'
 
 const useStyles = makeStyles((theme) => ({
+    root: {
+        width: '100%',
+        marginBottom: theme.spacing(2)
+    },
     formControl: {
         margin: theme.spacing(1),
         minWidth: 188,
@@ -42,21 +46,19 @@ export default function LayerAutomation ({ selectedLayer, userId, roundId }) {
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [selectedLayer.id])
     return (
-        <div>
-            <Box display="flex" flexDirection="column">
-                <FormControl className={classes.formControl}>
-                    <InputLabel htmlFor="fx-select-label">FX</InputLabel>
-                    <Select
-                        value={selectedFX}
-                        onChange={onFXSelect}
-                        labelId="fx-select-label"
-                    >
-                        {fxMenuItems}
-                    </Select>
-                </FormControl>
 
-            </Box>
+        <Box className={classes.root} display="flex" flexDirection="column">
+            <FormControl className={classes.formControl}>
+                <InputLabel htmlFor="fx-select-label">FX</InputLabel>
+                <Select
+                    value={selectedFX}
+                    onChange={onFXSelect}
+                    labelId="fx-select-label"
+                >
+                    {fxMenuItems}
+                </Select>
+            </FormControl>
 
-        </div>
+        </Box>
     )
 }

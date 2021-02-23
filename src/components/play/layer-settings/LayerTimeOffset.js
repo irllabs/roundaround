@@ -11,6 +11,9 @@ import { SET_LAYER_TIME_OFFSET } from '../../../redux/actionTypes'
 
 
 const useStyles = makeStyles((theme) => ({
+    root: {
+        width: '100%'
+    },
     formControl: {
         margin: theme.spacing(1),
         minWidth: 188,
@@ -47,16 +50,13 @@ export default function LayerTimeOffset ({ selectedLayer, user, roundId, playUIR
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [selectedLayer.id])
     return (
-        <div>
-            <Box display="flex" flexDirection="column">
-                <FormControl className={classes.formControl}>
-                    <Typography id="continuous-slider" variant="caption" gutterBottom>
-                        Time Offset (ms)
+        <Box className={classes.root} display="flex" flexDirection="column">
+            <FormControl className={classes.formControl}>
+                <Typography id="continuous-slider" variant="caption" gutterBottom>
+                    Time Offset (ms)
                     </Typography>
-                    <Slider value={sliderValue} min={-50} max={50} valueLabelDisplay="auto" onChange={onSliderChange} aria-labelledby="continuous-slider" />
-                </FormControl>
-            </Box>
-
-        </div>
+                <Slider value={sliderValue} min={-50} max={50} valueLabelDisplay="auto" onChange={onSliderChange} aria-labelledby="continuous-slider" />
+            </FormControl>
+        </Box>
     )
 }
