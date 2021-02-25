@@ -84,12 +84,12 @@ export default class Track {
         })
     }
     buildAudioChain () {
-        console.log('Track::buildAudioChain()', this.type, this.id);
+        console.log('Track::buildAudioChain()', this.type, this.id, this.instrument);
         if (this.type === Track.TRACK_TYPE_MASTER) {
             this.channel.toDestination()
         } else if (this.type !== Track.TRACK_TYPE_AUTOMATION) {
             this.disconnectAudioChain()
-            if (!_.isNil(this.instrument)) {
+            if (!_.isNil(this.instrument) && !_.isNil(this.instrument.instrument)) {
                 this.instrument.connect(this.channel)
                 //this.instrument.instrument.toDestination()
             }
@@ -243,6 +243,10 @@ export default class Track {
             if (!_.isNil(_this.instrument)) {
                 Instruments.dispose(_this.instrument.id)
             }
+            if (_.isNil(articulation)) {
+                _this.clearInstrument()
+                resolve()
+            }
             _this.instrument = await Instruments.create(
                 instrumentName,
                 articulation
@@ -257,6 +261,9 @@ export default class Track {
 
             resolve(_this.instrument)
         })
+    }
+    clearInstrument () {
+        Instruments.dispose(this.instrument.id)
     }
     setAutomatedFx (fxId) {
         if (!_.isNil(this.automation)) {

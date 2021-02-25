@@ -1,6 +1,7 @@
 import { Layer } from './constants';
 import { uuid } from './index';
 //import Track from '../audio-engine/Track'
+import _ from 'lodash'
 
 export const refrashAllIdsInArray = (array) => {
     return array.map(item => ({ ...item, id: uuid() }))
@@ -32,7 +33,7 @@ export const getDefaultLayerData = (userId, instrument) => {
             "noteLength": "64n",
             "instrument": "Sampler",
             "sampler": "BassDrum",
-            "sample": "bdLong04",
+            "sample": "E808_BD[long]-04.wav",
             ...instrument
         },
         "steps": Array(Layer.DefaultStepsAmount).fill(null).map(() => { return getDefaultStepData() }),
@@ -60,17 +61,17 @@ export const getDefaultRoundData = (userId) => {
             getDefaultLayerData(userId, {
                 "instrument": "Sampler",
                 "sampler": "HitHatOpen",
-                "sample": "oh03",
+                "sample": "E808_OH-03.wav",
             }),
             getDefaultLayerData(userId, {
                 "instrument": "Sampler",
                 "sampler": "SnareDrum",
-                "sample": "sd03",
+                "sample": "E808_SD-03.wav",
             }),
             getDefaultLayerData(userId, {
                 "instrument": "Sampler",
                 "sampler": "BassDrum",
-                "sample": "bdLong04"
+                "sample": "E808_BD[long]-04.wav"
             })
         ],
         userBuses: {},
@@ -152,9 +153,15 @@ export const getDefaultUserPattern = (order) => {
         state: {}
     }
 }
-export const getDefaultSample = () => {
+export const getDefaultSample = (userId) => {
+    let date = new Date()
+    let name = date.toLocaleString()
+    name = _.replace(name, ', ', '_')
+    console.log('getDefaultSample() name2', name);
     return {
         id: uuid(),
-        name: 'Recording'
+        createdBy: userId,
+        createdAt: Date.now(),
+        name
     }
 }

@@ -13,6 +13,7 @@ import Maracas from './instruments/Maracas'
 import Rimshot from './instruments/Rimshot'
 import TomToms from './instruments/TomToms'
 import Custom from './instruments/Custom'
+import CustomSamples from './CustomSamples'
 
 const Instruments = {
     instrumentClasses: {},
@@ -62,30 +63,49 @@ const Instruments = {
             id: instrumentId
         }).updateParameter(parameter, value);
     },
-    getInstrumentOptions (channelName) {
+    getInstrumentOptions (includeCustom = true) {
         let options = [];
         for (let [, instrument] of Object.entries(this.instrumentClasses)) {
-            options.push({
-                label: instrument.label,
-                name: instrument.instrumentName,
-                articulations: instrument.articulations
-            });
+            if (instrument.instrumentName !== 'custom' || includeCustom) {
+                options.push({
+                    label: instrument.label,
+                    name: instrument.instrumentName,
+                    articulations: instrument.articulations
+                });
+            }
         }
         options = _.sortBy(options, "label");
         return options;
     },
-    getInstrumentArticulationOptions (instrumentName) {
-        let options = [];
-        for (let [name, value] of Object.entries(
-            this.instrumentClasses[instrumentName].articulations
-        )) {
-            let option = {
-                name,
-                value
-            };
-            options.push(option);
+    getInstrumentArticulationOptions (instrumentName, userId) {
+        console.log('getInstrumentArticulationOptions()', instrumentName);
+        if (instrumentName !== 'custom') {
+            let options = [];
+            for (let [name, value] of Object.entries(
+                this.instrumentClasses[instrumentName].articulations
+            )) {
+                let option = {
+                    name,
+                    value
+                };
+                options.push(option);
+            }
+            console.log('got instrument options', options);
+            return options;
+        } else {
+            let options = []
+            console.log('CustomSamples.samples', CustomSamples.samples);
+            for (let [id, sample] of Object.entries(CustomSamples.samples)) {
+                if (sample.createdBy === userId) {
+                    options.push({
+                        name: sample.name,
+                        value: id
+                    })
+                }
+            }
+            console.log('got sample options', options);
+            return options
         }
-        return options;
     },
     getLabel (instrumentName) {
         return this.instrumentClasses[instrumentName].label;
@@ -94,10 +114,11 @@ const Instruments = {
         return this.instrumentClasses[instrumentName].articulations[articulation];
     },
     getDefaultArticulation (instrumentName) {
-        console.log('Instruments::getDefaultArticulation() instrumentName', instrumentName, this.instrumentClasses);
-        return !_.isNil(this.instrumentClasses[instrumentName].defaultArticulation)
+        //console.log('Instruments::getDefaultArticulation() instrumentName', instrumentName, this.instrumentClasses);
+        return this.instrumentClasses[instrumentName].defaultArticulation
+        /*return !_.isNil(this.instrumentClasses[instrumentName].defaultArticulation)
             ? this.instrumentClasses[instrumentName].defaultArticulation
-            : "none";
+            : "none";*/
     }
 };
 

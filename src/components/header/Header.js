@@ -20,6 +20,7 @@ import ProjectName from './ProjectName'
 import HeaderMenu from './HeaderMenu';
 import { FirebaseContext } from '../../firebase';
 import { getRandomColor } from '../../utils/index'
+import CustomSamples from '../../audio-engine/CustomSamples'
 
 const styles = theme => ({
     root: {
@@ -77,6 +78,11 @@ class Header extends Component {
                     //  } else {
                     const rounds = await _this.context.getRoundsList(user.id, 1.5)
                     _this.props.setRounds(rounds)
+                    const samples = await _this.context.getSamples(user.id)
+                    for (let sample of samples) {
+                        CustomSamples.add(sample)
+                    }
+                    console.log('CustomSamples', CustomSamples.samples);
 
                     // }
                 } else {

@@ -1,6 +1,6 @@
 import React, { Component } from 'react'
 import { connect } from "react-redux";
-import { Drawer } from '@material-ui/core';
+import { Divider, Drawer } from '@material-ui/core';
 import Button from '@material-ui/core/Button';
 import _ from 'lodash'
 import { SET_LAYER_MUTE, REMOVE_LAYER, SET_IS_SHOWING_LAYER_SETTINGS, SET_LAYER_STEPS } from '../../../redux/actionTypes'
@@ -49,19 +49,16 @@ const styles = theme => ({
         '& .MuiTab-root': {
             minWidth: 134
         }
+    },
+    divider: {
+        width: '100%',
+        marginTop: theme.spacing(2),
+        marginBottom: theme.spacing(2),
     }
 })
 
 class LayerSettings extends Component {
     static contextType = FirebaseContext;
-
-    constructor (props) {
-        super(props)
-        this.state = {
-            soundMode: 'builtin'
-        }
-        this.onSoundModeChange = this.onSoundModeChange.bind(this)
-    }
 
     onCloseClick () {
         this.props.dispatch({ type: SET_IS_SHOWING_LAYER_SETTINGS, payload: { value: false } })
@@ -92,11 +89,6 @@ class LayerSettings extends Component {
         this.context.updateLayer(this.props.round.id, selectedLayerClone.id, { steps: selectedLayerClone.steps })
     }
 
-    onSoundModeChange (e, tabValue) {
-        this.setState({
-            soundMode: tabValue
-        })
-    }
 
     render () {
         // console.log('Layer settings render()', this.props.user);
@@ -125,41 +117,19 @@ class LayerSettings extends Component {
                             <Button onClick={this.onClearStepsClick.bind(this)} variant="contained" color="secondary" disableElevation>Clear</Button>
                             <Button onClick={this.onDeleteLayerClick.bind(this)} variant="contained" color="secondary" disableElevation>Delete</Button>
                         </Box>
-                        <Tabs
-                            className={classes.soundTabs}
-                            value={this.state.soundMode}
-                            indicatorColor="primary"
-                            textColor="primary"
-                            variant="fullWidth"
-                            onChange={this.onSoundModeChange}
-                            aria-label="disabled tabs example"
-                        >
-                            <Tab label="Built-in sounds" value="builtin" />
-                            <Tab label="Custom sounds" value="custom" />
-                        </Tabs>
-                        {
-                            this.state.soundMode === 'builtin' &&
-                            <LayerInstrument selectedLayer={selectedLayer} roundId={this.props.round.id} user={this.props.user} />
-                        }
-                        {
-                            this.state.soundMode === 'custom' &&
-                            <LayerCustomSounds selectedLayer={selectedLayer} roundId={this.props.round.id} user={this.props.user} />
-                        }
-
-
-
+                        <Divider className={classes.divider} />
+                        <LayerInstrument selectedLayer={selectedLayer} roundId={this.props.round.id} user={this.props.user} />
+                        <LayerCustomSounds selectedLayer={selectedLayer} roundId={this.props.round.id} user={this.props.user} />
                     </>
                 )
             }
             form = (
                 <Box className={classes.root}>
-
                     <LayerType selectedLayer={selectedLayer} roundId={this.props.round.id} userId={this.props.user.id} />
                     <LayerNumberOfSteps selectedLayer={selectedLayer} roundId={this.props.round.id} user={this.props.user} />
                     <LayerPercentOffset selectedLayer={selectedLayer} roundId={this.props.round.id} user={this.props.user} playUIRef={this.props.playUIRef} />
                     <LayerTimeOffset selectedLayer={selectedLayer} roundId={this.props.round.id} user={this.props.user} playUIRef={this.props.playUIRef} />
                     {layerTypeFormItems}
-
                 </Box>
             )
         }

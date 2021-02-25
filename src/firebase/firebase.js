@@ -354,6 +354,49 @@ class Firebase {
         })
     }
 
+    deleteSample = async id => {
+        return this.db.collection('samples').doc(id).delete()
+    }
+
+    updateSample = async (sample) => {
+        let sampleClone = _.cloneDeep(sample)
+        delete sampleClone.id
+        delete sampleClone.localURL
+        return new Promise(async (resolve, reject) => {
+            try {
+                await this.db.collection('samples')
+                    .doc(sample.id)
+                    .set(sampleClone, { merge: true })
+                resolve()
+            } catch (e) {
+                console.error(e)
+            }
+        })
+    }
+
+    getSamples = async (userId) => {
+        return new Promise(async (resolve, reject) => {
+            let samples = []
+            try {
+                const roundsSnapshot = await this.db
+                    .collection("samples")
+                    .where('createdBy', '==', userId)
+                    .get();
+                roundsSnapshot.forEach(sampleDoc => {
+                    let sample = sampleDoc.data();
+                    sample.id = sampleDoc.id;
+                    samples.push(sample);
+                })
+                console.log('getSamples()', samples);
+                resolve(samples)
+            }
+            catch (e) {
+                console.error(e)
+                reject(e)
+            }
+        })
+    }
+
     saveUserPatterns = async (roundId, userId, userPatterns) => {
         let userPatternsClone = _.cloneDeep(userPatterns)
         return new Promise(async (resolve, reject) => {

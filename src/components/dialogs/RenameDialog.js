@@ -54,7 +54,7 @@ function RenameDialog ({ selectedRoundId, round, rounds, setRoundName, setIsShow
                 <Button onClick={handleClose}>
                     Cancel
           </Button>
-                <Button onClick={onOkClick}>
+                <Button color="primary" variant="contained" disableElevation autoFocus onClick={onOkClick}>
                     Rename
           </Button>
             </DialogActions>

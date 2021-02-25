@@ -42,7 +42,7 @@ function DeleteRoundDialog ({ isShowingDeleteRoundDialog, selectedRoundId, round
                 <Button onClick={handleClose}>
                     Cancel
           </Button>
-                <Button onClick={onOkClick} >
+                <Button color="primary" variant="contained" disableElevation autoFocus onClick={onOkClick} >
                     {
                         !isDeleting &&
                         <p>Delete</p>

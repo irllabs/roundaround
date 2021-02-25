@@ -18,6 +18,7 @@ export default class InstrumentBaseClass {
             this.instrument.releaseAll()
             this.instrument.dispose()
         }
+        this.instrument = null
         this.clearPart()
     }
     updateParameter (parameter, value) {
@@ -36,6 +37,7 @@ export default class InstrumentBaseClass {
         this.instrument.connect(this.connectedToChannel)
     }
     load (articulation) {
+        console.log('InstrumentBaseClass::load()', articulation);
         let _this = this
         return new Promise(async function (resolve, reject) {
             if (!_.isNil(articulation)) {
@@ -43,11 +45,11 @@ export default class InstrumentBaseClass {
             }
             let sampleMap = _this.getSampleMap()
             _this.sampleMap = _.cloneDeep(sampleMap)
-            //  console.log('instrument load()', sampleMap)
+            console.log('instrument load()', sampleMap)
             if (!_.isNil(sampleMap)) {
                 await _this.loadSamples(sampleMap)
             }
-            //    console.log('instrument finished loading');
+            console.log('instrument finished loading');
             resolve()
         })
     }
@@ -130,7 +132,7 @@ export default class InstrumentBaseClass {
     getSampleMap () {
         // console.log('getSampleMap', this.name, this.folder, this.articulations, this.parameters.articulation);
         let map = {
-            'C4': '/samples/' + this.folder + '/' + this.articulations[this.parameters.articulation]
+            'C4': '/samples/' + this.folder + '/' + this.parameters.articulation
         }
         return map
     }
