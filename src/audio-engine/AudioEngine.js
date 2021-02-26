@@ -1,7 +1,6 @@
 import * as Tone from 'tone';
 import Track from './Track';
 import _ from 'lodash'
-import { numberRange } from '../utils/index'
 
 const AudioEngine = {
     tracks: [],

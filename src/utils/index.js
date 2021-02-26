@@ -55,9 +55,9 @@ export const changeLayerLength = (layer, newLength) => {
         }
         let steps = [...layer.steps, ...stepsToAdd]
         let i = 0;
-        steps.map((step) => {
+        for (let step of steps) {
             step.order = i++;
-        })
+        }
         steps = _.orderBy(steps, 'order')
         return steps
     }

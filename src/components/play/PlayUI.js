@@ -5,8 +5,6 @@ import '@svgdotjs/svg.panzoom.js'
 import { HTML_UI_Params, KEY_MAPPINGS } from '../../utils/constants'
 import { connect } from "react-redux";
 import AudioEngine from '../../audio-engine/AudioEngine'
-import Instruments from '../../audio-engine/Instruments'
-import FX from '../../audio-engine/FX'
 import { getDefaultLayerData } from '../../utils/defaultData';
 import { TOGGLE_STEP, ADD_LAYER, SET_SELECTED_LAYER_ID, SET_IS_SHOWING_LAYER_SETTINGS, SET_IS_PLAYING, UPDATE_STEP, SET_IS_SHOWING_ORIENTATION_DIALOG } from '../../redux/actionTypes'
 import { FirebaseContext } from '../../firebase/'

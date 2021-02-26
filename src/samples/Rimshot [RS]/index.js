@@ -1,4 +1,4 @@
-export default {
+const Samples = {
     rs01: 'E808_RS-01.wav',
     rs02: 'E808_RS-02.wav',
     rs03: 'E808_RS-03.wav',
@@ -11,3 +11,4 @@ export default {
     rs10: 'E808_RS-10.wav',
     rs11: 'E808_RS-11.wav'
 };
+export default Samples;

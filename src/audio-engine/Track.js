@@ -84,7 +84,7 @@ export default class Track {
         })
     }
     buildAudioChain () {
-        console.log('Track::buildAudioChain()', this.type, this.id, this.instrument);
+        // console.log('Track::buildAudioChain()', this.type, this.id, this.instrument);
         if (this.type === Track.TRACK_TYPE_MASTER) {
             this.channel.toDestination()
         } else if (this.type !== Track.TRACK_TYPE_AUTOMATION) {
@@ -224,7 +224,7 @@ export default class Track {
                 previousNote.duration += ticksPerStep
             }
         }
-        console.log('notes', notes);
+        // console.log('notes', notes);
         return notes
     }
     msToTicks (ms) {
@@ -235,7 +235,7 @@ export default class Track {
         return Math.round(ms / msPerTick)
     }
     async setInstrument (instrument) {
-        console.time('setInstrument', instrument)
+        // console.time('setInstrument', instrument)
         const instrumentName = instrument.sampler
         const articulation = instrument.sample
         let _this = this
@@ -251,7 +251,7 @@ export default class Track {
                 instrumentName,
                 articulation
             )
-            console.log('instrument created')
+            // console.log('instrument created')
             _this.buildAudioChain()
             if (!_.isNil(_this.notes)) {
                 _this.instrument.loadPart(_this.notes, false)

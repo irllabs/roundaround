@@ -62,7 +62,6 @@ const useStyles = makeStyles((theme) => ({
 
 function HeaderAvatar ({ user, users, setUser, setRounds, shouldShowMenu, setUsers, setRound, setUserColor }) {
     const firebaseContext = useContext(FirebaseContext)
-
     const [open, setOpen] = React.useState(false);
     const anchorRef = React.useRef(null);
 

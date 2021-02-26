@@ -1,4 +1,4 @@
-export default {
+const Samples = {
     sd01: 'E808_SD-01.wav',
     sd02: 'E808_SD-02.wav',
     sd03: 'E808_SD-03.wav',
@@ -20,3 +20,4 @@ export default {
     sd19: 'E808_SD-19.wav',
     sd20: 'E808_SD-20.wav'
 };
+export default Samples;

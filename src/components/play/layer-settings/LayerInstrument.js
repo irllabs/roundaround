@@ -87,19 +87,19 @@ export default function LayerInstrument ({ selectedLayer, user, roundId }) {
         }
     };
     const articulationMenuItems = articulationOptions.map(articulation => <MenuItem value={articulation.value} key={articulation.value}>{articulation.name}</MenuItem>)
-    useEffect(async () => {
+    useEffect(() => {
+        async function refreshCustomSampleName (sampleId) {
+            let sample = await CustomSamples.get(sampleId)
+            setCustomSampleName(sample.name)
+        }
         setSelectedInstrument(selectedLayer.instrument.sampler)
         setSelectedArticulation(selectedLayer.instrument.sample)
         if (selectedLayer.instrument.sampler === 'custom') {
-            refreshCustomSampleName()
+            refreshCustomSampleName(selectedLayer.instrument.sample)
         }
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [selectedLayer.id, selectedLayer.instrument.sample, selectedLayer.instrument.sampler])
 
-    const refreshCustomSampleName = async () => {
-        let sample = await CustomSamples.get(selectedArticulation)
-        setCustomSampleName(sample.name)
-    }
 
     const [sampleAnchorElement, setSampleAnchorElement] = useState(null);
     const onSampleMenuClick = (event) => {

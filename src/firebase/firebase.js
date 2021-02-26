@@ -387,7 +387,7 @@ class Firebase {
                     sample.id = sampleDoc.id;
                     samples.push(sample);
                 })
-                console.log('getSamples()', samples);
+                // console.log('getSamples()', samples);
                 resolve(samples)
             }
             catch (e) {

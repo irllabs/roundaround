@@ -1,4 +1,4 @@
-import React, { Component, useEffect, useContext } from 'react'
+import React, { Component } from 'react'
 import PropTypes from 'prop-types';
 import { connect } from "react-redux";
 import Button from '@material-ui/core/Button';
@@ -11,7 +11,6 @@ import { withStyles } from '@material-ui/core/styles';
 import ShareIcon from '@material-ui/icons/Share';
 import ArrowBackIosIcon from '@material-ui/icons/ArrowBackIos';
 import PlayButton from './PlayButton';
-import { useLocation } from 'react-router-dom'
 import { setUser, setIsShowingSignInDialog, setRedirectAfterSignIn, setRounds, setUserDisplayName, setSignUpDisplayName, setIsShowingShareDialog } from '../../redux/actions'
 import _ from 'lodash'
 import HeaderAvatar from './HeaderAvatar'
@@ -21,6 +20,7 @@ import HeaderMenu from './HeaderMenu';
 import { FirebaseContext } from '../../firebase';
 import { getRandomColor } from '../../utils/index'
 import CustomSamples from '../../audio-engine/CustomSamples'
+import { createRound } from '../../utils/index'
 
 const styles = theme => ({
     root: {
@@ -82,7 +82,7 @@ class Header extends Component {
                     for (let sample of samples) {
                         CustomSamples.add(sample)
                     }
-                    console.log('CustomSamples', CustomSamples.samples);
+                    //console.log('CustomSamples', CustomSamples.samples);
 
                     // }
                 } else {
@@ -102,22 +102,33 @@ class Header extends Component {
                 }
                 // console.log('redirectAfterSignIn', _this.props.redirectAfterSignIn);
                 if (!_.isNil(_this.props.redirectAfterSignIn)) {
-                    _this.redirect()
+                    _this.redirect(authUser)
                 }
             } else {
                 // console.log('signed out', _this.props.location.pathname);
                 if (_this.props.location.pathname !== '/') {
-                    _this.props.history.push('/')
+                    // _this.props.history.push('/')
                     _this.props.setIsShowingSignInDialog(true)
                 }
             }
         })
     }
 
-    redirect = () => {
-        // console.log('redirect', this.props.redirectAfterSignIn);
-        this.props.history.push(this.props.redirectAfterSignIn)
-        this.props.setRedirectAfterSignIn(null)
+    redirect = async (authUser) => {
+        //console.log('redirect', this.props.redirectAfterSignIn, authUser);
+        if (!authUser.isAnonymous) {
+            // if not guest user go to rounds list
+            this.props.history.push(this.props.redirectAfterSignIn)
+            this.props.setRedirectAfterSignIn(null)
+        } else if (this.props.redirectAfterSignIn === '/rounds') {
+            // guest user, create a new round and redirect to there instead of /rounds
+            let newRound = createRound(this.props.user.id)
+            let newRounds = [...this.props.rounds, newRound]
+            await this.context.createRound(newRound)
+            this.props.setRounds(newRounds)
+            this.props.setRedirectAfterSignIn(null)
+            this.props.history.push('/play/' + newRound.id)
+        }
     }
 
     onSignInClick = () => {

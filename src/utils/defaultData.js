@@ -41,9 +41,9 @@ export const getDefaultLayerData = (userId, instrument) => {
     }
     // increase each layer createdAt time by 1 ms so they're not equal
     let i = 0
-    layer.steps.map((step) => {
+    for (let step of layer.steps) {
         step.order = i++
-    })
+    }
     return layer;
 };
 
@@ -81,10 +81,10 @@ export const getDefaultRoundData = (userId) => {
     round.userPatterns[userId] = getDefaultUserPatterns(userId)
     // increase each layer createdAt time by 1 ms so they're not equal
     let i = 0
-    round.layers.map((layer) => {
+    for (let layer of round.layers) {
         layer.name = "Layer " + (i + 1)
         layer.createdAt += i++
-    })
+    }
     return round
 }
 

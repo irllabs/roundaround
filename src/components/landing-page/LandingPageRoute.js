@@ -7,7 +7,9 @@ import Grid from '@material-ui/core/Grid';
 import Button from '@material-ui/core/Button';
 import { connect } from "react-redux";
 import _ from 'lodash';
-import { setIsShowingSignInDialog, setRedirectAfterSignIn } from '../../redux/actions'
+import { setIsShowingSignInDialog, setRedirectAfterSignIn, setRounds } from '../../redux/actions'
+import { createRound } from '../../utils/index'
+import { FirebaseContext } from '../../firebase';
 
 const styles = theme => ({
     root: {
@@ -38,14 +40,24 @@ const styles = theme => ({
 })
 
 class LandingPageRoute extends Component {
+    static contextType = FirebaseContext;
     constructor (props) {
         super(props);
         this.onGetStartedClick = this.onGetStartedClick.bind(this);
     }
-    onGetStartedClick () {
+    async onGetStartedClick () {
         if (!_.isNil(this.props.user)) {
-            // redirect to /play
-            this.props.history.push('/rounds')
+            if (!this.props.user.isGuest) {
+                // redirect to /rounds list
+                this.props.history.push('/rounds')
+            } else {
+                // guest user so create new round and go there instead of rounds list
+                let newRound = createRound(this.props.user.id)
+                let newRounds = [newRound]
+                await this.context.createRound(newRound)
+                this.props.setRounds(newRounds)
+                this.props.history.push('/play/' + newRound.id)
+            }
         } else {
             // show sign in dialog
             this.props.setRedirectAfterSignIn('/rounds')
@@ -88,6 +100,7 @@ export default connect(
     mapStateToProps,
     {
         setIsShowingSignInDialog,
-        setRedirectAfterSignIn
+        setRedirectAfterSignIn,
+        setRounds
     }
 )(withStyles(styles)(LandingPageRoute));

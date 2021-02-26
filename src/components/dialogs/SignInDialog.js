@@ -12,7 +12,6 @@ import { FirebaseContext } from '../../firebase';
 import firebase from "firebase/app";
 import ArrowBackIcon from '@material-ui/icons/ArrowBack';
 import { getRandomColor } from '../../utils/index'
-import { useLocation } from 'react-router-dom'
 
 import _ from 'lodash'
 
@@ -53,7 +52,6 @@ const styles = makeStyles({
 
 const SignInDialog = ({ isShowingSignInDialog, setIsShowingSignInDialog, setSignUpDisplayName, setUser, setRounds, redirectAfterSignIn, setRedirectAfterSignIn }) => {
     const firebaseContext = useContext(FirebaseContext);
-    const location = useLocation();
     const onClose = () => {
         setIsShowingEmailForm(false)
         setIsShowingEmailSignupForm(false)
@@ -77,8 +75,8 @@ const SignInDialog = ({ isShowingSignInDialog, setIsShowingSignInDialog, setSign
         onClose()
         let provider = new firebase.auth.GoogleAuthProvider();
         try {
-            const authResult = await firebaseContext.auth.signInWithPopup(provider)
-            const authUser = authResult.user
+            await firebaseContext.auth.signInWithPopup(provider)
+            // const authUser = authResult.user
             /*let user = await firebaseContext.loadUser(authUser.uid)
             if (_.isNil(user)) {
                 //new user, create user document

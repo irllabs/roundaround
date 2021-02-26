@@ -37,7 +37,7 @@ export default class InstrumentBaseClass {
         this.instrument.connect(this.connectedToChannel)
     }
     load (articulation) {
-        console.log('InstrumentBaseClass::load()', articulation);
+        //  console.log('InstrumentBaseClass::load()', articulation);
         let _this = this
         return new Promise(async function (resolve, reject) {
             if (!_.isNil(articulation)) {
@@ -45,11 +45,11 @@ export default class InstrumentBaseClass {
             }
             let sampleMap = _this.getSampleMap()
             _this.sampleMap = _.cloneDeep(sampleMap)
-            console.log('instrument load()', sampleMap)
+            //  console.log('instrument load()', sampleMap)
             if (!_.isNil(sampleMap)) {
                 await _this.loadSamples(sampleMap)
             }
-            console.log('instrument finished loading');
+            //   console.log('instrument finished loading');
             resolve()
         })
     }

@@ -1,4 +1,4 @@
-export default {
+const Samples = {
     hc01: 'E808_HC-01.wav',
     hc02: 'E808_HC-02.wav',
     hc03: 'E808_HC-03.wav',
@@ -30,3 +30,4 @@ export default {
     mc09: 'E808_MC-09.wav',
     mc10: 'E808_MC-10.wav'
 };
+export default Samples;

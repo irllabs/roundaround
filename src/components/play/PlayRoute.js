@@ -1,4 +1,4 @@
-import React, { Component, createRef } from 'react'
+import React, { Component } from 'react'
 import PlayUI from './PlayUI'
 import PatternsSidebar from './PatternsSidebar'
 import PropTypes from 'prop-types';

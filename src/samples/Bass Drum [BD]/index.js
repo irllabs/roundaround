@@ -1,4 +1,4 @@
-export default {
+const Samples = {
     bdLong01: 'E808_BD[long]-01.wav',
     bdLong02: 'E808_BD[long]-02.wav',
     bdLong03: 'E808_BD[long]-03.wav',
@@ -29,3 +29,4 @@ export default {
     bdShort11: 'E808_BD[short]-11.wav',
     bdShort12: 'E808_BD[short]-12.wav'
 };
+export default Samples;
