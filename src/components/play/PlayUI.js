@@ -65,7 +65,7 @@ class PlayUI extends Component {
     }
 
     createRound () {
-        //console.log('createRound()');
+        //  console.log('createRound()');
         this.round = _.cloneDeep(this.props.round)
         this.userColors = this.getUserColors()
         // Create SVG container
@@ -1228,19 +1228,26 @@ class PlayUI extends Component {
                 _this.hideOrientationDialog()
             }
             if (!_.isNil(_this.container)) {
-                _this.containerWidth = Math.max(window.screen.width || 0, window.innerWidth || 0)
-                _this.containerheight = Math.max(window.screen.height || 0, window.innerHeight || 0)
+                let width = window.innerWidth
+                let height = window.innerHeight
+                // _this.containerWidth = Math.max(window.screen.width || 0, window.innerWidth || 0)
+                //_this.containerheight = Math.max(window.screen.height || 0, window.innerHeight || 0)
+                _this.containerWidth = width
+                _this.containerheight = height
 
+                // console.log('onWindowResize', orientation, '_this.containerWidth', _this.containerWidth, '_this.containerheight', _this.containerheight);
                 const roundElement = document.getElementById('round')
-                roundElement.style.width = _this.containerWidth + 'px'
-                roundElement.style.height = _this.containerHeight + 'px'
+                roundElement.style.width = width + 'px'
+                roundElement.style.height = height + 'px'
+                //console.log('set round height to ', height + 'px', 'actual height', roundElement.style.height);
+
                 let currentViewBox = _this.container.viewbox()
-                _this.container.size(this.containerWidth, this.containerHeight)
+                _this.container.size(width, height)
                 _this.container.viewbox(
                     0,
                     currentViewBox.y,
-                    _this.containerWidth,
-                    _this.containerHeight
+                    width,
+                    height
                 )
                 _this.draw()
             }
