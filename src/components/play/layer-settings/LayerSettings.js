@@ -70,6 +70,7 @@ class LayerSettings extends Component {
         const isMuted = !this.props.selectedLayer.isMuted
         AudioEngine.tracksById[this.props.selectedLayer.id].setMute(isMuted)
         this.props.dispatch({ type: SET_LAYER_MUTE, payload: { id: this.props.selectedLayer.id, value: isMuted, user: this.props.user.id } })
+        this.context.updateLayer(this.props.round.id, this.props.selectedLayer.id, { isMuted })
     }
 
     onDeleteLayerClick () {

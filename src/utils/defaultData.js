@@ -157,7 +157,6 @@ export const getDefaultSample = (userId) => {
     let date = new Date()
     let name = date.toLocaleString()
     name = _.replace(name, ', ', '_')
-    console.log('getDefaultSample() name2', name);
     return {
         id: uuid(),
         createdBy: userId,

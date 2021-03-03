@@ -23,17 +23,17 @@ export default class Custom extends InstrumentBaseClass {
         return map
     }
     load (sampleId) {
-        console.log('custom::load()', sampleId);
+        //  console.log('custom::load()', sampleId);
         const _this = this
         return new Promise(async function (resolve, reject) {
             let sample = await CustomSamples.get(sampleId)
             let sampleMap = _this.getSampleMap(sample)
             _this.sampleMap = _.cloneDeep(sampleMap)
-            console.log('instrument load()', sampleMap)
+            //   console.log('instrument load()', sampleMap)
             if (!_.isNil(sampleMap)) {
                 await _this.loadSamples(sampleMap)
             }
-            console.log('instrument finished loading');
+            // console.log('instrument finished loading');
             resolve()
         })
     }

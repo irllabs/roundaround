@@ -49,11 +49,7 @@ class PlayUI extends Component {
         window.addEventListener('resize', this.onWindowResizeThrottled)
         window.addEventListener('keypress', this.onKeypress)
         this.addBackgroundEventListeners()
-        if (this.getOrientation() === 'portrait') {
-            this.showOrientationDialog()
-        } else {
-            this.hideOrientationDialog()
-        }
+        this.checkOrientation()
     }
 
     async componentWillUnmount () {
@@ -219,7 +215,7 @@ class PlayUI extends Component {
             let newLayer = _.find(this.props.round.layers, { id: layer.id })
             if (!_.isNil(newLayer) && !_.isEqual(layer.instrument, newLayer.instrument)) {
                 // instrument has changed
-                console.log('instrument has changed', newLayer.instrument);
+                // console.log('instrument has changed', newLayer.instrument);
                 AudioEngine.tracksById[newLayer.id].setInstrument(newLayer.instrument)
                 this.updateLayerLabelText(layer.id, newLayer.instrument.sampler)
             }
@@ -1159,7 +1155,7 @@ class PlayUI extends Component {
 
     onStepClick (stepGraphic) {
         let step = this.getStep(stepGraphic.id)
-        console.log('onStepClick', step);
+        // console.log('onStepClick', step);
 
         // update internal round so that it doesn't trigger another update when we receive a change after the dispatch
         step.isOn = !step.isOn
@@ -1263,6 +1259,17 @@ class PlayUI extends Component {
         }
         // console.log('getOrientation', orientation);
         return orientation
+    }
+
+    checkOrientation () {
+        const _this = this
+        _.delay(() => {
+            if (_this.getOrientation() === 'portrait') {
+                _this.showOrientationDialog()
+            } else {
+                _this.hideOrientationDialog()
+            }
+        }, 500)
     }
 
     onKeypress (e) {

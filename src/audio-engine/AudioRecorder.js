@@ -27,7 +27,7 @@ const AudioRecorder = {
 
         try {
             await this.mic.open()
-            console.log("mic open");
+            // console.log("mic open");
 
             _this.inputMeterInterval = setInterval(() => {
                 if (!_.isNil(levelCallback)) {
@@ -55,12 +55,12 @@ const AudioRecorder = {
         this.hasBegunRecording = false
         this.scheduleCountdownEvent = new Tone.ToneEvent(function () {
             if (!_this.hasBegunCountdown) {
-                console.log('first 0 event');
+                //    console.log('first 0 event');
                 _this.hasBegunCountdown = true
                 _this.startCountdown()
             } else if (!_this.hasBegunRecording) {
                 // second time we've passed 0, start recording
-                console.log('second 0 event');
+                //  console.log('second 0 event');
                 _this.hasBegunRecording = true
                 _this.countDownPart.dispose()
 
@@ -68,7 +68,7 @@ const AudioRecorder = {
                 _this.startRecording()
             } else {
                 // third time we've passed 0, stop the recording
-                console.log('third 0 event');
+                //  console.log('third 0 event');
                 _this.scheduleCountdownEvent.dispose()
                 _this.stop()
             }
@@ -116,7 +116,7 @@ const AudioRecorder = {
         _this.countdownCallack(4)
     },
     async stop () {
-        console.log('AudioRecorder::stop()');
+        //  console.log('AudioRecorder::stop()');
         this.hasBegunCountdown = false
         this.hasBegunRecording = false
         if (!_.isNil(this.mic)) {
@@ -126,13 +126,16 @@ const AudioRecorder = {
         if (!_.isNil(this.recorder)) {
             this.recorder.stop()
         }
+        if (!_.isNil(this.scheduleCountdownEvent)) {
+            this.scheduleCountdownEvent.dispose()
+        }
 
     },
     startRecording () {
-        console.log('startRecording()');
+        //   console.log('startRecording()');
         const _this = this
 
-        console.log('start recording called');
+        // console.log('start recording called');
         this.chunks = []
         navigator.mediaDevices.getUserMedia({ audio: true }).then(stream => {
             const options = { mimeType: 'audio/wav' }
@@ -141,15 +144,15 @@ const AudioRecorder = {
             _this.recorder.start();
 
             _this.recorder.addEventListener('dataavailable', (e) => {
-                console.log('Recording stopped, data available');
+                //   console.log('Recording stopped, data available');
                 _this.chunks.push(e.data)
             });
             _this.recorder.addEventListener('start', (e) => {
-                console.log('start');
+                //  console.log('start');
                 //this.setState({ state: 'recording' });
             })
             _this.recorder.addEventListener('stop', (e) => {
-                console.log('stop');
+                //   console.log('stop');
                 // this.setState({ state: 'inactive' });
                 let blob = new Blob(_this.chunks, {
                     type: 'audio/wav'
@@ -157,15 +160,15 @@ const AudioRecorder = {
                 _this.recordingFinishedCallback(blob)
             })
             _this.recorder.addEventListener('pause', (e) => {
-                console.log('pause');
+                //   console.log('pause');
                 // this.setState({ state: 'paused' });
             })
             _this.recorder.addEventListener('resume', (e) => {
-                console.log('resume');
+                //   console.log('resume');
                 // this.setState({ state: 'recording' });
             })
             _this.recorder.addEventListener('error', (e) => {
-                console.log('error');
+                console.log('error', e);
             })
         });
 

@@ -8,13 +8,13 @@ const CustomSamples = {
     },
     add (sample) {
         if (!_.isNil(sample)) {
-            console.log('CustomSamples:add() sample', sample);
+            //  console.log('CustomSamples:add() sample', sample);
             this.samples[sample.id] = sample
-            console.log('CustomSamples::added', this.samples);
+            // console.log('CustomSamples::added', this.samples);
         }
     },
     async get (id) {
-        console.log('CustomSamples::get()', id);
+        // console.log('CustomSamples::get()', id);
         const _this = this
         return new Promise(async (resolve, reject) => {
             if (!_.isNil(this.samples[id])) {
@@ -23,7 +23,7 @@ const CustomSamples = {
             if (!_.isNil(id)) {
                 try {
                     let sample = await this.firebase.getSample(id)
-                    console.log('CustomSamples::get() from firebase', sample);
+                    // console.log('CustomSamples::get() from firebase', sample);
                     _this.samples[id] = _.cloneDeep(sample)
                     resolve(sample)
                 } catch (e) {
@@ -44,7 +44,7 @@ const CustomSamples = {
         })
     },
     rename (sampleId, newName) {
-        console.log('CustomSample::rename', sampleId, newName);
+        // console.log('CustomSample::rename', sampleId, newName);
         this.samples[sampleId].name = newName
         this.firebase.updateSample({ id: sampleId, name: newName })
     }

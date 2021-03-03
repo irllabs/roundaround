@@ -59,9 +59,9 @@ export default function LayerInstrument ({ selectedLayer, user, roundId }) {
 
     const onInstrumentSelect = (event) => {
         setSelectedInstrument(event.target.value);
-        console.log('onInstrumentSelect', event.target.value);
+        //   console.log('onInstrumentSelect', event.target.value);
         let defaultArticulation = Instruments.getDefaultArticulation(event.target.value)
-        console.log('defaultArticulation', defaultArticulation);
+        //   console.log('defaultArticulation', defaultArticulation);
         if (!_.isNil(defaultArticulation)) {
             const defaultArticulationName = defaultArticulation[1]
             setSelectedArticulation(defaultArticulationName)
@@ -78,7 +78,7 @@ export default function LayerInstrument ({ selectedLayer, user, roundId }) {
     const [selectedArticulation, setSelectedArticulation] = React.useState(selectedLayer.instrument.sample)
     const onArticulationSelect = async (event) => {
         setSelectedArticulation(event.target.value);
-        console.log('UPDATE_LAYER_INSTRUMENT', selectedInstrument, event.target.value);
+        // console.log('UPDATE_LAYER_INSTRUMENT', selectedInstrument, event.target.value);
         dispatch({ type: UPDATE_LAYER_INSTRUMENT, payload: { id: selectedLayer.id, instrument: { sampler: selectedInstrument, sample: event.target.value }, user: user.id } })
         firebase.updateLayer(roundId, selectedLayer.id, { instrument: { sample: event.target.value } })
         if (selectedInstrument === 'custom') {
@@ -136,7 +136,7 @@ export default function LayerInstrument ({ selectedLayer, user, roundId }) {
     }
     const renameSample = async () => {
         const newName = renameSampleTextField.current.querySelectorAll("input")[0].value
-        console.log('on rename click', newName);
+        // console.log('on rename click', newName);
         CustomSamples.rename(selectedArticulation, newName)
         onCloseRenameSampleDialog()
     }

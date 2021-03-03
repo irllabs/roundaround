@@ -1,5 +1,4 @@
 import React, { Component } from 'react'
-import PropTypes from 'prop-types';
 import { withStyles } from '@material-ui/styles';
 import Box from '@material-ui/core/Box';
 import Button from '@material-ui/core/Button';
@@ -46,12 +45,14 @@ class LayerCustomSounds extends Component {
     constructor (props) {
         super(props)
         this.state = {
-            isInRecordMode: false,
+            mode: null,
+            //isInRecordMode: false,
             isRecording: false,
             level: 0,
             recordButtonText: 'Record',
-            isInUploadRecordingMode: false,
-            isInUploadMode: false
+            //isInUploadRecordingMode: false,
+            //isInUploadMode: false,
+            //
         }
         //this.soundOptions = [{ value: '', label: 'Notes' }, { value: Track.TRACK_TYPE_AUTOMATION, label: 'Automation' }]
         this.onRecordClick = this.onRecordClick.bind(this)
@@ -61,13 +62,14 @@ class LayerCustomSounds extends Component {
         this.onRecordingFinished = this.onRecordingFinished.bind(this)
         this.onCustomSampleFileUploaderChange = this.onCustomSampleFileUploaderChange.bind(this)
         this.onDropFile = this.onDropFile.bind(this)
+
     }
     /*componentDidMount () {
         window.addEventListener('drop', this.onDropFile);
     }*/
     async onRecordClick () {
-        if (!this.state.isInRecordMode) {
-            console.log('onRecordClick', AudioEngine.isOn);
+        // console.log('onRecordClick', this.state.mode)
+        if (_.isNil(this.state.mode)) {
             if (!AudioEngine.isOn()) {
                 AudioEngine.play()
                 this.props.dispatch({ type: SET_IS_PLAYING, payload: { value: true } })
@@ -79,13 +81,15 @@ class LayerCustomSounds extends Component {
                     recordingStartedCallback: this.onRecordingStarted,
                     recordingFinishedCallback: this.onRecordingFinished
                 })
-            this.setState({ recordButtonText: 'Ready...' })
-        } else {
+            this.setState({
+                recordButtonText: 'Ready...',
+                mode: 'countdown'
+            })
+        } else if (this.state.mode === 'recording') {
             AudioRecorder.stop()
+        } else {
+            // console.log('ignoring click');
         }
-        this.setState({
-            isInRecordMode: !this.state.isInRecordMode,
-        })
     }
     onCountDown (value) {
         this.setState({ recordButtonText: value })
@@ -96,11 +100,11 @@ class LayerCustomSounds extends Component {
         })
     }
     onRecordingStarted () {
-        this.setState({ isRecording: true, recordButtonText: 'Recording' })
+        this.setState({ mode: 'recording', recordButtonText: 'Recording' })
     }
     async onRecordingFinished (blob) {
-        console.log('recording finsished');
-
+        // console.log('recording finsished');
+        this.setState({ mode: 'upload' })
 
         let sample = getDefaultSample(this.props.user.id)
 
@@ -110,17 +114,7 @@ class LayerCustomSounds extends Component {
         // add to local custom sample cache
         CustomSamples.add(_.cloneDeep(sample))
 
-        console.log('added sample', sample, CustomSamples.samples);
-
-        this.setState({
-            recordButtonText: 'Record',
-            isRecording: false,
-            isInRecordMode: false,
-            isInUploadRecordingMode: true
-        })
-
-
-
+        // console.log('added sample', sample, CustomSamples.samples);
 
         // upload blob to firebase
         const metadata = {
@@ -131,15 +125,18 @@ class LayerCustomSounds extends Component {
         let snapshot = await fileRef.put(blob, metadata)
 
         let downloadURL = await snapshot.ref.getDownloadURL()
-        console.log('Uploaded blob!', downloadURL);
+        // console.log('Uploaded blob!', downloadURL);
         sample.remoteURL = downloadURL
         await _this.context.createSample(sample)
 
         // update state with new sample
         this.props.dispatch({ type: UPDATE_LAYER_INSTRUMENT, payload: { id: this.props.selectedLayer.id, instrument: { sampler: 'custom', sample: sample.id }, user: this.props.user.id } })
         this.setState({
-            isInUploadRecordingMode: false
+            mode: null,
+            recordButtonText: 'Record'
         })
+        this.context.updateLayer(this.props.roundId, this.props.selectedLayer.id, { instrument: { sampler: 'custom', sample: sample.id } })
+
     }
 
     onCustomSampleFileUploaderChange () {
@@ -147,14 +144,14 @@ class LayerCustomSounds extends Component {
     }
 
     async onDropFile (files) {
-        console.log('onDropFile', files);
+        // console.log('onDropFile', files);
         const file = files?.[0]
         if (!file) {
             return
         }
-        console.log(file);
+        // console.log(file);
         this.setState({
-            isInUploadMode: true
+            mode: 'fileUpload'
         })
 
         try {
@@ -173,26 +170,29 @@ class LayerCustomSounds extends Component {
             let snapshot = await fileRef.put(blob, metadata)
 
             let downloadURL = await snapshot.ref.getDownloadURL()
-            console.log('Uploaded blob!', downloadURL);
+            //  console.log('Uploaded blob!', downloadURL);
             sample.remoteURL = downloadURL
             await _this.context.createSample(sample)
 
             // update state with new sample
             this.props.dispatch({ type: UPDATE_LAYER_INSTRUMENT, payload: { id: this.props.selectedLayer.id, instrument: { sampler: 'custom', sample: sample.id }, user: this.props.user.id } })
             this.setState({
-                isInUploadMode: false
+                mode: null
             })
+            this.context.updateLayer(this.props.roundId, this.props.selectedLayer.id, { instrument: { sampler: 'custom', sample: sample.id } })
+
         } catch (e) {
             console.log(e)
         }
     }
 
     render () {
+        //console.log('########### render()', this.state.mode);
         const { classes } = this.props;
-        let startIcon = this.state.isRecording ? <StopIcon /> : <MicIcon />
-        let uploadStartIcon = this.state.isInUploadMode ? '' : <UploadIcon />
-        let recordButtonColor = this.state.isRecording ? 'red' : 'white'
-        if ((this.state.isInRecordMode && !this.state.isRecording) || this.state.isInUploadRecordingMode) {
+        let startIcon = this.state.mode === 'recording' ? <StopIcon /> : <MicIcon />
+        let uploadStartIcon = this.state.mode === 'fileUpload' ? '' : <UploadIcon />
+        let recordButtonColor = (this.state.mode === 'recording') ? 'red' : 'white'
+        if (this.state.mode === 'countdown' || this.state.mode === 'upload' || this.state.mode === 'fileUpload') {
             startIcon = ''
             recordButtonColor = '#1E1E1E'
         }
@@ -203,17 +203,17 @@ class LayerCustomSounds extends Component {
                     <Button
                         className={classes.button}
                         variant="contained"
-                        color={(this.state.isInRecordMode || this.state.isInUploadRecordingMode) ? 'primary' : 'secondary'}
+                        color={(this.state.mode === 'countdown' || this.state.mode === 'recording' || this.state.mode === 'upload' || this.state.mode === 'fileUpload') ? 'primary' : 'secondary'}
                         style={{ color: recordButtonColor }}
                         disableElevation
                         startIcon={startIcon}
                         onClick={this.onRecordClick}>
                         {
-                            !this.state.isInUploadRecordingMode &&
+                            this.state.mode !== 'upload' &&
                             <span>{this.state.recordButtonText}</span>
                         }
                         {
-                            this.state.isInUploadRecordingMode &&
+                            this.state.mode === 'upload' &&
                             <CircularProgress color="secondary" size={24} />
                         }
                     </Button>
@@ -232,11 +232,11 @@ class LayerCustomSounds extends Component {
                                             uploadStartIcon
                                         }>
                                         {
-                                            this.state.isInUploadMode &&
+                                            this.state.mode === 'fileUpload' &&
                                             <CircularProgress color="primary" size={24} />
                                         }
                                         {
-                                            !this.state.isInUploadMode &&
+                                            !this.state.mode === 'fileUpload' &&
                                             <span>Upload</span>
                                         }
                                     </Button>
@@ -249,7 +249,7 @@ class LayerCustomSounds extends Component {
 
                 </Box>
                 {
-                    this.state.isInRecordMode &&
+                    (this.state.mode === 'recording' || this.state.mode === 'countdown') &&
                     <VUMeter className={classes.vuMeter} level={this.state.level} />
                 }
             </Box>
@@ -257,9 +257,6 @@ class LayerCustomSounds extends Component {
     }
 }
 
-LayerCustomSounds.propTypes = {
-    classes: PropTypes.object.isRequired,
-};
 const mapStateToProps = state => {
     return {
         user: state.user

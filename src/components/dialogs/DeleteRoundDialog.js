@@ -45,7 +45,7 @@ function DeleteRoundDialog ({ isShowingDeleteRoundDialog, selectedRoundId, round
                 <Button color="primary" variant="contained" disableElevation autoFocus onClick={onOkClick} >
                     {
                         !isDeleting &&
-                        <p>Delete</p>
+                        <span>Delete</span>
                     }
                     {
                         isDeleting &&
