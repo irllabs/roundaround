@@ -11,4 +11,5 @@ export default class Claves extends InstrumentBaseClass {
         super(Claves.instrumentName, Claves.articulations, Claves.folder)
         this.parameters.articulation = Claves.defaultArticulation;
     }
+
 }

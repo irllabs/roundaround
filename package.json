@@ -28,6 +28,7 @@
     "react-scripts": "4.0.1",
     "react-sortable-hoc": "^1.11.0",
     "redux": "^4.0.5",
+    "sfz-parser": "^0.0.9",
     "tone": "^14.7.77",
     "web-vitals": "^0.2.4"
   },

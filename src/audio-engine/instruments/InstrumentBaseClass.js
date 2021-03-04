@@ -1,7 +1,7 @@
 
 import * as Tone from 'tone';
 import _ from 'lodash'
-import { randomBool } from '../../utils/index'
+import { randomBool, numberRange } from '../../utils/index'
 const Note = require('@tonaljs/note')
 
 export default class InstrumentBaseClass {
@@ -36,14 +36,15 @@ export default class InstrumentBaseClass {
         this.connectedToChannel = channel
         this.instrument.connect(this.connectedToChannel)
     }
-    load (articulation) {
-        //  console.log('InstrumentBaseClass::load()', articulation);
+    load (articulationId) {
+        console.log('InstrumentBaseClass::load()', articulationId);
+        let articulation = this.articulations[articulationId]
         let _this = this
         return new Promise(async function (resolve, reject) {
-            if (!_.isNil(articulation)) {
-                _this.parameters.articulation = articulation
+            if (!_.isNil(articulationId)) {
+                _this.parameters.articulation = articulationId
             }
-            let sampleMap = _this.getSampleMap()
+            let sampleMap = _this.getSampleMap(articulation)
             _this.sampleMap = _.cloneDeep(sampleMap)
             //  console.log('instrument load()', sampleMap)
             if (!_.isNil(sampleMap)) {
@@ -81,13 +82,14 @@ export default class InstrumentBaseClass {
         notes
     ) {
         let _this = this
-        //console.log('instrument loading notes', notes);
+        console.log('instrument loading notes', notes);
         this.clearPart()
         this.notes = _.cloneDeep(notes)
         this.beforeLoadPart(this.notes)
         for (let note of this.notes) {
             note.time += 'i';
             note.duration += 'i';
+            note.midi = this.calculateMidiNoteFromVelocity(note.velocity)
         }
         this.part = new Tone.Part(function (time, note) {
             if (
@@ -99,6 +101,7 @@ export default class InstrumentBaseClass {
                     shouldPlayNote = randomBool(note.probability)
                 }
                 if (shouldPlayNote) {
+
                     _this.instrument.triggerAttackRelease(
                         Tone.Midi(note.midi),
                         note.duration,
@@ -129,12 +132,37 @@ export default class InstrumentBaseClass {
     releaseAll () {
         this.instrument.releaseAll()
     }
-    getSampleMap () {
-        // console.log('getSampleMap', this.name, this.folder, this.articulations, this.parameters.articulation);
-        let map = {
-            'C4': '/samples/' + this.folder + '/' + this.parameters.articulation
+    getSampleMap (articulation) {
+        console.log('getSampleMap', articulation);
+        let map = {}
+        let sampleIndex = 0
+        for (let sample of articulation.samples) {
+            map['C' + sampleIndex++] = '/samples/' + this.folder + '/' + sample.sample
         }
+        /*let map = {
+            'C0': '/samples/' + this.folder + '/' + articulation.samples[0].sample,
+            'C1': '/samples/' + this.folder + '/' + articulation.samples[1].sample
+        }*/
         return map
+    }
+    /* getSampleMap () {
+         // console.log('getSampleMap', this.name, this.folder, this.articulations, this.parameters.articulation);
+         let map = {
+             'C4': '/samples/' + this.folder + '/' + this.parameters.articulation
+         }
+         return map
+     }*/
+    calculateMidiNoteFromVelocity (velocity) {
+        // based on this.parameters.articulation.samples calculate midi note that coresponds with velocity
+        //return 12 // default 'C0' as midi note 12 ?
+        let midiVelocity = numberRange(velocity, 0, 1, 0, 127)
+        console.log('calculateMidiNoteFromVelocity', velocity, midiVelocity, this.articulations);
+
+        const articulation = this.articulations[this.parameters.articulation]
+        let sampleIndex = _.findIndex(articulation.samples, (articulation) => {
+            return (midiVelocity >= articulation.lovel) && (midiVelocity <= articulation.hivel)
+        })
+        return (sampleIndex + 1) * 12
     }
     triggerNote (note) {
         this.instrument.triggerAttackRelease(
