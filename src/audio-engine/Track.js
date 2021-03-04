@@ -26,7 +26,7 @@ export default class Track {
         this.type = type;
         this.trackParameters.type = type
         if (this.type === Track.TRACK_TYPE_LAYER || this.type === Track.TRACK_TYPE_USER) {
-            this.channel = new Tone.Channel()
+            this.channel = new Tone.Channel({ channelCount: 2 })
             this.fx = null
             this.sortedFx = null
             if (_.isNil(this.trackParameters.fx)) {
@@ -56,12 +56,12 @@ export default class Track {
         this.calculatePart(this.trackParameters)
     }
     setFxOrder (updatedFxOrders) {
-        this.disconnectAudioChain()
-        for (let updatedFxOrder of updatedFxOrders) {
-            _.find(this.sortedFx, { id: updatedFxOrder.id }).order = updatedFxOrder.order
-        }
-        this.sortedFx = _.sortBy(this.sortedFx, 'order')
-        this.buildAudioChain()
+        /* this.disconnectAudioChain()
+         for (let updatedFxOrder of updatedFxOrders) {
+             _.find(this.sortedFx, { id: updatedFxOrder.id }).order = updatedFxOrder.order
+         }
+         this.sortedFx = _.sortBy(this.sortedFx, 'order')
+         this.buildAudioChain()*/
     }
     load (trackParameters) {
         this.trackParameters = trackParameters
@@ -90,8 +90,14 @@ export default class Track {
         } else if (this.type !== Track.TRACK_TYPE_AUTOMATION) {
             this.disconnectAudioChain()
             if (!_.isNil(this.instrument) && !_.isNil(this.instrument.instrument)) {
-                this.instrument.connect(this.channel)
                 //this.instrument.instrument.toDestination()
+                this.instrument.instrument.connect(this.channel)
+                //this.channel.toDestination()
+                // let channel = new Tone.Channel({ channelCount: 2 })
+                //channel.toDestination()
+                // this.instrument.instrument.connect(channel)
+
+                // console.log('instrument channels', this.instrument.instrument.numberOfOutputs, 'channel numberOfInputs', this.channel.numberOfInputs, 'channel numberOfOutputs', this.channel.numberOfOutputs);
             }
             let onFx = _.filter(this.sortedFx, {
                 isOn: true
