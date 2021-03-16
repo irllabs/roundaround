@@ -32,8 +32,8 @@ export const getDefaultLayerData = (userId, instrument) => {
         "instrument": {
             "noteLength": "64n",
             "instrument": "Sampler",
-            "sampler": "BassDrum",
-            "sample": "E808_BD[long]-04.wav",
+            "sampler": "HiHats",
+            "sample": "tight",
             ...instrument
         },
         "steps": Array(Layer.DefaultStepsAmount).fill(null).map(() => { return getDefaultStepData() }),
@@ -60,18 +60,18 @@ export const getDefaultRoundData = (userId) => {
         "layers": [
             getDefaultLayerData(userId, {
                 "instrument": "Sampler",
-                "sampler": "HitHatOpen",
-                "sample": "E808_OH-03.wav",
+                "sampler": "HiHats",
+                "sample": "tight",
             }),
             getDefaultLayerData(userId, {
                 "instrument": "Sampler",
-                "sampler": "SnareDrum",
-                "sample": "E808_SD-03.wav",
+                "sampler": "HiHats",
+                "sample": "tight",
             }),
             getDefaultLayerData(userId, {
                 "instrument": "Sampler",
-                "sampler": "BassDrum",
-                "sample": "E808_BD[long]-04.wav"
+                "sampler": "HiHats",
+                "sample": "tight"
             })
         ],
         userBuses: {},

@@ -37,4 +37,7 @@ export default class Custom extends InstrumentBaseClass {
             resolve()
         })
     }
+    calculateMidiNoteFromVelocity (velocity) {
+        return 60
+    }
 }

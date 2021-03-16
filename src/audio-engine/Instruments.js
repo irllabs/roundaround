@@ -1,17 +1,10 @@
 
 import _ from "lodash";
-import BassDrum from './instruments/BassDrum'
-import HiHatClosed from './instruments/HiHatClosed'
-import HitHatOpen from './instruments/HitHatOpen'
-import SnareDrum from './instruments/SnareDrum'
-import Clap from './instruments/Clap'
-import Claves from './instruments/Claves'
-import Congas from './instruments/Congas'
-import Cowbell from './instruments/Cowbell'
-import Cymbal from './instruments/Cymbal'
-import Maracas from './instruments/Maracas'
-import Rimshot from './instruments/Rimshot'
-import TomToms from './instruments/TomToms'
+import HiHats from './instruments/HiHats'
+import Kicks from './instruments/Kicks'
+import Snares from './instruments/Snares'
+import Perc from './instruments/Perc'
+import Metal from './instruments/Metal'
 import Custom from './instruments/Custom'
 import CustomSamples from './CustomSamples'
 
@@ -20,18 +13,11 @@ const Instruments = {
     instruments: [],
     init () {
         const classes = [
-            BassDrum,
-            HiHatClosed,
-            SnareDrum,
-            HitHatOpen,
-            Clap,
-            Claves,
-            Congas,
-            Cowbell,
-            Cymbal,
-            Maracas,
-            Rimshot,
-            TomToms,
+            HiHats,
+            Kicks,
+            Snares,
+            Perc,
+            Metal,
             Custom
         ];
         for (let instrumentClass of classes) {
@@ -81,12 +67,12 @@ const Instruments = {
         // console.log('getInstrumentArticulationOptions()', instrumentName);
         if (instrumentName !== 'custom') {
             let options = [];
-            for (let [name, value] of Object.entries(
+            for (let [, value] of Object.entries(
                 this.instrumentClasses[instrumentName].articulations
             )) {
                 let option = {
-                    name,
-                    value
+                    name: value.label,
+                    value: value.id
                 };
                 options.push(option);
             }

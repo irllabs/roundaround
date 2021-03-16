@@ -59,14 +59,13 @@ export default function LayerInstrument ({ selectedLayer, user, roundId }) {
 
     const onInstrumentSelect = (event) => {
         setSelectedInstrument(event.target.value);
-        //   console.log('onInstrumentSelect', event.target.value);
+        console.log('onInstrumentSelect', event.target.value);
         let defaultArticulation = Instruments.getDefaultArticulation(event.target.value)
-        //   console.log('defaultArticulation', defaultArticulation);
+        console.log('defaultArticulation', defaultArticulation);
         if (!_.isNil(defaultArticulation)) {
-            const defaultArticulationName = defaultArticulation[1]
-            setSelectedArticulation(defaultArticulationName)
-            dispatch({ type: UPDATE_LAYER_INSTRUMENT, payload: { id: selectedLayer.id, instrument: { sampler: event.target.value, sample: defaultArticulationName }, user: user.id } })
-            firebase.updateLayer(roundId, selectedLayer.id, { instrument: { sampler: event.target.value, sample: defaultArticulationName } })
+            setSelectedArticulation(defaultArticulation)
+            dispatch({ type: UPDATE_LAYER_INSTRUMENT, payload: { id: selectedLayer.id, instrument: { sampler: event.target.value, sample: defaultArticulation }, user: user.id } })
+            firebase.updateLayer(roundId, selectedLayer.id, { instrument: { sampler: event.target.value, sample: defaultArticulation } })
         };
     }
     const instrumentMenuItems = () => {
