@@ -33,7 +33,7 @@ export const getDefaultLayerData = (userId, instrument) => {
             "noteLength": "64n",
             "instrument": "Sampler",
             "sampler": "HiHats",
-            "sample": "tight",
+            "sample": "quick",
             ...instrument
         },
         "steps": Array(Layer.DefaultStepsAmount).fill(null).map(() => { return getDefaultStepData() }),
@@ -61,17 +61,17 @@ export const getDefaultRoundData = (userId) => {
             getDefaultLayerData(userId, {
                 "instrument": "Sampler",
                 "sampler": "HiHats",
-                "sample": "tight",
+                "sample": "quick",
             }),
             getDefaultLayerData(userId, {
                 "instrument": "Sampler",
-                "sampler": "HiHats",
-                "sample": "tight",
+                "sampler": "Snares",
+                "sample": "skintight",
             }),
             getDefaultLayerData(userId, {
                 "instrument": "Sampler",
-                "sampler": "HiHats",
-                "sample": "tight"
+                "sampler": "Kicks",
+                "sample": "classic"
             })
         ],
         userBuses: {},
