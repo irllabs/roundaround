@@ -99,6 +99,9 @@ const Instruments = {
     getArticulationLabel (instrumentName, articulation) {
         return this.instrumentClasses[instrumentName].articulations[articulation];
     },
+    getInstrumentLabel (instrumentName) {
+        return this.instrumentClasses[instrumentName].label
+    },
     getDefaultArticulation (instrumentName) {
         //console.log('Instruments::getDefaultArticulation() instrumentName', instrumentName, this.instrumentClasses);
         return this.instrumentClasses[instrumentName].defaultArticulation

@@ -12,6 +12,7 @@ import * as Tone from 'tone';
 import { withStyles } from '@material-ui/styles';
 import PropTypes from 'prop-types';
 import { numberRange } from '../../utils/index'
+import Instruments from '../../audio-engine/Instruments'
 
 const styles = theme => ({
     button: {
@@ -491,7 +492,7 @@ class PlayUI extends Component {
         //const angleOffset = (((Math.PI * 2) / layer.steps.length) * (layer.timeOffset / 100))
         angle += anglePercentOffset
         angle += angleTimeOffset
-        let layerLabelString = layer.instrument.sampler
+        let layerLabelString = Instruments.getInstrumentLabel(layer.instrument.sampler)
         if (layerLabelString.length > 5) {
             layerLabelString = layerLabelString.substring(0, 5) + '...'
         }
