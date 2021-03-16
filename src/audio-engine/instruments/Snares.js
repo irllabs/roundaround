@@ -3,7 +3,7 @@ import Samples from '../../samples/Snares/index'
 
 export default class Snares extends InstrumentBaseClass {
     static instrumentName = 'Snares';
-    static label = 'Snares';
+    static label = 'Snare';
     static folder = 'Snares';
     static articulations = Samples
     static defaultArticulation = Object.entries(Snares.articulations)[0][0];

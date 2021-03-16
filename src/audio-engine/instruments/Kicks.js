@@ -3,7 +3,7 @@ import Samples from '../../samples/Kicks/index'
 
 export default class Kicks extends InstrumentBaseClass {
     static instrumentName = 'Kicks';
-    static label = 'Kicks';
+    static label = 'Kick';
     static folder = 'Kicks';
     static articulations = Samples
     static defaultArticulation = Object.entries(Kicks.articulations)[0][0];
