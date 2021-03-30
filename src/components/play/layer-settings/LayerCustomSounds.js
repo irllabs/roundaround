@@ -26,16 +26,27 @@ const styles = theme => ({
         width: '100%',
         marginBottom: theme.spacing(2),
         display: 'flex',
-        justifyContent: 'space-between'
+        justifyContent: 'space-between',
+        [theme.breakpoints.down('sm')]: {
+            flexDirection: "column"
+        }
     },
+
     button: {
         minWidth: 130,
-        height: 36
+        height: 36,
+        [theme.breakpoints.down('sm')]: {
+            marginBottom: theme.spacing(1),
+            minWidth: 118
+        }
     },
     uploadButton: {
         minWidth: 130,
         height: 36,
-        border: '1px dashed rgba(255,255,255,0.2)'
+        border: '1px dashed rgba(255,255,255,0.2)',
+        [theme.breakpoints.down('sm')]: {
+            minWidth: 118
+        }
     },
 
 })

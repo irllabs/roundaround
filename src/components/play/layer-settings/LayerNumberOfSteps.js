@@ -19,6 +19,9 @@ const useStyles = makeStyles((theme) => ({
     formControl: {
         margin: theme.spacing(1),
         minWidth: 188,
+        [theme.breakpoints.down('sm')]: {
+            minWidth: 100
+        },
     },
     selectEmpty: {
         marginTop: theme.spacing(2),
@@ -47,7 +50,7 @@ export default function LayerNumberOfSteps ({ selectedLayer, user, roundId }) {
     return (
         <Box className={classes.root} display="flex" flexDirection="column">
             <FormControl className={classes.formControl}>
-                <InputLabel htmlFor="number-of-steps-select-label">Number of steps</InputLabel>
+                <InputLabel htmlFor="number-of-steps-select-label">Steps</InputLabel>
                 <Select
                     value={selectedNumberOfSteps}
                     onChange={onNumberOfStepsSelect}

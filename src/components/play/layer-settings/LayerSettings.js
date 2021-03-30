@@ -22,7 +22,10 @@ import LayerCustomSounds from './LayerCustomSounds'
 
 const styles = theme => ({
     drawer: {
-
+        backgroundColor: '#2E2E2E',
+        '& .MuiPaper-root': {
+            backgroundColor: '#2E2E2E',
+        }
     },
     root: {
         display: "flex",
@@ -30,6 +33,9 @@ const styles = theme => ({
         height: "100%",
         alignItems: "center",
         width: 300,
+        [theme.breakpoints.down('sm')]: {
+            width: 150
+        },
         /*'& > *': {
             marginBottom: '1rem'
         },*/
@@ -40,7 +46,15 @@ const styles = theme => ({
     },
     buttonContainer: {
         width: '100%',
-        marginBottom: theme.spacing(2)
+        marginBottom: theme.spacing(2),
+        [theme.breakpoints.down('sm')]: {
+            flexDirection: "column"
+        },
+    },
+    containedButton: {
+        [theme.breakpoints.down('sm')]: {
+            marginBottom: theme.spacing(1)
+        },
     },
     soundTabs: {
         marginBottom: theme.spacing(2),
@@ -102,8 +116,8 @@ class LayerSettings extends Component {
                     <>
                         <LayerAutomation selectedLayer={selectedLayer} roundId={this.props.round.id} userId={this.props.user.id} />
                         <Box className={classes.buttonContainer} display="flex" justifyContent="space-evenly">
-                            <Button onClick={this.onClearStepsClick.bind(this)} variant="contained" color="secondary" disableElevation>Clear</Button>
-                            <Button onClick={this.onDeleteLayerClick.bind(this)} variant="contained" color="secondary" disableElevation>Delete</Button>
+                            <Button className={classes.containedButton} onClick={this.onClearStepsClick.bind(this)} variant="contained" color="secondary" disableElevation>Clear</Button>
+                            <Button className={classes.containedButton} onClick={this.onDeleteLayerClick.bind(this)} variant="contained" color="secondary" disableElevation>Delete</Button>
                         </Box>
                     </>
                 )
@@ -112,9 +126,9 @@ class LayerSettings extends Component {
                     <>
                         <VolumeSlider selectedLayer={selectedLayer} roundId={this.props.round.id} user={this.props.user} />
                         <Box className={classes.buttonContainer} display="flex" justifyContent="space-evenly">
-                            <Button onClick={this.onMuteClick.bind(this)} variant="contained" color={selectedLayer.isMuted ? 'primary' : 'secondary'} disableElevation>Mute</Button>
-                            <Button onClick={this.onClearStepsClick.bind(this)} variant="contained" color="secondary" disableElevation>Clear</Button>
-                            <Button onClick={this.onDeleteLayerClick.bind(this)} variant="contained" color="secondary" disableElevation>Delete</Button>
+                            <Button className={classes.containedButton} onClick={this.onMuteClick.bind(this)} variant="contained" color={selectedLayer.isMuted ? 'primary' : 'secondary'} disableElevation>Mute</Button>
+                            <Button className={classes.containedButton} onClick={this.onClearStepsClick.bind(this)} variant="contained" color="secondary" disableElevation>Clear</Button>
+                            <Button className={classes.containedButton} onClick={this.onDeleteLayerClick.bind(this)} variant="contained" color="secondary" disableElevation>Delete</Button>
                         </Box>
                         <Divider className={classes.divider} />
                         <LayerInstrument selectedLayer={selectedLayer} roundId={this.props.round.id} user={this.props.user} />
