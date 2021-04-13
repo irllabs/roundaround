@@ -40,6 +40,7 @@ class PlayUI extends Component {
         this.selectedLayerId = null;
         this.onKeypress = this.onKeypress.bind(this)
         this.onOutsideClick = this.onOutsideClick.bind(this)
+        this.stepModalStepUpdateThrottled = _.throttle(this.stepModalStepUpdate.bind(this), 300)
     }
 
     async componentDidMount () {
@@ -799,6 +800,7 @@ class PlayUI extends Component {
                 })
 
                 _this.container.on('mouseup', (e) => {
+                    console.log('_this.container.on(mouseup)');
                     e.stopPropagation()
                     _this.removeStepSwipeListeners()
                     _this.container.off('mousemove')
@@ -819,49 +821,54 @@ class PlayUI extends Component {
                 })
             })
             stepGraphic.on('touchstart', (e) => {
+                console.log('touchstart');
                 e.stopPropagation()
                 e.preventDefault()
                 _this.swipeToggleActive = false
                 _this.startStepMoveTimer(stepGraphic, e.touches[0].pageX, e.touches[0].pageY)
                 _this.touchStartStepGraphic = stepGraphic
                 _this.isCurrentlyOverStepGraphic = stepGraphic
+                stepGraphic.on('touchmove', (e) => {
+                    console.log('touchmove');
+                    if (_.isNil(_this.stepMoveTimer) && !_this.swipeToggleActive) {
+                        _this.onStepDragMove(stepGraphic, e.touches[0].pageX, e.touches[0].pageY)
+                    } else {
+                        // console.log('touchmove', e, stepGraphic.id);
+                        //_this.swipeToggleActive = stepGraphic
+                        _this.touchStartStepGraphic = stepGraphic
+                        _this.isOverStep(stepGraphic, e.touches[0].pageX, e.touches[0].pageY)
+                    }
+                })
+                stepGraphic.on('touchend', (e) => {
+                    console.log('touchend');
+                    _this.hideStepModal()
+                    if (!_.isNil(_this.stepMoveTimer)) {
+                        // timer has not expired, so interpret as a click
+                        console.log('touchend interpreted as click', _this.swipeToggleActive);
+                        _this.clearShowStepModalTimer()
+                        if (!_this.swipeToggleActive) {
+                            console.log('acting on interpreted click');
+                            _this.onStepClick(stepGraphic)
+                        } else {
+                            console.log('ignoring interpreted click');
+                        }
+
+                    } else {
+                        _this.onStepDragEnd(stepGraphic)
+                    }
+                    stepGraphic.off('touchmove')
+                    stepGraphic.off('touchend')
+                })
             })
             // console.log('adding touchmove event for stepgraphic', stepGraphic.id);
-            stepGraphic.on('touchmove', (e) => {
-                if (_.isNil(_this.stepMoveTimer) && !_this.swipeToggleActive) {
-                    _this.onStepDragMove(stepGraphic, e.touches[0].pageX, e.touches[0].pageY)
-                } else {
-                    // console.log('touchmove', e, stepGraphic.id);
-                    //_this.swipeToggleActive = stepGraphic
-                    _this.touchStartStepGraphic = stepGraphic
-                    _this.isOverStep(stepGraphic, e.touches[0].pageX, e.touches[0].pageY)
-                }
-            })
-            stepGraphic.on('touchend', (e) => {
-                _this.hideStepModal()
-                if (!_.isNil(_this.stepMoveTimer)) {
-                    // timer has not expired, so interpret as a click
-                    console.log('touchend interpreted as click', _this.swipeToggleActive);
-                    _this.clearShowStepModalTimer()
-                    if (!_this.swipeToggleActive) {
-                        console.log('acting on interpreted click');
-                        _this.onStepClick(stepGraphic)
-                    } else {
-                        console.log('ignoring interpreted click');
-                    }
 
-                } else {
-                    _this.onStepDragEnd(stepGraphic)
-                }
-            })
 
         }
     }
     removeStepEventListeners (stepGraphic) {
+        //console.log('removeStepEventListeners()');
         stepGraphic.off('mousedown')
         stepGraphic.off('touchstart')
-        stepGraphic.off('touchend')
-        stepGraphic.off('touchmove')
     }
     startStepMoveTimer (stepGraphic, x, y) {
         const _this = this
@@ -886,6 +893,7 @@ class PlayUI extends Component {
         this.updateStepModal(stepGraphic)
         const _this = this
         this.container.on('mousemove', (e) => {
+            console.log('_this.container.on(mousemove)');
             e.preventDefault()
             _this.onStepDragMove(stepGraphic, e.pageX, e.pageY)
         })
@@ -893,7 +901,9 @@ class PlayUI extends Component {
     }
 
     hideStepModal () {
+        console.log('hideStepModal()');
         this.stepModal.hide()
+        this.container.off('mousemove')
     }
 
     clearShowStepModalTimer () {
@@ -969,7 +979,19 @@ class PlayUI extends Component {
             })
             stepGraphic.fill({ opacity: stepGraphic.probability })
             this.updateStepModal(stepGraphic)
+
+            // throttle updates to step
+            this.stepModalStepUpdateThrottled(stepGraphic)
         }
+    }
+
+    stepModalStepUpdate (stepGraphic) {
+        let step = this.getStep(stepGraphic.id)
+        step.probability = _.round(stepGraphic.probability, 1)
+        step.velocity = _.round(stepGraphic.velocity, 1)
+        this.props.dispatch({ type: UPDATE_STEP, payload: { step: step, layerId: stepGraphic.layerId } })
+        this.saveLayer(stepGraphic.layerId)
+        AudioEngine.recalculateParts(this.props.round)
     }
 
     onStepDragEnd (stepGraphic) {

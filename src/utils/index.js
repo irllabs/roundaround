@@ -32,8 +32,48 @@ export const getRandomColor = () => {
     // return '#' + Math.floor(Math.random() * 16777215).toString(16);
 }
 export const changeLayerLength = (layer, newLength) => {
-    const amount = layer.steps.length;
-    let difference = newLength - amount;
+    const oldLength = layer.steps.length;
+    let difference = newLength - oldLength;
+
+    let newSteps = []
+    for (let i = 0; i < newLength; i++) {
+        let step = getDefaultStepData()
+        step.order = i
+        newSteps.push(step)
+    }
+
+    if (oldLength < newLength) {
+        if (newLength % oldLength == 0) {
+            // new length fits neatly in to old length
+            let multiple = newLength / oldLength
+            // console.log('new length is multiple of old', multiple);
+            for (let i = 0; i < oldLength; i++) {
+                newSteps[i * multiple].isOn = layer.steps[i].isOn
+            }
+        } else {
+            // new length doesn't fit neatly
+            //console.log('new length is not multiple of old');
+            for (let i = 0; i < oldLength; i++) {
+                newSteps[i].isOn = layer.steps[i].isOn
+            }
+        }
+    } else {
+        if (oldLength % newLength == 0) {
+            // new length fits neatly in to old length
+            let multiple = oldLength / newLength
+            // console.log('new length is multiple of old', multiple);
+            for (let i = 0; i < newLength; i++) {
+                newSteps[i].isOn = layer.steps[i * multiple].isOn
+            }
+        } else {
+            // new length doesn't fit neatly
+            // console.log('new length is not multiple of old');
+            for (let i = 0; i < newLength; i++) {
+                newSteps[i].isOn = layer.steps[i].isOn
+            }
+        }
+    }
+    /*
     if (difference < 0) {
         //remove the difference
         const newSteps = [...layer.steps];
@@ -49,7 +89,7 @@ export const changeLayerLength = (layer, newLength) => {
         // add new steps
         let stepsToAdd = [];
         if (newLength > Limits.stepsPerLayer.max) {
-            stepsToAdd = Array(Limits.stepsPerLayer.max - amount).fill(0).map(element => getDefaultStepData());
+            stepsToAdd = Array(Limits.stepsPerLayer.max - oldLength).fill(0).map(element => getDefaultStepData());
         } else {
             stepsToAdd = Array(difference).fill(0).map(element => getDefaultStepData());
         }
@@ -60,7 +100,9 @@ export const changeLayerLength = (layer, newLength) => {
         }
         steps = _.orderBy(steps, 'order')
         return steps
-    }
+    }*/
+
+    return newSteps
 }
 
 export const convertPercentToDB = (percent) => {

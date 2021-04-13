@@ -66,10 +66,11 @@ class PatternsSidebar extends Component {
         this.onMinimizeClick = this.onMinimizeClick.bind(this)
     }
     async onLoadPattern (id) {
-        // console.log('onLoadPattern', id);
+        console.log('onLoadPattern', id);
         const pattern = _.find(this.props.round.userPatterns[this.props.user.id].patterns, { id })
         if (!_.isEmpty(pattern.state)) {
-            // console.log('loading state', pattern);
+            console.log('loading state', pattern);
+            console.time('loadPattern')
 
             this.setState({ selectedPattern: pattern.id, selectedPatternNeedsSaving: false })
 
@@ -84,15 +85,37 @@ class PatternsSidebar extends Component {
                 }
             }
 
+
             // save to store first so UI updates straight away
-            for (const layer of pattern.state.layers) {
+            /*for (const layer of pattern.state.layers) {
                 const layerExists = _.find(this.props.round.layers, { id: layer.id })
                 if (!_.isNil(layerExists)) {
                     //  console.log('changing layer state', layer.id, layer);
                     //this.props.setLayerSteps(layer.id, layer.steps)
                     this.props.updateLayer(layer.id, layer)
                 }
+            }*/
+
+            // check we haven't deleted the layer that is referenced in the pattern
+            let layersToDelete = []
+            for (const layer of pattern.state.layers) {
+                const layerExists = _.find(this.props.round.layers, { id: layer.id })
+                if (_.isNil(layerExists)) {
+                    layersToDelete.push(layer)
+                }
             }
+
+            //console.log('pattern.state.layers', pattern.state.layers)
+
+            _.remove(pattern.state.layers, function (n) {
+                return layersToDelete.indexOf(n) > -1
+            })
+
+            //console.log('pattern.state.layers after remove', pattern.state.layers)
+
+            this.props.updateLayers(pattern.state.layers)
+
+            //console.timeEnd('loadPattern')
 
 
             // this.props.updateLayers(pattern.state.layers)

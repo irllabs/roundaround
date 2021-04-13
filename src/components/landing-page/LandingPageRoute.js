@@ -72,12 +72,17 @@ class LandingPageRoute extends Component {
                     <Grid container className={classes.container} spacing={3}>
                         <Grid item xs={12} sm={12} md={6}>
                             <h1>Gather around, make music, and have fun.</h1>
-                            <p>Sed ut perspiciatis unde omnis iste natus error sit voluptatem accusantium doloremque laudantium, totam rem aperiam, eaque ipsa quae ab illo inventore veritatis et quasi architecto beatae vitae dicta sunt explicabo. Nemo enim ipsam voluptatem quia voluptas sit aspernatur aut odit aut fugit, sed quia consequuntur magni dolores eos qui ratione voluptatem sequi nesciunt.</p>
-                            <Button className={classes.getStartedButton} variant="contained" color="primary" disableElevation onClick={this.onGetStartedClick}>Get started</Button>
+                            <p>Rounds is a multi-person live-sampling step-sequencer with social features.  It runs in the browser or as a Native iOS application, with the following steps: compose a pattern (or "Round"), make variations and save presets, share a link to have someone join you with additional layers.  Rounds is best on a recent iPad.</p>
+                            <div style={{ width: "100%", textAlign: "center", marginTop: "2rem" }}>
+                                <Button className={classes.getStartedButton} variant="contained" color="primary" disableElevation onClick={this.onGetStartedClick}>Get started</Button>
+
+                            </div>
                         </Grid>
                         <Grid item xs={12} sm={12} md={6}>
-                            <Box className={classes.video}>
-                            </Box>
+                            <video width="100%" controls poster="https://firebasestorage.googleapis.com/v0/b/roundaround.appspot.com/o/marketing%2Froundaround-demo.jpg?alt=media&token=07a12429-bc4a-4de2-8f43-031a471367d8">
+                                <source src="https://firebasestorage.googleapis.com/v0/b/roundaround.appspot.com/o/marketing%2Froundaround-demo.mp4?alt=media&token=5e7388f0-3037-4596-b569-ca97bff02c6c" type="video/mp4" />
+                                    Your browser does not support the video tag.
+                            </video>
                         </Grid>
                     </Grid>
                 </Container>
