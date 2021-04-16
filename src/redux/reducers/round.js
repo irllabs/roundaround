@@ -34,7 +34,9 @@ import {
     SET_ROUND_CURRENT_USERS,
     SET_LAYER_TIME_OFFSET,
     SET_LAYER_PERCENT_OFFSET,
-    UPDATE_LAYER
+    UPDATE_LAYER,
+    SET_USER_PATTERN_SEQUENCE,
+    SET_IS_PLAYING_SEQUENCE
 } from "../actionTypes";
 import update from 'immutability-helper';
 import _ from 'lodash'
@@ -75,7 +77,6 @@ export default function (state = initialState, action) {
             let layersUpdate = {}
             for (let i = 0; i < layers.length; i++) {
                 layersUpdate[i] = {
-
                     $merge: layers[i]
                 }
             }
@@ -297,6 +298,18 @@ export default function (state = initialState, action) {
                 }
             })
         }
+        case SET_USER_PATTERN_SEQUENCE: {
+            const { userId, data } = action.payload;
+            return update(state, {
+                userPatterns: {
+                    [userId]: {
+                        sequence: {
+                            $set: data
+                        }
+                    }
+                }
+            })
+        }
         case SET_LAYER_GAIN: {
             const { id, value } = action.payload;
             const layerIndex = _.findIndex(state.layers, { id })
@@ -443,6 +456,27 @@ export default function (state = initialState, action) {
             return update(state, {
                 currentUsers: {
                     $set: value
+                }
+            })
+        }
+        case SET_IS_PLAYING_SEQUENCE: {
+            const { userId, value } = action.payload;
+            /*console.log('SET_IS_PLAYING_SEQUENCE', userId, value, update(state, {
+                userPatterns: {
+                    [userId]: {
+                        isPlayingSequence: {
+                            $set: value
+                        }
+                    }
+                }
+            }));*/
+            return update(state, {
+                userPatterns: {
+                    [userId]: {
+                        isPlayingSequence: {
+                            $set: value
+                        }
+                    }
                 }
             })
         }

@@ -398,6 +398,7 @@ class Firebase {
     }
 
     saveUserPatterns = async (roundId, userId, userPatterns) => {
+        console.log('saveUserPatterns()', roundId, userId, userPatterns);
         let userPatternsClone = _.cloneDeep(userPatterns)
         return new Promise(async (resolve, reject) => {
             try {
