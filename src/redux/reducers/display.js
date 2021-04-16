@@ -11,7 +11,9 @@ import {
     SET_IS_SHOWING_SHARE_DIALOG,
     SET_DISABLE_KEY_LISTENER,
     SET_SELECTED_ROUND_ID,
-    SET_IS_SHOWING_ORIENTATION_DIALOG
+    SET_IS_SHOWING_ORIENTATION_DIALOG,
+    SET_IS_RECORDING_SEQUENCE,
+    SET_CURRENT_SEQUENCE_PATTERN
 } from "../actionTypes";
 import update from 'immutability-helper';
 
@@ -26,7 +28,9 @@ const initialState = {
     isShowingShareDialog: false,
     disableKeyListener: false,
     selectedRoundId: null,
-    isShowingOrientationDialog: false
+    isShowingOrientationDialog: false,
+    isRecordingSequence: false,
+    currentSequencePattern: null
 };
 
 export default function (state = initialState, action) {
@@ -91,6 +95,17 @@ export default function (state = initialState, action) {
                 isShowingOrientationDialog: { $set: action.payload.value }
             })
         }
+        case SET_IS_RECORDING_SEQUENCE: {
+            return update(state, {
+                isRecordingSequence: { $set: action.payload.value }
+            })
+        }
+        case SET_CURRENT_SEQUENCE_PATTERN: {
+            return update(state, {
+                currentSequencePattern: { $set: action.payload.value }
+            })
+        }
+
         default:
             return state;
     }

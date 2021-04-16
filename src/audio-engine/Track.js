@@ -53,7 +53,7 @@ export default class Track {
             }
             this.automation = new Automation(this.trackParameters.automationFxId, this.userId)
         }
-        this.calculatePart(this.trackParameters)
+        this.calculatePart(this.trackParameters, this.userPatterns)
     }
     setFxOrder (updatedFxOrders) {
         /* this.disconnectAudioChain()
@@ -63,9 +63,10 @@ export default class Track {
          this.sortedFx = _.sortBy(this.sortedFx, 'order')
          this.buildAudioChain()*/
     }
-    load (trackParameters) {
+    load (trackParameters, userPatterns) {
         this.trackParameters = trackParameters
-        this.calculatePart(trackParameters)
+        this.userPatterns = userPatterns
+        this.calculatePart(trackParameters, userPatterns)
 
     }
     async createFX (fxList) {
@@ -179,22 +180,28 @@ export default class Track {
             }
         }
     }
-    calculatePart (layer) {
+    calculatePart (layer, userPatterns) {
+        //console.log('Track::calculatePart()', layer, userPatterns);
         this.trackParameters = layer
-        if (!_.isNil(layer)) {
-            if (this.type === Track.TRACK_TYPE_AUTOMATION) {
-                this.automation.clearPart()
-                this.automation.loadSteps(layer.steps)
-            } else {
-                if (_.isNil(this.instrument) || _.isNil(layer)) {
-                    return
+        if (!_.isNil(userPatterns)) {
+            // if (!userPatterns.isPlayingSequence) {
+            if (!_.isNil(layer)) {
+                if (this.type === Track.TRACK_TYPE_AUTOMATION) {
+                    this.automation.clearPart()
+                    this.automation.loadSteps(layer.steps)
+                } else {
+                    if (_.isNil(this.instrument) || _.isNil(layer)) {
+                        return
+                    }
+                    this.instrument.clearPart()
+                    this.notes = this.convertStepsToNotes(layer.steps, layer.percentOffset, layer.timeOffset)
+                    _.sortBy(this.notes, 'time')
+                    this.instrument.loadPart(this.notes, 1)
                 }
-                this.instrument.clearPart()
-                this.notes = this.convertStepsToNotes(layer.steps, layer.percentOffset, layer.timeOffset)
-                _.sortBy(this.notes, 'time')
-                this.instrument.loadPart(this.notes, false)
-
             }
+            /*   } else {
+                   console.log('calculatePart sequence');
+               }*/
         }
     }
     convertStepsToNotes (steps, percentOffset, timeOffset) {
@@ -260,7 +267,7 @@ export default class Track {
             // console.log('instrument created')
             _this.buildAudioChain()
             if (!_.isNil(_this.notes)) {
-                _this.instrument.loadPart(_this.notes, false)
+                _this.instrument.loadPart(_this.notes, 1)
             }
             // _this.calculatePart()
             //_this.instrument.setVolume(_this.channel.volume.value)
@@ -277,7 +284,7 @@ export default class Track {
         } else {
             this.createAutomation(fxId, this.userId)
         }
-        this.calculatePart(this.trackParameters)
+        this.calculatePart(this.trackParameters, this.userPatterns)
     }
     createAutomation (fxId, userId) {
         this.automation = new Automation(fxId, userId)

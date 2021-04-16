@@ -33,7 +33,7 @@ export const getRandomColor = () => {
 }
 export const changeLayerLength = (layer, newLength) => {
     const oldLength = layer.steps.length;
-    let difference = newLength - oldLength;
+    //let difference = newLength - oldLength;
 
     let newSteps = []
     for (let i = 0; i < newLength; i++) {
