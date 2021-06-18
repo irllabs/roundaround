@@ -18,11 +18,9 @@ Reference:
 - Another simple implementation: https://github.com/NYUMusEdLab/Accessible-Groove-Pizza
 
 ## Musical Concepts
-Rounds (aka RoundAround) is a Step Sequencer:
-![Step Sequencers: Traditional (Linear) and Radial Metaphors](/docs/images/RoundAround_StepSequencers.jpeg)
+Rounds (aka RoundAround) is a Step Sequencer.
 
 Rounds gives names a number of musical/technical concepts; understanding these terms is critical to effective communication about the development of rounds:
-
 
 - `Round`: A collection of "Layers"; a Round is visualized as multiple concentric circles, each with steps that have an active/inactive state, a velocity, a pitch and a probability; note that "pitch" is currently not exposed in Rounds.
 - `Project`: The backend/Firebase data concept for how information for a `Round` is stored; a `Project` consists of a "Round" (the `layers` it includes, the `sampler instruments` associated with each `layer` and the rythmic `pattern` assigned to the layer), the `User` that created it
@@ -39,8 +37,6 @@ Rounds gives names a number of musical/technical concepts; understanding these t
 - `Step Interaction`: The occurence of a user interaction with a step (i.e. clicking/dragging).  In a multi-person session, user-interactions are visualized for all users to that all players know what other players are doing
 - `Session`: a collaborative "Session" where multiple users are interacting with a complex "round".  A "Session" is created when a user "Shares" a round and another user joins.
 
-## Data Concepts
-![Key Data Concepts for RoundAround](/docs/images/RoundAround_Concepts.jpeg)
 
 
 ## Local Development
