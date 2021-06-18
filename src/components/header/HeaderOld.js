@@ -14,7 +14,7 @@ import { useLocation } from 'react-router-dom'
 import { setUser, setIsShowingSignInDialog, setRedirectAfterSignIn, setRounds, setUserDisplayName, setSignUpDisplayName, setIsShowingShareDialog } from '../../redux/actions'
 import _ from 'lodash'
 import HeaderAvatar from './HeaderAvatar'
-import JitsiComponent from '../play/JitsiComponent';
+import AudioChatComponent from '../play/AudioChatComponent';
 import ProjectName from './ProjectName'
 import HeaderMenu from './HeaderMenu';
 import { FirebaseContext } from '../../firebase';
@@ -150,7 +150,7 @@ function Header ({ user, users, round, setUser, setIsShowingSignInDialog, redire
                                 ))
                             }
                         </Box>
-                        <JitsiComponent />
+                        <AudioChatComponent />
                         <div>
                             <Button className={classes.rightSideChild} onClick={onShareClick} variant="contained" color="secondary" disableElevation startIcon={<ShareIcon />}>Share</Button>
                         </div>

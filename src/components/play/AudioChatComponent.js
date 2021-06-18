@@ -4,7 +4,6 @@ import { FirebaseContext } from '../../firebase';
 import PropTypes from 'prop-types';
 import { withStyles } from '@material-ui/styles';
 import IconButton from '@material-ui/core/IconButton';
-import CircularProgress from '@material-ui/core/CircularProgress';
 import MicIcon from '@material-ui/icons/Mic';
 import MicOffIcon from '@material-ui/icons/MicOff';
 import CallIcon from '@material-ui/icons/Call';
@@ -30,82 +29,48 @@ const styles = theme => ({
     }
 })
 
-class JitsiComponent extends Component {
+class AudioChatComponent extends Component {
     static contextType = FirebaseContext;
     constructor (props) {
         super(props);
         this.state = {
             isEnabled: false,
-            isConnecting: false
+            micIsEnabled: true
         }
         this.join = this.join.bind(this)
         this.leave = this.leave.bind(this)
         this.onMicClick = this.onMicClick.bind(this)
+        this.onConnected = this.onConnected.bind(this);
+
+        document.body.addEventListener('connected', this.onConnected, false);
     }
 
     async join () {
         this.setState({
-            isEnabled: true,
-            isConnecting: true,
-            micIsEnabled: true
-        })
-
-        const roomName = this.props.roomName
-        const tokenResult = await this.context.getJitsiToken(this.props.user.id, '', '', '')
-        console.log('jitsi token', tokenResult);
-        const jwt = tokenResult.data.token;
-
-        // eslint-disable-next-line no-undef
-        this.api = new JitsiMeetExternalAPI("8x8.vc", {
-            roomName: "vpaas-magic-cookie-ed842ad0fbe8446fbfeb14c7580a7f71/" + roomName,
-            width: 600,
-            height: 400,
-            userInfo: {
-                email: 'john.doe@company.com',
-                displayName: 'Qwe'
-            },
-            configOverwrite: {
-                prejoinPageEnabled: false,
-                startVideoMuted: true,
-                disableInviteFunctions: true
-            },
-            parentNode: document.querySelector('#jaas-container'),
-            jwt
-        });
-        const _this = this
-        this.api.on('videoConferenceJoined', async (e) => {
-            console.log('videoConferenceJoined', e);
-            let isVideoMuted = await _this.api.isVideoMuted()
-            console.log('isVideoMuted', isVideoMuted);
-            if (!isVideoMuted) {
-                _this.api.executeCommand('toggleVideo');
-
-                _this.setState({
-                    isConnecting: false
-                })
-
-            }
+            isEnabled: true
         })
     }
 
     leave () {
         this.setState({
-            isEnabled: false,
-            isConnecting: false
+            isEnabled: false
         })
-        this.api.executeCommand('hangup');
-        this.api.dispose()
     }
 
     async onMicClick () {
-        let audioIsMuted = await this.api.isAudioMuted()
-        this.api.executeCommand('toggleAudio');
-        audioIsMuted = !audioIsMuted
-        this.setState({
-            micIsEnabled: !audioIsMuted
+        this.setState((prevState) => {
+            window.NAF.connection.adapter.enableMicrophone(!prevState.micIsEnabled);
+
+            return {
+                ...prevState,
+                micIsEnabled: !prevState.micIsEnabled
+            }
         })
     }
 
+    onConnected() {
+        window.NAF.connection.adapter.enableMicrophone(this.state.micIsEnabled);
+    }
 
     render () {
         const { classes } = this.props;
@@ -119,13 +84,7 @@ class JitsiComponent extends Component {
 
                 }
                 {
-                    (this.state.isEnabled && this.state.isConnecting) &&
-                    <IconButton className={classes.micButton}>
-                        <CircularProgress size={24} />
-                    </IconButton>
-                }
-                {
-                    (this.state.isEnabled && !this.state.isConnecting) &&
+                    (this.state.isEnabled) &&
                     <IconButton className={classes.micButtonOn} onClick={this.leave}>
                         <CallEndIcon />
                     </IconButton>
@@ -135,7 +94,6 @@ class JitsiComponent extends Component {
                     <IconButton className={classes.micButton} onClick={this.onMicClick} disabled={!this.state.isEnabled}>
                         <MicIcon />
                     </IconButton>
-
                 }
                 {
                     !this.state.micIsEnabled &&
@@ -144,15 +102,59 @@ class JitsiComponent extends Component {
                     </IconButton>
 
                 }
-                <div className={classes.root}>
-                    <div id="jaas-container" style={{ height: "100%" }}></div>
-                </div >
+
+                {this.state.isEnabled &&
+                <a-scene
+                    embedded
+                    networked-scene={`
+                        serverURL: comms.simplevr.irl.studio;
+                        app: Roundaround;
+                        room: ${this.props.roomName};
+                        audio: true;
+                        adapter: easyrtc;
+                        debug: true;
+                        connectOnLoad: 'true';
+                    `}
+                >
+                    <a-assets>
+                        <template
+                            id='avatar-template'
+                            dangerouslySetInnerHTML={{
+                                __html: '<a-entity networked-audio-source />'
+                            }}
+                        />
+                    </a-assets>
+
+                    <a-entity
+                        id='audio-source-entity'
+                        networked="template:#avatar-template;attachTemplateToLocal:false;"
+                    >
+                    </a-entity>
+
+                    <a-camera
+                        wasd-controls-enabled="false"
+                        look-controls-enabled="true"
+                        fov="65"
+                        animation__zoom-in="
+                            property: zoom;
+                            from: 1;
+                            startEvents: start-zoom-in;
+                            to: 5;"
+                        zoom="1"
+                        near="1"
+                    >
+                        <a-cursor
+                            id="cursor"
+                            animation__scale-out="property: scale; from: 1 1 1; to: .2 .2 .2; startEvents: start-scale-out;"
+                        />
+                    </a-camera>
+                </a-scene>}
             </>
         )
     }
 }
 
-JitsiComponent.propTypes = {
+AudioChatComponent.propTypes = {
     classes: PropTypes.object.isRequired,
 };
 
@@ -170,4 +172,4 @@ export default connect(
     mapStateToProps, {
 
 }
-)(withStyles(styles)(JitsiComponent));
+)(withStyles(styles)(AudioChatComponent));
