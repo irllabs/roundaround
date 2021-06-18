@@ -23,8 +23,7 @@ Reference:
 
 ## Musical Concepts
 
-Rounds (aka RoundAround) is a Step Sequencer:
-![Step Sequencers: Traditional (Linear) and Radial Metaphors](/docs/images/RoundAround_StepSequencers.jpeg)
+Rounds (aka RoundAround) is a Step Sequencer.
 
 Rounds gives names a number of musical/technical concepts; understanding these terms is critical to effective communication about the development of rounds:
 
@@ -45,7 +44,7 @@ Rounds gives names a number of musical/technical concepts; understanding these t
 
 ## Data Concepts
 
-![Key Data Concepts for RoundAround](/docs/images/RoundAround_Concepts.jpeg)
+# ![Key Data Concepts for RoundAround](/docs/images/RoundAround_Concepts.jpeg)
 
 ## Set Node Version
 
