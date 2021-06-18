@@ -20,7 +20,7 @@ Reference:
 ## Musical Concepts
 Rounds (aka RoundAround) is a Step Sequencer.
 
-Rounds gives names a number of musical/technical concepts; understanding these terms is critical to effective communication about the development of rounds:
+Rounds names a number of musical/technical concepts; understanding these terms is critical to effective communication about the development of rounds:
 
 - `Round`: A collection of "Layers"; a Round is visualized as multiple concentric circles, each with steps that have an active/inactive state, a velocity, a pitch and a probability; note that "pitch" is currently not exposed in Rounds.
 - `Project`: The backend/Firebase data concept for how information for a `Round` is stored; a `Project` consists of a "Round" (the `layers` it includes, the `sampler instruments` associated with each `layer` and the rythmic `pattern` assigned to the layer), the `User` that created it
