@@ -193,14 +193,7 @@ class Header extends Component {
 						}
 						{
 							!user &&
-							<Button
-								variant="contained"
-								color="secondary"
-								disableElevation
-								onClick={this.onSignInClick}
-								data-test="button-sign-in-out"
-								className="signed-out"
-							>Sign in</Button>
+							<Button variant="contained" color="secondary" disableElevation onClick={this.onSignInClick}>Sign in</Button>
 						}
 
 					</>
