@@ -11,8 +11,7 @@ import { setIsShowingSignInDialog, setSignUpDisplayName, setUser, setRounds, set
 import { FirebaseContext } from '../../firebase';
 import firebase from "firebase/app";
 import ArrowBackIcon from '@material-ui/icons/ArrowBack';
-import { getRandomColor } from '../../utils/index'
-
+import { getRandomColor, createRound } from '../../utils/index'
 import _ from 'lodash'
 
 const styles = makeStyles({
@@ -161,6 +160,7 @@ const SignInDialog = ({ isShowingSignInDialog, setIsShowingSignInDialog, setSign
         const displayName = displayNameGuestInput.current.querySelectorAll("input")[0].value
         if (!_.isEmpty(displayName)) {
             try {
+                setRedirectAfterSignIn('/rounds')
                 const authResult = await firebaseContext.auth.signInAnonymously()
                 console.log('authResult', authResult);
                 const authUser = authResult.user
