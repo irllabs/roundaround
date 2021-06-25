@@ -12,7 +12,7 @@ const FX = {
     fx: [],
     fxById: {},
     init () {
-        let classes = [Lowpass, Delay, Highpass, Distortion, Bitcrusher, Autowah, Reverb]
+        let classes = [Delay, Distortion, Bitcrusher, Autowah, Reverb, Lowpass, Highpass]
         for (let fxClass of classes) {
             this.fxClasses[fxClass.fxName] = fxClass
         }
