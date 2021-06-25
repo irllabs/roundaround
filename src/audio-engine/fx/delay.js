@@ -13,7 +13,7 @@ export default class Delay extends FXBaseClass {
         this._mix = 0.2
         this._mixBeforeBypass = this._mix
         this.label = 'Tape delay'
-        this._delayTime = '8t';
+        this._delayTime = '24t';
         this._feedback = 0.7
         this.isOn = fxParameters.isOn
     }
