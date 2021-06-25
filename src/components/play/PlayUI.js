@@ -2,7 +2,7 @@ import React, { Component } from 'react';
 import * as _ from 'lodash';
 import { SVG } from '@svgdotjs/svg.js'
 import '@svgdotjs/svg.panzoom.js'
-import { HTML_UI_Params, KEY_MAPPINGS } from '../../utils/constants'
+import { HTML_UI_Params, KEY_MAPPINGS, Layer } from '../../utils/constants'
 import { connect } from "react-redux";
 import AudioEngine from '../../audio-engine/AudioEngine'
 import { getDefaultLayerData } from '../../utils/defaultData';
@@ -247,6 +247,7 @@ class PlayUI extends Component {
             if (!_.isNil(newLayer) && !_.isEqual(layer.isMuted, newLayer.isMuted)) {
                 //  console.log('mute has changed', newLayer.isMuted)
                 AudioEngine.tracksById[newLayer.id].setMute(newLayer.isMuted)
+                this.updateMuteColor(newLayer)
             }
         }
 
@@ -465,7 +466,7 @@ class PlayUI extends Component {
         const layerDiameter = HTML_UI_Params.addNewLayerButtonDiameter + HTML_UI_Params.initialLayerPadding + ((HTML_UI_Params.stepDiameter + HTML_UI_Params.layerPadding + HTML_UI_Params.layerPadding + HTML_UI_Params.stepDiameter) * (order + 1))
         const xOffset = (this.containerWidth / 2) - (layerDiameter / 2)
         const yOffset = (this.containerHeight / 2) - (layerDiameter / 2)
-        const layerGraphic = this.container.circle(layerDiameter, layerDiameter).attr({ fill: 'none' }).stroke({ color: this.userColors[layer.createdBy], width: HTML_UI_Params.layerStrokeMax + 'px', opacity: 0 })
+        const layerGraphic = this.container.circle(layerDiameter, layerDiameter).attr({ fill: 'none' }).stroke({ color: layer.isMuted ? '#474747' : this.userColors[layer.createdBy], width: HTML_UI_Params.layerStrokeMax + 'px', opacity: 0 })
         layerGraphic.x(xOffset)
         layerGraphic.y(yOffset)
         layerGraphic.id = layer.id
@@ -503,7 +504,7 @@ class PlayUI extends Component {
             const x = Math.round(layerDiameter / 2 + radius * Math.cos(angle) - HTML_UI_Params.stepDiameter / 2) + xOffset;
             const y = Math.round(layerDiameter / 2 + radius * Math.sin(angle) - HTML_UI_Params.stepDiameter / 2) + yOffset;
             const stepGraphic = this.container.circle(HTML_UI_Params.stepDiameter)
-            stepGraphic.stroke({ color: this.userColors[layer.createdBy], width: HTML_UI_Params.stepStrokeWidth + 'px', opacity: 0 })
+            stepGraphic.stroke({ color: layer.isMuted ? '#474747' : this.userColors[layer.createdBy], width: HTML_UI_Params.stepStrokeWidth + 'px', opacity: 0 })
             stepGraphic.animate(animateTime).stroke({ opacity: 1 })
             stepGraphic.x(x)
             stepGraphic.y(y)
@@ -539,7 +540,16 @@ class PlayUI extends Component {
         layerGraphic.layerLabel.text(text)
         this.updateLayerLabel(layerGraphic)
     }
-
+    updateMuteColor (layer) {
+        console.log("🚀 this.container", this.container)
+        console.log("🚀 layer", layer)
+        let layerGraphic = _.find(this.layerGraphics, { id: layer.id });
+        layerGraphic.attr({ stroke: layer.isMuted ? '#474747' : this.userColors[layer.createdBy] })
+        for (let step of layer.steps) {
+            const stepGraphic = _.find(this.stepGraphics, { id: step.id })
+            stepGraphic.attr({stroke:layer.isMuted ? '#474747' : this.userColors[layer.createdBy], fill: (layer.isMuted && step.isOn)? '#474747' : !step.isOn ? '#101114' : this.userColors[layer.createdBy] }) 
+        }
+    }
     updateStep (step, showActivityIndicator = false) {
         //  console.log('updateStep', step);
         if (!_.isEmpty(this.stepGraphics) && !_.isNil(step)) {
@@ -563,7 +573,7 @@ class PlayUI extends Component {
             } else {
                 //console.log('updateStep()', step.isOn);
                 if (step.isOn) {
-                    stepGraphic.attr({ fill: _this.userColors[layer.createdBy], 'fill-opacity': step.probability })
+                    stepGraphic.attr({ fill: layer.isMuted ? '#474747' :  _this.userColors[layer.createdBy], 'fill-opacity': step.probability })
                     stepGraphic.transform({
                         scale: numberRange(step.velocity, 0, 1, 0.5, 1)
                     })
@@ -628,6 +638,24 @@ class PlayUI extends Component {
             angle += stepSize
             if (_.isNil(layerGraphic.firstStep)) {
                 layerGraphic.firstStep = stepGraphic
+            }
+            const nodeTransformProperty = stepGraphic.node.getAttribute('transform');
+            if(nodeTransformProperty){
+              let transformValuesArray =   nodeTransformProperty.split('(')[1].split(')')[0].split(',');
+              if(transformValuesArray.length){
+                const scaleValue = (transformValuesArray[0] *1);
+                const layerPadding = Layer.Padding;
+                const scaleDiff = scaleValue - layerPadding;
+                const finalScaleFactor =  layerPadding - scaleDiff;
+
+                const finalX = (x * finalScaleFactor) + ((HTML_UI_Params.stepDiameter/2) * finalScaleFactor);
+                const finalY = (y * finalScaleFactor) + ((HTML_UI_Params.stepDiameter/2) * finalScaleFactor);
+
+                transformValuesArray[4] = `${finalX}`;
+                transformValuesArray[5] = `${finalY}`;
+
+                stepGraphic.node.setAttribute('transform', `matrix(${transformValuesArray.join(',')})`);
+              }
             }
         }
         layerGraphic.labelYOffset = 32 * (anglePercentOffset + angleTimeOffset)
