@@ -48,6 +48,7 @@ Rounds names a number of musical/technical concepts; understanding these terms i
 -  `yarn build`
 -  `firebase deploy --only hosting:production`
 -  `firebase deploy --only hosting:stage`
+-  `firebase deploy --only hosting:dev`
 
 ## Deploy functions (generates Jitsi tokens)
 - Make sure you have the jaasauth.pk private key file in the root of the functions folder (not kept in git)
