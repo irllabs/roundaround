@@ -59,7 +59,7 @@ Rounds names a number of musical/technical concepts; understanding these terms i
 
 ## Importing Soundfonts
 
-- Soundfonts can be converted to a Javascript readble format using a script located in scrips/soundfonts. Soundfonts need to be in SFZ format, this is a file format that does not contain the actual samples, they reside in a folder called samples. The script will convert all of the SFZs in the specified folder to a single JS file. An example folder of Snares is located in the soundfonts folder. The script takes two parameters, path to input folder and output file name. To convert the example 'Snares' folder run the following in the scripts/soundfonts folder:
+Soundfonts can be converted to a Javascript readble format using a script located in scrips/soundfonts. Soundfonts need to be in SFZ format, this is a file format that does not contain the actual samples, they reside in a folder called samples. The script will convert all of the SFZs in the specified folder to a single JS file. An example folder of Snares is located in the soundfonts folder. The script takes two parameters, path to input folder and output file name. To convert the example 'Snares' folder run the following in the scripts/soundfonts folder:
 
 - `yarn` (to install dependencies)
 - `node index.js snares ./Snares`
@@ -72,11 +72,11 @@ Rounds names a number of musical/technical concepts; understanding these terms i
 
 ## Importing MIDI
 
-The following are notes on implementing a MIDI import feature. It assumes that the user wishes to import a midi file which is 1 bar long, containing one or more tracks, and that the notes of each track should be mapped to an individual layer in the round.
+The following are notes on implementing a MIDI import feature. It assumes that the user wishes to import a midi file which is 1 bar long, containing one or more tracks, that each track should be mapped to an individual layer in the round, and that each note in the track should be mapped to a step in the layer.
 
 - Once the user has selected a local MIDI file, it can be converted to a JS object using the following library: https://github.com/Tonejs/Midi
 - It would probably be a good idea to quantize each note in the notes array, the quantize value should perhaps be up to the user
 - You can then loop through each track in the MIDI JS object and create a layer in the round for each track (see "onAddLayerClick" function in PlayUI.js)
-- The number of steps the layer should have can be calculated based on the shortest time interval between two notes in the note array as well as their timings. To change the number of steps in a layer dispatch a "SET_LAYER_STEPS" action (see components/play/layer-settings/LayerNumberOfSteps.js)
+- The number of steps the layer should have can be calculated based on the timings and duration of the notes in the note array. To change the number of steps in a layer dispatch a "SET_LAYER_STEPS" action (see components/play/layer-settings/LayerNumberOfSteps.js)
 - You can then loop through each of the steps and toggle them on if a note exists in the note array at the particular step time and dispatch a "TOGGLE_STEP" action
 - Note that timing in midi files is in "ticks", with the resolution set in the header of the JSON file as PPQ (Parts Per Quarter note). So for example with a PPQ of 192, for a layer with 4 steps you would be looking for notes with times of 0, 192, 384 & 568.
