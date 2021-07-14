@@ -69,3 +69,14 @@ Rounds names a number of musical/technical concepts; understanding these terms i
 - Copy the samples folder in the Snares folder to 'public/samples/Snares'
 - Create an instrument in 'src/audio-engine/instruments/Snares.js' (just copy an existing one and rename accordingly)
 - Imported the instrument in to 'src/audio-engine/Instrument.js'
+
+## Importing MIDI
+
+The following are notes on implementing a MIDI import feature. It assumes that the user wishes to import a midi file which is 1 bar long, containing one or more tracks, and that the notes of each track should be mapped to an individual layer in the round.
+
+- Once the user has selected a local MIDI file, it can be converted to a JS object using the following library: https://github.com/Tonejs/Midi
+- It would probably be a good idea to quantize each note in the notes array, the quantize value should perhaps be up to the user
+- You can then loop through each track in the MIDI JS object and create a layer in the round for each track (see "onAddLayerClick" function in PlayUI.js)
+- The number of steps the layer should have can be calculated based on the shortest time interval between two notes in the note array as well as their timings. To change the number of steps in a layer dispatch a "SET_LAYER_STEPS" action (see components/play/layer-settings/LayerNumberOfSteps.js)
+- You can then loop through each of the steps and toggle them on if a note exists in the note array at the particular step time and dispatch a "TOGGLE_STEP" action
+- Note that timing in midi files is in "ticks", with the resolution set in the header of the JSON file as PPQ (Parts Per Quarter note). So for example with a PPQ of 192, for a layer with 4 steps you would be looking for notes with times of 0, 192, 384 & 568.
