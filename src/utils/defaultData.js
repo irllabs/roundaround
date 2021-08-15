@@ -139,12 +139,17 @@ export const getDefaultUserPatterns = (id) => {
     let userPattern = {
         id,
         isQueuing: '',
-        patterns: []
+        patterns: [],
+        sequence: getDefaultUserPatternSequence(),
+        isPlayingSequence: false
     }
-    for (let i = 0; i < 5; i++) {
+    for (let i = 0; i < 8; i++) {
         userPattern.patterns[i] = getDefaultUserPattern(i)
     }
     return userPattern
+}
+export const getDefaultUserPatternSequence = () => {
+    return [false, false, false, false, false, false, false, false]
 }
 export const getDefaultUserPattern = (order) => {
     return {

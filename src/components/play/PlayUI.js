@@ -6,14 +6,14 @@ import { HTML_UI_Params, KEY_MAPPINGS } from '../../utils/constants'
 import { connect } from "react-redux";
 import AudioEngine from '../../audio-engine/AudioEngine'
 import { getDefaultLayerData } from '../../utils/defaultData';
-import { TOGGLE_STEP, ADD_LAYER, SET_SELECTED_LAYER_ID, SET_IS_SHOWING_LAYER_SETTINGS, SET_IS_PLAYING, UPDATE_STEP, SET_IS_SHOWING_ORIENTATION_DIALOG } from '../../redux/actionTypes'
+import { TOGGLE_STEP, ADD_LAYER, SET_SELECTED_LAYER_ID, SET_IS_SHOWING_LAYER_SETTINGS, SET_IS_PLAYING, UPDATE_STEP, SET_IS_SHOWING_ORIENTATION_DIALOG, UPDATE_LAYERS, SET_CURRENT_SEQUENCE_PATTERN } from '../../redux/actionTypes'
 import { FirebaseContext } from '../../firebase/'
 import * as Tone from 'tone';
 import { withStyles } from '@material-ui/styles';
 import PropTypes from 'prop-types';
 import { numberRange } from '../../utils/index'
 import Instruments from '../../audio-engine/Instruments'
-
+import { detailedDiff } from 'deep-object-diff';
 const styles = theme => ({
     button: {
         cursor: 'pointer'
@@ -41,6 +41,7 @@ class PlayUI extends Component {
         this.onKeypress = this.onKeypress.bind(this)
         this.onOutsideClick = this.onOutsideClick.bind(this)
         this.stepModalStepUpdateThrottled = _.throttle(this.stepModalStepUpdate.bind(this), 300)
+        this.sequencerParts = {}
     }
 
     async componentDidMount () {
@@ -87,18 +88,53 @@ class PlayUI extends Component {
     }
 
     async componentDidUpdate () {
-        // console.log('componentDidUpdate()', this.props.round)
+        console.log('componentDidUpdate()', this.round, this.props.round)
+        console.time('componentDidUpdate')
 
-        // Calculate what's changed so we only redraw if necessary
-        let redraw = false
-        const _this = this
-
+        // whole round has changed
         if (this.round.id !== this.props.round.id) {
-            // whole round has changed
             this.round = _.cloneDeep(this.props.round)
             AudioEngine.load(this.props.round)
             this.draw()
             return
+        }
+
+        let diff = detailedDiff(this.round, this.props.round)
+        console.log('diff', diff);
+
+        let redraw = false
+        let shouldRecalculateParts = false
+        const _this = this
+
+        // remove layer
+        for (let layer of this.round.layers) {
+            let newLayer = _.find(this.props.round.layers, { id: layer.id })
+            if (_.isNil(newLayer)) {
+                AudioEngine.removeTrack(layer.id)
+                redraw = true
+            }
+        }
+
+        // sequence update
+        if (!_.isNil(diff.updated.userPatterns)) {
+            for (let [userPatternsId, userPatterns] of Object.entries(diff.updated.userPatterns)) {
+                if (!_.isNil(userPatterns.isPlayingSequence)) {
+                    if (userPatterns.isPlayingSequence) {
+                        console.log('isPlayingSequence turned on', userPatterns, this.props.round.userPatterns[userPatternsId]);
+                        const newUserPatterns = this.props.round.userPatterns[userPatternsId]
+                        this.startSequence(newUserPatterns)
+                    } else {
+                        console.log('isPlayingSequence turned off');
+                        this.stopSequence(userPatternsId)
+                    }
+                }
+            }
+        }
+
+        // step updates
+        if (!_.isNil(diff.updated.layers)) {
+            shouldRecalculateParts = true
+            redraw = true
         }
 
         if (this.round.bpm !== this.props.round.bpm) {
@@ -115,102 +151,15 @@ class PlayUI extends Component {
             redraw = true
         }
 
-        // Edit all interactions changed
-        if (this.editAllLayers !== this.props.editAllLayers) {
-            this.editAllLayers = this.props.editAllLayers
-            this.removeAllStepEventListeners()
-            for (let layerGraphic of this.layerGraphics) {
-                if (this.editAllLayers) {
-                    layerGraphic.isAllowedInteraction = true
-                } else {
-                    //  console.log('layer', _.find(this.props.round.layers, { id: layerGraphic.id }));
-                    const layer = _.find(this.props.round.layers, { id: layerGraphic.id })
-                    if (!_.isNil(layer)) {
-                        layerGraphic.isAllowedInteraction = layer.createdBy === this.props.user.id
-                    }
-                }
-                this.addLayerEventListeners(layerGraphic)
-            }
-            for (let stepGraphic of this.stepGraphics) {
-                if (this.editAllLayers) {
-                    stepGraphic.isAllowedInteraction = true
-                } else {
-                    stepGraphic.isAllowedInteraction = this.stepLayerDictionary[stepGraphic.id].createdBy === this.props.user.id
-                }
-                this.addStepEventListeners(stepGraphic)
-            }
-        }
-
-        if (!this.isOn && this.props.isOn && !_.isNil(this.positionLine)) {
-            //console.log('playing timeline');
-            // adding 200ms delay to compensate for starting audio with delay to reduce audio glitches. Todo: sync this better with the transport
-            _.delay(() => {
-                this.positionLine.timeline().play()
-                this.isOn = true
-            }, 200)
-        } else if (this.isOn && !this.props.isOn && !_.isNil(this.positionLine)) {
-            //console.log('pausing timeline');
-            _.delay(() => {
-                this.positionLine.timeline().stop()
-                this.isOn = false
-            }, 200)
-        }
-
-        //if (this.round.layers.length < this.props.round.layers.length) {
-        // check for one or more layers added
-        this.cacheStepLayers()
-        for (let layer of this.props.round.layers) {
-            let oldLayer = _.find(this.round.layers, { id: layer.id })
-            if (_.isNil(oldLayer)) {
+        // add layer
+        if (!_.isNil(diff.added.layers)) {
+            for (let [, layer] of Object.entries(diff.added.layers)) {
                 await AudioEngine.createTrack(layer)
                 redraw = true
             }
         }
-        // } else if (this.round.layers.length > this.props.round.layers.length) {
-        // check for one or more layers removed
-        // this.cacheStepLayers()
-        for (let layer of this.round.layers) {
-            let newLayer = _.find(this.props.round.layers, { id: layer.id })
-            if (_.isNil(newLayer)) {
-                AudioEngine.removeTrack(layer.id)
-                redraw = true
-            }
-        }
-        //    }
 
-        // check for number of steps per layer changed
-        let previousSteps = []
-        for (let i = 0; i < this.round.layers.length; i++) {
-            const layer = this.round.layers[i]
-            previousSteps.push(...layer.steps)
-            const newLayer = _.find(this.props.round.layers, { id: layer.id })
-            if (!_.isNil(newLayer)) {
-                if (newLayer.steps.length !== layer.steps.length) {
-                    // number of steps has changed
-                    redraw = true
-                    AudioEngine.recalculateParts(this.props.round)
-                }
-            }
-        }
 
-        // Check if an individual step has changed
-        let newSteps = []
-        for (let layer of this.props.round.layers) {
-            for (let newStep of layer.steps) {
-                newSteps.push(newStep)
-            }
-
-        }
-        for (let previousStep of previousSteps) {
-            let newStep = _.find(newSteps, { id: previousStep.id })
-            if (!_.isNil(newStep)) {
-                if (!_.isEqual(previousStep, newStep)) {
-                    //   console.log('found changed step', previousStep, newStep);
-                    this.updateStep(newStep, true)
-                    AudioEngine.recalculateParts(this.props.round)
-                }
-            }
-        }
 
         // Check for layer type or instrument changes
         for (let layer of this.round.layers) {
@@ -254,17 +203,22 @@ class PlayUI extends Component {
         for (let layer of this.round.layers) {
             let newLayer = _.find(this.props.round.layers, { id: layer.id })
             if (!_.isNil(newLayer) && !_.isEqual(layer.timeOffset, newLayer.timeOffset)) {
-                // console.log('timeOffset has changed')
                 AudioEngine.recalculateParts(this.props.round)
                 this.adjustLayerOffset(newLayer.id, newLayer.percentOffset, newLayer.timeOffset)
             }
             if (!_.isNil(newLayer) && !_.isEqual(layer.percentOffset, newLayer.percentOffset)) {
-                //  console.log('percentOffset has changed')
                 AudioEngine.recalculateParts(this.props.round)
                 this.adjustLayerOffset(newLayer.id, newLayer.percentOffset, newLayer.timeOffset)
             }
         }
 
+
+
+
+
+        if (shouldRecalculateParts) {
+            AudioEngine.recalculateParts(this.props.round)
+        }
         if (redraw) {
             this.clear()
             this.round = _.cloneDeep(this.props.round)
@@ -272,6 +226,205 @@ class PlayUI extends Component {
         } else {
             this.round = _.cloneDeep(this.props.round)
         }
+
+        console.timeEnd('componentDidUpdate')
+        /*
+    
+            if (this.round.id !== this.props.round.id) {
+                // whole round has changed
+                this.round = _.cloneDeep(this.props.round)
+                AudioEngine.load(this.props.round)
+                this.draw()
+                return
+            }
+    
+            if (this.round.bpm !== this.props.round.bpm) {
+                this.round.bpm = this.props.round.bpm
+                AudioEngine.setTempo(this.round.bpm)
+                this.reclaculateIndicatorAnimation()
+                this.adjustAllLayerOffsets()
+            }
+    
+            // User profile color changed
+            const userColors = this.getUserColors()
+            if (!_.isEqual(userColors, this.userColors)) {
+                this.userColors = userColors
+                redraw = true
+            }
+    
+            // Edit all interactions changed
+            if (this.editAllLayers !== this.props.editAllLayers) {
+                this.editAllLayers = this.props.editAllLayers
+                this.removeAllStepEventListeners()
+                for (let layerGraphic of this.layerGraphics) {
+                    if (this.editAllLayers) {
+                        layerGraphic.isAllowedInteraction = true
+                    } else {
+                        //  console.log('layer', _.find(this.props.round.layers, { id: layerGraphic.id }));
+                        const layer = _.find(this.props.round.layers, { id: layerGraphic.id })
+                        if (!_.isNil(layer)) {
+                            layerGraphic.isAllowedInteraction = layer.createdBy === this.props.user.id
+                        }
+                    }
+                    this.addLayerEventListeners(layerGraphic)
+                }
+                for (let stepGraphic of this.stepGraphics) {
+                    if (this.editAllLayers) {
+                        stepGraphic.isAllowedInteraction = true
+                    } else {
+                        stepGraphic.isAllowedInteraction = this.stepLayerDictionary[stepGraphic.id].createdBy === this.props.user.id
+                    }
+                    this.addStepEventListeners(stepGraphic)
+                }
+            }
+    
+            if (!this.isOn && this.props.isOn && !_.isNil(this.positionLine)) {
+                //console.log('playing timeline');
+                // adding 200ms delay to compensate for starting audio with delay to reduce audio glitches. Todo: sync this better with the transport
+                _.delay(() => {
+                    this.positionLine.timeline().play()
+                    this.isOn = true
+                }, 200)
+            } else if (this.isOn && !this.props.isOn && !_.isNil(this.positionLine)) {
+                //console.log('pausing timeline');
+                _.delay(() => {
+                    this.positionLine.timeline().stop()
+                    this.isOn = false
+                }, 200)
+            }
+    
+            // check for one or more layers added
+            this.cacheStepLayers()
+            for (let layer of this.props.round.layers) {
+                let oldLayer = _.find(this.round.layers, { id: layer.id })
+                if (_.isNil(oldLayer)) {
+                    await AudioEngine.createTrack(layer)
+                    redraw = true
+                }
+            }
+    
+            for (let layer of this.round.layers) {
+                let newLayer = _.find(this.props.round.layers, { id: layer.id })
+                if (_.isNil(newLayer)) {
+                    AudioEngine.removeTrack(layer.id)
+                    redraw = true
+                }
+            }
+    
+            // check for number of steps per layer changed
+            let previousSteps = []
+            for (let i = 0; i < this.round.layers.length; i++) {
+                const layer = this.round.layers[i]
+                previousSteps.push(...layer.steps)
+                const newLayer = _.find(this.props.round.layers, { id: layer.id })
+                if (!_.isNil(newLayer)) {
+                    if (newLayer.steps.length !== layer.steps.length) {
+                        // number of steps has changed
+                        redraw = true
+                        AudioEngine.recalculateParts(this.props.round)
+                    }
+                }
+            }
+    
+            // Check if an individual step has changed
+            let newSteps = []
+            for (let layer of this.props.round.layers) {
+                for (let newStep of layer.steps) {
+                    newSteps.push(newStep)
+                }
+    
+            }
+            let shouldRecalculateParts = false
+        //    console.timeEnd('componentDidUpdate B3 B')
+            for (let previousStep of previousSteps) {
+            //    console.time('componentDidUpdate B3 C')
+                let newStep = _.find(newSteps, { id: previousStep.id })
+            //    console.timeEnd('componentDidUpdate B3 C')
+                if (!_.isNil(newStep)) {
+                //    console.time('componentDidUpdate B3 D')
+                    //const shouldUpdate = !_.isEqual(previousStep, newStep)
+                    let shouldUpdate = false
+                    if (previousStep.isOn != newStep.isOn) {
+                        shouldUpdate = true
+                    }
+                //    console.timeEnd('componentDidUpdate B3 D')
+                    if (shouldUpdate) {
+                        //   console.log('found changed step', previousStep, newStep);
+                    //    console.time('componentDidUpdate B3 E')
+                        //this.updateStep(newStep, true)
+                    //    console.timeEnd('componentDidUpdate B3 E')
+                    //    console.time('componentDidUpdate B3 F')
+                        shouldRecalculateParts = true
+                        //AudioEngine.recalculateParts(this.props.round)
+                    //    console.timeEnd('componentDidUpdate B3 F')
+                    }
+                }
+            }
+            
+    
+            // Check for layer type or instrument changes
+            for (let layer of this.round.layers) {
+                let newLayer = _.find(this.props.round.layers, { id: layer.id })
+                if (!_.isNil(newLayer) && !_.isEqual(layer.instrument, newLayer.instrument)) {
+                    // instrument has changed
+                    // console.log('instrument has changed', newLayer.instrument);
+                    AudioEngine.tracksById[newLayer.id].setInstrument(newLayer.instrument)
+                    this.updateLayerLabelText(layer.id, newLayer.instrument.sampler)
+                }
+                if (!_.isNil(newLayer) && !_.isEqual(layer.type, newLayer.type)) {
+                    // type has changed
+                    //console.log('layer type has changed');
+                    AudioEngine.tracksById[newLayer.id].setType(newLayer.type, newLayer.automationFxId)
+                }
+                if (!_.isNil(newLayer) && !_.isEqual(layer.automationFxId, newLayer.automationFxId)) {
+                    // automation has changed
+                    //  console.log('layer automation fx id has changed');
+                    AudioEngine.tracksById[newLayer.id].setAutomatedFx(newLayer.automationFxId)
+                }
+            }
+            // Check for gain changes
+            for (let layer of this.round.layers) {
+                let newLayer = _.find(this.props.round.layers, { id: layer.id })
+                if (!_.isNil(newLayer) && !_.isEqual(layer.gain, newLayer.gain)) {
+                    //  console.log('gain has changed', newLayer.gain)
+                    AudioEngine.tracksById[newLayer.id].setVolume(newLayer.gain)
+                }
+            }
+    
+            // Check for mute changes
+            for (let layer of this.round.layers) {
+                let newLayer = _.find(this.props.round.layers, { id: layer.id })
+                if (!_.isNil(newLayer) && !_.isEqual(layer.isMuted, newLayer.isMuted)) {
+                    //  console.log('mute has changed', newLayer.isMuted)
+                    AudioEngine.tracksById[newLayer.id].setMute(newLayer.isMuted)
+                }
+            }
+    
+            // Check for layer time offset changes
+            for (let layer of this.round.layers) {
+                let newLayer = _.find(this.props.round.layers, { id: layer.id })
+                if (!_.isNil(newLayer) && !_.isEqual(layer.timeOffset, newLayer.timeOffset)) {
+                    AudioEngine.recalculateParts(this.props.round)
+                    this.adjustLayerOffset(newLayer.id, newLayer.percentOffset, newLayer.timeOffset)
+                }
+                if (!_.isNil(newLayer) && !_.isEqual(layer.percentOffset, newLayer.percentOffset)) {
+                    AudioEngine.recalculateParts(this.props.round)
+                    this.adjustLayerOffset(newLayer.id, newLayer.percentOffset, newLayer.timeOffset)
+                }
+            }
+    
+            // Check for sequence changes
+            for (let [, userPatterns] of Object.entries(this.round.userPatterns)) {
+                let newUserPatterns = _.find(this.props.round.userPatterns, { id: userPatterns.id })
+                if (!userPatterns.isPlayingSequence && newUserPatterns.isPlayingSequence) {
+                    //console.log('isPlayingSequence turned on');
+                    AudioEngine.recalculateParts(this.props.round)
+                    this.calculateSequence(newUserPatterns)
+                } else {
+                    // console.log('isPlayingSequence turned off');
+                }
+            }
+            */
     }
 
     getStep (id) {
@@ -389,6 +542,8 @@ class PlayUI extends Component {
 
                 }, time)
             }, notes)
+            part.loop = true
+            part.loopEnd = '1:0:0'
             part.start(0)
             _this.toneParts.push(part)
         }
@@ -420,6 +575,156 @@ class PlayUI extends Component {
             notes.push(note)
         }
         return notes
+    }
+
+    startSequence (userPatterns) {
+        console.log('calculating seq', userPatterns);
+        const PPQ = Tone.Transport.PPQ
+        const ticksPerBar = PPQ * 4
+        const notes = []
+        const _this = this
+        let numberOfBars = 0
+
+        for (let i = 0; i < userPatterns.sequence.length; i++) {
+            let id = userPatterns.sequence[i]
+            if (id !== false) {
+
+                let note = {
+                    time: ((i * ticksPerBar) - 32),
+                    id,
+                    order: i
+                }
+                notes.push(note)
+                numberOfBars++
+            }
+        }
+        for (let note of notes) {
+            if (note.time < 0) {
+                note.time += ticksPerBar * numberOfBars
+            }
+            note.time += 'i'
+        }
+        // console.log('loading seq part', notes);
+        // const shouldUpdateGraphics = userPatterns.id === this.props.user.id
+        let part = new Tone.Part(function (time, note) {
+            //console.log('seq note', note);
+            _this.loadPatternPriority(userPatterns.id, note.id, note.order)
+            //  if (shouldUpdateGraphics) {
+            Tone.Draw.schedule(function () {
+                _this.loadPattern(userPatterns.id, note.id, note.order)
+            })
+            // }
+        }, notes)
+        part.loop = true
+        part.loopEnd = numberOfBars + ':0:0'
+        part.start(0)
+        this.sequencerParts[userPatterns.id] = part
+    }
+
+    stopSequence (id) {
+        if (!_.isNil(this.sequencerParts[id])) {
+            this.sequencerParts[id].stop()
+        }
+    }
+
+    loadPatternPriority (userId, id, order) {
+        // console.log('load pattern', id);
+        // console.time('loadPatternPriority')
+        //this.props.dispatch({ type: SET_CURRENT_SEQUENCE_PATTERN, payload: { value: order } })
+        const pattern = _.find(this.props.round.userPatterns[userId].patterns, { id })
+        if (!_.isEmpty(pattern.state)) {
+            // check if we have layers in the round not referenced in the pattern then set all steps in that layer to off
+            for (const existingLayer of this.props.round.layers) {
+                if (_.isNil(_.find(pattern.state.layers, { id: existingLayer.id })) && existingLayer.createdBy === userId) {
+                    let existingLayerClone = _.cloneDeep(existingLayer)
+                    for (const step of existingLayerClone.steps) {
+                        step.isOn = false
+                    }
+                    pattern.state.layers.push(existingLayerClone)
+                }
+            }
+
+            // check we haven't deleted the layer that is referenced in the pattern
+            let layersToDelete = []
+            for (const layer of pattern.state.layers) {
+                const layerExists = _.find(this.props.round.layers, { id: layer.id })
+                if (_.isNil(layerExists)) {
+                    layersToDelete.push(layer)
+                }
+            }
+
+            _.remove(pattern.state.layers, function (n) {
+                return layersToDelete.indexOf(n) > -1
+            })
+            //this.props.updateLayers(pattern.state.layers)
+
+            // console.log('loadPattern updating internal layers', this.round.layers, pattern.state.layers);
+
+            for (let layer of this.round.layers) {
+                let patternLayer = _.find(pattern.state.layers, { id: layer.id })
+                if (!_.isNil(patternLayer)) {
+                    layer.steps = patternLayer.steps
+                }
+            }
+
+            AudioEngine.recalculateParts(this.round)
+            // console.timeEnd('loadPattern')
+
+            // this.props.dispatch({ type: UPDATE_LAYERS, payload: { layers: pattern.state.layers } })
+            // this.props.dispatch({ type: SET_CURRENT_SEQUENCE_PATTERN, payload: { value: order } })
+        }
+
+    }
+
+    loadPattern (userId, id, order) {
+        // console.log('load pattern', id);
+        // console.time('loadPattern')
+        //this.props.dispatch({ type: SET_CURRENT_SEQUENCE_PATTERN, payload: { value: order } })
+        const pattern = _.find(this.props.round.userPatterns[userId].patterns, { id })
+        /*if (!_.isEmpty(pattern.state)) {
+            // check if we have layers in the round not referenced in the pattern then set all steps in that layer to off
+            for (const existingLayer of this.props.round.layers) {
+                if (_.isNil(_.find(pattern.state.layers, { id: existingLayer.id })) && existingLayer.createdBy === this.props.user.id) {
+                    let existingLayerClone = _.cloneDeep(existingLayer)
+                    for (const step of existingLayerClone.steps) {
+                        step.isOn = false
+                    }
+                    pattern.state.layers.push(existingLayerClone)
+                }
+            }
+
+            // check we haven't deleted the layer that is referenced in the pattern
+            let layersToDelete = []
+            for (const layer of pattern.state.layers) {
+                const layerExists = _.find(this.props.round.layers, { id: layer.id })
+                if (_.isNil(layerExists)) {
+                    layersToDelete.push(layer)
+                }
+            }
+
+            _.remove(pattern.state.layers, function (n) {
+                return layersToDelete.indexOf(n) > -1
+            })
+            //this.props.updateLayers(pattern.state.layers)
+
+            //    console.log('loadPattern updating internal layers', this.round.layers, pattern.state.layers);
+
+            // for (let layer of this.round.layers) {
+            //   layer.steps = _.find(pattern.state.layers, { id: layer.id }).steps
+            // }
+
+            //AudioEngine.recalculateParts(this.round)
+            // console.timeEnd('loadPattern')
+
+            this.props.dispatch({ type: UPDATE_LAYERS, payload: { layers: pattern.state.layers } })
+            this.props.dispatch({ type: SET_CURRENT_SEQUENCE_PATTERN, payload: { value: order } })
+        }*/
+
+
+        this.props.dispatch({ type: UPDATE_LAYERS, payload: { layers: this.round.layers } })
+        this.props.dispatch({ type: SET_CURRENT_SEQUENCE_PATTERN, payload: { value: order } })
+        this.clear()
+        this.draw(false)
     }
 
     clear () {
@@ -462,19 +767,26 @@ class PlayUI extends Component {
         // console.log('addLayer', layer);
         let animateTime = shouldAnimate ? 600 : 0
 
-        const layerDiameter = HTML_UI_Params.addNewLayerButtonDiameter + HTML_UI_Params.initialLayerPadding + ((HTML_UI_Params.stepDiameter + HTML_UI_Params.layerPadding + HTML_UI_Params.layerPadding + HTML_UI_Params.stepDiameter) * (order + 1))
+        //const layerDiameter = HTML_UI_Params.addNewLayerButtonDiameter + HTML_UI_Params.initialLayerPadding + ((HTML_UI_Params.stepDiameter + HTML_UI_Params.layerPadding + HTML_UI_Params.layerPadding + HTML_UI_Params.stepDiameter) * (order + 1))
+        const layerDiameter = this.getLayerDiameter(order)
         const xOffset = (this.containerWidth / 2) - (layerDiameter / 2)
         const yOffset = (this.containerHeight / 2) - (layerDiameter / 2)
-        const layerGraphic = this.container.circle(layerDiameter, layerDiameter).attr({ fill: 'none' }).stroke({ color: this.userColors[layer.createdBy], width: HTML_UI_Params.layerStrokeMax + 'px', opacity: 0 })
+        let layerStrokeSize = HTML_UI_Params.layerStrokeMax / HTML_UI_Params.otherUserLayerSizeDivisor
+        if (layer.createdBy === this.props.user.id) {
+            layerStrokeSize = HTML_UI_Params.layerStrokeMax
+        }
+        const layerGraphic = this.container.circle(layerDiameter, layerDiameter).attr({ fill: 'none' }).stroke({ color: this.userColors[layer.createdBy], width: layerStrokeSize + 'px', opacity: 0 })
         layerGraphic.x(xOffset)
         layerGraphic.y(yOffset)
         layerGraphic.id = layer.id
         layerGraphic.order = order
         layerGraphic.isAllowedInteraction = layer.createdBy === this.props.user.id
         if (layer.id === this.selectedLayerId) {
-            layerGraphic.animate().stroke({ opacity: HTML_UI_Params.layerStrokeOpacity * 2 })
+            // layerGraphic.animate().stroke({ opacity: HTML_UI_Params.layerStrokeOpacity * 2 })
+            layerGraphic.stroke({ opacity: HTML_UI_Params.layerStrokeOpacity * 2 })
         } else {
-            layerGraphic.animate(animateTime).stroke({ opacity: HTML_UI_Params.layerStrokeOpacity })
+            //layerGraphic.animate(animateTime).stroke({ opacity: HTML_UI_Params.layerStrokeOpacity })
+            layerGraphic.stroke({ opacity: HTML_UI_Params.layerStrokeOpacity })
         }
         if (layerGraphic.isAllowedInteraction) {
             layerGraphic.addClass(this.props.classes.button)
@@ -486,6 +798,12 @@ class PlayUI extends Component {
 
         // draw steps
         const stepSize = (2 * Math.PI) / layer.steps.length;
+        let stepDiameter = HTML_UI_Params.stepDiameter / HTML_UI_Params.otherUserLayerSizeDivisor
+        let stepStrokeWidth = HTML_UI_Params.stepStrokeWidth / HTML_UI_Params.otherUserLayerSizeDivisor
+        if (layer.createdBy === this.props.user.id) {
+            stepDiameter = HTML_UI_Params.stepDiameter
+            stepStrokeWidth = HTML_UI_Params.stepStrokeWidth
+        }
         const radius = layerDiameter / 2;
         let angle = Math.PI / -2; // start at -90 degrees so first step is at top
         const anglePercentOffset = this.ticksToRadians(this.ticksPerStep(layer.steps.length) * (layer.percentOffset / 100))
@@ -497,14 +815,18 @@ class PlayUI extends Component {
         if (layerLabelString.length > 5) {
             layerLabelString = layerLabelString.substring(0, 5) + '...'
         }
+        if (layer.createdBy !== this.props.user.id) {
+            layerLabelString = ""
+        }
         layerGraphic.layerLabel = this.container.plain(layerLabelString)
         layerGraphic.firstStep = null;
         for (let step of layer.steps) {
-            const x = Math.round(layerDiameter / 2 + radius * Math.cos(angle) - HTML_UI_Params.stepDiameter / 2) + xOffset;
-            const y = Math.round(layerDiameter / 2 + radius * Math.sin(angle) - HTML_UI_Params.stepDiameter / 2) + yOffset;
-            const stepGraphic = this.container.circle(HTML_UI_Params.stepDiameter)
-            stepGraphic.stroke({ color: this.userColors[layer.createdBy], width: HTML_UI_Params.stepStrokeWidth + 'px', opacity: 0 })
-            stepGraphic.animate(animateTime).stroke({ opacity: 1 })
+            const x = Math.round(layerDiameter / 2 + radius * Math.cos(angle) - stepDiameter / 2) + xOffset;
+            const y = Math.round(layerDiameter / 2 + radius * Math.sin(angle) - stepDiameter / 2) + yOffset;
+            const stepGraphic = this.container.circle(stepDiameter)
+            stepGraphic.stroke({ color: this.userColors[layer.createdBy], width: stepStrokeWidth + 'px', opacity: 0 })
+            //stepGraphic.animate(animateTime).stroke({ opacity: 1 })
+            stepGraphic.stroke({ opacity: 1 })
             stepGraphic.x(x)
             stepGraphic.y(y)
             angle += stepSize
@@ -526,6 +848,25 @@ class PlayUI extends Component {
         this.updateLayerLabel(layerGraphic)
 
     }
+
+    getLayerDiameter (order) {
+        console.log('this.props.round.layers', this.props.round.layers);
+        let diameter = HTML_UI_Params.addNewLayerButtonDiameter + HTML_UI_Params.initialLayerPadding
+        for (let i = 0; i < order; i++) {
+            let layer = this.round.layers[i]
+            if (layer.createdBy === this.props.user.id) {
+                diameter += HTML_UI_Params.stepDiameter + HTML_UI_Params.layerPadding + HTML_UI_Params.layerPadding + HTML_UI_Params.stepDiameter
+                //diameter += HTML_UI_Params.stepDiameter + HTML_UI_Params.stepDiameter
+            } else {
+                diameter += ((HTML_UI_Params.stepDiameter + HTML_UI_Params.layerPadding + HTML_UI_Params.layerPadding + HTML_UI_Params.stepDiameter) / HTML_UI_Params.otherUserLayerSizeDivisor)
+                //diameter += ((HTML_UI_Params.stepDiameter + HTML_UI_Params.stepDiameter) / 2)
+            }
+        }
+        console.log('getLayerDiameter(' + order + ')', diameter);
+        return diameter
+        //HTML_UI_Params.addNewLayerButtonDiameter + HTML_UI_Params.initialLayerPadding + ((HTML_UI_Params.stepDiameter + HTML_UI_Params.layerPadding + HTML_UI_Params.layerPadding + HTML_UI_Params.stepDiameter) * (order + 1))
+    }
+
     updateLayerLabel (layerGraphic) {
         layerGraphic.layerLabel.x(layerGraphic.firstStep.x() + HTML_UI_Params.stepDiameter + 8)
         layerGraphic.layerLabel.y(layerGraphic.firstStep.y() + ((HTML_UI_Params.stepDiameter / 2) - 6) + layerGraphic.labelYOffset)
@@ -800,7 +1141,7 @@ class PlayUI extends Component {
                 })
 
                 _this.container.on('mouseup', (e) => {
-                    console.log('_this.container.on(mouseup)');
+                    //console.log('_this.container.on(mouseup)');
                     e.stopPropagation()
                     _this.removeStepSwipeListeners()
                     _this.container.off('mousemove')
@@ -821,7 +1162,7 @@ class PlayUI extends Component {
                 })
             })
             stepGraphic.on('touchstart', (e) => {
-                console.log('touchstart');
+                //  console.log('touchstart');
                 e.stopPropagation()
                 e.preventDefault()
                 _this.swipeToggleActive = false
@@ -829,7 +1170,7 @@ class PlayUI extends Component {
                 _this.touchStartStepGraphic = stepGraphic
                 _this.isCurrentlyOverStepGraphic = stepGraphic
                 stepGraphic.on('touchmove', (e) => {
-                    console.log('touchmove');
+                    //  console.log('touchmove');
                     if (_.isNil(_this.stepMoveTimer) && !_this.swipeToggleActive) {
                         _this.onStepDragMove(stepGraphic, e.touches[0].pageX, e.touches[0].pageY)
                     } else {
@@ -840,17 +1181,17 @@ class PlayUI extends Component {
                     }
                 })
                 stepGraphic.on('touchend', (e) => {
-                    console.log('touchend');
+                    //   console.log('touchend');
                     _this.hideStepModal()
                     if (!_.isNil(_this.stepMoveTimer)) {
                         // timer has not expired, so interpret as a click
-                        console.log('touchend interpreted as click', _this.swipeToggleActive);
+                        //  console.log('touchend interpreted as click', _this.swipeToggleActive);
                         _this.clearShowStepModalTimer()
                         if (!_this.swipeToggleActive) {
-                            console.log('acting on interpreted click');
+                            // console.log('acting on interpreted click');
                             _this.onStepClick(stepGraphic)
                         } else {
-                            console.log('ignoring interpreted click');
+                            //  console.log('ignoring interpreted click');
                         }
 
                     } else {
@@ -893,7 +1234,7 @@ class PlayUI extends Component {
         this.updateStepModal(stepGraphic)
         const _this = this
         this.container.on('mousemove', (e) => {
-            console.log('_this.container.on(mousemove)');
+            //  console.log('_this.container.on(mousemove)');
             e.preventDefault()
             _this.onStepDragMove(stepGraphic, e.pageX, e.pageY)
         })
@@ -901,7 +1242,7 @@ class PlayUI extends Component {
     }
 
     hideStepModal () {
-        console.log('hideStepModal()');
+        // console.log('hideStepModal()');
         this.stepModal.hide()
         this.container.off('mousemove')
     }
@@ -913,14 +1254,14 @@ class PlayUI extends Component {
     }
 
     addStepSwipeListeners (originalStepGraphic) {
-        console.log('addStepSwipeListeners', this);
+        // console.log('addStepSwipeListeners', this);
         this.removeStepSwipeListeners()
         const _this = this
         for (const stepGraphic of this.stepGraphics) {
             if (stepGraphic.layerId === originalStepGraphic.layerId) {
-                console.log('adding mouseover');
+                // console.log('adding mouseover');
                 stepGraphic.on('mouseover', (e) => {
-                    console.log('on stepGraphic mouseover');
+                    //  console.log('on stepGraphic mouseover');
                     _this.onStepClick(stepGraphic)
                 })
             }
@@ -938,7 +1279,7 @@ class PlayUI extends Component {
         const layerGraphic = _.find(this.layerGraphics, { id: stepGraphic.layerId })
         const _this = this
         layerGraphic.on('mouseout', (e) => {
-            console.log('layerGraphic mouseout');
+            //console.log('layerGraphic mouseout');
             _this.swipeToggleActive = false
             _this.removeStepSwipeListeners()
             layerGraphic.off('mouseout')
@@ -1006,132 +1347,6 @@ class PlayUI extends Component {
         }
         AudioEngine.recalculateParts(this.props.round)
     }
-
-
-    /*addStepEventListeners (stepGraphic) {
-        const _this = this
-        if (stepGraphic.isAllowedInteraction) {
-            stepGraphic.on('mousedown', (e) => {
-                e.stopPropagation()
-                e.preventDefault()
-                _this.startStepMoveTimer(stepGraphic, e.pageX, e.pageY)
-
-                _this.container.on('mousemove', (e) => {
-                    e.preventDefault()
-                    if (!this.stepIsPanning) {
-                        _this.onStepDragStart(stepGraphic, e.pageX, e.pageY)
-                    }
-                    _this.onStepDragMove(stepGraphic, e.pageX, e.pageY)
-                })
-                _this.container.on('mouseup', (e) => {
-                    e.stopPropagation()
-                    _this.container.off('mousemove')
-                    _this.container.off('mouseup')
-                    clearTimeout(_this.stepMoveTimer)
-                    console.log('mouseup', this.stepIsPanning);
-                    if (this.stepIsPanning) {
-                        _this.onStepDragEnd(stepGraphic)
-                    } else {
-                        _this.onStepClick(stepGraphic)
-                    }
-                })
-            })
-
-            stepGraphic.on('mouseover', (e) => {
-                _this.highlightStep(stepGraphic)
-            })
-            stepGraphic.on('mouseout', (e) => {
-                _this.unhighlightStep(stepGraphic)
-            })
-            stepGraphic.on('touchstart', (e) => {
-                _this.onStepDragStart(stepGraphic, e.touches[0].pageX, e.touches[0].pageY)
-            })
-
-            stepGraphic.on('touchend', (e) => {
-                _this.onStepDragEnd(stepGraphic)
-            })
-            stepGraphic.on('touchmove', (e) => {
-                _this.onStepDragMove(stepGraphic, e.touches[0].pageX, e.touches[0].pageY)
-            })
-        }
-    }
-
-    startStepMoveTimer (stepGraphic, x, y) {
-        const _this = this
-        this.stepMoveTimer = setTimeout(function () {
-            _this.onStepDragStart(stepGraphic, x, y)
-        }, 1000)
-    }
-
-    onStepDragStart (stepGraphic, x, y) {
-        console.log('onStepDragStart', stepGraphic, x, y,);
-        clearTimeout(this.stepMoveTimer)
-        this.stepIsPanning = true
-        stepGraphic.startX = x
-        stepGraphic.startY = y
-        const step = this.getStep(stepGraphic.id)
-        stepGraphic.isOn = step.isOn
-        stepGraphic.probabilityPanStart = stepGraphic.probability = step.probability;
-        stepGraphic.velocityPanStart = stepGraphic.velocity = step.velocity;
-        if (stepGraphic.isOn) {
-            this.stepModal.show()
-            this.updateStepModal(stepGraphic)
-        }
-    }
-    onStepDragMove (stepGraphic, x, y) {
-        let deltaX = x - stepGraphic.startX
-        let deltaY = y - stepGraphic.startY
-        //console.log('onStepDragMove', this.isZooming, stepGraphic.isOn, deltaX, deltaY, stepGraphic.isPanningX);
-        if (!this.isZooming && stepGraphic.isOn) {
-            if (deltaX < -100) {
-                deltaX = -100
-            }
-            deltaX = deltaX / 100
-            stepGraphic.probability = stepGraphic.probabilityPanStart + deltaX
-            if (stepGraphic.probability < 0) {
-                stepGraphic.probability = 0
-            } else if (stepGraphic.probability > 1) {
-                stepGraphic.probability = 1
-            }
-
-            if (deltaY < -100) {
-                deltaY = -100
-            }
-            deltaY = deltaY / -100
-            //delta += 1
-            //stepGraphic.velocity = delta * stepGraphic.velocityPanStart;
-            stepGraphic.velocity = stepGraphic.velocityPanStart + deltaY;
-            if (stepGraphic.velocity < 0) {
-                stepGraphic.velocity = 0
-            } else if (stepGraphic.velocity > 1) {
-                stepGraphic.velocity = 1
-            }
-
-            stepGraphic.transform({
-                scale: numberRange(stepGraphic.velocity, 0, 1, 0.5, 1)
-            })
-            stepGraphic.fill({ opacity: stepGraphic.probability })
-            this.updateStepModal(stepGraphic)
-        }
-    }
-    onStepDragEnd (stepGraphic) {
-        if (stepGraphic.isOn) {
-            const step = this.getStep(stepGraphic.id)
-            step.probability = stepGraphic.probability
-            step.velocity = stepGraphic.velocity
-            this.props.dispatch({ type: SET_STEP_PROBABILITY, payload: { probability: stepGraphic.probability, layerId: stepGraphic.layerId, stepId: stepGraphic.id, user: this.props.user.id } })
-            this.props.dispatch({ type: SET_STEP_VELOCITY, payload: { velocity: stepGraphic.velocity, layerId: stepGraphic.layerId, stepId: stepGraphic.id, user: this.props.user.id } })
-            this.saveLayer(stepGraphic.layerId)
-            this.stepIsPanning = false
-            //this.context.updateStep(this.round.id, stepGraphic.layerId, stepGraphic.id, step)
-        }
-        AudioEngine.recalculateParts(this.props.round)
-        this.stepIsPanning = false
-        this.stepModal.hide()
-        setTimeout(() => {
-            this.isPanning = false
-        }, 100)
-    }*/
 
     highlightStep (stepGraphic) {
         const layer = _.find(this.props.round.layers, { id: stepGraphic.layerId })

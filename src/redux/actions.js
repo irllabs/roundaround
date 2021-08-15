@@ -28,7 +28,12 @@ import {
     UPDATE_STEP,
     SET_IS_SHOWING_ORIENTATION_DIALOG,
     UPDATE_LAYER,
-    UPDATE_LAYERS
+    UPDATE_LAYERS,
+    SET_IS_RECORDING_SEQUENCE,
+    SET_USER_PATTERN_SEQUENCE,
+    SET_IS_PLAYING_SEQUENCE,
+    SET_CURRENT_SEQUENCE_PATTERN
+
 } from './actionTypes'
 
 // User
@@ -98,6 +103,15 @@ export const setIsShowingOrientationDialog = (value) => ({
     type: SET_IS_SHOWING_ORIENTATION_DIALOG,
     payload: { value }
 })
+export const setIsRecordingSequence = (value) => ({
+    type: SET_IS_RECORDING_SEQUENCE,
+    payload: { value }
+})
+export const setCurrentSequencePattern = (value) => ({
+    type: SET_CURRENT_SEQUENCE_PATTERN,
+    payload: { value }
+})
+
 
 // Rounds
 export const setRounds = (value) => ({
@@ -154,6 +168,15 @@ export const updateStep = (data) => ({
     type: UPDATE_STEP,
     payload: data
 })
+export const setUserPatternSequence = (userId, data) => ({
+    type: SET_USER_PATTERN_SEQUENCE,
+    payload: { userId, data }
+})
+export const setIsPlayingSequence = (userId, value) => ({
+    type: SET_IS_PLAYING_SEQUENCE,
+    payload: { userId, value }
+})
+
 // Layer
 export const setLayerSteps = (id, steps) => ({
     type: SET_LAYER_STEPS,

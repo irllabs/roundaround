@@ -4,15 +4,21 @@ import { connect } from "react-redux";
 import PropTypes from 'prop-types';
 import { withStyles } from '@material-ui/styles';
 import Box from '@material-ui/core/Box';
+
 import PatternThumbControl from './PatternThumbControl'
 import { FirebaseContext } from '../../firebase';
 import {
     saveUserPattern,
     setLayerSteps,
     updateLayer,
-    updateLayers
+    updateLayers,
+    setUserPatternSequence,
+    setIsRecordingSequence,
+    setIsPlayingSequence,
+    setCurrentSequencePattern
 } from "../../redux/actions";
 import ChevronLeftIcon from '@material-ui/icons/ChevronLeft';
+import PatternSequencer from './PatternSequencer';
 
 const styles = theme => ({
     root: {
@@ -67,67 +73,93 @@ class PatternsSidebar extends Component {
     }
     async onLoadPattern (id) {
         console.log('onLoadPattern', id);
-        const pattern = _.find(this.props.round.userPatterns[this.props.user.id].patterns, { id })
-        if (!_.isEmpty(pattern.state)) {
-            console.log('loading state', pattern);
-            console.time('loadPattern')
+        if (!this.props.display.isRecordingSequence) {
+            const pattern = _.find(this.props.round.userPatterns[this.props.user.id].patterns, { id })
+            if (!_.isEmpty(pattern.state)) {
+                console.log('loading state', pattern);
+                console.time('loadPattern')
 
-            this.setState({ selectedPattern: pattern.id, selectedPatternNeedsSaving: false })
+                this.setState({ selectedPattern: pattern.id, selectedPatternNeedsSaving: false })
 
-            // check if we have layers in the round not referenced in the pattern then set all steps in that layer to off
-            for (const existingLayer of this.props.round.layers) {
-                if (_.isNil(_.find(pattern.state.layers, { id: existingLayer.id })) && existingLayer.createdBy === this.props.user.id) {
-                    let existingLayerClone = _.cloneDeep(existingLayer)
-                    for (const step of existingLayerClone.steps) {
-                        step.isOn = false
+                // check if we have layers in the round not referenced in the pattern then set all steps in that layer to off
+                for (const existingLayer of this.props.round.layers) {
+                    if (_.isNil(_.find(pattern.state.layers, { id: existingLayer.id })) && existingLayer.createdBy === this.props.user.id) {
+                        let existingLayerClone = _.cloneDeep(existingLayer)
+                        for (const step of existingLayerClone.steps) {
+                            step.isOn = false
+                        }
+                        pattern.state.layers.push(existingLayerClone)
                     }
-                    pattern.state.layers.push(existingLayerClone)
+                }
+
+
+                // save to store first so UI updates straight away
+                /*for (const layer of pattern.state.layers) {
+                    const layerExists = _.find(this.props.round.layers, { id: layer.id })
+                    if (!_.isNil(layerExists)) {
+                        //  console.log('changing layer state', layer.id, layer);
+                        //this.props.setLayerSteps(layer.id, layer.steps)
+                        this.props.updateLayer(layer.id, layer)
+                    }
+                }*/
+
+                // check we haven't deleted the layer that is referenced in the pattern
+                let layersToDelete = []
+                for (const layer of pattern.state.layers) {
+                    const layerExists = _.find(this.props.round.layers, { id: layer.id })
+                    if (_.isNil(layerExists)) {
+                        layersToDelete.push(layer)
+                    }
+                }
+
+                //console.log('pattern.state.layers', pattern.state.layers)
+
+                _.remove(pattern.state.layers, function (n) {
+                    return layersToDelete.indexOf(n) > -1
+                })
+
+                //console.log('pattern.state.layers after remove', pattern.state.layers)
+
+                // make sure layers are ordered the same
+
+                let orderedLayers = []
+                // this.props.updateLayers(pattern.state.layers)
+                for (const layer of pattern.state.layers) {
+                    let index = _.findIndex(this.props.round.layers, { id: layer.id })
+                    console.log('index', index);
+                    orderedLayers[index] = layer
+                }
+
+                //console.timeEnd('loadPattern')
+
+                console.log('orderedLayers', orderedLayers);
+                this.props.updateLayers(orderedLayers)
+                // console.log('after round update', this.props.round);
+
+                // now save to firebase
+                for (const layer of pattern.state.layers) {
+                    // todo handle edge cases - eg layer been deleted
+                    const layerExists = _.find(this.props.round.layers, { id: layer.id })
+                    if (!_.isNil(layerExists)) {
+                        this.context.updateLayer(this.props.round.id, layer.id, layer)
+                    }
                 }
             }
-
-
-            // save to store first so UI updates straight away
-            /*for (const layer of pattern.state.layers) {
-                const layerExists = _.find(this.props.round.layers, { id: layer.id })
-                if (!_.isNil(layerExists)) {
-                    //  console.log('changing layer state', layer.id, layer);
-                    //this.props.setLayerSteps(layer.id, layer.steps)
-                    this.props.updateLayer(layer.id, layer)
-                }
-            }*/
-
-            // check we haven't deleted the layer that is referenced in the pattern
-            let layersToDelete = []
-            for (const layer of pattern.state.layers) {
-                const layerExists = _.find(this.props.round.layers, { id: layer.id })
-                if (_.isNil(layerExists)) {
-                    layersToDelete.push(layer)
-                }
-            }
-
-            //console.log('pattern.state.layers', pattern.state.layers)
-
-            _.remove(pattern.state.layers, function (n) {
-                return layersToDelete.indexOf(n) > -1
+        } else {
+            let seq = _.cloneDeep(this.props.round.userPatterns[this.props.user.id].sequence)
+            let firstAvailbleSlot = _.findIndex(seq, function (n) {
+                return n === false
             })
-
-            //console.log('pattern.state.layers after remove', pattern.state.layers)
-
-            this.props.updateLayers(pattern.state.layers)
-
-            //console.timeEnd('loadPattern')
-
-
-            // this.props.updateLayers(pattern.state.layers)
-            // console.log('after round update', this.props.round);
-
-            // now save to firebase
-            for (const layer of pattern.state.layers) {
-                // todo handle edge cases - eg layer been deleted
-                const layerExists = _.find(this.props.round.layers, { id: layer.id })
-                if (!_.isNil(layerExists)) {
-                    this.context.updateLayer(this.props.round.id, layer.id, layer)
-                }
+            if (firstAvailbleSlot > -1) {
+                seq[firstAvailbleSlot] = id
+                this.props.setUserPatternSequence(this.props.user.id, seq)
+                this.context.saveUserPatterns(this.props.round.id, this.props.user.id, this.props.round.userPatterns[this.props.user.id])
+            } else {
+                this.props.setIsRecordingSequence(false)
+            }
+            if (firstAvailbleSlot === seq.length - 1) {
+                this.props.setIsRecordingSequence(false)
+                this.props.setIsPlayingSequence(this.props.user.id, true)
             }
         }
     }
@@ -195,6 +227,7 @@ class PatternsSidebar extends Component {
                     {items.map((item, index) => (
                         <PatternThumbControl key={`item-${item.id}`} id={item.id} label={item.label} isFilled={item.isFilled} isSelected={item.id === this.state.selectedPattern} needsSaving={selectedPatternNeedsSaving} loadPattern={this.onLoadPattern} savePattern={this.onSavePattern} />
                     ))}
+                    <PatternSequencer />
                 </div>
                 <Box className={classes.minimizeButton + ' ' + buttonIsMinimizedClass} onClick={this.onMinimizeClick}><ChevronLeftIcon size="small" /></Box>
             </Box>
@@ -222,6 +255,10 @@ export default connect(
     saveUserPattern,
     setLayerSteps,
     updateLayer,
-    updateLayers
+    updateLayers,
+    setUserPatternSequence,
+    setIsRecordingSequence,
+    setIsPlayingSequence,
+    setCurrentSequencePattern
 }
 )(withStyles(styles)(PatternsSidebar));

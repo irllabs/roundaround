@@ -79,7 +79,7 @@ export default class InstrumentBaseClass {
         // to be overidden
     }
     loadPart (
-        notes
+        notes, numberOfBars
     ) {
         let _this = this
         // console.log('instrument loading notes', notes);
@@ -113,6 +113,8 @@ export default class InstrumentBaseClass {
         }, this.notes)
         this.afterPartLoaded()
         // console.log('this.part', this.part);
+        this.part.loop = true
+        this.part.loopEnd = numberOfBars + ":0:0"
         this.part.start(0)
     }
     beforeLoadPart (notes) {

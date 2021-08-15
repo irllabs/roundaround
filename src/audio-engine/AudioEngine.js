@@ -33,7 +33,7 @@ const AudioEngine = {
             }
             for (const layer of round.layers) {
                 const track = await _this.createTrack(layer)
-                await track.load(layer)
+                await track.load(layer, round.userPatterns[layer.createdBy])
             };
             //  console.log('audio engine finsihed loading round');
             resolve()
@@ -51,7 +51,7 @@ const AudioEngine = {
     play () {
         this.startAudioContext()
         Tone.Transport.start("+0.1");
-        Tone.Transport.loop = true
+        Tone.Transport.loop = false
         Tone.Transport.loopEnd = '1:0:0'
     },
     stop () {
@@ -67,18 +67,24 @@ const AudioEngine = {
     },
     // assumes tracks haven't changed, just the steps
     recalculateParts (round, layerId = null) {
-        // console.log('AudioEngine::recalculateParts()');
+        console.log('AudioEngine::recalculateParts()');
+        console.time('AudioEngine::recalculateParts')
         if (!_.isNil(round)) {
             this.round = round
             for (let layer of round.layers) {
                 if (_.isNil(layerId) || layerId === layer.id) {
                     if (!_.isNil(this.tracksById[layer.id])) {
-                        this.tracksById[layer.id].calculatePart(layer)
+                        this.tracksById[layer.id].calculatePart(layer, round.userPatterns[layer.createdBy])
                     }
                 }
             }
         }
+        console.timeEnd('AudioEngine::recalculateParts')
     },
+    getIsPlayingSequence (userId, round) {
+        return round.userPatterns[userId].isPlayingSequence
+    },
+
     createTrack (trackParameters) {
         const userId = trackParameters.createdBy
         const type = trackParameters.type
