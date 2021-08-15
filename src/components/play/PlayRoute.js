@@ -9,7 +9,7 @@ import _ from 'lodash';
 import Loader from 'react-loader-spinner';
 import { connect } from "react-redux";
 import { FirebaseContext } from '../../firebase';
-import { setRound, setUsers, setIsPlaying, setUserBusFxOverride, addUserBus, setRoundCurrentUsers, setRoundBpm, setRoundSwing } from '../../redux/actions'
+import { setRound, setUsers, setIsPlaying, setUserBusFxOverride, addUserBus, setRoundCurrentUsers, setRoundBpm, setRoundSwing, setIsPlayingSequence } from '../../redux/actions'
 import AudioEngine from '../../audio-engine/AudioEngine'
 import Instruments from '../../audio-engine/Instruments'
 import FX from '../../audio-engine/FX'
@@ -46,6 +46,7 @@ class PlayRoute extends Component {
         this.isDisposing = false;
         this.reloadCollaborationLayers = this.reloadCollaborationLayers.bind(this)
         this.startAudioContext = this.startAudioContext.bind(this)
+        this.handleUserPatternsChange = this.handleUserPatternsChange.bind(this)
         this.reloadCollaborationLayersThrottled = _.debounce(this.reloadCollaborationLayers, 1000)
         this.playUIRef = null;
     }
@@ -222,6 +223,27 @@ class PlayRoute extends Component {
                 }
             });
         })
+
+        // UserPatterns
+        this.userPatternsChangeListenerUnsubscribe = this.context.db.collection('rounds').doc(this.props.round.id).collection('userPatterns').onSnapshot((userPatternsCollectionSnapshot) => {
+            //  console.log('### layer change listener fired');
+            userPatternsCollectionSnapshot.docChanges().forEach(change => {
+                if (change.type === 'modified') {
+                    //  console.log('Modified layer: ', change.doc.data());
+                    const userPatterns = change.doc.data()
+                    userPatterns.id = change.doc.id
+                    _this.handleUserPatternsChange(userPatterns)
+                }
+                if (change.type === 'added') {
+                    //   console.log('New layer: ', change.doc.data());
+                    // _this.reloadCollaborationLayersThrottled()
+                }
+                if (change.type === 'removed') {
+                    //    console.log('Removed layer: ', change.doc.data());
+                    // _this.reloadCollaborationLayersThrottled()
+                }
+            });
+        })
     }
 
     removeFirebaseListeners () {
@@ -283,6 +305,11 @@ class PlayRoute extends Component {
         if (fxOrderChanged) {
             AudioEngine.busesByUser[userBus.id].setFxOrder(userBus.fx)
         }
+    }
+
+    handleUserPatternsChange (userPatterns) {
+        console.log('userPatternsChange', userPatterns);
+        this.props.setIsPlayingSequence(userPatterns.id, userPatterns.isPlayingSequence)
     }
 
     // if any of the subcollections for a collaboration user change, trigger a (throttled) reload of all collaboration layers as there could be multiple changes
@@ -379,6 +406,7 @@ export default connect(
         addUserBus,
         setRoundCurrentUsers,
         setRoundBpm,
-        setRoundSwing
+        setRoundSwing,
+        setIsPlayingSequence
     }
 )(withStyles(styles)(PlayRoute));
