@@ -80,7 +80,7 @@ class LandingPageRoute extends Component {
                         </Grid>
                         <Grid item xs={12} sm={12} md={6}>
                             <video width="100%" controls poster="https://firebasestorage.googleapis.com/v0/b/roundaround.appspot.com/o/marketing%2Froundaround-demo.jpg?alt=media&token=07a12429-bc4a-4de2-8f43-031a471367d8">
-                                <source src="https://firebasestorage.googleapis.com/v0/b/roundaround.appspot.com/o/marketing%2Froundaround-demo.mp4?alt=media&token=5e7388f0-3037-4596-b569-ca97bff02c6c" type="video/mp4" />
+                                <source src="https://firebasestorage.googleapis.com/v0/b/roundaround.appspot.com/o/marketing%2Froundaround-demo2.mp4?alt=media&token=9321b383-4ec7-4e48-9f2c-7989977bc025" type="video/mp4" />
                                     Your browser does not support the video tag.
                             </video>
                         </Grid>

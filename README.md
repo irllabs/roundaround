@@ -47,10 +47,9 @@ Rounds names a number of musical/technical concepts; understanding these terms i
 - navigate to [http://localhost:3000](http://localhost:3000)
 
 ## Deploy frontend
-
-- `yarn build`
-- `firebase deploy --only hosting:production`
-- `firebase deploy --only hosting:stage`
+-  `yarn build`
+-  `firebase deploy --only hosting:production`
+-  `firebase deploy --only hosting:stage`
 
 ## Deploy functions (generates Jitsi tokens)
 
