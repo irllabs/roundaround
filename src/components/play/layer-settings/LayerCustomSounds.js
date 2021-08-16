@@ -215,7 +215,7 @@ class LayerCustomSounds extends Component {
                         className={classes.button}
                         variant="contained"
                         color={(this.state.mode === 'countdown' || this.state.mode === 'recording' || this.state.mode === 'upload' || this.state.mode === 'fileUpload') ? 'primary' : 'secondary'}
-                        style={{ color: recordButtonColor }}
+                        style={{ color: recordButtonColor, display: 'none' }}
                         disableElevation
                         startIcon={startIcon}
                         onClick={this.onRecordClick}>
