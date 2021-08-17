@@ -6,7 +6,8 @@ export default class HiHats extends InstrumentBaseClass {
     static label = 'Hi-hat';
     static folder = 'HiHats';
     static articulations = Samples
-    static defaultArticulation = Object.entries(HiHats.articulations)[0][0];
+    static samplesCount = Object.entries(HiHats.articulations).length
+    static defaultArticulation = Object.entries(HiHats.articulations)[Math.floor(Math.random() * HiHats.samplesCount)][0];
     constructor () {
         super(HiHats.instrumentName, HiHats.articulations, HiHats.folder)
         this.parameters.articulation = HiHats.defaultArticulation;

@@ -6,8 +6,9 @@ export default class Kicks extends InstrumentBaseClass {
     static label = 'Kick';
     static folder = 'Kicks';
     static articulations = Samples
-    static defaultArticulation = Object.entries(Kicks.articulations)[0][0];
-    constructor () {
+    static samplesCount = Object.entries(Kicks.articulations).length;
+    static defaultArticulation = Object.entries(Kicks.articulations)[Math.floor(Math.random() * Kicks.samplesCount)][0];
+    constructor() {
         super(Kicks.instrumentName, Kicks.articulations, Kicks.folder)
         this.parameters.articulation = Kicks.defaultArticulation;
     }
