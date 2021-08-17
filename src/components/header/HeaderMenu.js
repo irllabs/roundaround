@@ -9,7 +9,7 @@ import MenuList from '@material-ui/core/MenuList';
 import Divider from '@material-ui/core/Divider';
 import { makeStyles } from '@material-ui/core/styles';
 import IconButton from '@material-ui/core/IconButton';
-import MoreHorizIcon from '@material-ui/icons/MoreHoriz';
+// import MoreHorizIcon from '@material-ui/icons/MoreHoriz';
 import FullscreenIcon from '@material-ui/icons/Fullscreen';
 import TempoSlider from './TempoSlider'
 //import SwingSlider from './SwingSlider'
@@ -92,12 +92,19 @@ export default function HeaderMenu ({ name }) {
         <div className={classes.root}>
 
             <div>
-                <IconButton
+               {/* <IconButton
                     ref={anchorRef}
                     aria-controls={open ? 'menu-list-grow' : undefined}
                     aria-haspopup="true"
                     onClick={handleToggle}>
                     <MoreHorizIcon />
+                </IconButton> */}
+                <IconButton
+                    // ref={anchorRef}
+                    // aria-controls={open ? 'menu-list-grow' : undefined}
+                    // aria-haspopup="true"
+                    onClick={onFullscreenClick}>
+                    <FullscreenIcon fontSize="small" />
                 </IconButton>
 
                 <Popper open={open} anchorEl={anchorRef.current} role={undefined} transition disablePortal>
@@ -116,8 +123,6 @@ export default function HeaderMenu ({ name }) {
                                             <Divider />
                                         </MenuList>
                                         <TempoSlider />
-
-
                                     </Box>
                                 </ClickAwayListener>
                             </Paper>
