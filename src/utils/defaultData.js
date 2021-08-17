@@ -36,7 +36,7 @@ export const getDefaultLayerData = (userId, instrument) => {
             "noteLength": "64n",
             "instrument": "Sampler",
             "sampler": "HiHats",
-            "sample": "quick",
+            "sample": Object.entries(HiHatsSamples)[Math.floor(Math.random() * Object.entries(HiHatsSamples).length)][0],
             ...instrument
         },
         "steps": Array(Layer.DefaultStepsAmount).fill(null).map(() => { return getDefaultStepData() }),
