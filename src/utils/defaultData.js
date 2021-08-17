@@ -1,5 +1,8 @@
 import { Layer } from './constants';
 import { uuid } from './index';
+import HiHatsSamples from '../samples/HiHats';
+import KicksSamples from '../samples/Kicks';
+import SnareSamples from '../samples/Snares';
 //import Track from '../audio-engine/Track'
 import _ from 'lodash'
 
@@ -61,17 +64,17 @@ export const getDefaultRoundData = (userId) => {
             getDefaultLayerData(userId, {
                 "instrument": "Sampler",
                 "sampler": "HiHats",
-                "sample": "quick",
+                "sample": Object.entries(HiHatsSamples)[Math.floor(Math.random() * Object.entries(HiHatsSamples).length)][0],
             }),
             getDefaultLayerData(userId, {
                 "instrument": "Sampler",
                 "sampler": "Snares",
-                "sample": "skintight",
+                "sample": Object.entries(SnareSamples)[Math.floor(Math.random() * Object.entries(SnareSamples).length)][0],
             }),
             getDefaultLayerData(userId, {
                 "instrument": "Sampler",
                 "sampler": "Kicks",
-                "sample": "classic"
+                "sample": Object.entries(KicksSamples)[Math.floor(Math.random() * Object.entries(KicksSamples).length)][0],
             })
         ],
         userBuses: {},
