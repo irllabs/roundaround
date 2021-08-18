@@ -33,7 +33,7 @@ const useStyles = makeStyles((theme) => ({
     }
 }));
 
-export default function HeaderMenu ({ name }) {
+export default function HeaderMenu({ name }) {
     const classes = useStyles();
     const [open, setOpen] = React.useState(false);
     const anchorRef = React.useRef(null);
@@ -50,7 +50,7 @@ export default function HeaderMenu ({ name }) {
         setOpen(false);
     };
 
-    function handleListKeyDown (event) {
+    function handleListKeyDown(event) {
         if (event.key === 'Tab') {
             event.preventDefault();
             setOpen(false);
@@ -62,6 +62,8 @@ export default function HeaderMenu ({ name }) {
         if (_.isNil(document.fullscreenElement)) {
             if (element.requestFullscreen) {
                 element.requestFullscreen();
+            } else if (element.webkitEnterFullScreen) {/* Safari */
+                element.webkitEnterFullScreen();
             } else if (element.webkitRequestFullscreen) { /* Safari */
                 element.webkitRequestFullscreen();
             } else if (element.msRequestFullscreen) { /* IE11 */
@@ -70,6 +72,8 @@ export default function HeaderMenu ({ name }) {
         } else {
             if (document.exitFullscreen) {
                 document.exitFullscreen();
+            } else if (document.webkitCancelFullScreen) {
+                document.webkitCancelFullScreen();
             } else if (document.webkitExitFullscreen) { /* Safari */
                 document.webkitExitFullscreen();
             } else if (document.msExitFullscreen) { /* IE11 */
@@ -92,7 +96,7 @@ export default function HeaderMenu ({ name }) {
         <div className={classes.root}>
 
             <div>
-               {/* <IconButton
+                {/* <IconButton
                     ref={anchorRef}
                     aria-controls={open ? 'menu-list-grow' : undefined}
                     aria-haspopup="true"
