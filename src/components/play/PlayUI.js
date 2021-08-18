@@ -1185,7 +1185,7 @@ class PlayUI extends Component {
                     // _this.removeStepSwipeListeners()
                     _this.container.off('mousemove')
                     _this.container.off('mouseup')
-
+                    _this.hideStepModal()
                     //  console.log('mouseup', '_this.stepMoveTimer', _this.stepMoveTimer, '_this.swipeToggleActive', _this.swipeToggleActive);
                     if (!_.isNil(_this.stepMoveTimer)) {
                         // timer has not expired, so interpret as a click
