@@ -59,17 +59,21 @@ export default function HeaderMenu({ name }) {
 
     const onFullscreenClick = () => {
         var element = document.documentElement;
+        console.log("document.fullscreenElement): ", document.fullscreenElement)
         if (_.isNil(document.fullscreenElement)) {
             if (element.requestFullscreen) {
                 element.requestFullscreen();
             } else if (element.webkitEnterFullScreen) {/* Safari */
                 element.webkitEnterFullScreen();
-            } else if (element.webkitRequestFullscreen) { /* Safari */
+            }
+            else if (element.webkitRequestFullscreen) { /* Safari */
                 element.webkitRequestFullscreen();
             } else if (element.msRequestFullscreen) { /* IE11 */
                 element.msRequestFullscreen();
             }
         } else {
+            console.log("webkitCancelFullScreen: ", document.webkitCancelFullScreen)     
+            console.log("webkitExitFullscreen: ", document.webkitExitFullscreen)        
             if (document.exitFullscreen) {
                 document.exitFullscreen();
             } else if (document.webkitCancelFullScreen) {
@@ -78,6 +82,14 @@ export default function HeaderMenu({ name }) {
                 document.webkitExitFullscreen();
             } else if (document.msExitFullscreen) { /* IE11 */
                 document.msExitFullscreen();
+            }
+        }
+
+        if(document.fullscreenElement) {
+            if (document.webkitCancelFullScreen) {
+                document.webkitCancelFullScreen();
+            } else if (document.webkitExitFullscreen) { /* Safari */
+                document.webkitExitFullscreen();
             }
         }
     }
