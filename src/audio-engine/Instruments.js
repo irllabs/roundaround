@@ -17,7 +17,7 @@ const Instruments = {
             Kicks,
             Snares,
             Perc,
-            Metal,
+            // Metal,
             Custom
         ];
         for (let instrumentClass of classes) {

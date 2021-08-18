@@ -3,6 +3,7 @@ import { uuid } from './index';
 import HiHatsSamples from '../samples/HiHats';
 import KicksSamples from '../samples/Kicks';
 import SnareSamples from '../samples/Snares';
+import PercSamples from '../samples/Perc';
 //import Track from '../audio-engine/Track'
 import _ from 'lodash'
 
@@ -21,6 +22,7 @@ export const getDefaultStepData = () => {
 };
 
 export const getDefaultLayerData = (userId, instrument) => {
+    let randomInstrument = getRandomInStrument();
     const layer = {
         "id": uuid(),
         "createdBy": userId || null,
@@ -34,9 +36,9 @@ export const getDefaultLayerData = (userId, instrument) => {
         "gain": 0,
         "instrument": {
             "noteLength": "64n",
-            "instrument": "Sampler",
-            "sampler": "HiHats",
-            "sample": Object.entries(HiHatsSamples)[Math.floor(Math.random() * Object.entries(HiHatsSamples).length)][0],
+            "instrument": randomInstrument.instrument,
+            "sampler": randomInstrument.sampler,
+            "sample": randomInstrument.sample,
             ...instrument
         },
         "steps": Array(Layer.DefaultStepsAmount).fill(null).map(() => { return getDefaultStepData() }),
@@ -49,6 +51,33 @@ export const getDefaultLayerData = (userId, instrument) => {
     }
     return layer;
 };
+
+const getRandomInStrument = () => {
+    let arr_instruments = [
+        {
+            instrument: "Sampler",
+            sampler: "HiHats",
+            sample: Object.entries(HiHatsSamples)[Math.floor(Math.random() * Object.entries(HiHatsSamples).length)][0],
+        },
+        {
+            instrument: "Sampler",
+            sampler: "Snares",
+            sample: Object.entries(SnareSamples)[Math.floor(Math.random() * Object.entries(SnareSamples).length)][0],
+        },
+        {
+            instrument: "Sampler",
+            sampler: "Kicks",
+            sample: Object.entries(KicksSamples)[Math.floor(Math.random() * Object.entries(KicksSamples).length)][0],
+        },
+        {
+            instrument: "Sampler",
+            sampler: "Perc",
+            sample: Object.entries(PercSamples)[Math.floor(Math.random() * Object.entries(PercSamples).length)][0],
+        }
+    ]
+
+    return arr_instruments[Math.floor(Math.random() * arr_instruments.length)];
+}
 
 export const getDefaultRoundData = (userId) => {
     const round = {

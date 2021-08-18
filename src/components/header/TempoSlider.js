@@ -48,7 +48,7 @@ function TempoSlider({ round, setRoundBpm }) {
         return `${value}`;
     }
     return (
-        <div style={{ transform: 'scale(0.7)', marginLeft: '-60px', marginRight: '-60px', padding: '1rem', display: 'flex', alignItems: 'center', justifyContent: 'center', paddingTop: '40px', paddingBottom: 0 }}>
+        <div style={{ padding: '1rem', display: 'flex', alignItems: 'center', justifyContent: 'center', paddingTop: '40px', paddingBottom: 0 }}>
             <div style={{ marginRight: '1rem' }}>Tempo</div>
             <StyledSlider
                 value={value}
@@ -56,6 +56,7 @@ function TempoSlider({ round, setRoundBpm }) {
                 valueLabelFormat={valuetext}
                 valueLabelDisplay="on"
                 aria-labelledby="continuous-slider"
+                className='tempo-slider'
                 min={50}
                 max={200}
             />

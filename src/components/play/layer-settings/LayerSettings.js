@@ -138,7 +138,7 @@ class LayerSettings extends Component {
             }
             form = (
                 <Box className={classes.root}>
-                    <LayerType selectedLayer={selectedLayer} roundId={this.props.round.id} userId={this.props.user.id} />
+                    {/* <LayerType selectedLayer={selectedLayer} roundId={this.props.round.id} userId={this.props.user.id} /> */}
                     <LayerNumberOfSteps selectedLayer={selectedLayer} roundId={this.props.round.id} user={this.props.user} />
                     <LayerPercentOffset selectedLayer={selectedLayer} roundId={this.props.round.id} user={this.props.user} playUIRef={this.props.playUIRef} />
                     <LayerTimeOffset selectedLayer={selectedLayer} roundId={this.props.round.id} user={this.props.user} playUIRef={this.props.playUIRef} />

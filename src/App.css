@@ -11,3 +11,13 @@ body{
 .App{
     height:100%;
 }
+
+.tempo-slider {
+    width: 210px !important;
+}
+
+@media only screen and (max-width: 991px) {
+    .tempo-slider {
+        width: 140px !important;
+    }
+}
