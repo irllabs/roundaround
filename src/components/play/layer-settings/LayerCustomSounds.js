@@ -231,7 +231,7 @@ class LayerCustomSounds extends Component {
 
                     <Dropzone onDrop={this.onDropFile}>
                         {({ getRootProps, getInputProps }) => (
-                            <section>
+                            <section style={{margin: 'auto'}}>
                                 <div {...getRootProps()}>
                                     <input {...getInputProps()} />
                                     <Button

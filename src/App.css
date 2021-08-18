@@ -21,10 +21,6 @@ body{
     display: none;
 }
 
-.MuiBox-root.MuiBox-root-260.LayerCustomSounds-buttonContainer-254 section {
-    margin: auto;
-}
-
 @media only screen and (max-width: 991px) {
     .tempo-slider {
         width: 140px !important;
