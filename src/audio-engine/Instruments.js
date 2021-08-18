@@ -4,7 +4,7 @@ import HiHats from './instruments/HiHats'
 import Kicks from './instruments/Kicks'
 import Snares from './instruments/Snares'
 import Perc from './instruments/Perc'
-import Metal from './instruments/Metal'
+// import Metal from './instruments/Metal'
 import Custom from './instruments/Custom'
 import CustomSamples from './CustomSamples'
 
