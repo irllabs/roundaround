@@ -201,7 +201,7 @@ class LayerCustomSounds extends Component {
         //console.log('########### render()', this.state.mode);
         const { classes } = this.props;
         let startIcon = this.state.mode === 'recording' ? <StopIcon /> : <MicIcon />
-        let uploadStartIcon = this.state.mode === 'fileUpload' ? '' : <UploadIcon />
+        // let uploadStartIcon = this.state.mode === 'fileUpload' ? '' : <UploadIcon />
         let recordButtonColor = (this.state.mode === 'recording') ? 'red' : 'white'
         if (this.state.mode === 'countdown' || this.state.mode === 'upload' || this.state.mode === 'fileUpload') {
             startIcon = ''
@@ -239,9 +239,11 @@ class LayerCustomSounds extends Component {
 
                                         color="primary"
                                         disableElevation
-                                        startIcon={
-                                            uploadStartIcon
-                                        }>
+                                        // startIcon={
+                                        //     uploadStartIcon
+                                        // }
+                                        >
+                                            Upload...
                                         {
                                             this.state.mode === 'fileUpload' &&
                                             <CircularProgress color="primary" size={24} />

@@ -48,8 +48,8 @@ function TempoSlider({ round, setRoundBpm }) {
         return `${value}`;
     }
     return (
-        <div style={{ padding: '1rem', display: 'flex', alignItems: 'center', justifyContent: 'center', paddingTop: '40px', paddingBottom: 0 }}>
-            <div style={{ marginRight: '1rem' }}>Tempo</div>
+        <div style={{ padding: '1rem', display: 'flex', alignItems: 'center', justifyContent: 'center'  }}>
+             <div style={{ marginRight: '1rem' }}>{value}</div>
             <StyledSlider
                 value={value}
                 onChange={handleChange}
