@@ -41,11 +41,52 @@ const styles = theme => ({
 
 class LandingPageRoute extends Component {
     static contextType = FirebaseContext;
-    constructor (props) {
+    constructor(props) {
         super(props);
         this.onGetStartedClick = this.onGetStartedClick.bind(this);
     }
-    async onGetStartedClick () {
+
+    componentDidMount() {
+        // console.log("this.props.user: ", this.props.user)
+        if (this.props.user.id) {
+            if (!this.props.user.isGuest) {
+                // redirect to /rounds list
+                this.props.history.push('/rounds')
+            } else {
+                // guest user so create new round and go there instead of rounds list
+                let newRound = createRound(this.props.user.id)
+                let newRounds = [newRound]
+                this.context.createRound(newRound).then(() => {
+                    this.props.setRounds(newRounds)
+                    this.props.history.push('/play/' + newRound.id)
+                }).catch(err => {
+                    console.log("error: ", err)
+                })
+            }
+        }
+    }
+
+    componentDidUpdate(prevProps, prevState) {
+        if (prevProps.user == null && this.props.user.id) {
+            // console.log("this.props.user: ", this.props.user)
+            if (!this.props.user.isGuest) {
+                // redirect to /rounds list
+                this.props.history.push('/rounds')
+            } else {
+                // guest user so create new round and go there instead of rounds list
+                let newRound = createRound(this.props.user.id)
+                let newRounds = [newRound]
+                this.context.createRound(newRound).then(() => {
+                    this.props.setRounds(newRounds)
+                    this.props.history.push('/play/' + newRound.id)
+                }).catch(err => {
+                    console.log("error: ", err)
+                })
+            }
+        }
+    }
+
+    async onGetStartedClick() {
         if (!_.isNil(this.props.user)) {
             if (!this.props.user.isGuest) {
                 // redirect to /rounds list
@@ -64,7 +105,7 @@ class LandingPageRoute extends Component {
             this.props.setIsShowingSignInDialog(true)
         }
     }
-    render () {
+    render() {
         const { classes } = this.props;
         return (
             <>
@@ -81,7 +122,7 @@ class LandingPageRoute extends Component {
                         <Grid item xs={12} sm={12} md={6}>
                             <video width="100%" controls poster="https://firebasestorage.googleapis.com/v0/b/roundaround.appspot.com/o/marketing%2Froundaround-demo.jpg?alt=media&token=07a12429-bc4a-4de2-8f43-031a471367d8">
                                 <source src="https://firebasestorage.googleapis.com/v0/b/roundaround.appspot.com/o/marketing%2Froundaround-demo2.mp4?alt=media&token=9321b383-4ec7-4e48-9f2c-7989977bc025" type="video/mp4" />
-                                    Your browser does not support the video tag.
+                                Your browser does not support the video tag.
                             </video>
                         </Grid>
                     </Grid>
