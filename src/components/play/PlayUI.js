@@ -542,6 +542,11 @@ class PlayUI extends Component {
                     if (!_.isNil(stepGraphic)) {
                         stepGraphic.stroke({ color: '#FFFFFF' })
                         stepGraphic.animate().stroke({ color: note.color })
+                        let step = _this.getStep(stepGraphic.id)
+                        if(step.isOn) {
+                            stepGraphic.transform({scale: 1.2})
+                            stepGraphic.animate().transform({ scale: 1 })
+                        }
                     }
 
                 }, time)
