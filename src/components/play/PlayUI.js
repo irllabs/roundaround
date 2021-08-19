@@ -74,7 +74,7 @@ class PlayUI extends Component {
         roundElement.style.width = this.containerWidth + 'px'
         roundElement.style.height = this.containerHeight + 'px'
 
-        console.log("roundElement: ", roundElement);
+        // console.log("roundElement: ", roundElement);
 
         this.container = SVG()
             .addTo(roundElement)
@@ -103,7 +103,7 @@ class PlayUI extends Component {
         }
 
         let diff = detailedDiff(this.round, this.props.round)
-        console.log('diff', diff);
+        // console.log('diff', diff);
 
         let redraw = false
         let shouldRecalculateParts = false
@@ -123,11 +123,11 @@ class PlayUI extends Component {
             for (let [userPatternsId, userPatterns] of Object.entries(diff.updated.userPatterns)) {
                 if (!_.isNil(userPatterns.isPlayingSequence)) {
                     if (userPatterns.isPlayingSequence) {
-                        console.log('isPlayingSequence turned on', userPatterns, this.props.round.userPatterns[userPatternsId]);
+                        // console.log('isPlayingSequence turned on', userPatterns, this.props.round.userPatterns[userPatternsId]);
                         const newUserPatterns = this.props.round.userPatterns[userPatternsId]
                         this.startSequence(newUserPatterns)
                     } else {
-                        console.log('isPlayingSequence turned off');
+                        // console.log('isPlayingSequence turned off');
                         this.stopSequence(userPatternsId)
                     }
                 }
@@ -587,7 +587,7 @@ class PlayUI extends Component {
     }
 
     startSequence(userPatterns) {
-        console.log('calculating seq', userPatterns);
+        // console.log('calculating seq', userPatterns);
         const PPQ = Tone.Transport.PPQ
         const ticksPerBar = PPQ * 4
         const notes = []
@@ -689,7 +689,7 @@ class PlayUI extends Component {
         // console.log('load pattern', id);
         // console.time('loadPattern')
         //this.props.dispatch({ type: SET_CURRENT_SEQUENCE_PATTERN, payload: { value: order } })
-        const pattern = _.find(this.props.round.userPatterns[userId].patterns, { id })
+        // const pattern = _.find(this.props.round.userPatterns[userId].patterns, { id })
         /*if (!_.isEmpty(pattern.state)) {
             // check if we have layers in the round not referenced in the pattern then set all steps in that layer to off
             for (const existingLayer of this.props.round.layers) {
@@ -774,7 +774,7 @@ class PlayUI extends Component {
 
     addLayer(layer, order, shouldAnimate = true) {
         // console.log('addLayer', layer);
-        let animateTime = shouldAnimate ? 600 : 0
+        // let animateTime = shouldAnimate ? 600 : 0
 
         //const layerDiameter = HTML_UI_Params.addNewLayerButtonDiameter + HTML_UI_Params.initialLayerPadding + ((HTML_UI_Params.stepDiameter + HTML_UI_Params.layerPadding + HTML_UI_Params.layerPadding + HTML_UI_Params.stepDiameter) * (order + 1))
         const layerDiameter = this.getLayerDiameter(order)
@@ -880,7 +880,7 @@ class PlayUI extends Component {
                 //diameter += ((HTML_UI_Params.stepDiameter + HTML_UI_Params.stepDiameter) / 2)
             }
         }
-        console.log('getLayerDiameter(' + order + ')', diameter);
+        // console.log('getLayerDiameter(' + order + ')', diameter);
         return diameter
         //HTML_UI_Params.addNewLayerButtonDiameter + HTML_UI_Params.initialLayerPadding + ((HTML_UI_Params.stepDiameter + HTML_UI_Params.layerPadding + HTML_UI_Params.layerPadding + HTML_UI_Params.stepDiameter) * (order + 1))
     }
@@ -899,8 +899,8 @@ class PlayUI extends Component {
         this.updateLayerLabel(layerGraphic)
     }
     updateMuteColor(layer) {
-        console.log("🚀 this.container", this.container)
-        console.log("🚀 layer", layer)
+        // console.log("🚀 this.container", this.container)
+        // console.log("🚀 layer", layer)
         let layerGraphic = _.find(this.layerGraphics, { id: layer.id });
         layerGraphic.attr({ stroke: layer.isMuted ? '#474747' : this.userColors[layer.createdBy] })
         for (let step of layer.steps) {

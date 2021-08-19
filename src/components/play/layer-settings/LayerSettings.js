@@ -13,7 +13,7 @@ import VolumeSlider from './VolumeSlider'
 import LayerInstrument from './LayerInstrument'
 import LayerNumberOfSteps from './LayerNumberOfSteps'
 import { FirebaseContext } from '../../../firebase';
-import LayerType from './LayerType';
+// import LayerType from './LayerType';
 import LayerAutomation from './LayerAutomation';
 import Track from '../../../audio-engine/Track'
 import LayerPercentOffset from './LayerPercentOffset'

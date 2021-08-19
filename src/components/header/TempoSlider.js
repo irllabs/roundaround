@@ -28,7 +28,7 @@ const StyledSlider = withStyles({
 })(Slider);
 function TempoSlider({ round, setRoundBpm }) {
     const firebase = useContext(FirebaseContext);
-    const [value, setValue] = React.useState(round ? round.bpm : 50);
+    const [value, setValue] = React.useState(round ? round.bpm : 40);
     const updateTempoState = (bpm) => {
         setRoundBpm(bpm)
         firebase.updateRound(round.id, { bpm })
@@ -48,14 +48,14 @@ function TempoSlider({ round, setRoundBpm }) {
         if (round && round.bpm) {
             setValue(round.bpm)
         }
-    })
+    },[round])
 
     function valuetext(value) {
         return `${value}`;
     }
     return (
         <div style={{ padding: '1rem', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-            <div style={{ marginRight: '1rem' }}>Tempo {value}</div>
+            <div style={{ marginRight: '1rem' }}>Tempo: {value < 50 ? '' : value}</div>
             <StyledSlider
                 value={value}
                 onChange={handleChange}

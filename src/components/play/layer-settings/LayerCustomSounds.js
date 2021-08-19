@@ -5,7 +5,7 @@ import Button from '@material-ui/core/Button';
 import { connect } from "react-redux";
 import MicIcon from '@material-ui/icons/MicOutlined';
 import StopIcon from '@material-ui/icons/Stop';
-import UploadIcon from '@material-ui/icons/CloudUploadOutlined';
+// import UploadIcon from '@material-ui/icons/CloudUploadOutlined';
 import AudioEngine from '../../../audio-engine/AudioEngine'
 import AudioRecorder from '../../../audio-engine/AudioRecorder'
 import VUMeter from './VUMeter';
