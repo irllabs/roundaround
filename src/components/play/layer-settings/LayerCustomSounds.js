@@ -53,7 +53,7 @@ const styles = theme => ({
 
 class LayerCustomSounds extends Component {
     static contextType = FirebaseContext
-    constructor (props) {
+    constructor(props) {
         super(props)
         this.state = {
             mode: null,
@@ -78,7 +78,7 @@ class LayerCustomSounds extends Component {
     /*componentDidMount () {
         window.addEventListener('drop', this.onDropFile);
     }*/
-    async onRecordClick () {
+    async onRecordClick() {
         // console.log('onRecordClick', this.state.mode)
         if (_.isNil(this.state.mode)) {
             if (!AudioEngine.isOn()) {
@@ -102,18 +102,18 @@ class LayerCustomSounds extends Component {
             // console.log('ignoring click');
         }
     }
-    onCountDown (value) {
+    onCountDown(value) {
         this.setState({ recordButtonText: value })
     }
-    onRecordLevel (level) {
+    onRecordLevel(level) {
         this.setState({
             level
         })
     }
-    onRecordingStarted () {
+    onRecordingStarted() {
         this.setState({ mode: 'recording', recordButtonText: 'Recording' })
     }
-    async onRecordingFinished (blob) {
+    async onRecordingFinished(blob) {
         // console.log('recording finsished');
         this.setState({ mode: 'upload' })
 
@@ -150,11 +150,11 @@ class LayerCustomSounds extends Component {
 
     }
 
-    onCustomSampleFileUploaderChange () {
+    onCustomSampleFileUploaderChange() {
 
     }
 
-    async onDropFile (files) {
+    async onDropFile(files) {
         // console.log('onDropFile', files);
         const file = files?.[0]
         if (!file) {
@@ -197,7 +197,7 @@ class LayerCustomSounds extends Component {
         }
     }
 
-    render () {
+    render() {
         //console.log('########### render()', this.state.mode);
         const { classes } = this.props;
         let startIcon = this.state.mode === 'recording' ? <StopIcon /> : <MicIcon />
@@ -231,19 +231,19 @@ class LayerCustomSounds extends Component {
 
                     <Dropzone onDrop={this.onDropFile}>
                         {({ getRootProps, getInputProps }) => (
-                            <section style={{margin: 'auto'}}>
+                            <section style={{ margin: 'auto', width: '100%' }}>
                                 <div {...getRootProps()}>
                                     <input {...getInputProps()} />
                                     <Button
                                         className={classes.uploadButton}
-
+                                        style={{width: '100%'}}
                                         color="primary"
                                         disableElevation
-                                        // startIcon={
-                                        //     uploadStartIcon
-                                        // }
-                                        >
-                                            Upload...
+                                    // startIcon={
+                                    //     uploadStartIcon
+                                    // }
+                                    >
+                                        Upload...
                                         {
                                             this.state.mode === 'fileUpload' &&
                                             <CircularProgress color="primary" size={24} />
