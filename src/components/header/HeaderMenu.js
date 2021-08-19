@@ -59,7 +59,9 @@ export default function HeaderMenu({ name }) {
 
     const onFullscreenClick = () => {
         var element = document.documentElement;
-        console.log("document.fullscreenElement): ", document.fullscreenElement)
+        // console.log("document.fullscreenElement): ", document.fullscreenElement)
+        // console.log("webkitCancelFullScreen: ", document.webkitCancelFullScreen)
+        // console.log("webkitExitFullscreen: ", document.webkitExitFullscreen)
         if (_.isNil(document.fullscreenElement)) {
             if (element.requestFullscreen) {
                 element.requestFullscreen();
@@ -72,8 +74,7 @@ export default function HeaderMenu({ name }) {
                 element.msRequestFullscreen();
             }
         } else {
-            console.log("webkitCancelFullScreen: ", document.webkitCancelFullScreen)     
-            console.log("webkitExitFullscreen: ", document.webkitExitFullscreen)        
+
             if (document.exitFullscreen) {
                 document.exitFullscreen();
             } else if (document.webkitCancelFullScreen) {
@@ -85,13 +86,10 @@ export default function HeaderMenu({ name }) {
             }
         }
 
-        if(document.fullscreenElement) {
-            if (document.webkitCancelFullScreen) {
-                document.webkitCancelFullScreen();
-            } else if (document.webkitExitFullscreen) { /* Safari */
-                document.webkitExitFullscreen();
-            }
+        if (document.webkitFullscreenElement) {
+            document.webkitCancelFullScreen();
         }
+
     }
 
     // return focus to the button when we transitioned from !open -> open
