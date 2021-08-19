@@ -179,7 +179,7 @@ class Header extends Component {
                                 <PlayButton className={classes.rightSideChild} />
                             </div>
                             <div>
-                                {round && <TempoSlider />}
+                                <TempoSlider />
                             </div>
                             <div>
                                 <HeaderMenu />
