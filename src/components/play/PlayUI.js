@@ -1187,7 +1187,7 @@ class PlayUI extends Component {
                 _this.container.on('mouseup', (e) => {
                     // console.log('_this.container.on(mouseup)');
                     e.stopPropagation()
-                    // _this.removeStepSwipeListeners()
+                    _this.removeStepSwipeListeners()
                     _this.container.off('mousemove')
                     _this.container.off('mouseup')
                     _this.hideStepModal()
