@@ -93,12 +93,12 @@ class PlayUI extends Component {
     async componentDidUpdate(prevProps,) {
         // console.log('componentDidUpdate()', this.round, this.props.round)
         // console.log('componentDidUpdate', this.props.selectedLayerId)
-        if(prevProps.selectedLayerId !== this.props.selectedLayerId) {
+        if (prevProps.selectedLayerId !== this.props.selectedLayerId) {
             this.selectedLayerId = this.props.selectedLayerId;
         }
 
         // whole round has changed
-        
+
         if (this.round.id !== this.props.round.id) {
             this.round = _.cloneDeep(this.props.round)
             AudioEngine.load(this.props.round)
@@ -547,8 +547,8 @@ class PlayUI extends Component {
                         stepGraphic.stroke({ color: '#FFFFFF' })
                         stepGraphic.animate().stroke({ color: note.color })
                         let step = _this.getStep(stepGraphic.id)
-                        if(step.isOn) {
-                            stepGraphic.transform({scale: 1.2})
+                        if (step.isOn) {
+                            stepGraphic.transform({ scale: 1.2 })
                             stepGraphic.animate().transform({ scale: 1 })
                         }
                     }
@@ -1175,6 +1175,7 @@ class PlayUI extends Component {
                 _this.startStepMoveTimer(stepGraphic, e.pageX, e.pageY)
                 stepGraphic.on('mouseout', (e) => {
                     //console.log('mouseout');
+                    console.log("e: ", e)
                     if (!_.isNil(_this.stepMoveTimer)) {
                         // we've swiped / dragged out of the step, toggle this step and listen for mouseovers on all other steps
                         // add listener to layergraphic to cancel swiping
@@ -1182,8 +1183,6 @@ class PlayUI extends Component {
                         _this.touchStartStepGraphic = stepGraphic
                         _this.onStepClick(stepGraphic)
                         _this.addStepSwipeListeners(stepGraphic)
-
-                        // _this.addStepSwipeCancelListener(stepGraphic)
                     }
 
                 })
@@ -1304,11 +1303,10 @@ class PlayUI extends Component {
         // console.log('addStepSwipeListeners', this);
         this.removeStepSwipeListeners()
         const _this = this
-        for (const stepGraphic of this.stepGraphics) {
+        for (const stepGraphic of _this.stepGraphics) {
             if (stepGraphic.layerId === originalStepGraphic.layerId) {
-                // console.log('adding mouseover');
                 stepGraphic.on('mouseover', (e) => {
-                    //  console.log('on stepGraphic mouseover');
+                    console.log('on stepGraphic mouseover');
                     _this.onStepClick(stepGraphic)
                 })
             }
@@ -1446,7 +1444,9 @@ class PlayUI extends Component {
         step.isOn = !step.isOn
         this.updateStep(step, false)
         AudioEngine.recalculateParts(this.round)
-        this.props.dispatch({ type: TOGGLE_STEP, payload: { layerId: stepGraphic.layerId, stepId: stepGraphic.id, isOn: step.isOn, user: null } })
+
+        // this.props.dispatch({ type: TOGGLE_STEP, payload: { layerId: stepGraphic.layerId, stepId: stepGraphic.id, isOn: step.isOn, user: null } })
+
         // console.log('this.context', this.context);
         this.saveLayer(stepGraphic.layerId)
         //this.context.updateStep(this.round.id, stepGraphic.layerId, stepGraphic.id, step)
@@ -1622,7 +1622,7 @@ PlayUI.propTypes = {
     classes: PropTypes.object.isRequired,
 };
 
-const mapStateToProps = state => {   
+const mapStateToProps = state => {
     return {
         round: state.round,
         user: state.user,

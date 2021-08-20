@@ -162,7 +162,6 @@ class EffectsSidebar extends Component {
         const { classes } = this.props;
         let items = []
         if (!_.isNil(this.props.round) && !_.isNil(this.props.round.userBuses) && !_.isNil(this.props.round.userBuses[this.props.user.id])) {
-            console.log("this.props.round.userBuses[this.props.user.id]: ", this.props.round.userBuses[this.props.user.id])
             for (const fx of this.props.round.userBuses[this.props.user.id].fx) {
                 let item = {
                     id: fx.id,
