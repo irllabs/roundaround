@@ -11,7 +11,7 @@ import { setIsShowingSignInDialog, setSignUpDisplayName, setUser, setRounds, set
 import { FirebaseContext } from '../../firebase';
 import firebase from "firebase/app";
 import ArrowBackIcon from '@material-ui/icons/ArrowBack';
-import { getRandomColor, createRound } from '../../utils/index'
+import { getRandomColor } from '../../utils/index'
 import _ from 'lodash'
 
 const styles = makeStyles({

@@ -11,3 +11,18 @@ body{
 .App{
     height:100%;
 }
+
+.tempo-slider {
+    width: 210px !important;
+}
+
+.PrivateValueLabel-thumb-99.PrivateValueLabel-open-100 .PrivateValueLabel-offset-101 {
+    transform: scale(0.7) translateY(-4px) !important;
+    display: none;
+}
+
+@media only screen and (max-width: 991px) {
+    .tempo-slider {
+        width: 140px !important;
+    }
+}

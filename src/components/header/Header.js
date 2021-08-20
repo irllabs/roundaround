@@ -21,6 +21,7 @@ import { FirebaseContext } from '../../firebase';
 import { getRandomColor } from '../../utils/index'
 import CustomSamples from '../../audio-engine/CustomSamples'
 import { createRound } from '../../utils/index'
+import TempoSlider from './TempoSlider';
 
 const styles = theme => ({
     root: {
@@ -59,13 +60,13 @@ const styles = theme => ({
 
 class Header extends Component {
     static contextType = FirebaseContext;
-    constructor (props) {
+    constructor(props) {
         super(props);
         this.onSignInClick = this.onSignInClick.bind(this)
         this.onShareClick = this.onShareClick.bind(this)
     }
 
-    componentDidMount () {
+    componentDidMount() {
         const _this = this
         _this.context.onUserUpdatedObservers.push(async (authUser) => {
             if (!_.isNil(authUser)) {
@@ -139,7 +140,7 @@ class Header extends Component {
         this.props.setIsShowingShareDialog(true)
     }
 
-    render () {
+    render() {
         const { classes, location, round, users, user } = this.props;
         const isPlayMode = location.pathname.includes('/play/') ? true : false
         return (
@@ -176,6 +177,9 @@ class Header extends Component {
                             </div>
                             <div>
                                 <PlayButton className={classes.rightSideChild} />
+                            </div>
+                            <div>
+                                <TempoSlider />
                             </div>
                             <div>
                                 <HeaderMenu />

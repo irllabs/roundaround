@@ -5,7 +5,7 @@ import Button from '@material-ui/core/Button';
 import { connect } from "react-redux";
 import MicIcon from '@material-ui/icons/MicOutlined';
 import StopIcon from '@material-ui/icons/Stop';
-import UploadIcon from '@material-ui/icons/CloudUploadOutlined';
+// import UploadIcon from '@material-ui/icons/CloudUploadOutlined';
 import AudioEngine from '../../../audio-engine/AudioEngine'
 import AudioRecorder from '../../../audio-engine/AudioRecorder'
 import VUMeter from './VUMeter';
@@ -53,7 +53,7 @@ const styles = theme => ({
 
 class LayerCustomSounds extends Component {
     static contextType = FirebaseContext
-    constructor (props) {
+    constructor(props) {
         super(props)
         this.state = {
             mode: null,
@@ -78,7 +78,7 @@ class LayerCustomSounds extends Component {
     /*componentDidMount () {
         window.addEventListener('drop', this.onDropFile);
     }*/
-    async onRecordClick () {
+    async onRecordClick() {
         // console.log('onRecordClick', this.state.mode)
         if (_.isNil(this.state.mode)) {
             if (!AudioEngine.isOn()) {
@@ -102,18 +102,18 @@ class LayerCustomSounds extends Component {
             // console.log('ignoring click');
         }
     }
-    onCountDown (value) {
+    onCountDown(value) {
         this.setState({ recordButtonText: value })
     }
-    onRecordLevel (level) {
+    onRecordLevel(level) {
         this.setState({
             level
         })
     }
-    onRecordingStarted () {
+    onRecordingStarted() {
         this.setState({ mode: 'recording', recordButtonText: 'Recording' })
     }
-    async onRecordingFinished (blob) {
+    async onRecordingFinished(blob) {
         // console.log('recording finsished');
         this.setState({ mode: 'upload' })
 
@@ -150,11 +150,11 @@ class LayerCustomSounds extends Component {
 
     }
 
-    onCustomSampleFileUploaderChange () {
+    onCustomSampleFileUploaderChange() {
 
     }
 
-    async onDropFile (files) {
+    async onDropFile(files) {
         // console.log('onDropFile', files);
         const file = files?.[0]
         if (!file) {
@@ -197,11 +197,11 @@ class LayerCustomSounds extends Component {
         }
     }
 
-    render () {
+    render() {
         //console.log('########### render()', this.state.mode);
         const { classes } = this.props;
         let startIcon = this.state.mode === 'recording' ? <StopIcon /> : <MicIcon />
-        let uploadStartIcon = this.state.mode === 'fileUpload' ? '' : <UploadIcon />
+        // let uploadStartIcon = this.state.mode === 'fileUpload' ? '' : <UploadIcon />
         let recordButtonColor = (this.state.mode === 'recording') ? 'red' : 'white'
         if (this.state.mode === 'countdown' || this.state.mode === 'upload' || this.state.mode === 'fileUpload') {
             startIcon = ''
@@ -215,7 +215,7 @@ class LayerCustomSounds extends Component {
                         className={classes.button}
                         variant="contained"
                         color={(this.state.mode === 'countdown' || this.state.mode === 'recording' || this.state.mode === 'upload' || this.state.mode === 'fileUpload') ? 'primary' : 'secondary'}
-                        style={{ color: recordButtonColor }}
+                        style={{ color: recordButtonColor, display: 'none' }}
                         disableElevation
                         startIcon={startIcon}
                         onClick={this.onRecordClick}>
@@ -231,17 +231,19 @@ class LayerCustomSounds extends Component {
 
                     <Dropzone onDrop={this.onDropFile}>
                         {({ getRootProps, getInputProps }) => (
-                            <section>
+                            <section style={{ margin: 'auto', width: '100%' }}>
                                 <div {...getRootProps()}>
                                     <input {...getInputProps()} />
                                     <Button
                                         className={classes.uploadButton}
-
+                                        style={{width: '100%'}}
                                         color="primary"
                                         disableElevation
-                                        startIcon={
-                                            uploadStartIcon
-                                        }>
+                                    // startIcon={
+                                    //     uploadStartIcon
+                                    // }
+                                    >
+                                        Upload...
                                         {
                                             this.state.mode === 'fileUpload' &&
                                             <CircularProgress color="primary" size={24} />

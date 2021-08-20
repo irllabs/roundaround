@@ -64,8 +64,8 @@ class PatternThumbControl extends Component {
         if (!this.isAnimating) {
             if (this.props.isFilled) {
                 this.thumbBackground.stroke('none')
-                if (this.props.isSelected || this.isOver) {
-                    this.thumbBackground.fill('#999999')
+                if (this.props.isSelected || this.isOver) {                    
+                    this.thumbBackground.fill('#c0c0c0')
                 } else {
                     this.thumbBackground.fill('#555555')
                 }
