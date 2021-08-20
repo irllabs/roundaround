@@ -90,11 +90,15 @@ class PlayUI extends Component {
         this.draw()
     }
 
-    async componentDidUpdate() {
+    async componentDidUpdate(prevProps,) {
         // console.log('componentDidUpdate()', this.round, this.props.round)
-        // console.time('componentDidUpdate')
+        // console.log('componentDidUpdate', this.props.selectedLayerId)
+        if(prevProps.selectedLayerId !== this.props.selectedLayerId) {
+            this.selectedLayerId = this.props.selectedLayerId;
+        }
 
         // whole round has changed
+        
         if (this.round.id !== this.props.round.id) {
             this.round = _.cloneDeep(this.props.round)
             AudioEngine.load(this.props.round)
@@ -1618,13 +1622,13 @@ PlayUI.propTypes = {
     classes: PropTypes.object.isRequired,
 };
 
-const mapStateToProps = state => {
-    //console.log('mapStateToProps', state);
+const mapStateToProps = state => {   
     return {
         round: state.round,
         user: state.user,
         users: state.users,
-        disableKeyListener: state.display.disableKeyListener
+        disableKeyListener: state.display.disableKeyListener,
+        selectedLayerId: state.display.selectedLayerId
     };
 };
 
