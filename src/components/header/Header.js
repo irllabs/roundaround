@@ -165,18 +165,14 @@ class Header extends Component {
                             }
                         </div>
                         <Box className={classes.rightSide} >
-                            {users.lengh > 1 ? (
-                                <Box className={classes.avatars}>
-                                    {
-                                        users.map((currentUser) => (
-                                            <HeaderAvatar className={classes.avatar} key={currentUser.id} user={currentUser} users={users} shouldShowMenu={!_.isNil(user) && (currentUser.id === user.id)} />
-                                        ))
-                                    }
-                                </Box>
-                            ) : ''}
-                            {users.length > 1 ? (
-                                <AudioChatComponent />
-                            ) : ''}
+                            <Box className={classes.avatars}>
+                                {
+                                    users.map((currentUser) => (
+                                        <HeaderAvatar className={classes.avatar} key={currentUser.id} user={currentUser} users={users} shouldShowMenu={!_.isNil(user) && (currentUser.id === user.id)} />
+                                    ))
+                                }
+                            </Box>
+                            <AudioChatComponent />
                             <div>
                                 {/* <Button className={classes.rightSideChild} onClick={this.onShareClick} variant="contained" color="secondary" disableElevation startIcon={<ShareIcon />}>Share</Button> */}
                                 <ShareButton className={classes.rightSideChild} onShareClick={this.onShareClick} />
