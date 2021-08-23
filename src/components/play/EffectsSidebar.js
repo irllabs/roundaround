@@ -131,7 +131,7 @@ class EffectsSidebar extends Component {
             items: arrayMove(items, oldIndex, newIndex),
         }));*/
     };
-    onSwitchOn (fxId, isOn) {
+    onSwitchOn (fxId) {
 
         AudioEngine.busesByUser[this.props.user.id].fx[fxId].override = true
         this.props.setUserBusFxOverride(this.props.user.id, fxId, true)
@@ -139,20 +139,18 @@ class EffectsSidebar extends Component {
         //this.props.dispatch({ type: SET_USER_BUS_FX_OVERRIDE, payload: { fxId, userId: this.props.user.id, value: true } })
         let userBus = _.cloneDeep(this.props.round.userBuses[this.props.user.id])   
         let fx = _.find(userBus.fx, { id: fxId })
-        fx.isOverride = true
-        fx.isOn = isOn
+        fx.isOverride = true     
        
         this.context.updateUserBus(this.props.round.id, this.props.user.id, userBus)
     }
-    onSwitchOff (fxId, isOn) {
+    onSwitchOff (fxId) {
        
         AudioEngine.busesByUser[this.props.user.id].fx[fxId].override = false
         this.props.setUserBusFxOverride(this.props.user.id, fxId, false)
         //this.props.dispatch({ type: SET_USER_BUS_FX_OVERRIDE, payload: { fxId, userId: this.props.user.id, value: false } })
         let userBus = _.cloneDeep(this.props.round.userBuses[this.props.user.id])
         let fx = _.find(userBus.fx, { id: fxId })
-        fx.isOverride = false
-        fx.isOn = isOn;
+        fx.isOverride = false        
         this.context.updateUserBus(this.props.round.id, this.props.user.id, userBus)
     }
     onMinimizeClick () {
@@ -168,7 +166,8 @@ class EffectsSidebar extends Component {
                     label: fx.name,
                     userId: this.props.user.id,
                     name: fx.name,
-                    isOn: fx.isOn
+                    isOn: fx.isOn,
+                    isOverride: fx.isOverride
                 }
                 items.push(item)
             }

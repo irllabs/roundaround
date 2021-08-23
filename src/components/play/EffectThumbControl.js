@@ -30,8 +30,9 @@ class EffectThumbControl extends Component {
         this.onMouseUp = this.onMouseUp.bind(this)
     }
     componentDidMount() {
-        this.isOn = this.props.fx ? this.props.fx.isOn : false;
-       
+        // console.log("this.props.fix: ", this.props.fx)
+        this.isOn = this.props.fx ? this.props.fx.isOverride : false;
+
         const element = this.thumbControlRef.current;
 
         this.container = SVG()
@@ -39,8 +40,8 @@ class EffectThumbControl extends Component {
             .size(thumbWidth + 40, thumbHeight)
         this.background = this.container.rect(thumbWidth + 40, thumbHeight).fill('none').radius(24)
         this.thumb = this.container.nested()
-        this.thumb.x(containerWidth - thumbWidth) 
-        
+        this.thumb.x(containerWidth - thumbWidth)
+
         this.thumb.addClass(this.props.classes.button)
         this.thumbBackground = this.thumb.rect(thumbWidth, thumbHeight).fill('#474747').radius(24)
         this.labelContainer = this.thumb.nested()
@@ -48,11 +49,11 @@ class EffectThumbControl extends Component {
         this.label.x((thumbWidth / 2) - (this.label.node.getBBox().width / 2))
         this.label.y((thumbHeight / 2) - (this.label.node.getBBox().height / 2))
 
-        if(this.isOn) {
+        if (this.isOn) {
             this.thumb.x(0);
             this.thumbBackground.fill('#EAEAEA')
         }
- 
+
         this.addEventListeners()
     }
     addEventListeners() {
@@ -115,7 +116,6 @@ class EffectThumbControl extends Component {
         } else if (x < 0) {
             x = 0
         }
-       
         this.thumb.x(x)
     }
     onMouseUp(e) {
@@ -139,11 +139,10 @@ class EffectThumbControl extends Component {
         this.thumb.x(x)
     }
     switchOn() {
-        this.props.switchOn(this.props.fxId, !this.isOn)
+        this.props.switchOn(this.props.fxId)
     }
     switchOff() {
-        this.isOn = false
-        this.props.switchOff(this.props.fxId, this.isOn)
+        this.props.switchOff(this.props.fxId)
     }
     render() {
         return (
