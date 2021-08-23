@@ -1307,7 +1307,15 @@ class PlayUI extends Component {
             if (stepGraphic.layerId === originalStepGraphic.layerId) {
                 stepGraphic.on('mouseover', (e) => {
                     console.log('on stepGraphic mouseover');
-                    _this.onStepClick(stepGraphic)
+                    // _this.onStepClick(stepGraphic)
+                    let step = _this.getStep(stepGraphic.id)
+                    step.isOn = !step.isOn
+                    _this.updateStep(step, false)
+                    AudioEngine.recalculateParts(this.round)
+                    _this.saveLayer(stepGraphic.layerId); 
+                    // stepGraphic.on('mouseup', (event) => {
+                    //     _this.props.dispatch({ type: TOGGLE_STEP, payload: { layerId: stepGraphic.layerId, stepId: stepGraphic.id, isOn: step.isOn, user: null } })
+                    // })
                 })
             }
         }
@@ -1445,7 +1453,7 @@ class PlayUI extends Component {
         this.updateStep(step, false)
         AudioEngine.recalculateParts(this.round)
 
-        // this.props.dispatch({ type: TOGGLE_STEP, payload: { layerId: stepGraphic.layerId, stepId: stepGraphic.id, isOn: step.isOn, user: null } })
+        this.props.dispatch({ type: TOGGLE_STEP, payload: { layerId: stepGraphic.layerId, stepId: stepGraphic.id, isOn: step.isOn, user: null } })
 
         // console.log('this.context', this.context);
         this.saveLayer(stepGraphic.layerId)
