@@ -101,7 +101,8 @@ class PatternSequencer extends Component {
     render () {
         const { classes } = this.props;
         let items = []
-        if (!_.isNil(this.props.round) && !_.isNil(this.props.round.userPatterns) && !_.isNil(this.props.round.userPatterns[this.props.user.id])) {
+
+        if (_.get(this.props, 'round.userPatterns[this.props.user.id]sequence', false)) {
             let i = 0
             for (const id of this.props.round.userPatterns[this.props.user.id].sequence) {
                 let item = {
