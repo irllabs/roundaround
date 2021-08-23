@@ -53,14 +53,15 @@ class LandingPageRoute extends Component {
                 this.props.history.push('/rounds')
             } else {
                 // guest user so create new round and go there instead of rounds list
-                let newRound = createRound(this.props.user.id)
-                let newRounds = [newRound]
-                this.context.createRound(newRound).then(() => {
-                    this.props.setRounds(newRounds)
-                    this.props.history.push('/play/' + newRound.id)
-                }).catch(err => {
-                    console.log("error: ", err)
-                })
+                this.props.history.push('/rounds')
+                // let newRound = createRound(this.props.user.id)
+                // let newRounds = [newRound]
+                // this.context.createRound(newRound).then(() => {
+                //     this.props.setRounds(newRounds)
+                //     this.props.history.push('/play/' + newRound.id)
+                // }).catch(err => {
+                //     console.log("error: ", err)
+                // })
             }
         }
     }
@@ -73,14 +74,15 @@ class LandingPageRoute extends Component {
                 this.props.history.push('/rounds')
             } else {
                 // guest user so create new round and go there instead of rounds list
-                let newRound = createRound(this.props.user.id)
-                let newRounds = [newRound]
-                this.context.createRound(newRound).then(() => {
-                    this.props.setRounds(newRounds)
-                    this.props.history.push('/play/' + newRound.id)
-                }).catch(err => {
-                    console.log("error: ", err)
-                })
+                this.props.history.push('/rounds')
+                // let newRound = createRound(this.props.user.id)
+                // let newRounds = [newRound]
+                // this.context.createRound(newRound).then(() => {
+                //     this.props.setRounds(newRounds)
+                //     this.props.history.push('/play/' + newRound.id)
+                // }).catch(err => {
+                //     console.log("error: ", err)
+                // })
             }
         }
     }
