@@ -8,7 +8,6 @@ import {
     Link, withRouter
 } from "react-router-dom";
 import { withStyles } from '@material-ui/core/styles';
-import ShareIcon from '@material-ui/icons/Share';
 import ArrowBackIosIcon from '@material-ui/icons/ArrowBackIos';
 import PlayButton from './PlayButton';
 import { setUser, setIsShowingSignInDialog, setRedirectAfterSignIn, setRounds, setUserDisplayName, setSignUpDisplayName, setIsShowingShareDialog } from '../../redux/actions'

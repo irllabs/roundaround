@@ -143,6 +143,7 @@ export default function LayerInstrument ({ selectedLayer, user, roundId }) {
         onCloseRenameSampleDialog()
     }
     const [customSampleName, setCustomSampleName] = useState(null)
+
     return (
         <Box className={classes.root} display="flex" flexDirection="column">
             <FormControl className={classes.formControl}>

@@ -95,6 +95,8 @@ class PlayUI extends Component {
         // console.log('componentDidUpdate', this.props.selectedLayerId)
         if (prevProps.selectedLayerId !== this.props.selectedLayerId) {
             this.selectedLayerId = this.props.selectedLayerId;
+            // console.log("this.selectedLayerId: ", this.selectedLayerId)
+            this.highlightLayer(_.find(this.layerGraphics, { id: this.selectedLayerId }))
         }
 
         // whole round has changed
@@ -201,7 +203,7 @@ class PlayUI extends Component {
         for (let layer of this.round.layers) {
             let newLayer = _.find(this.props.round.layers, { id: layer.id })
             if (!_.isNil(newLayer) && !_.isEqual(layer.isMuted, newLayer.isMuted)) {
-                //  console.log('mute has changed', newLayer.isMuted)
+                 console.log('mute has changed', newLayer.isMuted)
                 AudioEngine.tracksById[newLayer.id].setMute(newLayer.isMuted)
                 this.updateMuteColor(newLayer)
             }

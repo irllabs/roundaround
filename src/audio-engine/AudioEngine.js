@@ -67,8 +67,8 @@ const AudioEngine = {
     },
     // assumes tracks haven't changed, just the steps
     recalculateParts (round, layerId = null) {
-        console.log('AudioEngine::recalculateParts()');
-        console.time('AudioEngine::recalculateParts')
+        // console.log('AudioEngine::recalculateParts()');
+        // console.time('AudioEngine::recalculateParts')
         if (!_.isNil(round)) {
             this.round = round
             for (let layer of round.layers) {
@@ -79,7 +79,7 @@ const AudioEngine = {
                 }
             }
         }
-        console.timeEnd('AudioEngine::recalculateParts')
+        // console.timeEnd('AudioEngine::recalculateParts')
     },
     getIsPlayingSequence (userId, round) {
         return round.userPatterns[userId].isPlayingSequence

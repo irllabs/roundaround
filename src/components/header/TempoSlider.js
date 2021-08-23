@@ -1,4 +1,4 @@
-import React, { useCallback, useContext } from 'react';
+import React, { useCallback, useContext, useEffect } from 'react';
 import { connect } from "react-redux";
 import Slider from '@material-ui/core/Slider';
 import { withStyles } from '@material-ui/core/styles';
@@ -48,7 +48,7 @@ function TempoSlider({ round, setRoundBpm }) {
         if (round && round.bpm) {
             setValue(round.bpm)
         }
-    },[round])
+    }, [round])
 
     function valuetext(value) {
         return `${value}`;

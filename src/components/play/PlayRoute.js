@@ -308,7 +308,7 @@ class PlayRoute extends Component {
     }
 
     handleUserPatternsChange (userPatterns) {
-        console.log('userPatternsChange', userPatterns);
+        // console.log('userPatternsChange', userPatterns);
         this.props.setIsPlayingSequence(userPatterns.id, userPatterns.isPlayingSequence)
     }
 

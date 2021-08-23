@@ -1,8 +1,9 @@
-import React, { useEffect, useContext } from 'react'
+import React, { useEffect } from 'react'
 import { connect } from 'react-redux'
 import { Box, FormControl, Grid, InputLabel, makeStyles, MenuItem, Select } from '@material-ui/core';
 import { SET_SELECTED_LAYER_ID } from '../../../redux/actionTypes';
 import _ from 'lodash'
+import Instruments from '../../../audio-engine/Instruments';
 
 const useStyles = makeStyles((theme) => ({
     root: {
@@ -24,22 +25,37 @@ function LayerChange(props) {
 
     const { selectedLayer,  round } = props;
     const classes = useStyles();
-
-
-
     const [selectedLayerID, setSelectedLayerID] = React.useState(selectedLayer.id)
+    const instrumentOptions = Instruments.getInstrumentOptions(false);
+    // console.log("instrumentOptions: ", instrumentOptions)
+
+    const getLabelText = (sampler) => {
+        let instrumentOption = instrumentOptions.find(item=>item.name === sampler);
+        let text = '';
+        if(instrumentOption) {
+            text =  instrumentOption.label;
+        } else {
+            text = sampler;
+        }
+
+        if (text.length > 5) {
+            text = text.substring(0, 5) + '...'
+        }
+
+        return text;
+    }
 
     const layers = round ? _.filter(round.layers, { createdBy: props.user.id })  : [];
 
     const sortLayers = layers.sort((a, b) => (a.name > b.name) ? 1 : ((b.name > a.name) ? -1 : 0))
 
-    const layerItems = sortLayers.map((layer, index) => <MenuItem value={layer.id} key={layer.id}>{layer.name}</MenuItem>)
+    const layerItems = sortLayers.map((layer, index) => <MenuItem value={layer.id} key={layer.id}>{getLabelText(layer.instrument.sampler)}</MenuItem>)
 
+    
 
     const onChangeLayer = (event) => {
        
         const layerId = event.target.value
-        // console.log("layerID, ", layerId)
         props.dispatch({ type: SET_SELECTED_LAYER_ID, payload: { layerId } })
     }
 

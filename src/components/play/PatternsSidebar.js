@@ -72,12 +72,12 @@ class PatternsSidebar extends Component {
         this.onMinimizeClick = this.onMinimizeClick.bind(this)
     }
     async onLoadPattern (id) {
-        console.log('onLoadPattern', id);
+        // console.log('onLoadPattern', id);
         if (!this.props.display.isRecordingSequence) {
             const pattern = _.find(this.props.round.userPatterns[this.props.user.id].patterns, { id })
             if (!_.isEmpty(pattern.state)) {
-                console.log('loading state', pattern);
-                console.time('loadPattern')
+                // console.log('loading state', pattern);
+                // console.time('loadPattern')
 
                 this.setState({ selectedPattern: pattern.id, selectedPatternNeedsSaving: false })
 
@@ -126,13 +126,13 @@ class PatternsSidebar extends Component {
                 // this.props.updateLayers(pattern.state.layers)
                 for (const layer of pattern.state.layers) {
                     let index = _.findIndex(this.props.round.layers, { id: layer.id })
-                    console.log('index', index);
+                    // console.log('index', index);
                     orderedLayers[index] = layer
                 }
 
                 //console.timeEnd('loadPattern')
 
-                console.log('orderedLayers', orderedLayers);
+                // console.log('orderedLayers', orderedLayers);
                 this.props.updateLayers(orderedLayers)
                 // console.log('after round update', this.props.round);
 
