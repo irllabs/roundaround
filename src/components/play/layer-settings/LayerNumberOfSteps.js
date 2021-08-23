@@ -38,6 +38,8 @@ export default function LayerNumberOfSteps ({ selectedLayer, user, roundId }) {
         setSelectedNumberOfSteps(event.target.value);
         let newSteps = changeLayerLength(selectedLayer, event.target.value)
         dispatch({ type: SET_LAYER_STEPS, payload: { id: selectedLayer.id, steps: newSteps, user: user.id } })
+
+        selectedLayer.steps = newSteps;
         firebase.updateLayer(roundId, selectedLayer.id, selectedLayer)
     };
     const numberOfStepsMenuItems = numberOfStepsOptions.map(numberOfSteps => <MenuItem value={numberOfSteps} key={numberOfSteps}>{numberOfSteps}</MenuItem>)

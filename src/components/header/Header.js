@@ -22,6 +22,7 @@ import { getRandomColor } from '../../utils/index'
 import CustomSamples from '../../audio-engine/CustomSamples'
 import { createRound } from '../../utils/index'
 import TempoSlider from './TempoSlider';
+import ShareButton from './ShareButton';
 
 const styles = theme => ({
     root: {
@@ -164,16 +165,21 @@ class Header extends Component {
                             }
                         </div>
                         <Box className={classes.rightSide} >
-                            <Box className={classes.avatars}>
-                                {
-                                    users.map((currentUser) => (
-                                        <HeaderAvatar className={classes.avatar} key={currentUser.id} user={currentUser} users={users} shouldShowMenu={!_.isNil(user) && (currentUser.id === user.id)} />
-                                    ))
-                                }
-                            </Box>
-                            <AudioChatComponent />
+                            {users.lengh > 1 ? (
+                                <Box className={classes.avatars}>
+                                    {
+                                        users.map((currentUser) => (
+                                            <HeaderAvatar className={classes.avatar} key={currentUser.id} user={currentUser} users={users} shouldShowMenu={!_.isNil(user) && (currentUser.id === user.id)} />
+                                        ))
+                                    }
+                                </Box>
+                            ) : ''}
+                            {users.length > 1 ? (
+                                <AudioChatComponent />
+                            ) : ''}
                             <div>
-                                <Button className={classes.rightSideChild} onClick={this.onShareClick} variant="contained" color="secondary" disableElevation startIcon={<ShareIcon />}>Share</Button>
+                                {/* <Button className={classes.rightSideChild} onClick={this.onShareClick} variant="contained" color="secondary" disableElevation startIcon={<ShareIcon />}>Share</Button> */}
+                                <ShareButton className={classes.rightSideChild} onShareClick={this.onShareClick} />
                             </div>
                             <div>
                                 <PlayButton className={classes.rightSideChild} />
