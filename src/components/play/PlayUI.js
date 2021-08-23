@@ -237,7 +237,7 @@ class PlayUI extends Component {
             this.round = _.cloneDeep(this.props.round)
         }
 
-        console.timeEnd('componentDidUpdate')
+        // console.timeEnd('componentDidUpdate')
         /*
     
             if (this.round.id !== this.props.round.id) {

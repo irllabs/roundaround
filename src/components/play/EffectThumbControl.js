@@ -52,6 +52,9 @@ class EffectThumbControl extends Component {
         if (this.isOn) {
             this.thumb.x(0);
             this.thumbBackground.fill('#EAEAEA')
+            if(this.props.fx) {
+                this.props.updateAudioEngine(this.props.fx.id)
+            }
         }
 
         this.addEventListeners()

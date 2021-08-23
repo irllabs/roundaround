@@ -156,6 +156,10 @@ class EffectsSidebar extends Component {
     onMinimizeClick () {
         this.setState({ isMinimized: !this.state.isMinimized })
     }
+
+    updateAudioEngine = (fxId) => {
+        AudioEngine.busesByUser[this.props.user.id].fx[fxId].override = true
+    }
     render () {
         const { classes } = this.props;
         let items = []
@@ -178,7 +182,7 @@ class EffectsSidebar extends Component {
         return (
             <Box className={classes.root + ' ' + isMinimizedClass}>
                 {items.map((fx, index) => (
-                    <EffectThumbControl key={fx.id} className={classes.thumbControl} label={toTitleCase(fx.label)} fx={fx} fxId={fx.id} userId={fx.userId} switchOn={this.onSwitchOn} switchOff={this.onSwitchOff} name={fx.name} />
+                    <EffectThumbControl key={fx.id} className={classes.thumbControl} label={toTitleCase(fx.label)} fx={fx} fxId={fx.id} userId={fx.userId} updateAudioEngine={(fxId) =>this.updateAudioEngine(fxId)} switchOn={this.onSwitchOn} switchOff={this.onSwitchOff} name={fx.name} />
                 ))}
                 <Box className={classes.minimizeButton + ' ' + buttonIsMinimizedClass} onClick={this.onMinimizeClick}><ChevronRightIcon size="small" /></Box>
             </Box>
