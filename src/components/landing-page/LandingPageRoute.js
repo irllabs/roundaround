@@ -66,7 +66,7 @@ class LandingPageRoute extends Component {
     }
 
     componentDidUpdate(prevProps, prevState) {
-        if (prevProps.user == null && this.props.user.id) {
+        if (prevProps.user == null && this.props.user && this.props.user.id) {
             // console.log("this.props.user: ", this.props.user)
             if (!this.props.user.isGuest) {
                 // redirect to /rounds list
