@@ -31,6 +31,9 @@ function TempoSlider({ round, setRoundBpm }) {
     const [value, setValue] = React.useState(round ? round.bpm : 40);
     const updateTempoState = (bpm) => {
         setRoundBpm(bpm)
+        if (!round) {
+            return;
+        }
         firebase.updateRound(round.id, { bpm })
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
