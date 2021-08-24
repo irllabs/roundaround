@@ -86,7 +86,7 @@ export const getDefaultRoundData = (userId) => {
         "dataVersion": 1.5,
         "bpm": 120,
         swing: 0,
-        "name": "Default Round",
+        "name": "My Project 1",
         "createdAt": Date.now(),
         "currentUsers": [],
         "layers": [
