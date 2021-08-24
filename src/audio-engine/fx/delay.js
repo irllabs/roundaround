@@ -13,8 +13,10 @@ export default class Delay extends FXBaseClass {
         this._mix = 0.2
         this._mixBeforeBypass = this._mix
         this.label = 'Tape delay'
-        this._delayTime = '18t';
-        this._feedback = 0.62
+        // this._delayTime = '18t';
+        // this._feedback = 0.62
+        this._delayTime = '0.8t';
+        this._feedback = 0.2
         this.isOn = fxParameters.isOn
     }
 
@@ -53,7 +55,12 @@ export default class Delay extends FXBaseClass {
     }
 
     enable () {
-        this.fx = new Tone.FeedbackDelay(this._delayTime, this._feedback)
+        // const pingPong = new Tone.PingPongDelay("4n", 0.2).toDestination();
+        // const drum = new Tone.MembraneSynth().connect(pingPong);
+        // drum.triggerAttackRelease("C4", "32n");
+
+        this.fx = new Tone.PingPongDelay(this._delayTime, this._feedback).toDestination();
+
         this.fx.wet.value = this._mix
         this.setBypass(true)
     }
