@@ -21,6 +21,10 @@ body{
     display: none;
 }
 
+.rename-dialog-action {
+    padding: 8px 24px !important;
+    justify-content: space-between !important;
+}
 @media only screen and (max-width: 991px) {
     .tempo-slider {
         width: 140px !important;

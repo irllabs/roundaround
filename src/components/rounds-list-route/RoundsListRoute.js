@@ -57,14 +57,23 @@ class RoundsListRoute extends Component {
     }
 
     async onNewRoundClick () {
-        console.log('create new round');
+        // console.log('create new round');
         let newRound = createRound(this.props.user.id)
-        console.log('newRound', newRound);
+        // console.log('newRound', newRound);
+        newRound.name = this.props.rounds.length === 0 ? 'My Project 1' : this.getRoundName(this.props.rounds, newRound)
         let newRounds = [...this.props.rounds, newRound]
         await this.context.createRound(newRound)
         this.props.setRounds(newRounds)
         // redirect to new round
         this.onLaunchRoundClick(newRound.id)
+    }
+
+    getRoundName = (rounds, newRound) => {
+        let sortRounds =  _.sortBy(rounds, 'name');
+        let lastRound = sortRounds[0];
+        let name = lastRound.name;
+        let str = name.split('My Project ');
+        return `My Project ${parseInt(str[1]) + 1}`;
     }
 
     onLaunchRoundClick (id) {

@@ -202,8 +202,13 @@ class PlayUI extends Component {
         // Check for mute changes
         for (let layer of this.round.layers) {
             let newLayer = _.find(this.props.round.layers, { id: layer.id })
-            if (!_.isNil(newLayer) && !_.isEqual(layer.isMuted, newLayer.isMuted)) {
-                 console.log('mute has changed', newLayer.isMuted)
+            // if (!_.isNil(newLayer) && !_.isEqual(layer.isMuted, newLayer.isMuted)) {
+            //     console.log('mute has changed', newLayer.isMuted)
+            //     AudioEngine.tracksById[newLayer.id].setMute(newLayer.isMuted)
+            //     this.updateMuteColor(newLayer)
+            // }
+            if (!_.isNil(newLayer)) {
+                // console.log('mute has changed', newLayer.isMuted)
                 AudioEngine.tracksById[newLayer.id].setMute(newLayer.isMuted)
                 this.updateMuteColor(newLayer)
             }

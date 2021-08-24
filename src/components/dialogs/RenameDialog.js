@@ -10,7 +10,7 @@ import { setRoundName, setIsShowingRenameDialog, setRounds, setDisableKeyListene
 import { FirebaseContext } from '../../firebase';
 import _ from 'lodash'
 
-function RenameDialog ({ selectedRoundId, round, rounds, setRoundName, setIsShowingRenameDialog, isShowingRenameDialog, setRounds, setDisableKeyListener }) {
+function RenameDialog({ selectedRoundId, round, rounds, setRoundName, setIsShowingRenameDialog, isShowingRenameDialog, setRounds, setDisableKeyListener }) {
     const firebase = useContext(FirebaseContext);
     const textField = useRef(null)
     const handleClose = () => {
@@ -50,13 +50,13 @@ function RenameDialog ({ selectedRoundId, round, rounds, setRoundName, setIsShow
                     fullWidth
                 />
             </DialogContent>
-            <DialogActions>
+            <DialogActions className='rename-dialog-action'>
                 <Button onClick={handleClose}>
                     Cancel
-          </Button>
+                </Button>
                 <Button color="primary" variant="contained" disableElevation autoFocus onClick={onOkClick}>
                     Rename
-          </Button>
+                </Button>
             </DialogActions>
         </Dialog>
     )
