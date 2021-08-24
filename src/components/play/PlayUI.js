@@ -207,6 +207,7 @@ class PlayUI extends Component {
             //     AudioEngine.tracksById[newLayer.id].setMute(newLayer.isMuted)
             //     this.updateMuteColor(newLayer)
             // }
+            
             if (!_.isNil(newLayer)) {
                 // console.log('mute has changed', newLayer.isMuted)
                 AudioEngine.tracksById[newLayer.id].setMute(newLayer.isMuted)
