@@ -42,6 +42,7 @@ class PlayUI extends Component {
         this.onOutsideClick = this.onOutsideClick.bind(this)
         this.stepModalStepUpdateThrottled = _.throttle(this.stepModalStepUpdate.bind(this), 300)
         this.sequencerParts = {}
+        this.selectedLayerIDRef = React.createRef();
     }
 
     async componentDidMount() {
@@ -91,8 +92,7 @@ class PlayUI extends Component {
     }
 
     async componentDidUpdate(prevProps,) {
-        // console.log('componentDidUpdate()', this.round, this.props.round)
-        // console.log('componentDidUpdate', this.props.selectedLayerId)
+        // console.log('componentDidUpdate()', this.round, this.props.round)       
         if (prevProps.selectedLayerId !== this.props.selectedLayerId) {
             this.selectedLayerId = this.props.selectedLayerId;
             // console.log("this.selectedLayerId: ", this.selectedLayerId)
@@ -1197,6 +1197,7 @@ class PlayUI extends Component {
                 _this.container.on('mouseup', (e) => {
                     // console.log('_this.container.on(mouseup)');
                     e.stopPropagation()
+                    _this.updateStepSwipeListers()
                     _this.removeStepSwipeListeners()
                     _this.container.off('mousemove')
                     _this.container.off('mouseup')
@@ -1306,23 +1307,28 @@ class PlayUI extends Component {
         this.stepMoveTimer = null
     }
 
+    updateStepSwipeListers = () => {        
+        this.props.dispatch({ type: UPDATE_LAYERS, payload: { layers: this.round.layers } })
+    }
+
     addStepSwipeListeners(originalStepGraphic) {
         // console.log('addStepSwipeListeners', this);
+        this.selectedLayerIDRef.current = originalStepGraphic.layerId;
+
         this.removeStepSwipeListeners()
         const _this = this
+
         for (const stepGraphic of _this.stepGraphics) {
-            if (stepGraphic.layerId === originalStepGraphic.layerId) {
+
+            if (stepGraphic.layerId === _this.selectedLayerIDRef.current) {
                 stepGraphic.on('mouseover', (e) => {
-                    console.log('on stepGraphic mouseover');
+                    // console.log('on stepGraphic mouseover');
                     // _this.onStepClick(stepGraphic)
                     let step = _this.getStep(stepGraphic.id)
                     step.isOn = !step.isOn
                     _this.updateStep(step, false)
                     AudioEngine.recalculateParts(this.round)
-                    _this.saveLayer(stepGraphic.layerId); 
-                    // stepGraphic.on('mouseup', (event) => {
-                    //     _this.props.dispatch({ type: TOGGLE_STEP, payload: { layerId: stepGraphic.layerId, stepId: stepGraphic.id, isOn: step.isOn, user: null } })
-                    // })
+                    _this.saveLayer(stepGraphic.layerId);
                 })
             }
         }
