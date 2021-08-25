@@ -1,4 +1,5 @@
 import Delay from '../audio-engine/fx/delay';
+import PingPongDelay from './fx/PingPongDelay';
 import Lowpass from '../audio-engine/fx/lowpass';
 import Highpass from '../audio-engine/fx/highpass';
 import Distortion from '../audio-engine/fx/distortion';
@@ -12,7 +13,7 @@ const FX = {
     fx: [],
     fxById: {},
     init () {
-        let classes = [Delay, Distortion, Bitcrusher, Autowah, Reverb, Lowpass, Highpass]
+        let classes = [PingPongDelay, Delay, Distortion, Bitcrusher, Autowah, Reverb, Lowpass, Highpass]
         for (let fxClass of classes) {
             this.fxClasses[fxClass.fxName] = fxClass
         }

@@ -69,11 +69,27 @@ class RoundsListRoute extends Component {
     }
 
     getRoundName = (rounds, newRound) => {
-        let sortRounds =  _.sortBy(rounds, 'name');
-        let lastRound = sortRounds[0];
-        let name = lastRound.name;
-        let str = name.split('My Project ');
-        return `My Project ${parseInt(str[1]) + 1}`;
+        const regex = new RegExp('(My Project)*', 'g');
+        const regex_1 = new RegExp('(My Project)+', 'g');
+
+        let checkRounds = rounds.filter(item => regex_1.test(item.name));
+        if(checkRounds.length > 0) {
+            let testRounds = rounds.filter(item => regex.test(item.name))
+            let newRounds = testRounds.filter(item => item.name !== 'My Project NaN');
+            if(newRounds.length > 0) {
+                let sortRounds =  newRounds.sort((a, b) => (a.name > b.name) ? -1 : ((b.name > a.name) ? 1 : 0))
+                let lastRound = sortRounds[0];
+                let name = lastRound.name;
+                let str = name.split('My Project ');
+                return `My Project ${str[1] === 'NaN' ? '1' : parseInt(str[1]) + 1}`;
+    
+            } else {
+                return 'My Project 1'
+            }
+        } else {
+            return 'My Project 1'
+        }
+        
     }
 
     onLaunchRoundClick (id) {
@@ -143,6 +159,7 @@ class RoundsListRoute extends Component {
 
         const { classes } = this.props;
         const rounds = this.props.rounds;
+        const sortRounds = rounds.sort((a, b) => (a.createdAt > b.createdAt) ? -1 : ((b.createdAt > a.createdAt) ? 1 : 0))
         return (
             <>
                 <Container className={classes.root}>
@@ -156,7 +173,7 @@ class RoundsListRoute extends Component {
                     <Box>
                         <List>
                             {
-                                rounds.map((round) => (
+                                sortRounds.map((round) => (
                                     <ListItem key={round.id} button onClick={this.onLaunchRoundClick.bind(this, round.id)}>
                                         <ListItemAvatar>
                                             <Avatar>

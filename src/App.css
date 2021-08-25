@@ -25,8 +25,63 @@ body{
     padding: 8px 24px !important;
     justify-content: space-between !important;
 }
+
+button.rename-cancel {
+    padding: 6px 16px !important;
+    width: 87.33px !important;
+    border: 1px solid #505050;
+}
+
+.rename-dialog .MuiDialog-paperWidthSm {
+    width: 360px;
+}
+
+.rename-dialog .rename-dialog-title {
+    text-align: center;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.rename-dialog .MuiDialogContent-root {
+    padding-top: 20px;
+}
+
+.rename-dialog .MuiDialogContent-root .rename-dialog-content {
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    box-sizing: border-box;
+    border-radius: 12px;
+    padding: 4px 10px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.rename-dialog-content .rename-dialog-input-field {
+    width: 100%;
+}
+
+.rename-dialog-content .rename-dialog-input-field input {
+    padding-bottom: 0;    
+}
+
+.rename-dialog-content .MuiInput-underline:before, 
+.rename-dialog-content .MuiInput-underline:after,
+.rename-dialog-content .MuiInput-underline:hover:not(.Mui-diabled):before {
+    border-bottom-width: 0;
+}
+
+.rename-dialog .MuiFormControl-marginDense {
+    margin-top: 0;
+    margin-bottom: 0;
+}
 @media only screen and (max-width: 991px) {
     .tempo-slider {
         width: 140px !important;
+    }
+}
+
+@media only screen and (max-width: 400px) {
+
+    .rename-dialog .MuiDialog-paperWidthSm {
+        width: 300px;
     }
 }

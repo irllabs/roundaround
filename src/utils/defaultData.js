@@ -131,6 +131,13 @@ export const getDefaultUserBusFx = () => {
     return [
         {
             "id": uuid(),
+            name: 'pingpong',
+            order: 5,
+            isOn: true,
+            isOverride: false
+        },
+        {
+            "id": uuid(),
             name: 'delay',
             order: 3,
             isOn: true,

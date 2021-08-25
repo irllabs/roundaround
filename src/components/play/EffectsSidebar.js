@@ -15,6 +15,7 @@ import arrayMove from 'array-move'
 import EffectThumbControl from './EffectThumbControl';
 import ChevronRightIcon from '@material-ui/icons/ChevronRight';
 import _ from 'lodash'
+import { uuid } from '../../utils';
 
 const styles = theme => ({
     root: {
@@ -102,7 +103,7 @@ const toTitleCase = (str) => {
 
 class EffectsSidebar extends Component {
     static contextType = FirebaseContext;
-    constructor (props) {
+    constructor(props) {
         super(props)
         this.state = {
             menuAnchorElement: null,
@@ -113,7 +114,7 @@ class EffectsSidebar extends Component {
         this.onMinimizeClick = this.onMinimizeClick.bind(this)
     }
 
-    onPlayClick () {
+    onPlayClick() {
         this.props.togglePlay()
     }
     onSortEnd = ({ oldIndex, newIndex }) => {
@@ -131,40 +132,74 @@ class EffectsSidebar extends Component {
             items: arrayMove(items, oldIndex, newIndex),
         }));*/
     };
-    onSwitchOn (fxId) {
+    onSwitchOn(fxId) {
 
         AudioEngine.busesByUser[this.props.user.id].fx[fxId].override = true
         this.props.setUserBusFxOverride(this.props.user.id, fxId, true)
-       
+
         //this.props.dispatch({ type: SET_USER_BUS_FX_OVERRIDE, payload: { fxId, userId: this.props.user.id, value: true } })
-        let userBus = _.cloneDeep(this.props.round.userBuses[this.props.user.id])   
+        let userBus = _.cloneDeep(this.props.round.userBuses[this.props.user.id])
         let fx = _.find(userBus.fx, { id: fxId })
-        fx.isOverride = true     
-       
+        fx.isOverride = true
+
         this.context.updateUserBus(this.props.round.id, this.props.user.id, userBus)
     }
-    onSwitchOff (fxId) {
-       
+    onSwitchOff(fxId) {
+
         AudioEngine.busesByUser[this.props.user.id].fx[fxId].override = false
         this.props.setUserBusFxOverride(this.props.user.id, fxId, false)
         //this.props.dispatch({ type: SET_USER_BUS_FX_OVERRIDE, payload: { fxId, userId: this.props.user.id, value: false } })
         let userBus = _.cloneDeep(this.props.round.userBuses[this.props.user.id])
         let fx = _.find(userBus.fx, { id: fxId })
-        fx.isOverride = false        
+        fx.isOverride = false
         this.context.updateUserBus(this.props.round.id, this.props.user.id, userBus)
     }
-    onMinimizeClick () {
+    onMinimizeClick() {
         this.setState({ isMinimized: !this.state.isMinimized })
     }
 
     updateAudioEngine = (fxId) => {
         AudioEngine.busesByUser[this.props.user.id].fx[fxId].override = true
     }
-    render () {
+
+    checkPingPongDelay = () => {
+        let userBus = _.cloneDeep(this.props.round.userBuses[this.props.user.id]);
+        let fx = userBus.fx;
+        let findPingPongFx = fx.find(item => item.name === 'pingpong');
+        if (findPingPongFx === undefined) {
+            let pingPongFx = {
+                "id": uuid(),
+                name: 'pingpong',
+                order: 5,
+                isOn: true,
+                isOverride: false
+            }
+
+            userBus.fx = [pingPongFx, ...userBus.fx];
+            fx = userBus.fx;
+            this.context.updateUserBus(this.props.round.id, this.props.user.id, userBus);
+        }
+
+        return fx;
+    }
+
+    render() {
         const { classes } = this.props;
         let items = []
         if (!_.isNil(this.props.round) && !_.isNil(this.props.round.userBuses) && !_.isNil(this.props.round.userBuses[this.props.user.id])) {
-            for (const fx of this.props.round.userBuses[this.props.user.id].fx) {
+            // for (const fx of this.props.round.userBuses[this.props.user.id].fx) {
+            //     let item = {
+            //         id: fx.id,
+            //         label: fx.name,
+            //         userId: this.props.user.id,
+            //         name: fx.name,
+            //         isOn: fx.isOn,
+            //         isOverride: fx.isOverride
+            //     }
+            //     items.push(item)
+            // }
+
+            for (const fx of this.checkPingPongDelay()) {
                 let item = {
                     id: fx.id,
                     label: fx.name,
@@ -182,7 +217,7 @@ class EffectsSidebar extends Component {
         return (
             <Box className={classes.root + ' ' + isMinimizedClass}>
                 {items.map((fx, index) => (
-                    <EffectThumbControl key={fx.id} className={classes.thumbControl} label={toTitleCase(fx.label)} fx={fx} fxId={fx.id} userId={fx.userId} updateAudioEngine={(fxId) =>this.updateAudioEngine(fxId)} switchOn={this.onSwitchOn} switchOff={this.onSwitchOff} name={fx.name} />
+                    <EffectThumbControl key={fx.id} className={classes.thumbControl} label={toTitleCase(fx.label)} fx={fx} fxId={fx.id} userId={fx.userId} updateAudioEngine={(fxId) => this.updateAudioEngine(fxId)} switchOn={this.onSwitchOn} switchOff={this.onSwitchOff} name={fx.name} />
                 ))}
                 <Box className={classes.minimizeButton + ' ' + buttonIsMinimizedClass} onClick={this.onMinimizeClick}><ChevronRightIcon size="small" /></Box>
             </Box>

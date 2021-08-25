@@ -125,9 +125,11 @@ class PlayUI extends Component {
         }
 
         // sequence update
+
         if (!_.isNil(diff.updated.userPatterns)) {
             for (let [userPatternsId, userPatterns] of Object.entries(diff.updated.userPatterns)) {
                 if (!_.isNil(userPatterns.isPlayingSequence)) {
+                    // console.log("userPatterns.isPlayingSequence: ", userPatterns.isPlayingSequence)
                     if (userPatterns.isPlayingSequence) {
                         // console.log('isPlayingSequence turned on', userPatterns, this.props.round.userPatterns[userPatternsId]);
                         const newUserPatterns = this.props.round.userPatterns[userPatternsId]
@@ -207,7 +209,7 @@ class PlayUI extends Component {
             //     AudioEngine.tracksById[newLayer.id].setMute(newLayer.isMuted)
             //     this.updateMuteColor(newLayer)
             // }
-            if (!_.isNil(newLayer)) {
+            if (!_.isNil(newLayer) && !_.isNil(AudioEngine.tracksById[newLayer.id])) {
                 // console.log('mute has changed', newLayer.isMuted)
                 AudioEngine.tracksById[newLayer.id].setMute(newLayer.isMuted)
                 this.updateMuteColor(newLayer)
@@ -1307,7 +1309,7 @@ class PlayUI extends Component {
         this.stepMoveTimer = null
     }
 
-    updateStepSwipeListers = () => {        
+    updateStepSwipeListers = () => {
         this.props.dispatch({ type: UPDATE_LAYERS, payload: { layers: this.round.layers } })
     }
 

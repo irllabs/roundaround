@@ -38,20 +38,28 @@ function RenameDialog({ selectedRoundId, round, rounds, setRoundName, setIsShowi
         }
     }, [isShowingRenameDialog, setDisableKeyListener])
     return (
-        <Dialog open={isShowingRenameDialog} onClose={handleClose} aria-labelledby="form-dialog-title">
-            <DialogTitle id="form-dialog-title">Rename</DialogTitle>
+        <Dialog className='rename-dialog ' open={isShowingRenameDialog} onClose={handleClose} aria-labelledby="form-dialog-title">
+            <DialogTitle className='rename-dialog-title' id="form-dialog-title">Rename project</DialogTitle>
             <DialogContent>
-                <TextField
-                    ref={textField}
-                    defaultValue={round ? round.name : ''}
-                    autoFocus
-                    margin="dense"
-                    id="name"
-                    fullWidth
-                />
+                <div className='rename-dialog-content'>
+                    <div className='rename-dialog-input-field'>
+                        <div className='text-white'>name</div>
+                        <TextField
+                            ref={textField}
+                            defaultValue={round ? round.name : ''}
+                            autoFocus
+                            margin="dense"
+                            id="name"
+                            fullWidth
+                        />
+                    </div>
+                    <div className='rename-dialog-clear'>
+                        X
+                    </div>
+                </div>
             </DialogContent>
             <DialogActions className='rename-dialog-action'>
-                <Button onClick={handleClose}>
+                <Button onClick={handleClose} className="rename-cancel">
                     Cancel
                 </Button>
                 <Button color="primary" variant="contained" disableElevation autoFocus onClick={onOkClick}>
