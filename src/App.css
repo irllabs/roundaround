@@ -1,15 +1,18 @@
-html{
-    height:100%;
+html {
+    height: 100%;
 }
-body{
-    height:100%;
-    background-color:#1B1B1B !important;
+
+body {
+    height: 100%;
+    background-color: #1B1B1B !important;
 }
-#root{
-    height:100%;
+
+#root {
+    height: 100%;
 }
-.App{
-    height:100%;
+
+.App {
+    height: 100%;
 }
 
 .tempo-slider {
@@ -22,16 +25,30 @@ body{
 }
 
 .rename-dialog-action {
-    padding: 8px 24px !important;
+    padding: 24px 24px !important;
     justify-content: space-between !important;
+    background-color: #333333 !important;
 }
 
 button.rename-cancel {
-    padding: 6px 16px !important;
-    width: 87.33px !important;
-    border: 1px solid #505050;
+    padding-top: 10px !important;
+    padding-bottom: 10px !important;
+    font-size: 16px;
+    width: 158px;
 }
 
+button.rename-ok {
+    padding-top: 10px !important;
+    padding-bottom: 10px !important;
+    font-size: 16px;
+    width: 158px;
+    background-color: #474747;
+    color: #ffffff;
+}
+
+button.rename-cancel:hover, button.rename-ok:hover {
+    background-color: #5c5c5c;
+}
 .rename-dialog .MuiDialog-paperWidthSm {
     width: 360px;
 }
@@ -39,10 +56,12 @@ button.rename-cancel {
 .rename-dialog .rename-dialog-title {
     text-align: center;
     border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    background-color: #333333 !important;
 }
 
 .rename-dialog .MuiDialogContent-root {
     padding-top: 20px;
+    background-color: #333333 !important;
 }
 
 .rename-dialog .MuiDialogContent-root .rename-dialog-content {
@@ -60,12 +79,10 @@ button.rename-cancel {
 }
 
 .rename-dialog-content .rename-dialog-input-field input {
-    padding-bottom: 0;    
+    padding-bottom: 0;
 }
 
-.rename-dialog-content .MuiInput-underline:before, 
-.rename-dialog-content .MuiInput-underline:after,
-.rename-dialog-content .MuiInput-underline:hover:not(.Mui-diabled):before {
+.rename-dialog-content .MuiInput-underline:before, .rename-dialog-content .MuiInput-underline:after, .rename-dialog-content .MuiInput-underline:hover:not(.Mui-diabled):before {
     border-bottom-width: 0;
 }
 
@@ -73,6 +90,11 @@ button.rename-cancel {
     margin-top: 0;
     margin-bottom: 0;
 }
+
+.rename-dialog-clear {
+    cursor: pointer;
+}
+
 @media only screen and (max-width: 991px) {
     .tempo-slider {
         width: 140px !important;
@@ -80,7 +102,6 @@ button.rename-cancel {
 }
 
 @media only screen and (max-width: 400px) {
-
     .rename-dialog .MuiDialog-paperWidthSm {
         width: 300px;
     }

@@ -53,7 +53,7 @@ function RenameDialog({ selectedRoundId, round, rounds, setRoundName, setIsShowi
                             fullWidth
                         />
                     </div>
-                    <div className='rename-dialog-clear'>
+                    <div className='rename-dialog-clear' onClick={() => textField.current.querySelectorAll("input")[0].value = ''}>
                         X
                     </div>
                 </div>
@@ -62,7 +62,7 @@ function RenameDialog({ selectedRoundId, round, rounds, setRoundName, setIsShowi
                 <Button onClick={handleClose} className="rename-cancel">
                     Cancel
                 </Button>
-                <Button color="primary" variant="contained" disableElevation autoFocus onClick={onOkClick}>
+                <Button className='rename-ok' color="primary" variant="contained" disableElevation autoFocus onClick={onOkClick}>
                     Rename
                 </Button>
             </DialogActions>

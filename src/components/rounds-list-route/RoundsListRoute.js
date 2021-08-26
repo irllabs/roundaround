@@ -76,6 +76,7 @@ class RoundsListRoute extends Component {
         if(checkRounds.length > 0) {
             let testRounds = rounds.filter(item => regex.test(item.name))
             let newRounds = testRounds.filter(item => item.name !== 'My Project NaN');
+            // console.log("newRounds: ", newRounds)
             if(newRounds.length > 0) {
                 let sortRounds =  newRounds.sort((a, b) => (a.name > b.name) ? -1 : ((b.name > a.name) ? 1 : 0))
                 let lastRound = sortRounds[0];
