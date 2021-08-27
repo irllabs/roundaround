@@ -6,18 +6,21 @@ The goal of this project is to create a multi-person collaborative step sequence
 
 Feature of the sequencer are:
 
-- A Radial paradigm (see https://apps.musedlab.org/groovepizza/?museid=naq8XXgSX&)
+- A Radial (or "euclidean"0 paradigm musical step sequencer
 - Multi-person live collaboration (e.g. google docs + step sequencer)
-- Front-end: React based, with computer browser client first, and mobile with ReactNative next
-- Back-end: Firebase, leverage real-time database for all collaborative editing features
-- Audio engine: [Tone.js](https://tonejs.github.io/#:~:text=js-,Tone.,of%20the%20Web%20Audio%20API.)
 - Synthesis: Sample based
-- Graphics: [svg.js](https://svgjs.com/docs/3.0/)
 
 Reference:
 
 - Simple radial multi-layer simple sequencer: https://tylerbisson.com/Groove-Pizzeria/
 - Another simple implementation: https://github.com/NYUMusEdLab/Accessible-Groove-Pizza
+
+## Technologies
+
+- Front-end: React/Redux 
+- Back-end: Firebase, leverage real-time database for all collaborative editing features
+- Audio engine: [Tone.js](https://tonejs.github.io/#:~:text=js-,Tone.,of%20the%20Web%20Audio%20API.)
+- Graphics: [svg.js](https://svgjs.com/docs/3.0/)
 
 ## Musical Concepts
 
