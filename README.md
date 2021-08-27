@@ -22,6 +22,10 @@ Reference:
 - Audio engine: [Tone.js](https://tonejs.github.io/#:~:text=js-,Tone.,of%20the%20Web%20Audio%20API.)
 - Graphics: [svg.js](https://svgjs.com/docs/3.0/)
 
+## Design
+- See https://www.figma.com/file/oRhqOzPSgnMgFPPz0tLWjv/V1?node-id=1165%3A85379 
+
+
 ## Musical Concepts
 
 Rounds (aka RoundAround) is a Step Sequencer.
