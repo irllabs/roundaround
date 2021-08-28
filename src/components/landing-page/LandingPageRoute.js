@@ -74,7 +74,15 @@ class LandingPageRoute extends Component {
                             <h1>Gather around, make music, and have fun.</h1>
                             <p>Rounds is a multi-person live-sampling step-sequencer with social features.  It runs in the browser or as a Native iOS application, with the following steps: compose a pattern (or "Round"), make variations and save presets, share a link to have someone join you with additional layers.  Rounds is best on a recent iPad.</p>
                             <div style={{ width: "100%", textAlign: "center", marginTop: "2rem" }}>
-                                <Button className={classes.getStartedButton} variant="contained" color="primary" disableElevation onClick={this.onGetStartedClick}>Get started</Button>
+                                <Button
+                                        className={classes.getStartedButton}
+                                        variant="contained" color="primary"
+                                        disableElevation
+                                        onClick={this.onGetStartedClick}
+                                        data-test="button-get-started"
+                                >
+                                    Get started
+                                </Button>
 
                             </div>
                         </Grid>
