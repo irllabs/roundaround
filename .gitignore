@@ -21,3 +21,6 @@ functions/node_modules
 
 # Ignore IntelliJ generated files
 .idea
+
+# Cypress test results
+cypress
