@@ -1848,12 +1848,12 @@
     ejs "^2.6.1"
     magic-string "^0.25.0"
 
-"@svgdotjs/svg.js@^3.0.16":
+"@svgdotjs/svg.js@3.0.16", "@svgdotjs/svg.js@^3.0.16":
   version "3.0.16"
   resolved "https://registry.yarnpkg.com/@svgdotjs/svg.js/-/svg.js-3.0.16.tgz#7044754e45daf62c8e2b115c45ca33ca5b967aff"
   integrity sha512-yZ4jfP/SeLHEnCi9PIrzienKCrA4vW9+jm5uUV3N5DG2e9zgXLY5FgywK2u8/gMFIeKO0HuqTLFFfWJj+MfMLA==
 
-"@svgdotjs/svg.panzoom.js@^2.1.1":
+"@svgdotjs/svg.panzoom.js@2.1.1":
   version "2.1.1"
   resolved "https://registry.yarnpkg.com/@svgdotjs/svg.panzoom.js/-/svg.panzoom.js-2.1.1.tgz#97ac97010d7814fdef84c8bdbb91b56b4e3edaf6"
   integrity sha512-fsGP+i64jcpaG1UXOmNDUWq2ZLpiMf+EwfHZn5NNnYp5K7J2gk96NcPhzMtgmCUZtu61Ro8Z5D2P3RdzBzpc3g==
@@ -6431,6 +6431,11 @@ human-signals@^1.1.1:
   version "1.1.1"
   resolved "https://registry.yarnpkg.com/human-signals/-/human-signals-1.1.1.tgz#c5b1cd14f50aeae09ab6c59fe63ba3395fe4dfa3"
   integrity sha512-SEQu7vl8KjNL2eoGBLF3+wAjpsNfA9XMlXAYj/3EdaNfAlxKthD1xjEQfGOUhllCGGJVNY34bRr6lPINhNjyZw==
+
+husky@^7.0.0:
+  version "7.0.2"
+  resolved "https://registry.yarnpkg.com/husky/-/husky-7.0.2.tgz#21900da0f30199acca43a46c043c4ad84ae88dff"
+  integrity sha512-8yKEWNX4z2YsofXAMT7KvA1g8p+GxtB1ffV8XtpAEGuXNAbCV5wdNKH+qTpw8SM9fh4aMPDR+yQuKfgnreyZlg==
 
 hyphenate-style-name@^1.0.3:
   version "1.0.4"
