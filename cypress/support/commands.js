@@ -23,28 +23,3 @@
 //
 // -- This will overwrite an existing command --
 // Cypress.Commands.overwrite('visit', (originalFn, url, options) => { ... })
-
-import { users } from "./users";
-
-Cypress.Commands.add("logout", () => {
-	cy.visit("/");
-	cy.get("[data-test=button-sign-in-out]").then(($btn) => {
-		if($btn.hasClass("signed-in")) {
-			cy.get("[data-test=button-sign-in-out]").click();
-			cy.get("[data-test=button-sign-out]").click();
-			cy.visit("/");
-		}
-	});
-});
-
-Cypress.Commands.add("login", () => {
-	cy.logout();
-
-	cy.get("[data-test=button-sign-in-out]").click();
-	cy.get("[data-test=button-email]").click();
-	cy.get("[data-test=input-email]").type(users.EMAIL_USER.username);
-	cy.get("[data-test=input-password]").type(users.EMAIL_USER.password);
-	cy.get("[data-test=button-sign-in]").click();
-	cy.wait(1000);
-	cy.get("[data-test=button-get-started]").click();
-});
