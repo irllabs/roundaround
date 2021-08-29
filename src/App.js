@@ -57,7 +57,7 @@ function App ({ setUser, setRounds, setIsShowingSignInDialog }) {
 
 
   return (
-    <div className="App">
+    <div className="App" data-test="app">
       <ThemeProvider theme={theme}>
         <CssBaseline />
         <Router>

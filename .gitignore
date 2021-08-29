@@ -18,3 +18,11 @@ ref
 functions/node_modules
 
 .eslintcache
+
+# Ignore IntelliJ generated files
+.idea
+
+# Cypress test results
+cypress/screenshots
+cypress/videos
+cypress/results
