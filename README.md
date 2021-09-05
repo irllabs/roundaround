@@ -49,14 +49,19 @@ Rounds names a number of musical/technical concepts; understanding these terms i
 
 ## Local Development
 
-- `yarn`
-- `yarn start`
+- `yarn` to install packages
+- `yarn start` to run app locally
 - navigate to [http://localhost:3000](http://localhost:3000)
 
 ## Deploy frontend
 -  `yarn build`
 -  `firebase deploy --only hosting:production`
 -  `firebase deploy --only hosting:stage`
+
+## Local functional tests
+Make sure the app is running locally
+- `npm run cypress:run` to run cypress tests in headless chrome
+- `npm run cypress:open` to open the cypress ui, run the specs by clicking the test on the left
 
 ## Deploy functions (generates Jitsi tokens)
 
