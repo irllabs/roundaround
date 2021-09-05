@@ -47,12 +47,6 @@ function TempoSlider({ round, setRoundBpm }) {
         updateTempoStateThrottled(bpm)
     };
 
-    useEffect(() => {
-        if (round && round.bpm) {
-            setValue(round.bpm)
-        }
-    },[round])
-
     function valuetext(value) {
         return `${value}`;
     }
