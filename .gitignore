@@ -26,3 +26,4 @@ functions/node_modules
 cypress/screenshots
 cypress/videos
 cypress/results
+cypress/fixtures/example.json
