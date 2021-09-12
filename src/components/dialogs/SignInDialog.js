@@ -207,7 +207,17 @@ const SignInDialog = ({ isShowingSignInDialog, setIsShowingSignInDialog, setSign
                         <Box className={classes.body}>
                             <Button className={classes.button} fullWidth color="secondary" variant="contained" disableElevation onClick={onGoogleSigninClick}>Continue with Google</Button>
                             <Button className={classes.button} fullWidth color="secondary" variant="contained" disableElevation onClick={onShowEmailSigninClick}>Sign in with email</Button>
-                            <Button className={classes.button} fullWidth color="secondary" variant="contained" disableElevation onClick={onUseAsGuestClick}>Use as guest</Button>
+                            <Button
+                                    className={classes.button}
+                                    fullWidth color="secondary"
+                                    variant="contained"
+                                    disableElevation
+                                    onClick={onUseAsGuestClick}
+                                    data-test="button-guest"
+                            >
+
+                                Use as guest
+                            </Button>
                             <p style={{ textAlign: 'center' }}>Don't have an account yet?</p>
                             <Button className={classes.signUpButton} fullWidth disableElevation onClick={onShowEmailSignupClick}>Sign up</Button>
                         </Box>
@@ -241,12 +251,27 @@ const SignInDialog = ({ isShowingSignInDialog, setIsShowingSignInDialog, setSign
                         </IconButton>Continue as guest</DialogTitle>
                         <Box className={classes.body}>
                             <form className={classes.emailForm} noValidate autoComplete="off">
-                                <TextField ref={displayNameGuestInput} className={classes.emailFormItem} label="Name" variant="outlined" />
+                                <TextField
+                                        ref={displayNameGuestInput}
+                                        className={classes.emailFormItem}
+                                        label="Name"
+                                        variant="outlined"
+                                        data-test="input-name"
+                                />
                                 {
                                     errorMessage &&
                                     <p className={classes.error}>{errorMessage}</p>
                                 }
-                                <Button className={classes.button} fullWidth color="primary" variant="contained" disableElevation onClick={onContinueAsGuestClick} ><strong>Continue as guest</strong></Button>
+                                <Button
+                                        className={classes.button}
+                                        fullWidth color="primary"
+                                        variant="contained"
+                                        disableElevation
+                                        onClick={onContinueAsGuestClick}
+                                        data-test="button-name"
+                                >
+                                    <strong>Continue as guest</strong>
+                                </Button>
                             </form>
 
                         </Box>

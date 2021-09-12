@@ -131,8 +131,7 @@ function HeaderAvatar ({ user, users, setUser, setRounds, shouldShowMenu, setUse
 
     return (
         <div className={classes.root}>
-
-            <div>
+            <div data-test="header">
                 {
                     shouldShowMenu &&
                     <>
@@ -140,7 +139,9 @@ function HeaderAvatar ({ user, users, setUser, setRounds, shouldShowMenu, setUse
                             ref={anchorRef}
                             aria-controls={open ? 'menu-list-grow' : undefined}
                             aria-haspopup="true"
-                            onClick={handleToggle}>
+                            data-test="button-avatar"
+                            onClick={handleToggle}
+                        >
                             {
                                 !_.isNil(user.avatar) &&
                                 <Avatar className={classes.avatar} alt={user.displayName} src={user.avatar} />
@@ -165,8 +166,18 @@ function HeaderAvatar ({ user, users, setUser, setRounds, shouldShowMenu, setUse
                                                 <h3 className={classes.userEmail}>{user.email}</h3>
                                                 <CirclePicker className={classes.colorPicker} onChangeComplete={onColorChosen} colors={Colors} />
                                                 <Divider />
-                                                <MenuList autoFocusItem={open} id="menu-list-grow" onKeyDown={handleListKeyDown}>
-                                                    <MenuItem onClick={onSignOutClick} className={classes.menuListItem}>Sign out</MenuItem>
+                                                <MenuList
+                                                        autoFocusItem={open}
+                                                        id="menu-list-grow"
+                                                        onKeyDown={handleListKeyDown}
+                                                >
+                                                    <MenuItem
+                                                            onClick={onSignOutClick}
+                                                            className={classes.menuListItem}
+                                                            data-test="button-sign-out"
+                                                    >
+                                                        Sign out
+                                                    </MenuItem>
                                                 </MenuList>
                                             </Box>
                                         </ClickAwayListener>
