@@ -1881,15 +1881,15 @@
     ejs "^2.6.1"
     magic-string "^0.25.0"
 
-"@svgdotjs/svg.js@3.0.16", "@svgdotjs/svg.js@^3.0.16":
+"@svgdotjs/svg.js@^3.0.16":
   version "3.0.16"
   resolved "https://registry.yarnpkg.com/@svgdotjs/svg.js/-/svg.js-3.0.16.tgz#7044754e45daf62c8e2b115c45ca33ca5b967aff"
   integrity sha512-yZ4jfP/SeLHEnCi9PIrzienKCrA4vW9+jm5uUV3N5DG2e9zgXLY5FgywK2u8/gMFIeKO0HuqTLFFfWJj+MfMLA==
 
-"@svgdotjs/svg.panzoom.js@2.1.1":
-  version "2.1.1"
-  resolved "https://registry.yarnpkg.com/@svgdotjs/svg.panzoom.js/-/svg.panzoom.js-2.1.1.tgz#97ac97010d7814fdef84c8bdbb91b56b4e3edaf6"
-  integrity sha512-fsGP+i64jcpaG1UXOmNDUWq2ZLpiMf+EwfHZn5NNnYp5K7J2gk96NcPhzMtgmCUZtu61Ro8Z5D2P3RdzBzpc3g==
+"@svgdotjs/svg.panzoom.js@^2.1.1":
+  version "2.1.2"
+  resolved "https://registry.yarnpkg.com/@svgdotjs/svg.panzoom.js/-/svg.panzoom.js-2.1.2.tgz#50e66a861f7c4f9e3992707f8e62e6e8da5c5223"
+  integrity sha512-0Nzo2TRlTebW3pzfAPtHx8Ye7Y3kuMEkK7hwVJi0SgQUB/vstjg7fvCJxB++EqsuDEetP0/SC+4CpLMVm6Lh2g==
   dependencies:
     "@svgdotjs/svg.js" "^3.0.16"
 
