@@ -42,13 +42,23 @@ Rounds names a number of musical/technical concepts; understanding these terms i
 
 ## Please set your node version
 Please use node v14.17.6 - the latest stable version of node, [nvm](https://tecadmin.net/install-nvm-macos-with-homebrew/) is an easy way to do this
-```shell 
-    ruby -e "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install)"
-    nvm install 14.17.6
-    nvm use v14.17.6
-    node -v // should be 14.17.6
+
+On OX, install Homebrew if you don't have it:
 ```
-Then if needed, `yarn install --frozen-lockfile`, to make sure all modules are installed with that node version (basically a clean install).
+ruby -e "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install)"
+```
+
+Install and select said version of Node:
+```
+nvm install 14.17.6
+nvm use v14.17.6
+node -v // should be 14.17.6
+```
+
+For a "Clean Install": assure that all modules are installed with that node version with:
+```
+yarn install --frozen-lockfile`
+```
 
 ## Local development
 - Go to your local branch
