@@ -20,25 +20,17 @@ Reference:
 
 # Development
 
-## Set Node Version
+# Development
+
+## Please set your node version
 Please use node v14.17.6 - the latest stable version of node, [nvm](https://tecadmin.net/install-nvm-macos-with-homebrew/) is an easy way to do this
-
-On OX, install Homebrew if you don't have it:
+```shell 
+    ruby -e "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install)"
+    nvm install 14.17.6
+    nvm use v14.17.6
+    node -v // should be 14.17.6
 ```
-ruby -e "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install)"
-```
-
-Install and select said version of Node:
-```
-nvm install 14.17.6
-nvm use v14.17.6
-node -v // should be 14.17.6
-```
-
-### (Optional) Clean Install Modules
-```
-yarn install --frozen-lockfile`
-```
+`yarn install --frozen-lockfile`, to make sure all modules are installed with that node version (basically a clean install).
 
 ## Local development
 - Go to your local branch
@@ -48,35 +40,19 @@ yarn install --frozen-lockfile`
 - navigate to [http://localhost:3000](http://localhost:3000)
 
 ## Dev workflow
-We use [git flow](https://www.atlassian.com/git/tutorials/comparing-workflows/gitflow-workflow#:~:text=The%20overall%20flow%20of%20Gitflow,branch%20is%20created%20from%20main&text=When%20a%20feature%20is%20complete%20it%20is%20merged%20into%20the,branch%20is%20created%20from%20main)
+We're basically using [git flow](https://www.atlassian.com/git/tutorials/comparing-workflows/gitflow-workflow#:~:text=The%20overall%20flow%20of%20Gitflow,branch%20is%20created%20from%20main&text=When%20a%20feature%20is%20complete%20it%20is%20merged%20into%20the,branch%20is%20created%20from%20main)
 
-### Summary
-- Make sure master is always production ready
-- Create feature/bug branches for every issue; put issue ID brance name, e.g. "bug/163-fix-step-count" for [Issue #163](https://github.com/irllabs/roundaround/issues/163) 
-- Merge `feature` branches into `stage` as soon as it's ready to minimize merge conflicts and lack of transparency in what the code will look like once it's deployed to `prod`.
+The idea is to make sure master is always production ready, and there's as much visibility as possible for new features. We want these features
+to get into develop as soon as it's ready to minimize merge conflicts and lack of transparency in what the code will look like once it's deployed to prod.
 
-### Branches
-
-- `master` - always runs, is deployed to `prod` (http://rounds.studio and http:/rounds.irl.studio)
-- `stage` - always runs, features are merged to it; is deployed to `stage` (http://roundaround-stage.web.app) when testing integration of features
-- `feature/<GitHub-issue-number>-<Feature-Description>` - one for each issue labeled as `enhancement` in github, deployed to `dev` (http://roundaround-dev.web.app) when testing a feature is useful
-- `bug//<GitHub-issue-number>-<Bug-Description>` - one for each issue labeled as `bug`, deployed to `dev` (http://roundaround-dev.web.app) when testing a bug is useful
-
-### How is new work added?
-- checkout `stage` and create a new feature/bug branch
-- If you want feedback deploy that branch out to `roundaround-dev.web.app`. It's fine if its buggy at the point of feedback
-- When you are confident the new feature is completed make a PR and do a [full regression test](https://docs.google.com/spreadsheets/d/1fn3mY7sy1YfqoeCXUstYxEqKOidWj6KFN_negDrXKeQ/edit#gid=116044031). 
-
-    Deploy to `roundaround-dev.web.app`. Ask product to test the added functionality. They will _not_ do a regression
-- If the tests pass, the PR is approved, and we're happy with the added functionality, merge that branch to stage. 
-
-    Deploy to `https://roundaround-stage.web.app/`
-- When we want to merge into master, deploy that (or those) features to the stage server if they aren't already, and _everyone_ does a full regression before we make a PR for stage to master
-- If the tests pass we merge to master. 
-
-    Deploy to `roundaround-dev.web.app`
-
-Summary - we never make a branch off master, only stage, and we only ever merge into master after stage is fully regression tested. We try to get feature branches into stage as soon as possible, so we can be confident we're always moving forward building on tested and verified work.
+So how is new work added?
+- checkout develop and create a new feature/bug branch
+- Get it so it fulfills the requirements, feel free to push that branch out to `roundaround-dev.web.app` whenever needed for feedback 
+    (see deploy frontend section below)
+- Once you're done push a PR against your branch off of develop and merge it after manually testing
+- Push that branch out to `https://roundaround-stage.web.app/`
+- Once everyone agrees develop is in a good spot we'll do manual regressions to merge develop into master. 
+    _Only_ develop should ever be merged into master
 
 
 ## Testing
