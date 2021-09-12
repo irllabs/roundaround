@@ -17,15 +17,10 @@ Reference:
 - Simple radial multi-layer simple sequencer: https://tylerbisson.com/Groove-Pizzeria/
 - Another simple implementation: https://github.com/NYUMusEdLab/Accessible-Groove-Pizza
 
-## Musical Concepts
-![Step Sequencers: Traditional (Linear) and Radial Metaphors](/docs/images/RoundAround_StepSequencers.jpeg)
-
-## Data Concepts
-![Key Data Concepts for RoundAround](/docs/images/RoundAround_Concepts.jpeg)
 
 # Development
 
-## Please set your node version
+## Set Node Version
 Please use node v14.17.6 - the latest stable version of node, [nvm](https://tecadmin.net/install-nvm-macos-with-homebrew/) is an easy way to do this
 
 On OX, install Homebrew if you don't have it:
@@ -40,7 +35,7 @@ nvm use v14.17.6
 node -v // should be 14.17.6
 ```
 
-For a "Clean Install": assure that all modules are installed with that node version with:
+### (Optional) Clean Install Modules
 ```
 yarn install --frozen-lockfile`
 ```
@@ -53,15 +48,16 @@ yarn install --frozen-lockfile`
 - navigate to [http://localhost:3000](http://localhost:3000)
 
 ## Dev workflow
-We're basically using [git flow](https://www.atlassian.com/git/tutorials/comparing-workflows/gitflow-workflow#:~:text=The%20overall%20flow%20of%20Gitflow,branch%20is%20created%20from%20main&text=When%20a%20feature%20is%20complete%20it%20is%20merged%20into%20the,branch%20is%20created%20from%20main)
+We use [git flow](https://www.atlassian.com/git/tutorials/comparing-workflows/gitflow-workflow#:~:text=The%20overall%20flow%20of%20Gitflow,branch%20is%20created%20from%20main&text=When%20a%20feature%20is%20complete%20it%20is%20merged%20into%20the,branch%20is%20created%20from%20main)
 
-The idea is to make sure master is always production ready, and there's as much visibility as possible for new features. We want these features
-to get into develop as soon as it's ready to minimize merge conflicts and lack of transparency in what the code will look like once it's deployed to prod.
+### Summary
+- Make sure master is always production ready
+- Create feature/bug branches for every issue; put issue ID brance name, e.g. "bug/163-fix-step-count" for [Issue #163](https://github.com/irllabs/roundaround/issues/163) 
+- Merge `feature` branches into `develop` as soon as it's ready to minimize merge conflicts and lack of transparency in what the code will look like once it's deployed to prod.
 
-So how is new work added?
-- checkout develop and create a new feature/bug branch
-- Get it so it fulfills the requirements, feel free to push that branch out to `roundaround-dev.web.app` whenever needed for feedback 
-    (see deploy frontend section below)
+### How is new work added?
+- checkout `develop` and create a new feature/bug branch
+- Get it so it fulfills the requirements, feel free to push that branch out to `roundaround-dev.web.app` whenever needed for feedback; (see deploy frontend section below)
 - Once you're done push a PR against your branch off of develop and merge it after manually testing
 - Push that branch out to `https://roundaround-stage.web.app/`
 - Once everyone agrees develop is in a good spot we'll do manual regressions to merge develop into master. 
