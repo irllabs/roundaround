@@ -33,7 +33,7 @@ Please use node v14.17.6 - the latest stable version of node, [nvm](https://teca
     nvm use v14.17.6
     node -v // should be 14.17.6
 ```
-`yarn install --frozen-lockfile`, to make sure all modules are installed with that node version (basically a clean install).
+Then if needed, `yarn install --frozen-lockfile`, to make sure all modules are installed with that node version (basically a clean install).
 
 ## Local development
 - Go to your local branch
