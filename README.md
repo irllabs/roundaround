@@ -61,11 +61,11 @@ We use [git flow](https://www.atlassian.com/git/tutorials/comparing-workflows/gi
 
 - Make sure master is always production ready
 - Create feature/bug branches for every issue; put issue ID brance name, e.g. "bug/163-fix-step-count" for [Issue #163](https://github.com/irllabs/roundaround/issues/163)
-- Merge `feature` branches into `develop` as soon as it's ready to minimize merge conflicts and lack of transparency in what the code will look like once it's deployed to prod.
+- Merge `feature` branches into `stage` as soon as it's ready to minimize merge conflicts and lack of transparency in what the code will look like once it's deployed to prod.
 
 ### How is new work added?
 
-- checkout `develop` and create a new feature/bug branch
+- checkout `stage` and create a new feature/bug branch
 - Get it so it fulfills the requirements, feel free to push that branch out to `roundaround-dev.web.app` whenever needed for feedback; (see deploy frontend section below)
 - Once you're done push a PR against your branch off of develop and merge it after manually testing
 - Push that branch out to `https://roundaround-stage.web.app/`
