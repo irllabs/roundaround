@@ -56,10 +56,10 @@ We use [git flow](https://www.atlassian.com/git/tutorials/comparing-workflows/gi
 - Merge `feature` branches into `stage` as soon as it's ready to minimize merge conflicts and lack of transparency in what the code will look like once it's deployed to `prod`.
 
 ### Branchines
-`master` - always runs, is deployed to `prod` (http://rounds.studio and http:/rounds.irl.studio)
-`stage` - always runs, features are merged to it; is deployed to `stage` (http://roundaround-stage.web.app) when testing integration of features
-`feature/<GitHub-issue-number>-<Feature-Description>` - one for each issue labeled as `enhancement` in github, deployed to `dev` (http://roundaround-dev.web.app) when testing a feature is useful
-`bug//<GitHub-issue-number>-<Bug-Description>` - one for each issue labeled as `bug`, deployed to `dev` (http://roundaround-dev.web.app) when testing a bug is useful
+- `master` - always runs, is deployed to `prod` (http://rounds.studio and http:/rounds.irl.studio)
+- `stage` - always runs, features are merged to it; is deployed to `stage` (http://roundaround-stage.web.app) when testing integration of features
+- `feature/<GitHub-issue-number>-<Feature-Description>` - one for each issue labeled as `enhancement` in github, deployed to `dev` (http://roundaround-dev.web.app) when testing a feature is useful
+- `bug//<GitHub-issue-number>-<Bug-Description>` - one for each issue labeled as `bug`, deployed to `dev` (http://roundaround-dev.web.app) when testing a bug is useful
 
 ### How is new work added?
 - checkout `stage` and create a new feature/bug branch
