@@ -1,17 +1,25 @@
-name: Roundaround Cypress Tests
+name: Cypress Tests with installation job
 
 on: [push]
 
 jobs:
-  cypress-run:
+  install:
     runs-on: ubuntu-latest
+    container: cypress/browsers:node14.17.6-chrome87-ff82
     steps:
       - name: Checkout
         uses: actions/checkout@v2
-      # Install NPM dependencies, cache them correctly
-      # and run all Cypress tests
-      - name: Cypress run
+
+      - name: Save build folder
+        uses: actions/upload-artifact@v2
+        with:
+          name: build
+          if-no-files-found: error
+          path: build
+
+      - name: Cypress install
         uses: cypress-io/github-action@v2
         with:
+          # Disable running of tests within install job
+          runTests: false
           build: yarn build
-          start: yarn start
