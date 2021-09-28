@@ -24,4 +24,4 @@ jobs:
         cache: 'npm'
     - run: yarn install --frozen-lockfile
     - run: yarn build
-    - run: yarn start
+    - run: yarn cypress:open
