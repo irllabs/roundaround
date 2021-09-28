@@ -1,6 +1,7 @@
 {
-
 	"chromeWebSecurity": false,
+	"baseUrlLocal": "http://localhost:3000/",
+
 	"baseUrl": "https://roundaround-dev.web.app/",
 	"defaultCommandTimeout": 15000,
 	"viewportWidth": 1300,
