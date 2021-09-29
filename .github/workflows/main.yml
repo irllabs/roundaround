@@ -9,3 +9,8 @@ jobs:
       # Install NPM dependencies, cache them correctlyand run all Cypress tests
       - name: Cypress run
         uses: cypress-io/github-action@v2
+  eslint-check:
+    runs-on: ubuntu-20.04
+    steps:
+      - name: Eslint run
+        run: ./node_modules/.bin/eslint --ext js,jsx src
