@@ -1,4 +1,5 @@
 {
+
 	"chromeWebSecurity": false,
 	"baseUrl": "https://roundaround-stage.web.app/",
 	"defaultCommandTimeout": 15000,
