@@ -11,13 +11,13 @@ jobs:
       # Install NPM dependencies, cache them correctlyand run all Cypress tests
       - name: Cypress master run
         if: github.ref == 'refs/heads/master'
-        run: CYPRESS_BASE_URL=http://rounds.studio cypress run
+        run: CYPRESS_BASE_URL=http://rounds.studio node_modules/.bin/cypress run
       - name: Cypress stage run
         if: github.ref == 'refs/heads/stage'
-        run: CYPRESS_BASE_URL=https://roundaround-stage.web.app/ cypress run
+        run: CYPRESS_BASE_URL=https://roundaround-stage.web.app/ node_modules/.bin/cypress run
       - name: Cypress dev run
         if: github.ref == 'refs/heads/dev'
-        run: CYPRESS_BASE_URL=https://roundaround-dev.web.app/ cypress run
+        run: CYPRESS_BASE_URL=https://roundaround-dev.web.app/ node_modules/.bin/cypress run
       - name: Cypress other run
         if: github.ref != 'refs/heads/dev' && github.ref != 'refs/heads/dev' && github.ref != 'refs/heads/master'
         uses: cypress-io/github-action@v2
