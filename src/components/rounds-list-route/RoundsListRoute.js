@@ -148,7 +148,7 @@ class RoundsListRoute extends Component {
                         <List>
                             {
                                 rounds.map((round) => (
-                                    <ListItem key={round.id} button onClick={this.onLaunchRoundClick.bind(this, round.id)}>
+                                    <ListItem key={round.id} button onClick={this.onLaunchRoundClick.bind(this, round.id)} data-test="list-item-round">
                                         <ListItemAvatar>
                                             <Avatar>
                                                 <ImageIcon />

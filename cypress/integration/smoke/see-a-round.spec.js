@@ -1,5 +1,4 @@
-var crypto = require('crypto');
-
+const crypto = require('crypto');
 
 describe("Can see a round", () => {
 	let hash;
@@ -10,8 +9,9 @@ describe("Can see a round", () => {
 		cy.clearCookies();
 	});
 
-	it("Can see a round", () => {
-		cy.visit("/");
+	it("As a guest", () => {
+		cy.logout();
+
 		cy.get("[data-test=button-get-started]").click();
 		cy.get("[data-test=app]").should("be.visible");
 
@@ -24,10 +24,20 @@ describe("Can see a round", () => {
 		cy.get("[data-test=app]").should("be.visible");
 		cy.get(".round").should("be.visible");
 
-		cy.get("[data-test=button-avatar]").click();
-		cy.get("[data-test=button-sign-out]").click();
+		cy.logout();
 
-		cy.visit("/");
+		cy.get("[data-test=app]").should("be.visible");
+	});
+
+	it("As a registered user", () => {
+		cy.login();
+
+		cy.get("[data-test=list-item-round]").first().click();
+		cy.get("[data-test=app]").should("be.visible");
+		cy.get(".round").should("be.visible");
+
+		cy.logout();
+
 		cy.get("[data-test=app]").should("be.visible");
 	});
 });
