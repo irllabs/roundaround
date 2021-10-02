@@ -4,6 +4,9 @@ node_modules
 # Ignore application build files
 build
 
+# Ignore NPM generated package-lock.json
+package-lock.json
+
 # Ignore Firebase cache
 .firebase
 
