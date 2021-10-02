@@ -51,10 +51,6 @@ const styles = theme => ({
 		marginRight: '1rem',
 		alignItems: 'center'
 	},
-	shareButton: {
-		backgroundColor: theme.palette.secondary.main,
-		marginRight: '1rem'
-	},
 	avatar: {
 		position: 'relative',
 
@@ -63,13 +59,13 @@ const styles = theme => ({
 
 class Header extends Component {
 	static contextType = FirebaseContext;
-	constructor(props) {
+	constructor (props) {
 		super(props);
 		this.onSignInClick = this.onSignInClick.bind(this)
 		this.onShareClick = this.onShareClick.bind(this)
 	}
 
-	componentDidMount() {
+	componentDidMount () {
 		const _this = this
 		_this.context.onUserUpdatedObservers.push(async (authUser) => {
 			if (!_.isNil(authUser)) {
@@ -126,9 +122,8 @@ class Header extends Component {
 			this.props.setRedirectAfterSignIn(null)
 		} else if (this.props.redirectAfterSignIn === '/rounds') {
 			// guest user, create a new round and redirect to there instead of /rounds
-			let newRound = await createRound(this.props.user.id)
-			if (!newRound) return;
-			let newRounds = [newRound, ...this.props.rounds]
+			let newRound = createRound(this.props.user.id)
+			let newRounds = [...this.props.rounds, newRound]
 			await this.context.createRound(newRound)
 			this.props.setRounds(newRounds)
 			this.props.setRedirectAfterSignIn(null)
@@ -144,54 +139,54 @@ class Header extends Component {
 		this.props.setIsShowingShareDialog(true)
 	}
 
-	render() {
+	render () {
 		const { classes, location, round, users, user } = this.props;
 		const isPlayMode = location.pathname.includes('/play/') ? true : false
 		return (
-			<Box className={classes.root} bgcolor={"background.default"}>
-				{isPlayMode &&
+				<Box className={classes.root} bgcolor={"background.default"}>
+					{isPlayMode &&
 					<>
-						<Box style={{ display: 'flex', flexDirection: 'row', alignItems: 'center' }}>
-							<IconButton data-test="button-back-to-rounds" to="/rounds" component={Link}>
-								<BackButton />
+						<div>
+							<IconButton to="/rounds" component={Link}>
+								<ArrowBackIosIcon />
 							</IconButton>
-							<Box style={{ marginLeft: 8 }}>
-								{
-									round &&
-									<Box>
-										<ProjectName name={round.name} />
-									</Box>
-								}
-								{
-									_.isNil(round) &&
-									<Typography>Loading...</Typography>
+						</div>
+						<div>
+							{
+								round &&
+								<div><ProjectName name={round.name} /></div>
+							}
+							{
+								_.isNil(round) &&
+								<div>Loading...</div>
 
-								}
-							</Box>
-						</Box>
+							}
+						</div>
 						<Box className={classes.rightSide} >
 							<Box className={classes.avatars}>
 								{
 									users.map((currentUser) => (
-										<HeaderAvatar className={classes.avatar} key={currentUser.id} user={currentUser} users={users} shouldShowMenu={!_.isNil(user) && (currentUser.id === user.id)} />
+											<HeaderAvatar className={classes.avatar} key={currentUser.id} user={currentUser} users={users} shouldShowMenu={!_.isNil(user) && (currentUser.id === user.id)} />
 									))
 								}
 							</Box>
-							{users.length > 1 && <JitsiComponent />}
-							<Box>
-								<IconButton className={classes.shareButton} onClick={this.onShareClick}><ShareIcon /></IconButton>
-							</Box>
-							<Box>
+							<JitsiComponent />
+							<div>
+								<Button className={classes.rightSideChild} onClick={this.onShareClick} variant="contained" color="secondary" disableElevation startIcon={<ShareIcon />}>Share</Button>
+							</div>
+							<div>
+								<PlayButton className={classes.rightSideChild} />
+							</div>
+							<div>
 								<HeaderMenu />
-							</Box>
+							</div>
 						</Box>
 					</>
-				}
-				{!isPlayMode &&
+					}
+					{!isPlayMode &&
 					<>
-						<Box>
-							<Button className={classes.roundAroundLogoButton} component={Link} to="/">RoundAround</Button>
-						</Box>
+						<div></div>
+						<div><Button className={classes.roundAroundLogoButton} component={Link} to="/">RoundAround</Button></div>
 						{
 							user &&
 							<HeaderAvatar user={user} users={users} shouldShowMenu={true} />
@@ -199,18 +194,20 @@ class Header extends Component {
 						{
 							!user &&
 							<Button
-								variant="contained"
-								color="secondary"
-								disableElevation
-								onClick={this.onSignInClick}
-								data-test="button-sign-in-out"
-								className="signed-out"
+									variant="contained"
+									color="secondary"
+									disableElevation
+									onClick={this.onSignInClick}
+									data-test="button-sign-in-out"
+									className="signed-out"
 							>Sign in</Button>
 						}
 
 					</>
-				}
-			</Box >
+					}
+
+
+				</Box >
 		)
 	}
 }
@@ -230,14 +227,14 @@ const mapStateToProps = state => {
 };
 
 export default connect(
-	mapStateToProps,
-	{
-		setUser,
-		setUserDisplayName,
-		setSignUpDisplayName,
-		setIsShowingSignInDialog,
-		setRedirectAfterSignIn,
-		setRounds,
-		setIsShowingShareDialog
-	}
+		mapStateToProps,
+		{
+			setUser,
+			setUserDisplayName,
+			setSignUpDisplayName,
+			setIsShowingSignInDialog,
+			setRedirectAfterSignIn,
+			setRounds,
+			setIsShowingShareDialog
+		}
 )(withRouter((withStyles(styles)(Header))));
