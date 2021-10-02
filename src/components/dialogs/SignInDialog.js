@@ -206,16 +206,24 @@ const SignInDialog = ({ isShowingSignInDialog, setIsShowingSignInDialog, setSign
                         </DialogTitle>
                         <Box className={classes.body}>
                             <Button className={classes.button} fullWidth color="secondary" variant="contained" disableElevation onClick={onGoogleSigninClick}>Continue with Google</Button>
-                            <Button className={classes.button} fullWidth color="secondary" variant="contained" disableElevation onClick={onShowEmailSigninClick}>Sign in with email</Button>
                             <Button
                                     className={classes.button}
-                                    fullWidth color="secondary"
+                                    fullWidth
+                                    color="secondary"
+                                    variant="contained"
+                                    disableElevation
+                                    onClick={onShowEmailSigninClick}
+                                    data-test="button-email"
+                            >Sign in with email</Button>
+                            <Button
+                                    className={classes.button}
+                                    fullWidth
+                                    color="secondary"
                                     variant="contained"
                                     disableElevation
                                     onClick={onUseAsGuestClick}
                                     data-test="button-guest"
                             >
-
                                 Use as guest
                             </Button>
                             <p style={{ textAlign: 'center' }}>Don't have an account yet?</p>
@@ -231,13 +239,37 @@ const SignInDialog = ({ isShowingSignInDialog, setIsShowingSignInDialog, setSign
                         </IconButton>Sign in with email</DialogTitle>
                         <Box className={classes.body}>
                             <form className={classes.emailForm} noValidate autoComplete="off">
-                                <TextField type="email" ref={emailAddressInput} className={classes.emailFormItem} label="Email address" variant="outlined" />
-                                <TextField ref={passwordInput} className={classes.emailFormItem} label="Password" variant="outlined" type="password" />
+                                <TextField
+                                        type="email"
+                                        ref={emailAddressInput}
+                                        className={classes.emailFormItem}
+                                        label="Email address"
+                                        variant="outlined"
+                                        data-test="input-email"
+                                />
+                                <TextField
+                                        ref={passwordInput}
+                                        className={classes.emailFormItem}
+                                        label="Password"
+                                        variant="outlined"
+                                        type="password"
+                                        data-test="input-password"
+                                />
                                 {
                                     errorMessage &&
                                     <p className={classes.error}>{errorMessage}</p>
                                 }
-                                <Button className={classes.button} fullWidth color="primary" variant="contained" disableElevation onClick={onEmailSigninClick} ><strong>Sign in</strong></Button>
+                                <Button
+                                        className={classes.button}
+                                        fullWidth color="primary"
+                                        variant="contained"
+                                        disableElevation
+                                        onClick={onEmailSigninClick}
+                                        data-test="button-sign-in"
+                                >
+
+                                    <strong>Sign in</strong>
+                                </Button>
                             </form>
 
                         </Box>
