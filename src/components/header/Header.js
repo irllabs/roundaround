@@ -59,13 +59,13 @@ const styles = theme => ({
 
 class Header extends Component {
 	static contextType = FirebaseContext;
-	constructor (props) {
+	constructor(props) {
 		super(props);
 		this.onSignInClick = this.onSignInClick.bind(this)
 		this.onShareClick = this.onShareClick.bind(this)
 	}
 
-	componentDidMount () {
+	componentDidMount() {
 		const _this = this
 		_this.context.onUserUpdatedObservers.push(async (authUser) => {
 			if (!_.isNil(authUser)) {
@@ -139,15 +139,15 @@ class Header extends Component {
 		this.props.setIsShowingShareDialog(true)
 	}
 
-	render () {
+	render() {
 		const { classes, location, round, users, user } = this.props;
 		const isPlayMode = location.pathname.includes('/play/') ? true : false
 		return (
-				<Box className={classes.root} bgcolor={"background.default"}>
-					{isPlayMode &&
+			<Box className={classes.root} bgcolor={"background.default"}>
+				{isPlayMode &&
 					<>
 						<div>
-							<IconButton to="/rounds" component={Link}>
+							<IconButton data-test="button-back-to-rounds" to="/rounds" component={Link}>
 								<ArrowBackIosIcon />
 							</IconButton>
 						</div>
@@ -166,7 +166,7 @@ class Header extends Component {
 							<Box className={classes.avatars}>
 								{
 									users.map((currentUser) => (
-											<HeaderAvatar className={classes.avatar} key={currentUser.id} user={currentUser} users={users} shouldShowMenu={!_.isNil(user) && (currentUser.id === user.id)} />
+										<HeaderAvatar className={classes.avatar} key={currentUser.id} user={currentUser} users={users} shouldShowMenu={!_.isNil(user) && (currentUser.id === user.id)} />
 									))
 								}
 							</Box>
@@ -182,8 +182,8 @@ class Header extends Component {
 							</div>
 						</Box>
 					</>
-					}
-					{!isPlayMode &&
+				}
+				{!isPlayMode &&
 					<>
 						<div></div>
 						<div><Button className={classes.roundAroundLogoButton} component={Link} to="/">RoundAround</Button></div>
@@ -194,20 +194,20 @@ class Header extends Component {
 						{
 							!user &&
 							<Button
-									variant="contained"
-									color="secondary"
-									disableElevation
-									onClick={this.onSignInClick}
-									data-test="button-sign-in-out"
-									className="signed-out"
+								variant="contained"
+								color="secondary"
+								disableElevation
+								onClick={this.onSignInClick}
+								data-test="button-sign-in-out"
+								className="signed-out"
 							>Sign in</Button>
 						}
 
 					</>
-					}
+				}
 
 
-				</Box >
+			</Box >
 		)
 	}
 }
@@ -227,14 +227,14 @@ const mapStateToProps = state => {
 };
 
 export default connect(
-		mapStateToProps,
-		{
-			setUser,
-			setUserDisplayName,
-			setSignUpDisplayName,
-			setIsShowingSignInDialog,
-			setRedirectAfterSignIn,
-			setRounds,
-			setIsShowingShareDialog
-		}
+	mapStateToProps,
+	{
+		setUser,
+		setUserDisplayName,
+		setSignUpDisplayName,
+		setIsShowingSignInDialog,
+		setRedirectAfterSignIn,
+		setRounds,
+		setIsShowingShareDialog
+	}
 )(withRouter((withStyles(styles)(Header))));
