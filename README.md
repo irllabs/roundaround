@@ -42,8 +42,6 @@ Rounds names a number of musical/technical concepts; understanding these terms i
 - `Step Interaction`: The occurence of a user interaction with a step (i.e. clicking/dragging). In a multi-person session, user-interactions are visualized for all users to that all players know what other players are doing
 - `Session`: a collaborative "Session" where multiple users are interacting with a complex "round". A "Session" is created when a user "Shares" a round and another user joins.
 
-## Data Concepts
-
 # ![Key Data Concepts for RoundAround](/docs/images/RoundAround_Concepts.jpeg)
 
 ## Set Node Version
