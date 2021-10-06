@@ -32,12 +32,29 @@ describe("Can see a round", () => {
 	it("As a registered user", () => {
 		cy.login();
 
-		cy.get("[data-test=list-item-round]").first().click();
-		cy.get("[data-test=app]").should("be.visible");
-		cy.get(".round").should("be.visible");
-
-		cy.logout();
-
-		cy.get("[data-test=app]").should("be.visible");
+		cy.get('html').then(($html) => {
+			if ($html.find("[data-test=list-item-round]").length) {
+				cy.get("[data-test=list-item-round]").first().click();
+				cy.get("[data-test=app]").should("be.visible");
+				cy.get(".round").should("be.visible");
+				cy.logout();
+				cy.get("[data-test=app]").should("be.visible");
+			} else if ($html.find("[data-test=button-new-round]").length) {
+				cy.get("[data-test=button-new-round]").click();
+				cy.get("[data-test=app]").should("be.visible");
+				cy.get(".round").should("be.visible");
+				cy.logout();
+				cy.get("[data-test=app]").should("be.visible");
+			}
+			else {
+				cy.get("[data-test=button-back-to-rounds]").click();
+				cy.get("[data-test=button-new-round]").should("be.visible");
+				cy.get("[data-test=button-new-round]").click();
+				cy.get("[data-test=app]").should("be.visible");
+				cy.get(".round").should("be.visible");
+				cy.logout();
+				cy.get("[data-test=app]").should("be.visible");
+			}
+		})
 	});
 });
