@@ -278,22 +278,22 @@ const SignInDialog = ({ isShowingSignInDialog, setIsShowingSignInDialog, setSign
                         <Box className={classes.body}>
                             <Button className={classes.button} fullWidth color="secondary" variant="contained" disableElevation onClick={onGoogleSigninClick}>Continue with Google</Button>
                             <Button
-                                    className={classes.button}
-                                    fullWidth
-                                    color="secondary"
-                                    variant="contained"
-                                    disableElevation
-                                    onClick={onShowEmailSigninClick}
-                                    data-test="button-email"
+                                className={classes.button}
+                                fullWidth
+                                color="secondary"
+                                variant="contained"
+                                disableElevation
+                                onClick={onShowEmailSigninClick}
+                                data-test="button-email"
                             >Sign in with email</Button>
                             <Button
-                                    className={classes.button}
-                                    fullWidth
-                                    color="secondary"
-                                    variant="contained"
-                                    disableElevation
-                                    onClick={onUseAsGuestClick}
-                                    data-test="button-guest"
+                                className={classes.button}
+                                fullWidth
+                                color="secondary"
+                                variant="contained"
+                                disableElevation
+                                onClick={onUseAsGuestClick}
+                                data-test="button-guest"
                             >
                                 Use as guest
                             </Button>
@@ -311,32 +311,32 @@ const SignInDialog = ({ isShowingSignInDialog, setIsShowingSignInDialog, setSign
                         <Box className={classes.body}>
                             <form className={classes.emailForm} noValidate autoComplete="off">
                                 <TextField
-                                        type="email"
-                                        ref={emailAddressInput}
-                                        className={classes.emailFormItem}
-                                        label="Email address"
-                                        variant="outlined"
-                                        data-test="input-email"
+                                    type="email"
+                                    ref={emailAddressInput}
+                                    className={classes.emailFormItem}
+                                    label="Email address"
+                                    variant="outlined"
+                                    data-test="input-email"
                                 />
                                 <TextField
-                                        ref={passwordInput}
-                                        className={classes.emailFormItem}
-                                        label="Password"
-                                        variant="outlined"
-                                        type="password"
-                                        data-test="input-password"
+                                    ref={passwordInput}
+                                    className={classes.emailFormItem}
+                                    label="Password"
+                                    variant="outlined"
+                                    type="password"
+                                    data-test="input-password"
                                 />
                                 {
                                     errorMessage &&
                                     <p className={classes.error}>{errorMessage}</p>
                                 }
                                 <Button
-                                        className={classes.button}
-                                        fullWidth color="primary"
-                                        variant="contained"
-                                        disableElevation
-                                        onClick={onEmailSigninClick}
-                                        data-test="button-sign-in"
+                                    className={classes.button}
+                                    fullWidth color="primary"
+                                    variant="contained"
+                                    disableElevation
+                                    onClick={onEmailSigninClick}
+                                    data-test="button-sign-in"
                                 >
 
                                     <strong>Sign in</strong>
@@ -355,23 +355,23 @@ const SignInDialog = ({ isShowingSignInDialog, setIsShowingSignInDialog, setSign
                         <Box className={classes.body}>
                             <form className={classes.emailForm} noValidate autoComplete="off">
                                 <TextField
-                                        ref={displayNameGuestInput}
-                                        className={classes.emailFormItem}
-                                        label="Name"
-                                        variant="outlined"
-                                        data-test="input-name"
+                                    ref={displayNameGuestInput}
+                                    className={classes.emailFormItem}
+                                    label="Name"
+                                    variant="outlined"
+                                    data-test="input-name"
                                 />
                                 {
                                     errorMessage &&
                                     <p className={classes.error}>{errorMessage}</p>
                                 }
                                 <Button
-                                        className={classes.button}
-                                        fullWidth color="primary"
-                                        variant="contained"
-                                        disableElevation
-                                        onClick={onContinueAsGuestClick}
-                                        data-test="button-name"
+                                    className={classes.button}
+                                    fullWidth color="primary"
+                                    variant="contained"
+                                    disableElevation
+                                    onClick={onContinueAsGuestClick}
+                                    data-test="button-name"
                                 >
                                     <strong>Continue as guest</strong>
                                 </Button>
