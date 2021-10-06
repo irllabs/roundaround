@@ -59,8 +59,10 @@ class RoundsListRoute extends Component {
     }
 
     async onNewRoundClick() {
-        let newRound = await createRound(this.props.user.id)
-        let newRounds = [newRound, ...this.props.rounds]
+        console.log('create new round');
+        let newRound = createRound(this.props.user.id)
+        console.log('newRound', newRound);
+        let newRounds = [...this.props.rounds, newRound]
         await this.context.createRound(newRound)
         this.props.setRounds(newRounds)
         // redirect to new round
@@ -128,6 +130,8 @@ class RoundsListRoute extends Component {
     }
 
     render() {
+        console.log('rendering rounds', this.props.rounds);
+
         const { classes } = this.props;
         const rounds = [...this.props.rounds];
         return (
@@ -135,12 +139,10 @@ class RoundsListRoute extends Component {
                 <Container className={classes.root}>
 
                     <Box className={classes.header}>
-                        <Box>
-                            <h1>My rounds</h1>
-                        </Box>
-                        <Box>
+                        <div><h1>My rounds</h1></div>
+                        <div>
                             <Button data-test="button-new-round" className={classes.getStartedButton} variant="contained" color="secondary" disableElevation onClick={this.onNewRoundClick} startIcon={<AddIcon />}>New round</Button>
-                        </Box>
+                        </div>
                     </Box>
                     <Box>
                         <List>
