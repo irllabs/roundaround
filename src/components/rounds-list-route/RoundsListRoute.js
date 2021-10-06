@@ -45,7 +45,7 @@ const styles = theme => ({
 
 class RoundsListRoute extends Component {
     static contextType = FirebaseContext;
-    constructor (props) {
+    constructor(props) {
         super(props);
         this.state = {
             menuIsOpen: false,
@@ -56,7 +56,7 @@ class RoundsListRoute extends Component {
         this.onMenuClick = this.onMenuClick.bind(this)
     }
 
-    async onNewRoundClick () {
+    async onNewRoundClick() {
         console.log('create new round');
         let newRound = createRound(this.props.user.id)
         console.log('newRound', newRound);
@@ -67,11 +67,11 @@ class RoundsListRoute extends Component {
         this.onLaunchRoundClick(newRound.id)
     }
 
-    onLaunchRoundClick (id) {
+    onLaunchRoundClick(id) {
         this.props.history.push('/play/' + id)
     }
 
-    getCreatedString (round) {
+    getCreatedString(round) {
         const date = new Date(round.createdAt)
         let dateString = date.toLocaleTimeString(
             'en-gb',
@@ -84,7 +84,7 @@ class RoundsListRoute extends Component {
         return dateString
     }
 
-    onMenuClick (roundId, e) {
+    onMenuClick(roundId, e) {
         let element = e.currentTarget
         console.log('onMenuClick', roundId, element);
         this.props.setSelectedRoundId(roundId)
@@ -129,7 +129,7 @@ class RoundsListRoute extends Component {
         this.props.setIsShowingDeleteRoundDialog(true)
     }
 
-    render () {
+    render() {
         console.log('rendering rounds', this.props.rounds);
 
         const { classes } = this.props;
@@ -141,7 +141,7 @@ class RoundsListRoute extends Component {
                     <Box className={classes.header}>
                         <div><h1>My rounds</h1></div>
                         <div>
-                            <Button className={classes.getStartedButton} variant="contained" color="secondary" disableElevation onClick={this.onNewRoundClick} startIcon={<AddIcon />}>New round</Button>
+                            <Button data-test="button-new-round" className={classes.getStartedButton} variant="contained" color="secondary" disableElevation onClick={this.onNewRoundClick} startIcon={<AddIcon />}>New round</Button>
                         </div>
                     </Box>
                     <Box>

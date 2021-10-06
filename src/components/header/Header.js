@@ -147,7 +147,7 @@ class Header extends Component {
 				{isPlayMode &&
 					<>
 						<div>
-							<IconButton to="/rounds" component={Link}>
+							<IconButton data-test="button-back-to-rounds" to="/rounds" component={Link}>
 								<ArrowBackIosIcon />
 							</IconButton>
 						</div>
@@ -193,7 +193,14 @@ class Header extends Component {
 						}
 						{
 							!user &&
-							<Button variant="contained" color="secondary" disableElevation onClick={this.onSignInClick}>Sign in</Button>
+							<Button
+								variant="contained"
+								color="secondary"
+								disableElevation
+								onClick={this.onSignInClick}
+								data-test="button-sign-in-out"
+								className="signed-out"
+							>Sign in</Button>
 						}
 
 					</>
