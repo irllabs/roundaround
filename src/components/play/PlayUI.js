@@ -988,24 +988,6 @@ class PlayUI extends Component {
             if (_.isNil(layerGraphic.firstStep)) {
                 layerGraphic.firstStep = stepGraphic
             }
-            const nodeTransformProperty = stepGraphic.node.getAttribute('transform');
-            if(nodeTransformProperty){
-              let transformValuesArray =   nodeTransformProperty.split('(')[1].split(')')[0].split(',');
-              if(transformValuesArray.length){
-                const scaleValue = (transformValuesArray[0] *1);
-                const layerPadding = Layer.Padding;
-                const scaleDiff = scaleValue - layerPadding;
-                const finalScaleFactor =  layerPadding - scaleDiff;
-
-                const finalX = (x * finalScaleFactor) + ((HTML_UI_Params.stepDiameter/2) * finalScaleFactor);
-                const finalY = (y * finalScaleFactor) + ((HTML_UI_Params.stepDiameter/2) * finalScaleFactor);
-
-                transformValuesArray[4] = `${finalX}`;
-                transformValuesArray[5] = `${finalY}`;
-
-                stepGraphic.node.setAttribute('transform', `matrix(${transformValuesArray.join(',')})`);
-              }
-            }
         }
         layerGraphic.labelYOffset = 32 * (anglePercentOffset + angleTimeOffset)
         this.updateLayerLabel(layerGraphic)
