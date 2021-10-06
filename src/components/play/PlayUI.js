@@ -2,7 +2,7 @@ import React, { Component } from 'react';
 import * as _ from 'lodash';
 import { SVG } from '@svgdotjs/svg.js'
 import '@svgdotjs/svg.panzoom.js'
-import { HTML_UI_Params, KEY_MAPPINGS } from '../../utils/constants'
+import { HTML_UI_Params, KEY_MAPPINGS, Layer } from '../../utils/constants'
 import { connect } from "react-redux";
 import AudioEngine from '../../audio-engine/AudioEngine'
 import { getDefaultLayerData } from '../../utils/defaultData';
@@ -842,6 +842,24 @@ class PlayUI extends Component {
             this.addStepEventListeners(stepGraphic)
             if (_.isNil(layerGraphic.firstStep)) {
                 layerGraphic.firstStep = stepGraphic
+            }
+            const nodeTransformProperty = stepGraphic.node.getAttribute('transform');
+            if(nodeTransformProperty){
+              let transformValuesArray =   nodeTransformProperty.split('(')[1].split(')')[0].split(',');
+              if(transformValuesArray.length){
+                const scaleValue = (transformValuesArray[0] *1);
+                const layerPadding = Layer.Padding;
+                const scaleDiff = scaleValue - layerPadding;
+                const finalScaleFactor =  layerPadding - scaleDiff;
+
+                const finalX = (x * finalScaleFactor) + ((HTML_UI_Params.stepDiameter/2) * finalScaleFactor);
+                const finalY = (y * finalScaleFactor) + ((HTML_UI_Params.stepDiameter/2) * finalScaleFactor);
+
+                transformValuesArray[4] = `${finalX}`;
+                transformValuesArray[5] = `${finalY}`;
+
+                stepGraphic.node.setAttribute('transform', `matrix(${transformValuesArray.join(',')})`);
+              }
             }
         }
         layerGraphic.labelYOffset = 32 * (anglePercentOffset + angleTimeOffset)
