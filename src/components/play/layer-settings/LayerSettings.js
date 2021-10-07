@@ -17,7 +17,7 @@ import LayerType from './LayerType';
 import LayerAutomation from './LayerAutomation';
 import Track from '../../../audio-engine/Track'
 import LayerPercentOffset from './LayerPercentOffset'
-import LayerTimeOffset from './LayerTimeOffset'
+//import LayerTimeOffset from './LayerTimeOffset'
 import LayerCustomSounds from './LayerCustomSounds'
 
 const styles = theme => ({
@@ -141,7 +141,7 @@ class LayerSettings extends Component {
                     <LayerType selectedLayer={selectedLayer} roundId={this.props.round.id} userId={this.props.user.id} />
                     <LayerNumberOfSteps selectedLayer={selectedLayer} roundId={this.props.round.id} user={this.props.user} />
                     <LayerPercentOffset selectedLayer={selectedLayer} roundId={this.props.round.id} user={this.props.user} playUIRef={this.props.playUIRef} />
-                    <LayerTimeOffset selectedLayer={selectedLayer} roundId={this.props.round.id} user={this.props.user} playUIRef={this.props.playUIRef} />
+                    {/* <LayerTimeOffset selectedLayer={selectedLayer} roundId={this.props.round.id} user={this.props.user} playUIRef={this.props.playUIRef} /> */}
                     {layerTypeFormItems}
                 </Box>
             )
