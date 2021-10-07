@@ -679,8 +679,8 @@ class PlayUI extends Component {
     loadPattern (userId, id, order) {
         // console.log('load pattern', id);
         // console.time('loadPattern')
-        //this.props.dispatch({ type: SET_CURRENT_SEQUENCE_PATTERN, payload: { value: order } })
-        const pattern = _.find(this.props.round.userPatterns[userId].patterns, { id })
+        // this.props.dispatch({ type: SET_CURRENT_SEQUENCE_PATTERN, payload: { value: order } })
+        // const pattern = _.find(this.props.round.userPatterns[userId].patterns, { id })
         /*if (!_.isEmpty(pattern.state)) {
             // check if we have layers in the round not referenced in the pattern then set all steps in that layer to off
             for (const existingLayer of this.props.round.layers) {
@@ -765,7 +765,7 @@ class PlayUI extends Component {
 
     addLayer (layer, order, shouldAnimate = true) {
         // console.log('addLayer', layer);
-        let animateTime = shouldAnimate ? 600 : 0
+        //let animateTime = shouldAnimate ? 600 : 0
 
         //const layerDiameter = HTML_UI_Params.addNewLayerButtonDiameter + HTML_UI_Params.initialLayerPadding + ((HTML_UI_Params.stepDiameter + HTML_UI_Params.layerPadding + HTML_UI_Params.layerPadding + HTML_UI_Params.stepDiameter) * (order + 1))
         const layerDiameter = this.getLayerDiameter(order)
