@@ -1,10 +1,15 @@
 /* eslint-disable eqeqeq */
 import { getDefaultRoundData, getDefaultStepData } from './defaultData'
-import { Limits, Colors } from './constants'
-import _ from 'lodash'
+import { Colors } from './constants'
 
 export const createRound = (userId) => {
     return getDefaultRoundData(userId)
+}
+
+export const arraymove = async (arr, fromIndex, toIndex) => {
+    var element = arr[fromIndex];
+    arr.splice(fromIndex, 1);
+    arr.splice(toIndex, 0, element);
 }
 
 export const uuid = () => {
