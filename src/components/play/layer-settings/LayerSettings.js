@@ -6,7 +6,6 @@ import _ from 'lodash'
 import { SET_LAYER_MUTE, REMOVE_LAYER, SET_IS_SHOWING_LAYER_SETTINGS, SET_LAYER_STEPS } from '../../../redux/actionTypes'
 import Box from '@material-ui/core/Box';
 import { withStyles } from '@material-ui/core/styles';
-//import { convertPercentToDB, convertDBToPercent, numberRange } from '../../../utils/index'
 import AudioEngine from '../../../audio-engine/AudioEngine'
 
 import VolumeSlider from './VolumeSlider'
