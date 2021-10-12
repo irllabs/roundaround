@@ -85,6 +85,7 @@ class Header extends Component {
 					//console.log('CustomSamples', CustomSamples.samples);
 
 					// }
+					_this.props.setRedirectAfterSignIn('rounds')
 				} else {
 					///console.log('ignoring auth change, probably signing up');
 					//new user, create user document
@@ -100,7 +101,6 @@ class Header extends Component {
 					await _this.context.createUser(user)
 					_this.props.setUser(user)
 				}
-				// console.log('redirectAfterSignIn', _this.props.redirectAfterSignIn);
 				if (!_.isNil(_this.props.redirectAfterSignIn)) {
 					_this.redirect(authUser)
 				}

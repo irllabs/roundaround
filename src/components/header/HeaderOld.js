@@ -106,7 +106,7 @@ function Header ({ user, users, round, setUser, setIsShowingSignInDialog, redire
                     setUser(user)
                 }
                 console.log('redirectAfterSignIn', redirectAfterSignIn);
-                redirect()
+                redirect();
             } else {
                 console.log('signed out', location.pathname);
                 if (location.pathname !== '/') {
