@@ -73,11 +73,21 @@ We use [git flow](https://www.atlassian.com/git/tutorials/comparing-workflows/gi
 ### How is new work added?
 
 - checkout `stage` and create a new feature/bug branch
-- Get it so it fulfills the requirements, feel free to push that branch out to `roundaround-dev.web.app` whenever needed for feedback; (see deploy frontend section below)
-- Once you're done push a PR against your branch off of develop and merge it after manually testing
-- Push that branch out to `https://roundaround-stage.web.app/`
-- Once everyone agrees develop is in a good spot we'll do manual regressions to merge develop into master.
-  _Only_ develop should ever be merged into master
+- If you want feedback deploy that branch out to `roundaround-dev.web.app`. It's fine if its buggy at the point of feedback
+- When you are confident the new feature is completed make a PR and do a [full regression test](https://docs.google.com/spreadsheets/d/1fn3mY7sy1YfqoeCXUstYxEqKOidWj6KFN_negDrXKeQ/edit#gid=116044031).
+
+  Deploy to `roundaround-dev.web.app`. Ask product to test the added functionality. They will _not_ do a regression
+
+- If the tests pass, the PR is approved, and we're happy with the added functionality, merge that branch to stage.
+
+  Deploy to `https://roundaround-stage.web.app/`
+
+- When we want to merge into master, deploy that (or those) features to the stage server if they aren't already, and _everyone_ does a full regression before we make a PR for stage to master
+- If the tests pass we merge to master.
+
+  Deploy to `roundaround-dev.web.app`
+
+Summary - we never make a branch off master, only stage, and we only ever merge into master after stage is fully regression tested. We try to get feature branches into stage as soon as possible, so we can be confident we're always moving forward building on tested and verified work.
 
 ## Testing
 
