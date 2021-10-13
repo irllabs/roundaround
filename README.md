@@ -64,7 +64,7 @@ We use [git flow](https://www.atlassian.com/git/tutorials/comparing-workflows/gi
 ### How is new work added?
 - checkout `stage` and create a new feature/bug branch
 - If you want feedback deploy that branch out to `roundaround-dev.web.app`. It's fine if its buggy at the point of feedback
-- When you are confident the new feature is completed make a PR and do a [full regression](https://docs.google.com/spreadsheets/d/1fn3mY7sy1YfqoeCXUstYxEqKOidWj6KFN_negDrXKeQ/edit#gid=116044031). 
+- When you are confident the new feature is completed make a PR and do a [full regression test](https://docs.google.com/spreadsheets/d/1fn3mY7sy1YfqoeCXUstYxEqKOidWj6KFN_negDrXKeQ/edit#gid=116044031). 
 
     Deploy to `roundaround-dev.web.app`. Ask product to test the added functionality. They will _not_ do a regression
 - If the tests pass, the PR is approved, and we're happy with the added functionality, merge that branch to stage. 
