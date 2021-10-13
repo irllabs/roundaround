@@ -17,66 +17,14 @@ import AudioEngine from '../../../audio-engine/AudioEngine'
 import Instruments from '../../../audio-engine/Instruments'
 
 import { FirebaseContext } from '../../../firebase';
-import LayerInstrument from './LayerInstrument'
-import LayerPopup from './LayerPopup'
-import VolumePopup from './VolumePopup'
-import { getDefaultLayerData } from '../../../utils/defaultData';
-import LayerListPopup from './LayerListPopup';
-import HamburgerPopup from './HamburgerPopup';
-import DeleteClearPopup from './DeleteClearPopup';
-import {
-    PlusIcon,
-    EqualiserIcon,
-    HiHatsIcon,
-    KickIcon,
-    PercIcon,
-    SnareIcon,
-    MuteIcon,
-    MutedIcon,
-    ErasorIcon,
-    TrashIcon,
-    HamburgerMenuIcon,
-    CloseIcon,
-    ElipsisIcon
-} from './resources'
+import LayerType from './LayerType';
+import LayerAutomation from './LayerAutomation';
+import Track from '../../../audio-engine/Track'
+import LayerPercentOffset from './LayerPercentOffset'
+//import LayerTimeOffset from './LayerTimeOffset'
+import LayerCustomSounds from './LayerCustomSounds'
 
-const styles = (theme) => ({
-    container: {
-        position: 'absolute',
-        display: 'flex',
-        justifyContent: 'center',
-        alignItems: 'flex-start',
-        backgroundColor: 'transparent',
-        bottom: 0,
-        right: '25%',
-        left: '25%',
-        [theme.breakpoints.down('md')]: {
-            right: '20%',
-            left: '20%'
-        },
-        [theme.breakpoints.down('sm')]: {
-            right: '5%',
-            left: '5%'
-        },
-    },
-    addLayerMobile: {
-        display: 'none',
-        [theme.breakpoints.down('xs')]: {
-            display: 'flex'
-        },
-    },
-    addLayerDesktop: {
-        display: 'flex',
-        [theme.breakpoints.down('xs')]: {
-            display: 'none'
-        },
-    },
-    selectedInstrumentInfo: {
-        display: 'flex',
-        [theme.breakpoints.down('xs')]: {
-            display: 'none'
-        }
-    },
+const styles = theme => ({
     drawer: {
         backgroundColor: '#2E2E2E',
         '& .MuiPaper-root': {
@@ -727,9 +675,51 @@ class LayerSettings extends Component {
 
         const { classes, theme, user } = this.props
         const selectedLayer = this.props.selectedLayer
-        const userColors = this.getUserColors()
-        const isMobile = windowWidth < theme.breakpoints.values.sm
-        const sample = selectedLayer?.instrument?.sample
+        let form = '';
+        if (!_.isNil(selectedLayer)) {
+            //layerVolumePercent = convertDBToPercent(selectedLayer.instrument.gain)
+            let layerTypeFormItems;
+            if (selectedLayer.type === Track.TRACK_TYPE_AUTOMATION) {
+                layerTypeFormItems = (
+                    <>
+                        <LayerAutomation selectedLayer={selectedLayer} roundId={this.props.round.id} userId={this.props.user.id} />
+                        <Box className={classes.buttonContainer} display="flex" justifyContent="space-evenly">
+                            <Button className={classes.containedButton} onClick={this.onClearStepsClick.bind(this)} variant="contained" color="secondary" disableElevation>Clear</Button>
+                            <Button className={classes.containedButton} onClick={this.onDeleteLayerClick.bind(this)} variant="contained" color="secondary" disableElevation>Delete</Button>
+                        </Box>
+                    </>
+                )
+            } else {
+                layerTypeFormItems = (
+                    <>
+                        <VolumeSlider selectedLayer={selectedLayer} roundId={this.props.round.id} user={this.props.user} />
+                        <Box className={classes.buttonContainer} display="flex" justifyContent="space-evenly">
+                            <Button className={classes.containedButton} onClick={this.onMuteClick.bind(this)} variant="contained" color={selectedLayer.isMuted ? 'primary' : 'secondary'} disableElevation>Mute</Button>
+                            <Button className={classes.containedButton} onClick={this.onClearStepsClick.bind(this)} variant="contained" color="secondary" disableElevation>Clear</Button>
+                            <Button className={classes.containedButton} onClick={this.onDeleteLayerClick.bind(this)} variant="contained" color="secondary" disableElevation>Delete</Button>
+                        </Box>
+                        <Divider className={classes.divider} />
+                        <LayerInstrument selectedLayer={selectedLayer} roundId={this.props.round.id} user={this.props.user} />
+                        <LayerCustomSounds selectedLayer={selectedLayer} roundId={this.props.round.id} user={this.props.user} />
+                    </>
+                )
+            }
+            form = (
+                <Box className={classes.root}>
+                    <LayerType selectedLayer={selectedLayer} roundId={this.props.round.id} userId={this.props.user.id} />
+                    <LayerNumberOfSteps selectedLayer={selectedLayer} roundId={this.props.round.id} user={this.props.user} />
+                    <LayerPercentOffset selectedLayer={selectedLayer} roundId={this.props.round.id} user={this.props.user} playUIRef={this.props.playUIRef} />
+                    {/* <LayerTimeOffset selectedLayer={selectedLayer} roundId={this.props.round.id} user={this.props.user} playUIRef={this.props.playUIRef} /> */}
+                    {layerTypeFormItems}
+                </Box>
+            )
+        }
+        return (
+            <div>
+                <Drawer
+                    className={classes.drawer}
+                    open={this.props.isOpen}
+                    variant={"persistent"}
 
         const instrumentIcon = (name) => {
             let Icon = <svg></svg>;
