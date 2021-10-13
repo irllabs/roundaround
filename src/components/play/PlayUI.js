@@ -528,7 +528,51 @@ class PlayUI extends Component {
         }
     }
 
-    loadPattern(userId, id, order) {
+    loadPattern (userId, id, order) {
+        // console.log('load pattern', id);
+        // console.time('loadPattern')
+        // this.props.dispatch({ type: SET_CURRENT_SEQUENCE_PATTERN, payload: { value: order } })
+        // const pattern = _.find(this.props.round.userPatterns[userId].patterns, { id })
+        /*if (!_.isEmpty(pattern.state)) {
+            // check if we have layers in the round not referenced in the pattern then set all steps in that layer to off
+            for (const existingLayer of this.props.round.layers) {
+                if (_.isNil(_.find(pattern.state.layers, { id: existingLayer.id })) && existingLayer.createdBy === this.props.user.id) {
+                    let existingLayerClone = _.cloneDeep(existingLayer)
+                    for (const step of existingLayerClone.steps) {
+                        step.isOn = false
+                    }
+                    pattern.state.layers.push(existingLayerClone)
+                }
+            }
+
+            // check we haven't deleted the layer that is referenced in the pattern
+            let layersToDelete = []
+            for (const layer of pattern.state.layers) {
+                const layerExists = _.find(this.props.round.layers, { id: layer.id })
+                if (_.isNil(layerExists)) {
+                    layersToDelete.push(layer)
+                }
+            }
+
+            _.remove(pattern.state.layers, function (n) {
+                return layersToDelete.indexOf(n) > -1
+            })
+            //this.props.updateLayers(pattern.state.layers)
+
+            //    console.log('loadPattern updating internal layers', this.round.layers, pattern.state.layers);
+
+            // for (let layer of this.round.layers) {
+            //   layer.steps = _.find(pattern.state.layers, { id: layer.id }).steps
+            // }
+
+            //AudioEngine.recalculateParts(this.round)
+            // console.timeEnd('loadPattern')
+
+            this.props.dispatch({ type: UPDATE_LAYERS, payload: { layers: pattern.state.layers } })
+            this.props.dispatch({ type: SET_CURRENT_SEQUENCE_PATTERN, payload: { value: order } })
+        }*/
+
+
         this.props.dispatch({ type: UPDATE_LAYERS, payload: { layers: this.round.layers } })
         this.props.dispatch({ type: SET_CURRENT_SEQUENCE_PATTERN, payload: { value: order } })
         this.clear()
@@ -571,10 +615,10 @@ class PlayUI extends Component {
          }*/
     }
 
-    addLayer(layer, order, shouldAnimate = true) {
-        const dim = this.isRecordingSequence
-        // let animateTime = shouldAnimate ? 600 : 0
-        const createdByThisUser = layer.createdBy === this.props.user.id;
+    addLayer (layer, order, shouldAnimate = true) {
+        // console.log('addLayer', layer);
+        //let animateTime = shouldAnimate ? 600 : 0
+
         //const layerDiameter = HTML_UI_Params.addNewLayerButtonDiameter + HTML_UI_Params.initialLayerPadding + ((HTML_UI_Params.stepDiameter + HTML_UI_Params.layerPadding + HTML_UI_Params.layerPadding + HTML_UI_Params.stepDiameter) * (order + 1))
         const layerDiameter = this.getLayerDiameter(order)
         const xOffset = (this.containerWidth / 2) - (layerDiameter / 2)
@@ -675,7 +719,7 @@ class PlayUI extends Component {
         return diameter
     }
 
-    updateLayerLabel(layerGraphic) {
+    updateLayerLabel (layerGraphic) {
         layerGraphic.layerLabel?.x(layerGraphic.firstStep?.x() + HTML_UI_Params.stepDiameter + 8)
         layerGraphic.layerLabel?.y(layerGraphic.firstStep?.y() + ((HTML_UI_Params.stepDiameter / 2) - 6) + layerGraphic.labelYOffset)
     }
@@ -762,7 +806,7 @@ class PlayUI extends Component {
         const layer = _.find(this.round.layers, { id })
         let stepGraphics = _.filter(this.stepGraphics, { layerId: id })
         const layerGraphic = _.find(this.layerGraphics, { id })
-        const layerDiameter = this.getLayerDiameter(order)
+        const layerDiameter = HTML_UI_Params.addNewLayerButtonDiameter + HTML_UI_Params.initialLayerPadding + ((HTML_UI_Params.stepDiameter + HTML_UI_Params.layerPadding + HTML_UI_Params.layerPadding + HTML_UI_Params.stepDiameter) * (layerGraphic.order))
         const xOffset = (this.containerWidth / 2) - (layerDiameter / 2)
         const yOffset = (this.containerHeight / 2) - (layerDiameter / 2)
         const stepSize = (2 * Math.PI) / layer.steps.length;
