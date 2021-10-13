@@ -1,7 +1,6 @@
 /* eslint-disable eqeqeq */
 import { getDefaultRoundData, getDefaultStepData } from './defaultData'
-import { Limits, Colors } from './constants'
-import _ from 'lodash'
+import { Colors } from './constants'
 
 export const createRound = (userId) => {
     return getDefaultRoundData(userId)
