@@ -675,7 +675,7 @@ class PlayUI extends Component {
         }
 
     }
-
+  
     loadPattern(userId, id, order) {
         this.props.dispatch({ type: UPDATE_LAYERS, payload: { layers: this.round.layers } })
         this.props.dispatch({ type: SET_CURRENT_SEQUENCE_PATTERN, payload: { value: order } })
@@ -818,7 +818,7 @@ class PlayUI extends Component {
         //HTML_UI_Params.addNewLayerButtonDiameter + HTML_UI_Params.initialLayerPadding + ((HTML_UI_Params.stepDiameter + HTML_UI_Params.layerPadding + HTML_UI_Params.layerPadding + HTML_UI_Params.stepDiameter) * (order + 1))
     }
 
-    updateLayerLabel(layerGraphic) {
+    updateLayerLabel (layerGraphic) {
         layerGraphic.layerLabel?.x(layerGraphic.firstStep?.x() + HTML_UI_Params.stepDiameter + 8)
         layerGraphic.layerLabel?.y(layerGraphic.firstStep?.y() + ((HTML_UI_Params.stepDiameter / 2) - 6) + layerGraphic.labelYOffset)
     }
