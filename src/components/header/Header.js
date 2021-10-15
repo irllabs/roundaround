@@ -82,9 +82,6 @@ class Header extends Component {
 					for (let sample of samples) {
 						CustomSamples.add(sample)
 					}
-					//console.log('CustomSamples', CustomSamples.samples);
-
-					// }
 					_this.props.setRedirectAfterSignIn('rounds')
 				} else {
 					///console.log('ignoring auth change, probably signing up');
