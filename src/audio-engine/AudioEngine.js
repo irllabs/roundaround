@@ -1,6 +1,7 @@
 import * as Tone from 'tone';
 import Track from './Track';
-import _ from 'lodash'
+import _ from 'lodash';
+import { arraymove } from '../utils';
 
 const AudioEngine = {
     tracks: [],
@@ -8,7 +9,7 @@ const AudioEngine = {
     tracksByType: {},
     busesByUser: {},
     master: null,
-    init () {
+    init() {
         const _this = this
         return new Promise(async (resolve, reject) => {
             _this.master = new Track({
@@ -18,7 +19,7 @@ const AudioEngine = {
             resolve()
         })
     },
-    async load (round) {
+    async load(round) {
         // console.log('audio engine loading round', round);
         const _this = this
         return new Promise(async (resolve, reject) => {
@@ -29,6 +30,11 @@ const AudioEngine = {
                 _this.setSwing(round.swing)
             }
             for (const userBus of Object.values(round.userBuses)) {
+                //check if lowpass and highpass are positioned second and third then move them to fourth and fifth positions
+                if (userBus.fx[1].name === 'lowpass' && userBus.fx[2].name === 'highpass') {
+                    await arraymove(userBus.fx, 1, 4);
+                    await arraymove(userBus.fx, 1, 4);
+                }
                 await _this.addUser(userBus.id, userBus.fx)
             }
             for (const layer of round.layers) {
@@ -39,7 +45,7 @@ const AudioEngine = {
             resolve()
         })
     },
-    async addUser (userId, userFx) {
+    async addUser(userId, userFx) {
         return new Promise(async (resolve, reject) => {
             //console.log('addUser()', userId);
             const userBus = await this.createTrack({ fx: userFx, id: userId, createdBy: userId, type: Track.TRACK_TYPE_USER })
@@ -48,25 +54,25 @@ const AudioEngine = {
             resolve()
         })
     },
-    play () {
+    play() {
         this.startAudioContext()
         Tone.Transport.start("+0.1");
         Tone.Transport.loop = false
         Tone.Transport.loopEnd = '1:0:0'
     },
-    stop () {
+    stop() {
         Tone.Transport.stop()
     },
-    startAudioContext () {
+    startAudioContext() {
         if (Tone.context.state !== 'running') {
             Tone.context.resume();
         }
     },
-    isOn () {
+    isOn() {
         return Tone.Transport.state === 'started'
     },
     // assumes tracks haven't changed, just the steps
-    recalculateParts (round, layerId = null) {
+    recalculateParts(round, layerId = null) {
         console.log('AudioEngine::recalculateParts()');
         console.time('AudioEngine::recalculateParts')
         if (!_.isNil(round)) {
@@ -81,11 +87,11 @@ const AudioEngine = {
         }
         console.timeEnd('AudioEngine::recalculateParts')
     },
-    getIsPlayingSequence (userId, round) {
+    getIsPlayingSequence(userId, round) {
         return round.userPatterns[userId].isPlayingSequence
     },
 
-    createTrack (trackParameters) {
+    createTrack(trackParameters) {
         const userId = trackParameters.createdBy
         const type = trackParameters.type
         // console.log('createTrack', trackParameters, userId, type);
@@ -108,12 +114,12 @@ const AudioEngine = {
             resolve(track)
         })
     },
-    removeTrack (id) {
+    removeTrack(id) {
         if (!_.isNil(this.tracksById[id])) {
             this.tracksById[id].dispose()
         }
     },
-    reset () {
+    reset() {
         for (let track of this.tracks) {
             track.dispose()
         }
@@ -122,20 +128,20 @@ const AudioEngine = {
         this.tracksByType = {}
     },
 
-    releaseAll () {
+    releaseAll() {
         for (let track of this.tracks) {
             track.releaseAll()
         }
     },
-    getPositionMilliseconds () {
+    getPositionMilliseconds() {
         return Math.round(Tone.Transport.seconds * 1000)
     },
-    setTempo (bpm) {
+    setTempo(bpm) {
         Tone.Transport.bpm.value = bpm
         // need to recalculate parts because absolute time offset needs to be recalculated
         this.recalculateParts(this.round)
     },
-    setSwing (swing) {
+    setSwing(swing) {
         Tone.Transport.swing = swing / 100
     }
 
