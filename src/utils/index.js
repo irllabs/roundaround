@@ -6,14 +6,14 @@ export const createRound = (userId) => {
     return getDefaultRoundData(userId)
 }
 
-export const randomInt = (min, max) => {
-    return Math.floor(Math.random() * (max - min)) + min;
-}
-
 export const arraymove = async (arr, fromIndex, toIndex) => {
     var element = arr[fromIndex];
     arr.splice(fromIndex, 1);
     arr.splice(toIndex, 0, element);
+}
+
+export const randomInt = (min, max) => {
+    return Math.floor(Math.random() * (max - min)) + min;
 }
 
 export const uuid = () => {
