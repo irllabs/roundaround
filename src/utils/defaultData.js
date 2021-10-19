@@ -21,7 +21,7 @@ export const getDefaultStepData = () => {
 
 export const getDefaultLayerData = (userId, instrument) => {
     const newInstruments = Instruments.classes();
-    const hihat = newInstruments.filter(inst => inst.name === 'HiHats')[0];
+    const hihat = newInstruments['HiHats'];
     const hithatSampleArray = Object.keys(hihat.samples);
     let randHihatSoundNo = 0;
     randHihatSoundNo = randomInt(0, hithatSampleArray.length);
@@ -56,9 +56,9 @@ export const getDefaultLayerData = (userId, instrument) => {
 
 export const getDefaultRoundData = (userId) => {
     const newInstruments = Instruments.classes();
-    const hihat = newInstruments.filter(inst => inst.name === 'HiHats')[0];
-    const snare = newInstruments.filter(inst => inst.name === 'Snares')[0];
-    const kick = newInstruments.filter(inst => inst.name === 'Kicks')[0];
+    const hihat = newInstruments['HiHats'];
+    const snare = newInstruments['Snares'];
+    const kick = newInstruments['Kicks'];
     const hithatSampleArray = Object.keys(hihat.samples);
     const snareSampleArray = Object.keys(snare.samples);
     const kickSampleArray = Object.keys(kick.samples);

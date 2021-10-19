@@ -33,9 +33,9 @@ const Instruments = {
             Metal,
             Custom
         ];
-        const inst = []
+        const inst = {};
         for (let instrument of classes) {
-            inst.push({ instrumentName: instrument.instrumentName, name: instrument.name, label: instrument.label, samples: instrument.articulations });
+            inst[instrument.instrumentName] = { instrumentName: instrument.instrumentName, name: instrument.name, label: instrument.label, samples: instrument.articulations };
         }
         return inst;
     },
