@@ -1,7 +1,9 @@
 import { Layer } from './constants';
 import { uuid } from './index';
+import { randomInt } from './index';
+import Instruments from '../audio-engine/Instruments';
 //import Track from '../audio-engine/Track'
-import _ from 'lodash'
+import _ from 'lodash';
 
 export const refrashAllIdsInArray = (array) => {
     return array.map(item => ({ ...item, id: uuid() }))
@@ -18,6 +20,11 @@ export const getDefaultStepData = () => {
 };
 
 export const getDefaultLayerData = (userId, instrument) => {
+    const newInstruments = Instruments.classes();
+    const hihat = newInstruments.filter(inst => inst.name === 'HiHats')[0];
+    const hithatSampleArray = Object.keys(hihat.samples);
+    let randHihatSoundNo = 0;
+    randHihatSoundNo = randomInt(0, hithatSampleArray.length);
     const layer = {
         "id": uuid(),
         "createdBy": userId || null,
@@ -33,7 +40,7 @@ export const getDefaultLayerData = (userId, instrument) => {
             "noteLength": "64n",
             "instrument": "Sampler",
             "sampler": "HiHats",
-            "sample": "quick",
+            "sample": hithatSampleArray[randHihatSoundNo],
             ...instrument
         },
         "steps": Array(Layer.DefaultStepsAmount).fill(null).map(() => { return getDefaultStepData() }),
@@ -48,6 +55,17 @@ export const getDefaultLayerData = (userId, instrument) => {
 };
 
 export const getDefaultRoundData = (userId) => {
+    const newInstruments = Instruments.classes();
+    const hihat = newInstruments.filter(inst => inst.name === 'HiHats')[0];
+    const snare = newInstruments.filter(inst => inst.name === 'Snares')[0];
+    const kick = newInstruments.filter(inst => inst.name === 'Kicks')[0];
+    const hithatSampleArray = Object.keys(hihat.samples);
+    const snareSampleArray = Object.keys(snare.samples);
+    const kickSampleArray = Object.keys(kick.samples);
+    let randHihatSoundNo, randSnareSoundNo, randKickSoundNo = 0;
+    randHihatSoundNo = randomInt(0, hithatSampleArray.length);
+    randSnareSoundNo = randomInt(0, snareSampleArray.length);
+    randKickSoundNo = randomInt(0, kickSampleArray.length);
     const round = {
         "createdBy": userId || null,
         "id": uuid(),
@@ -61,17 +79,17 @@ export const getDefaultRoundData = (userId) => {
             getDefaultLayerData(userId, {
                 "instrument": "Sampler",
                 "sampler": "HiHats",
-                "sample": "quick",
+                "sample": hithatSampleArray[randHihatSoundNo],
             }),
             getDefaultLayerData(userId, {
                 "instrument": "Sampler",
                 "sampler": "Snares",
-                "sample": "skintight",
+                "sample": snareSampleArray[randSnareSoundNo],
             }),
             getDefaultLayerData(userId, {
                 "instrument": "Sampler",
                 "sampler": "Kicks",
-                "sample": "classic"
+                "sample": kickSampleArray[randKickSoundNo],
             })
         ],
         userBuses: {},

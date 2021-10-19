@@ -6,6 +6,10 @@ export const createRound = (userId) => {
     return getDefaultRoundData(userId)
 }
 
+export const randomInt = (min, max) => {
+    return Math.floor(Math.random() * (max - min)) + min;
+}
+
 export const uuid = () => {
     return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, c => {
         // eslint-disable-next-line no-mixed-operators
