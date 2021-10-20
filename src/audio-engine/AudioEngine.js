@@ -1,6 +1,7 @@
 import * as Tone from 'tone';
 import Track from './Track';
-import _ from 'lodash'
+import _ from 'lodash';
+import { arraymove } from '../utils';
 
 const AudioEngine = {
     tracks: [],
@@ -29,6 +30,11 @@ const AudioEngine = {
                 _this.setSwing(round.swing)
             }
             for (const userBus of Object.values(round.userBuses)) {
+                //check if lowpass and highpass are positioned second and third then move them to fourth and fifth positions
+                if (userBus.fx[1].name === 'lowpass' && userBus.fx[2].name === 'highpass') {
+                    await arraymove(userBus.fx, 1, 4);
+                    await arraymove(userBus.fx, 1, 4);
+                }
                 await _this.addUser(userBus.id, userBus.fx)
             }
             for (const layer of round.layers) {
