@@ -28,7 +28,7 @@ const useStyles = makeStyles((theme) => ({
     },
 }));
 
-export default function LayerNumberOfSteps ({ selectedLayer, user, roundId }) {
+export default function LayerNumberOfSteps({ selectedLayer, user, roundId }) {
     const dispatch = useDispatch();
     const classes = useStyles();
     const firebase = useContext(FirebaseContext);
