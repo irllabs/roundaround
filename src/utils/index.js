@@ -6,6 +6,12 @@ export const createRound = (userId) => {
     return getDefaultRoundData(userId)
 }
 
+export const arraymove = async (arr, fromIndex, toIndex) => {
+    var element = arr[fromIndex];
+    arr.splice(fromIndex, 1);
+    arr.splice(toIndex, 0, element);
+}
+
 export const uuid = () => {
     return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, c => {
         // eslint-disable-next-line no-mixed-operators
