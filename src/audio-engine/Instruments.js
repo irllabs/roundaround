@@ -4,27 +4,25 @@ import HiHats from './instruments/HiHats'
 import Kicks from './instruments/Kicks'
 import Snares from './instruments/Snares'
 import Perc from './instruments/Perc'
-import Metal from './instruments/Metal'
 import Custom from './instruments/Custom'
 import CustomSamples from './CustomSamples'
 
 const Instruments = {
     instrumentClasses: {},
     instruments: [],
-    init () {
+    init() {
         const classes = [
             HiHats,
             Kicks,
             Snares,
             Perc,
-            Metal,
             Custom
         ];
         for (let instrumentClass of classes) {
             this.instrumentClasses[instrumentClass.instrumentName] = instrumentClass;
         }
     },
-    create (instrumentName, articulation) {
+    create(instrumentName, articulation) {
         if (!_.isNil(instrumentName)) {
             let _this = this;
             return new Promise(async function (resolve, reject) {
@@ -36,7 +34,7 @@ const Instruments = {
             });
         }
     },
-    dispose (id) {
+    dispose(id) {
         let instrument = _.find(this.instruments, {
             id
         });
@@ -44,12 +42,12 @@ const Instruments = {
             instrument.dispose();
         }
     },
-    updateParameter (instrumentId, parameter, value) {
+    updateParameter(instrumentId, parameter, value) {
         _.find(this.instruments, {
             id: instrumentId
         }).updateParameter(parameter, value);
     },
-    getInstrumentOptions (includeCustom = true) {
+    getInstrumentOptions(includeCustom = true) {
         let options = [];
         for (let [, instrument] of Object.entries(this.instrumentClasses)) {
             if (instrument.instrumentName !== 'custom' || includeCustom) {
@@ -63,7 +61,7 @@ const Instruments = {
         options = _.sortBy(options, "label");
         return options;
     },
-    getInstrumentArticulationOptions (instrumentName, userId) {
+    getInstrumentArticulationOptions(instrumentName, userId) {
         // console.log('getInstrumentArticulationOptions()', instrumentName);
         if (instrumentName !== 'custom') {
             let options = [];
@@ -93,16 +91,16 @@ const Instruments = {
             return options
         }
     },
-    getLabel (instrumentName) {
+    getLabel(instrumentName) {
         return this.instrumentClasses[instrumentName].label;
     },
-    getArticulationLabel (instrumentName, articulation) {
+    getArticulationLabel(instrumentName, articulation) {
         return this.instrumentClasses[instrumentName].articulations[articulation];
     },
-    getInstrumentLabel (instrumentName) {
+    getInstrumentLabel(instrumentName) {
         return this.instrumentClasses[instrumentName].label
     },
-    getDefaultArticulation (instrumentName) {
+    getDefaultArticulation(instrumentName) {
         //console.log('Instruments::getDefaultArticulation() instrumentName', instrumentName, this.instrumentClasses);
         return this.instrumentClasses[instrumentName].defaultArticulation
         /*return !_.isNil(this.instrumentClasses[instrumentName].defaultArticulation)
