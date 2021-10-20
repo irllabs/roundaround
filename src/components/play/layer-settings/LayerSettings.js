@@ -71,28 +71,28 @@ const styles = theme => ({
 class LayerSettings extends Component {
     static contextType = FirebaseContext;
 
-    onCloseClick () {
+    onCloseClick() {
         this.props.dispatch({ type: SET_IS_SHOWING_LAYER_SETTINGS, payload: { value: false } })
     }
 
-    onPreviewClick () {
+    onPreviewClick() {
         // todo: only audible to this user (mute for all others)
     }
 
-    onMuteClick () {
+    onMuteClick() {
         const isMuted = !this.props.selectedLayer.isMuted
         AudioEngine.tracksById[this.props.selectedLayer.id].setMute(isMuted)
         this.props.dispatch({ type: SET_LAYER_MUTE, payload: { id: this.props.selectedLayer.id, value: isMuted, user: this.props.user.id } })
         this.context.updateLayer(this.props.round.id, this.props.selectedLayer.id, { isMuted })
     }
 
-    onDeleteLayerClick () {
+    onDeleteLayerClick() {
         this.props.dispatch({ type: REMOVE_LAYER, payload: { id: this.props.selectedLayer.id, user: this.props.user.id } })
         this.context.deleteLayer(this.props.round.id, this.props.selectedLayer.id)
         this.onCloseClick()
     }
 
-    onClearStepsClick () {
+    onClearStepsClick() {
         let selectedLayerClone = _.cloneDeep(this.props.selectedLayer)
         for (let step of selectedLayerClone.steps) {
             step.isOn = false
@@ -102,7 +102,7 @@ class LayerSettings extends Component {
     }
 
 
-    render () {
+    render() {
         // console.log('Layer settings render()', this.props.user);
         const { classes } = this.props
         const selectedLayer = this.props.selectedLayer
