@@ -106,32 +106,32 @@ export const getDefaultUserBusFx = () => {
         },
         {
             "id": uuid(),
-            name: 'lowpass',
+            name: 'delay',
             order: 1,
             isOn: true,
             isOverride: false
         },
         {
             "id": uuid(),
-            name: 'highpass',
+            name: 'distortion',
             order: 2,
             isOn: true,
             isOverride: false
         },
         {
             "id": uuid(),
-            name: 'delay',
+            name: 'lowpass',
             order: 3,
             isOn: true,
             isOverride: false
         },
         {
             "id": uuid(),
-            name: 'distortion',
+            name: 'highpass',
             order: 4,
             isOn: true,
             isOverride: false
-        }
+        },
     ]
 }
 
