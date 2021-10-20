@@ -617,7 +617,7 @@ class PlayUI extends Component {
 
     addLayer (layer, order, shouldAnimate = true) {
         // console.log('addLayer', layer);
-        //let animateTime = shouldAnimate ? 600 : 0
+        // let animateTime = shouldAnimate ? 600 : 0
 
         //const layerDiameter = HTML_UI_Params.addNewLayerButtonDiameter + HTML_UI_Params.initialLayerPadding + ((HTML_UI_Params.stepDiameter + HTML_UI_Params.layerPadding + HTML_UI_Params.layerPadding + HTML_UI_Params.stepDiameter) * (order + 1))
         const layerDiameter = this.getLayerDiameter(order)
