@@ -19,12 +19,13 @@ export const getDefaultStepData = () => {
     }
 };
 
-export const getDefaultLayerData = (userId, instrument) => {
-    const newInstruments = Instruments.classes();
-    const hihat = newInstruments['HiHats'];
-    const hithatSampleArray = Object.keys(hihat.samples);
-    let randHihatSoundNo = 0;
-    randHihatSoundNo = randomInt(0, hithatSampleArray.length);
+export const getDefaultLayerData = async (userId, instrument) => {
+    const newInstruments = await Instruments.classes();
+    const newInstrumentsKeyArray = Object.keys(newInstruments);
+    const upperLimit = newInstrumentsKeyArray.length - 1;
+    const instrumentNo = randomInt(0, upperLimit);
+    const randInstName = newInstrumentsKeyArray[instrumentNo];
+    const randArticulation = await Instruments.getRandomArticulation(randInstName);
     const layer = {
         "id": uuid(),
         "createdBy": userId || null,
@@ -39,8 +40,8 @@ export const getDefaultLayerData = (userId, instrument) => {
         "instrument": {
             "noteLength": "64n",
             "instrument": "Sampler",
-            "sampler": "HiHats",
-            "sample": hithatSampleArray[randHihatSoundNo],
+            "sampler": randInstName,
+            "sample": randArticulation,
             ...instrument
         },
         "steps": Array(Layer.DefaultStepsAmount).fill(null).map(() => { return getDefaultStepData() }),
@@ -54,18 +55,19 @@ export const getDefaultLayerData = (userId, instrument) => {
     return layer;
 };
 
-export const getDefaultRoundData = (userId) => {
-    const newInstruments = Instruments.classes();
-    const hihat = newInstruments['HiHats'];
-    const snare = newInstruments['Snares'];
-    const kick = newInstruments['Kicks'];
-    const hithatSampleArray = Object.keys(hihat.samples);
-    const snareSampleArray = Object.keys(snare.samples);
-    const kickSampleArray = Object.keys(kick.samples);
-    let randHihatSoundNo, randSnareSoundNo, randKickSoundNo = 0;
-    randHihatSoundNo = randomInt(0, hithatSampleArray.length);
-    randSnareSoundNo = randomInt(0, snareSampleArray.length);
-    randKickSoundNo = randomInt(0, kickSampleArray.length);
+export const getDefaultRoundData = async (userId) => {
+    const newInstruments = await Instruments.classes();
+    const newInstrumentsKeyArray = Object.keys(newInstruments);
+    const upperLimit = newInstrumentsKeyArray.length - 1;
+    const instrumentNo = randomInt(0, upperLimit);
+    const instrumentNo1 = randomInt(0, upperLimit);
+    const instrumentNo2 = randomInt(0, upperLimit);
+    const randInstName = newInstrumentsKeyArray[instrumentNo];
+    const randInstName1 = newInstrumentsKeyArray[instrumentNo1];
+    const randInstName2 = newInstrumentsKeyArray[instrumentNo2];
+    const randomArticulation = await Instruments.getRandomArticulation(randInstName);
+    const randomArticulation1 = await Instruments.getRandomArticulation(randInstName1);
+    const randomArticulation2 = await Instruments.getRandomArticulation(randInstName2);
     const round = {
         "createdBy": userId || null,
         "id": uuid(),
@@ -76,20 +78,20 @@ export const getDefaultRoundData = (userId) => {
         "createdAt": Date.now(),
         "currentUsers": [],
         "layers": [
-            getDefaultLayerData(userId, {
+            await getDefaultLayerData(userId, {
                 "instrument": "Sampler",
-                "sampler": "HiHats",
-                "sample": hithatSampleArray[randHihatSoundNo],
+                "sampler": randInstName,
+                "sample": randomArticulation,
             }),
-            getDefaultLayerData(userId, {
+            await getDefaultLayerData(userId, {
                 "instrument": "Sampler",
-                "sampler": "Snares",
-                "sample": snareSampleArray[randSnareSoundNo],
+                "sampler": randInstName1,
+                "sample": randomArticulation1,
             }),
-            getDefaultLayerData(userId, {
+            await getDefaultLayerData(userId, {
                 "instrument": "Sampler",
-                "sampler": "Kicks",
-                "sample": kickSampleArray[randKickSoundNo],
+                "sampler": randInstName2,
+                "sample": randomArticulation2,
             })
         ],
         userBuses: {},
@@ -98,11 +100,12 @@ export const getDefaultRoundData = (userId) => {
     round.userBuses[userId] = getDefaultUserBus(userId)
     round.userPatterns[userId] = getDefaultUserPatterns(userId)
     // increase each layer createdAt time by 1 ms so they're not equal
-    let i = 0
-    for (let layer of round.layers) {
-        layer.name = "Layer " + (i + 1)
-        layer.createdAt += i++
-    }
+    // let i = 0
+    // for (let layer of round.layers) {
+    //     layer.name = "Layer " + (i + 1)
+    //     layer.createdAt += i++
+    // }
+    console.log('round --', round)
     return round
 }
 

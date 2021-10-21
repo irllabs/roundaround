@@ -2,8 +2,8 @@
 import { getDefaultRoundData, getDefaultStepData } from './defaultData'
 import { Colors } from './constants'
 
-export const createRound = (userId) => {
-    return getDefaultRoundData(userId)
+export const createRound = async (userId) => {
+    return await getDefaultRoundData(userId)
 }
 
 export const arraymove = async (arr, fromIndex, toIndex) => {

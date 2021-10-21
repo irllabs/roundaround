@@ -40,18 +40,18 @@ const styles = theme => ({
 
 class LandingPageRoute extends Component {
     static contextType = FirebaseContext;
-    constructor (props) {
+    constructor(props) {
         super(props);
         this.onGetStartedClick = this.onGetStartedClick.bind(this);
     }
-    async onGetStartedClick () {
+    async onGetStartedClick() {
         if (!_.isNil(this.props.user)) {
             if (!this.props.user.isGuest) {
                 // redirect to /rounds list
                 this.props.history.push('/rounds')
             } else {
                 // guest user so create new round and go there instead of rounds list
-                let newRound = createRound(this.props.user.id)
+                let newRound = await createRound(this.props.user.id)
                 let newRounds = [newRound]
                 await this.context.createRound(newRound)
                 this.props.setRounds(newRounds)
@@ -63,7 +63,7 @@ class LandingPageRoute extends Component {
             this.props.setIsShowingSignInDialog(true)
         }
     }
-    render () {
+    render() {
         const { classes } = this.props;
         return (
             <>
@@ -74,11 +74,11 @@ class LandingPageRoute extends Component {
                             <p>Rounds is a multi-person live-sampling step-sequencer with social features.  It runs in the browser or as a Native iOS application, with the following steps: compose a pattern (or "Round"), make variations and save presets, share a link to have someone join you with additional layers.  Rounds is best on a recent iPad.</p>
                             <div style={{ width: "100%", textAlign: "center", marginTop: "2rem" }}>
                                 <Button
-                                        className={classes.getStartedButton}
-                                        variant="contained" color="primary"
-                                        disableElevation
-                                        onClick={this.onGetStartedClick}
-                                        data-test="button-get-started"
+                                    className={classes.getStartedButton}
+                                    variant="contained" color="primary"
+                                    disableElevation
+                                    onClick={this.onGetStartedClick}
+                                    data-test="button-get-started"
                                 >
                                     Get started
                                 </Button>
@@ -88,7 +88,7 @@ class LandingPageRoute extends Component {
                         <Grid item xs={12} sm={12} md={6}>
                             <video width="100%" controls poster="https://firebasestorage.googleapis.com/v0/b/roundaround.appspot.com/o/marketing%2Froundaround-demo.jpg?alt=media&token=07a12429-bc4a-4de2-8f43-031a471367d8">
                                 <source src="https://firebasestorage.googleapis.com/v0/b/roundaround.appspot.com/o/marketing%2Froundaround-demo.mp4?alt=media&token=5e7388f0-3037-4596-b569-ca97bff02c6c" type="video/mp4" />
-                                    Your browser does not support the video tag.
+                                Your browser does not support the video tag.
                             </video>
                         </Grid>
                     </Grid>

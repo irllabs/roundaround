@@ -58,7 +58,7 @@ class RoundsListRoute extends Component {
 
     async onNewRoundClick() {
         console.log('create new round');
-        let newRound = createRound(this.props.user.id)
+        let newRound = await createRound(this.props.user.id)
         console.log('newRound', newRound);
         let newRounds = [...this.props.rounds, newRound]
         await this.context.createRound(newRound)
@@ -114,7 +114,7 @@ class RoundsListRoute extends Component {
         clonedRound.id = uuid()
         clonedRound.name += ' (duplicate)'
         clonedRound.createdAt = Date.now()
-        this.context.createRound(clonedRound)
+        await this.context.createRound(clonedRound)
         let clonedRounds = _.cloneDeep(this.props.rounds)
         clonedRounds.push(clonedRound)
         this.props.setRounds(clonedRounds)
