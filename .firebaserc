@@ -1,6 +1,7 @@
 {
   "projects": {
-    "roundaround": "roundaround"
+    "roundaround": "roundaround",
+    "default": "roundaround"
   },
   "targets": {
     "roundaround": {
