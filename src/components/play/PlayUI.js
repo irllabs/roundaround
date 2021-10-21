@@ -776,7 +776,7 @@ class PlayUI extends Component {
         const layerGraphic =
             this.container.circle(layerDiameter, layerDiameter).attr({ fill: 'none' })
                 .stroke({ color: this.userColors[layer.createdBy], width: layerStrokeSize + 'px' })
-                .opacity(!createdByThisUser ? 0.3 : 1)
+                .opacity(!createdByThisUser ? 0.5 : 1)
 
         layerGraphic.x(xOffset)
         layerGraphic.y(yOffset)
@@ -826,7 +826,7 @@ class PlayUI extends Component {
             const x = Math.round(layerDiameter / 2 + radius * Math.cos(angle) - stepDiameter / 2) + xOffset;
             const y = Math.round(layerDiameter / 2 + radius * Math.sin(angle) - stepDiameter / 2) + yOffset;
             const stepGraphic = this.container.circle(stepDiameter)
-            stepGraphic.stroke({ color: this.userColors[layer.createdBy], width: stepStrokeWidth + 'px' }).opacity(!createdByThisUser ? 0.3 : 1)
+            stepGraphic.stroke({ color: this.userColors[layer.createdBy], width: stepStrokeWidth + 'px' }).opacity(!createdByThisUser ? 0.5 : 1)
             stepGraphic.stroke({ opacity: 1 })
             stepGraphic.x(x)
             stepGraphic.y(y)
