@@ -17,7 +17,7 @@ var firebaseConfig = {
 };
 
 class Firebase {
-    constructor () {
+    constructor() {
         if (!firebase.apps.length) {
             app.initializeApp(firebaseConfig);
         }
@@ -114,6 +114,8 @@ class Firebase {
                 const roundsSnapshot = await this.db
                     .collection("rounds")
                     .where('createdBy', '==', userId)
+                    .orderBy('createdAt', 'desc')
+                    .limitToLast()
                     .get();
                 roundsSnapshot.forEach(roundDoc => {
                     let round = roundDoc.data();

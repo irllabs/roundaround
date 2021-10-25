@@ -26,7 +26,7 @@ const useStyles = makeStyles((theme) => ({
     }
 }));
 
-function ProjectName ({ name, setIsShowingRenameDialog, setIsShowingDeleteRoundDialog, setRound, round, setSelectedRoundId }) {
+function ProjectName({ name, setIsShowingRenameDialog, setIsShowingDeleteRoundDialog, setRound, round, setSelectedRoundId }) {
     const classes = useStyles();
     const [open, setOpen] = React.useState(false);
     const anchorRef = React.useRef(null);
@@ -65,7 +65,7 @@ function ProjectName ({ name, setIsShowingRenameDialog, setIsShowingDeleteRoundD
         setOpen(false)
     }
 
-    function handleListKeyDown (event) {
+    function handleListKeyDown(event) {
         if (event.key === 'Tab') {
             event.preventDefault();
             setOpen(false);

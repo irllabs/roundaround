@@ -60,7 +60,7 @@ class RoundsListRoute extends Component {
         console.log('create new round');
         let newRound = createRound(this.props.user.id)
         console.log('newRound', newRound);
-        let newRounds = [...this.props.rounds, newRound]
+        let newRounds = [newRound, ...this.props.rounds]
         await this.context.createRound(newRound)
         this.props.setRounds(newRounds)
         // redirect to new round
@@ -133,7 +133,7 @@ class RoundsListRoute extends Component {
         console.log('rendering rounds', this.props.rounds);
 
         const { classes } = this.props;
-        const rounds = this.props.rounds;
+        const rounds = [...this.props.rounds];
         return (
             <>
                 <Container className={classes.root}>
