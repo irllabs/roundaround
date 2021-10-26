@@ -2,11 +2,11 @@ import React, { Component } from 'react';
 import _ from 'lodash';
 import { SVG } from '@svgdotjs/svg.js'
 import '@svgdotjs/svg.panzoom.js'
-import { HTML_UI_Params, PRESET_LETTERS } from '../../utils/constants'
+import { HTML_UI_Params } from '../../utils/constants'
 import { connect } from "react-redux";
 import AudioEngine from '../../audio-engine/AudioEngine'
 import { getDefaultLayerData } from '../../utils/defaultData';
-import { SET_LAYER_MUTE, TOGGLE_STEP, ADD_LAYER, SET_SELECTED_LAYER_ID, SET_IS_SHOWING_LAYER_SETTINGS, SET_IS_PLAYING, UPDATE_STEP, SET_IS_SHOWING_ORIENTATION_DIALOG, UPDATE_LAYERS, SET_CURRENT_SEQUENCE_PATTERN } from '../../redux/actionTypes'
+import { SET_LAYER_MUTE, TOGGLE_STEP, ADD_LAYER, SET_SELECTED_LAYER_ID, SET_IS_SHOWING_LAYER_SETTINGS, UPDATE_STEP, SET_IS_SHOWING_ORIENTATION_DIALOG, UPDATE_LAYERS, SET_CURRENT_SEQUENCE_PATTERN } from '../../redux/actionTypes'
 import { FirebaseContext } from '../../firebase/'
 import * as Tone from 'tone';
 import { withStyles } from '@material-ui/styles';
@@ -1302,17 +1302,8 @@ class PlayUI extends Component {
     }
 
     onKeypress(e) {
-        if (e.key === KEY_MAPPINGS.playToggle && !this.props.disableKeyListener) {
-            if (this.props.round.isPlaying) {
-                AudioEngine.stop()
-                this.context.updateRound(this.round.id, { isPlaying: false })
-                this.props.dispatch({ type: SET_IS_PLAYING, payload: { value: false } })
-            } else {
-                AudioEngine.play()
-                this.context.updateRound(this.round.id, { isPlaying: true })
-                this.props.dispatch({ type: SET_IS_PLAYING, payload: { value: true } })
-            }
-        }
+        e.preventDefault();
+        // Prevent default and do nothing
     }
 
     showOrientationDialog() {
