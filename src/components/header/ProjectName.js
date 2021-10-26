@@ -56,11 +56,11 @@ function ProjectName({ name, setIsShowingRenameDialog, setIsShowingDeleteRoundDi
         setSelectedRoundId(round.id)
         setIsShowingDeleteRoundDialog(true)
     }
-    const onDuplicateClick = () => {
+    const onDuplicateClick = async () => {
         let clonedRound = _.cloneDeep(round)
         clonedRound.id = uuid()
         clonedRound.name += ' (duplicate)'
-        firebase.createRound(clonedRound)
+        await firebase.createRound(clonedRound)
         setRound(clonedRound)
         setOpen(false)
     }

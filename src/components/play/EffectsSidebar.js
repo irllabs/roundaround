@@ -102,7 +102,7 @@ const toTitleCase = (str) => {
 
 class EffectsSidebar extends Component {
     static contextType = FirebaseContext;
-    constructor (props) {
+    constructor(props) {
         super(props)
         this.state = {
             menuAnchorElement: null,
@@ -113,7 +113,7 @@ class EffectsSidebar extends Component {
         this.onMinimizeClick = this.onMinimizeClick.bind(this)
     }
 
-    onPlayClick () {
+    onPlayClick() {
         this.props.togglePlay()
     }
     onSortEnd = ({ oldIndex, newIndex }) => {
@@ -131,7 +131,7 @@ class EffectsSidebar extends Component {
             items: arrayMove(items, oldIndex, newIndex),
         }));*/
     };
-    onSwitchOn (fxId) {
+    onSwitchOn(fxId) {
         AudioEngine.busesByUser[this.props.user.id].fx[fxId].override = true
         this.props.setUserBusFxOverride(this.props.user.id, fxId, true)
         //this.props.dispatch({ type: SET_USER_BUS_FX_OVERRIDE, payload: { fxId, userId: this.props.user.id, value: true } })
@@ -140,7 +140,7 @@ class EffectsSidebar extends Component {
         fx.isOverride = true
         this.context.updateUserBus(this.props.round.id, this.props.user.id, userBus)
     }
-    onSwitchOff (fxId) {
+    onSwitchOff(fxId) {
         AudioEngine.busesByUser[this.props.user.id].fx[fxId].override = false
         this.props.setUserBusFxOverride(this.props.user.id, fxId, false)
         //this.props.dispatch({ type: SET_USER_BUS_FX_OVERRIDE, payload: { fxId, userId: this.props.user.id, value: false } })
@@ -149,10 +149,10 @@ class EffectsSidebar extends Component {
         fx.isOverride = false
         this.context.updateUserBus(this.props.round.id, this.props.user.id, userBus)
     }
-    onMinimizeClick () {
+    onMinimizeClick() {
         this.setState({ isMinimized: !this.state.isMinimized })
     }
-    render () {
+    render() {
         const { classes } = this.props;
         let items = []
         if (!_.isNil(this.props.round) && !_.isNil(this.props.round.userBuses) && !_.isNil(this.props.round.userBuses[this.props.user.id])) {
