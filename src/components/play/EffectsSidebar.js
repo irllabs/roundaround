@@ -125,6 +125,10 @@ class EffectsSidebar extends Component {
         this.context.updateUserBus(this.props.round.id, this.props.user.id, userBus)
     }
 
+        /*this.setState(({ items }) => ({
+            items: arrayMove(items, oldIndex, newIndex),
+        }));*/
+    };
     onSwitchOn(fxId) {
         AudioEngine.busesByUser[this.props.user.id].fx[fxId].override = true
         this.props.setUserBusFxOverride(this.props.user.id, fxId, true)
