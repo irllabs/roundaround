@@ -48,7 +48,7 @@ class PlayUI extends Component {
         // register this component with parent so we can do some instant updates bypassing redux for speed
         this.props.childRef(this)
 
-        this.createRound()
+        await this.createRound()
         window.addEventListener('resize', this.onWindowResizeThrottled)
         window.addEventListener('keypress', this.onKeypress)
         window.addEventListener('dblclick', () => this.onMuteToggle(this.props))
@@ -65,7 +65,7 @@ class PlayUI extends Component {
         this.disposeToneEvents()
     }
 
-    createRound() {
+    async createRound() {
         //  console.log('createRound()');
         this.round = _.cloneDeep(this.props.round)
         this.userColors = this.getUserColors()
@@ -442,7 +442,7 @@ class PlayUI extends Component {
         return _.find(steps, { id })
     }
 
-    draw(shouldAnimate) {
+    async draw(shouldAnimate) {
         // console.log('draw()', this.containerWidth, this.containerheight);
         this.clear()
         const _this = this
@@ -482,8 +482,8 @@ class PlayUI extends Component {
         this.addLayerButton = this.container.circle(HTML_UI_Params.addNewLayerButtonDiameter).attr({ fill: '#1B1B1B' }).stroke({ width: 1, color: this.userColors[this.props.user.id], dasharray: '5,5' })
         this.addLayerButton.x((this.containerWidth / 2) - (HTML_UI_Params.addNewLayerButtonDiameter / 2))
         this.addLayerButton.y((this.containerHeight / 2) - (HTML_UI_Params.addNewLayerButtonDiameter / 2))
-        this.addLayerButton.click(() => {
-            _this.onAddLayerClick()
+        this.addLayerButton.click(async () => {
+            await _this.onAddLayerClick()
         })
         this.addLayerButton.addClass(this.props.classes.button)
         //this.addLayerButton.svg('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="white" width="18px" height="18px"><path d="M0 0h24v24H0z" fill="white"/><path fill="white" d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/></svg>')
@@ -787,7 +787,7 @@ class PlayUI extends Component {
             this.container.circle(layerDiameter, layerDiameter).attr({ fill: 'none' })
                 .stroke({ color: this.userColors[layer.createdBy], width: layerStrokeSize + 'px' })
                 .opacity(!createdByThisUser ? 0.5 : 1)
-
+        layer.isMuted && layerGraphic.stroke({ color: 'rgba(255,255,255,0.1)' })
         layerGraphic.x(xOffset)
         layerGraphic.y(yOffset)
         layerGraphic.id = layer.id
@@ -1417,8 +1417,8 @@ class PlayUI extends Component {
 
     }
 
-    onAddLayerClick() {
-        const newLayer = getDefaultLayerData(this.props.user.id);
+    async onAddLayerClick() {
+        const newLayer = await getDefaultLayerData(this.props.user.id);
         newLayer.name = 'Layer ' + (this.props.round.layers.length + 1)
         this.props.dispatch({ type: ADD_LAYER, payload: { layer: newLayer, user: this.props.user.id } })
         this.context.createLayer(this.round.id, newLayer)
