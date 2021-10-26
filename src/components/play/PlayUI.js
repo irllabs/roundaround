@@ -1214,8 +1214,6 @@ class PlayUI extends Component {
                 })
             })
             // console.log('adding touchmove event for stepgraphic', stepGraphic.id);
-
-
         }
     }
     removeStepEventListeners(stepGraphic) {
