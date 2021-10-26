@@ -17,11 +17,9 @@ import AudioEngine from '../../../audio-engine/AudioEngine'
 import Instruments from '../../../audio-engine/Instruments'
 
 import { FirebaseContext } from '../../../firebase';
-import LayerType from './LayerType';
 import LayerAutomation from './LayerAutomation';
 import Track from '../../../audio-engine/Track'
 import LayerPercentOffset from './LayerPercentOffset'
-//import LayerTimeOffset from './LayerTimeOffset'
 import LayerCustomSounds from './LayerCustomSounds'
 
 const styles = theme => ({
@@ -425,164 +423,25 @@ class LayerSettings extends Component {
 
     static contextType = FirebaseContext;
 
-    resizeHeight = () => {
-        this.height = window.innerHeight;
-    }
-    componentDidMount() {
-        window.addEventListener('click', this.onClick)
-        window.addEventListener('resize', this.updateWindowWidth)
-        this.updateWindowWidth();
-        window.addEventListener('resize', this.resizeHeight);
-        if (this.props.round && this.props.selectedLayerId) {
-            const selectedLayer = _.find(this.props.round.layers, { id: this.props.selectedLayerId })
-            this.setSelectedInstrument(selectedLayer)
-        }
-    }
-
-    componentDidUpdate(prevProps) {
-        if (this.props.round && this.props.selectedLayerId) {
-            const selectedLayer = _.find(this.props.round.layers, { id: this.props.selectedLayerId })
-            //console.log('instrument in sampler', !selectedLayer.instrument.sampler.indexOf(this.state.selectedInstrument) > -1)
-            if (selectedLayer &&
-                (
-                    (prevProps.selectedLayerId !== this.props.selectedLayerId) ||
-                    (!this.state.selectedInstrument && selectedLayer)
-                    //|| (this.state.selectedInstrument && (selectedLayer.instrument.sampler.indexOf(this.state.selectedInstrument) === -1))
-                )
-            ) {
-                this.setSelectedInstrument(selectedLayer)
-            }
-            if (this.state.selectedInstrument) {
-                const selectedInstArray = this.state?.selectedInstrument.split('');
-                const firstTwo = selectedInstArray[0] + selectedInstArray[1];
-                selectedLayer?.instrument?.sampler.indexOf(firstTwo) === -1 && this.setSelectedInstrument(selectedLayer)
-            }
-        }
-    }
-
-    componentWillUnmount() {
-        window.removeEventListener('click', this.onClick)
-        window.removeEventListener('resize', this.updateWindowWidth)
-        window.removeEventListener('resize', this.resizeHeight)
-    }
-
-    updateWindowWidth = () => this.setState({ windowWidth: window.innerWidth })
-
-    setSelectedInstrument = async (selectedLayer) => {
-        const instrumentOptions = await Instruments.getInstrumentOptions(false)
-        if (instrumentOptions && this.props.round) {
-            const localLayer = _.find(this.props.round.layers, { id: this.props.selectedLayerId })
-            const sampler = selectedLayer?.instrument?.sampler || localLayer?.instrument?.sampler;
-            const instrument = _.find(instrumentOptions, { name: sampler })
-            if (instrument)
-                this.setState({ selectedInstrument: instrument.label })
-        }
-    }
-
-    getUserColors() {
-        let userColors = {};
-        for (const user of this.props.users) {
-            userColors[user.id] = user.color
-        }
-        return userColors
-    }
-
-    onClick = (e) => {
-        e.preventDefault()
-        e.stopPropagation()
-        const target = e.target;
-        if ((
-            (!this.instrumentPopupButton.current || (this.instrumentPopupButton.current && !this.instrumentPopupButton.current.contains(target)))
-            //&& (!this.addLayerButton.current || (this.addLayerButton.current && !this.addLayerButton.current.contains(target)))
-            && (!this.articulationsListButton.current || (this.articulationsListButton.current && !this.articulationsListButton.current.contains(target)))
-            && (!this.hamburgerButton.current || (this.hamburgerButton.current && !this.hamburgerButton.current.contains(target)))
-            && (!this.showDeleteClearPopupButton.current || (this.showDeleteClearPopupButton.current && !this.showDeleteClearPopupButton.current.contains(target)))
-            && (!this.instrumentsListButton.current || (this.instrumentsListButton.current && !this.instrumentsListButton.current.contains(target)))
-            && (!this.instrumentsButton.current || (this.instrumentsButton.current && !this.instrumentsButton.current.contains(target)))
-            && (!this.soundsButton.current || (this.soundsButton.current && !this.soundsButton.current.contains(target)))
-            && (!this.addStepsButton.current || (this.addStepsButton.current && !this.addStepsButton.current.contains(target)))
-            && (!this.subtractStepsButton.current || (this.subtractStepsButton.current && !this.subtractStepsButton.current.contains(target)))
-            && (!this.percentageButton.current || (this.percentageButton.current && !this.percentageButton.current.contains(target)))
-            && (!this.msButton.current || (this.msButton.current && !this.msButton.current.contains(target)))
-            && (!this.layerPopupButton.current || (this.layerPopupButton.current && !this.layerPopupButton.current.contains(target)))
-            && (!this.mixerPopupButton.current || (this.mixerPopupButton.current && !this.mixerPopupButton.current.contains(target)))
-            && (!this.volumePopupButton.current || (this.volumePopupButton && !this.volumePopupButton.current.contains(target)))
-            && (!this.muteToggle.current || (this.muteToggle && !this.muteToggle.current.contains(target)))
-            && (!this.soloButton.current || (this.soloButton && !this.soloButton.current.contains(target)))
-            && (!this.volumeSlider.current || (this.volumeSlider && !this.volumeSlider.current.contains(target)))
-            && (!this.offsetSlider.current || (this.offsetSlider && !this.offsetSlider.current.contains(target)))
-        )) {
-            this.hideAllLayerInspectorModals()
-        }
-    }
-
-    hideAllLayerInspectorModals = () => {
-        this.setState({
-            showMixerPopup: false,
-            showInstrumentsPopup: false,
-            showInstrumentsList: false,
-            showSoundsList: false,
-            showArticulationOptions: false,
-            showLayerPopup: false,
-            showVolumePopup: false,
-            showDeleteClearPopup: false,
-            showHamburgerPopup: false
-        })
-    }
-
     onCloseClick() {
         this.props.dispatch({ type: SET_IS_SHOWING_LAYER_SETTINGS, payload: { value: false } })
     }
 
-    onLayerClicked = (layerId) => {
-        //this.selectedLayerId = layerId
-        this.props.dispatch({ type: SET_SELECTED_LAYER_ID, payload: { layerId } })
-        //this.props.dispatch({ type: SET_IS_SHOWING_LAYER_SETTINGS, payload: { value: true } })
-        //this.highlightLayer(_.find(this.layerGraphics, { id: layerId }))
-    }
-
     onPreviewClick() {
-        // TODO: only audible to this user (mute for all others)
+        // todo: only audible to this user (mute for all others)
     }
 
-    onSoloClick = async (selectedLayer) => {
-        const layers = this.props.round.layers
-        if (selectedLayer) {
-            await layers.forEach(layer => {
-                const id = layer.id;
-                const isMuted = !layer.isMuted;
-                if (selectedLayer.id !== id) {
-                    AudioEngine.tracksById[id].setMute(isMuted)
-                    this.props.dispatch({ type: SET_LAYER_MUTE, payload: { id, value: isMuted, user: this.props.user.id } })
-                    this.context.updateLayer(this.props.round.id, id, { isMuted })
-                }
-            });
-        }
-    }
-
-    onMuteClick = (selectedLayer) => {
-        if (selectedLayer) {
-            const isMuted = !selectedLayer.isMuted
-            AudioEngine.tracksById[selectedLayer.id].setMute(isMuted)
-            this.props.dispatch({ type: SET_LAYER_MUTE, payload: { id: selectedLayer.id, value: isMuted, user: this.props.user.id } })
-            this.context.updateLayer(this.props.round.id, selectedLayer.id, { isMuted })
-        }
+    onMuteClick() {
+        const isMuted = !this.props.selectedLayer.isMuted
+        AudioEngine.tracksById[this.props.selectedLayer.id].setMute(isMuted)
+        this.props.dispatch({ type: SET_LAYER_MUTE, payload: { id: this.props.selectedLayer.id, value: isMuted, user: this.props.user.id } })
+        this.context.updateLayer(this.props.round.id, this.props.selectedLayer.id, { isMuted })
     }
 
     onDeleteLayerClick() {
-        const selectedLayer = this.props.selectedLayer
-        if (selectedLayer) {
-            this.props.dispatch({ type: REMOVE_LAYER, payload: { id: selectedLayer.id, user: this.props.user.id } })
-            this.context.deleteLayer(this.props.round.id, selectedLayer.id)
-            this.onCloseClick()
-        }
-    }
-
-    onAddLayerClick = async () => {
-        const newLayer = await getDefaultLayerData(this.props.user.id);
-        newLayer.name = 'Layer ' + (this.props.round.layers.length + 1)
-        this.props.dispatch({ type: ADD_LAYER, payload: { layer: newLayer, user: this.props.user.id } })
-        this.context.createLayer(this.props.round.id, newLayer)
+        this.props.dispatch({ type: REMOVE_LAYER, payload: { id: this.props.selectedLayer.id, user: this.props.user.id } })
+        this.context.deleteLayer(this.props.round.id, this.props.selectedLayer.id)
+        this.onCloseClick()
     }
 
     onClearStepsClick() {
@@ -650,14 +509,6 @@ class LayerSettings extends Component {
         this.setState({ showHamburgerPopup })
     }
 
-    toggleShowDeleteClearPopup = (e) => {
-        e.preventDefault()
-        e.stopPropagation()
-        const showDeleteClearPopup = !this.state.showDeleteClearPopup
-        this.hideAllLayerInspectorModals()
-        this.setState({ showDeleteClearPopup })
-    }
-
     render() {
         // console.log('Layer settings render()', this.props.user);
         const {
@@ -706,7 +557,6 @@ class LayerSettings extends Component {
             }
             form = (
                 <Box className={classes.root}>
-                    <LayerType selectedLayer={selectedLayer} roundId={this.props.round.id} userId={this.props.user.id} />
                     <LayerNumberOfSteps selectedLayer={selectedLayer} roundId={this.props.round.id} user={this.props.user} />
                     <LayerPercentOffset selectedLayer={selectedLayer} roundId={this.props.round.id} user={this.props.user} playUIRef={this.props.playUIRef} />
                     {/* <LayerTimeOffset selectedLayer={selectedLayer} roundId={this.props.round.id} user={this.props.user} playUIRef={this.props.playUIRef} /> */}
