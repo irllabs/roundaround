@@ -26,7 +26,7 @@ const useStyles = makeStyles((theme) => ({
     }
 }));
 
-function ProjectName ({ name, setIsShowingRenameDialog, setIsShowingDeleteRoundDialog, setRound, round, setSelectedRoundId }) {
+function ProjectName({ name, setIsShowingRenameDialog, setIsShowingDeleteRoundDialog, setRound, round, setSelectedRoundId }) {
     const classes = useStyles();
     const [open, setOpen] = React.useState(false);
     const anchorRef = React.useRef(null);
@@ -56,16 +56,16 @@ function ProjectName ({ name, setIsShowingRenameDialog, setIsShowingDeleteRoundD
         setSelectedRoundId(round.id)
         setIsShowingDeleteRoundDialog(true)
     }
-    const onDuplicateClick = () => {
+    const onDuplicateClick = async () => {
         let clonedRound = _.cloneDeep(round)
         clonedRound.id = uuid()
         clonedRound.name += ' (duplicate)'
-        firebase.createRound(clonedRound)
+        await firebase.createRound(clonedRound)
         setRound(clonedRound)
         setOpen(false)
     }
 
-    function handleListKeyDown (event) {
+    function handleListKeyDown(event) {
         if (event.key === 'Tab') {
             event.preventDefault();
             setOpen(false);

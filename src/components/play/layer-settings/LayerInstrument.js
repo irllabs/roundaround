@@ -53,17 +53,17 @@ const useStyles = makeStyles((theme) => ({
     }
 }));
 
-export default function LayerInstrument ({ selectedLayer, user, roundId }) {
+export default function LayerInstrument({ selectedLayer, user, roundId }) {
     const dispatch = useDispatch();
     const firebase = useContext(FirebaseContext);
     const classes = useStyles();
     const instrumentOptions = Instruments.getInstrumentOptions(false)
     const [selectedInstrument, setSelectedInstrument] = React.useState(selectedLayer.instrument.sampler)
 
-    const onInstrumentSelect = (event) => {
+    const onInstrumentSelect = async (event) => {
         setSelectedInstrument(event.target.value);
         console.log('onInstrumentSelect', event.target.value);
-        let defaultArticulation = Instruments.getDefaultArticulation(event.target.value)
+        let defaultArticulation = await Instruments.getRandomArticulation(event.target.value)
         console.log('defaultArticulation', defaultArticulation);
         if (!_.isNil(defaultArticulation)) {
             setSelectedArticulation(defaultArticulation)
@@ -90,7 +90,7 @@ export default function LayerInstrument ({ selectedLayer, user, roundId }) {
     };
     const articulationMenuItems = articulationOptions.map(articulation => <MenuItem value={articulation.value} key={articulation.value}>{articulation.name}</MenuItem>)
     useEffect(() => {
-        async function refreshCustomSampleName (sampleId) {
+        async function refreshCustomSampleName(sampleId) {
             let sample = await CustomSamples.get(sampleId)
             setCustomSampleName(sample.name)
         }
@@ -126,7 +126,7 @@ export default function LayerInstrument ({ selectedLayer, user, roundId }) {
     const deleteSample = async () => {
         await CustomSamples.delete(selectedArticulation, user.id)
         setIsShowingDeleteSampleDialog(false)
-        const defaultLayer = getDefaultLayerData()
+        const defaultLayer = await getDefaultLayerData()
         dispatch({ type: UPDATE_LAYER_INSTRUMENT, payload: { id: selectedLayer.id, instrument: { sampler: defaultLayer.instrument.sampler, sample: defaultLayer.instrument.sample }, user: user.id } })
         firebase.updateLayer(roundId, selectedLayer.id, { instrument: { sampler: defaultLayer.instrument.sampler, sample: defaultLayer.instrument.sample } })
     }
@@ -192,15 +192,15 @@ export default function LayerInstrument ({ selectedLayer, user, roundId }) {
                 <DialogContent>
                     <DialogContentText id="alert-dialog-description">
                         Are you sure you want to delete this sample?
-          </DialogContentText>
+                    </DialogContentText>
                 </DialogContent>
                 <DialogActions>
                     <Button onClick={onCloseDeleteSampleDialog} color="primary">
                         Cancel
-          </Button>
+                    </Button>
                     <Button onClick={deleteSample} color="primary" variant="contained" disableElevation autoFocus>
                         Delete
-          </Button>
+                    </Button>
                 </DialogActions>
             </Dialog>
             <Dialog open={isShowingRenameSampleDialog} onClose={onCloseRenameSampleDialog} aria-labelledby="form-dialog-title">
@@ -218,10 +218,10 @@ export default function LayerInstrument ({ selectedLayer, user, roundId }) {
                 <DialogActions>
                     <Button onClick={onCloseRenameSampleDialog}>
                         Cancel
-          </Button>
+                    </Button>
                     <Button color="primary" variant="contained" disableElevation autoFocus onClick={renameSample}>
                         Rename
-          </Button>
+                    </Button>
                 </DialogActions>
             </Dialog>
         </Box>
