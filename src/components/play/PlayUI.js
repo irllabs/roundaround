@@ -6,7 +6,7 @@ import { HTML_UI_Params } from '../../utils/constants'
 import { connect } from "react-redux";
 import AudioEngine from '../../audio-engine/AudioEngine'
 import { getDefaultLayerData } from '../../utils/defaultData';
-import { SET_LAYER_MUTE, TOGGLE_STEP, ADD_LAYER, SET_SELECTED_LAYER_ID, SET_IS_SHOWING_LAYER_SETTINGS, SET_IS_PLAYING, UPDATE_STEP, SET_IS_SHOWING_ORIENTATION_DIALOG, UPDATE_LAYERS, SET_CURRENT_SEQUENCE_PATTERN } from '../../redux/actionTypes'
+import { SET_LAYER_MUTE, TOGGLE_STEP, ADD_LAYER, SET_SELECTED_LAYER_ID, SET_IS_SHOWING_LAYER_SETTINGS, UPDATE_STEP, SET_IS_SHOWING_ORIENTATION_DIALOG, UPDATE_LAYERS, SET_CURRENT_SEQUENCE_PATTERN } from '../../redux/actionTypes'
 import { FirebaseContext } from '../../firebase/'
 import * as Tone from 'tone';
 import { withStyles } from '@material-ui/styles';
