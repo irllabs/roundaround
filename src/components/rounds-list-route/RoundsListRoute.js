@@ -60,7 +60,7 @@ class RoundsListRoute extends Component {
 
     async onNewRoundClick() {
         console.log('create new round');
-        let newRound = createRound(this.props.user.id)
+        let newRound = await createRound(this.props.user.id)
         console.log('newRound', newRound);
         let newRounds = [...this.props.rounds, newRound]
         await this.context.createRound(newRound)
