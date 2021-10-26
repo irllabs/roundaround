@@ -100,12 +100,11 @@ export const getDefaultRoundData = async (userId) => {
     round.userBuses[userId] = getDefaultUserBus(userId)
     round.userPatterns[userId] = getDefaultUserPatterns(userId)
     // increase each layer createdAt time by 1 ms so they're not equal
-    // let i = 0
-    // for (let layer of round.layers) {
-    //     layer.name = "Layer " + (i + 1)
-    //     layer.createdAt += i++
-    // }
-    console.log('round --', round)
+    let i = 0
+    for (let layer of round.layers) {
+        layer.name = "Layer " + (i + 1)
+        layer.createdAt += i++
+    }
     return round
 }
 
