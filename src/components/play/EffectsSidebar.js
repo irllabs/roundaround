@@ -159,6 +159,8 @@ class EffectsSidebar extends Component {
             for (const fx of this.props.round.userBuses[this.props.user.id].fx) {
                 let item = {
                     id: fx.id,
+                    isOn: fx.isOn,
+                    isOverride: fx.isOverride,
                     label: fx.name,
                     userId: this.props.user.id,
                     name: fx.name
@@ -172,7 +174,7 @@ class EffectsSidebar extends Component {
         return (
             <Box className={classes.root + ' ' + isMinimizedClass}>
                 {items.map((fx, index) => (
-                    <EffectThumbControl key={fx.id} className={classes.thumbControl} label={toTitleCase(fx.label)} fxId={fx.id} userId={fx.userId} switchOn={this.onSwitchOn} switchOff={this.onSwitchOff} name={fx.name} />
+                    <EffectThumbControl key={fx.id} isOn={fx.isOn} isOverride={fx.isOverride} className={classes.thumbControl} label={toTitleCase(fx.label)} fxId={fx.id} userId={fx.userId} switchOn={this.onSwitchOn} switchOff={this.onSwitchOff} name={fx.name} />
                 ))}
                 <Box className={classes.minimizeButton + ' ' + buttonIsMinimizedClass} onClick={this.onMinimizeClick}><ChevronRightIcon size="small" /></Box>
             </Box>
