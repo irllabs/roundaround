@@ -60,7 +60,7 @@ const styles = theme => ({
 
 class PatternsSidebar extends Component {
     static contextType = FirebaseContext;
-    constructor (props) {
+    constructor(props) {
         super(props)
         this.state = {
             selectedPattern: null,
@@ -71,7 +71,7 @@ class PatternsSidebar extends Component {
         this.onSavePattern = this.onSavePattern.bind(this)
         this.onMinimizeClick = this.onMinimizeClick.bind(this)
     }
-    async onLoadPattern (id) {
+    async onLoadPattern(id) {
         console.log('onLoadPattern', id);
         if (!this.props.display.isRecordingSequence) {
             const pattern = _.find(this.props.round.userPatterns[this.props.user.id].patterns, { id })
@@ -163,7 +163,7 @@ class PatternsSidebar extends Component {
             }
         }
     }
-    onSavePattern (id) {
+    onSavePattern(id) {
         //console.log('onSavePattern', id);
         // save all steps for this user
         this.setState({ selectedPattern: id, selectedPatternNeedsSaving: false })
@@ -172,11 +172,11 @@ class PatternsSidebar extends Component {
         this.props.saveUserPattern(this.props.user.id, id, state)
         this.context.saveUserPatterns(this.props.round.id, this.props.user.id, this.props.round.userPatterns[this.props.user.id])
     }
-    onMinimizeClick () {
+    onMinimizeClick() {
         this.setState({ isMinimized: !this.state.isMinimized })
     }
 
-    getCurrentState (userId) {
+    getCurrentState(userId) {
         const userLayers = _.filter(this.props.round.layers, { createdBy: userId })
         let state = {}
         state.layers = []
@@ -193,7 +193,7 @@ class PatternsSidebar extends Component {
         }
         return state
     }
-    render () {
+    render() {
         const { classes } = this.props;
         let selectedPatternNeedsSaving = false;
         if (!_.isNil(this.state.selectedPattern) && !_.isNil(this.props.round)) {
