@@ -6,7 +6,7 @@ import { HTML_UI_Params } from '../../utils/constants'
 import { connect } from "react-redux";
 import AudioEngine from '../../audio-engine/AudioEngine'
 import { getDefaultLayerData } from '../../utils/defaultData';
-import { TOGGLE_STEP, ADD_LAYER, SET_SELECTED_LAYER_ID, SET_IS_SHOWING_LAYER_SETTINGS, UPDATE_STEP, SET_IS_SHOWING_ORIENTATION_DIALOG, UPDATE_LAYERS, SET_CURRENT_SEQUENCE_PATTERN } from '../../redux/actionTypes'
+import { SET_LAYER_MUTE, TOGGLE_STEP, ADD_LAYER, SET_SELECTED_LAYER_ID, SET_IS_SHOWING_LAYER_SETTINGS, SET_IS_PLAYING, UPDATE_STEP, SET_IS_SHOWING_ORIENTATION_DIALOG, UPDATE_LAYERS, SET_CURRENT_SEQUENCE_PATTERN } from '../../redux/actionTypes'
 import { FirebaseContext } from '../../firebase/'
 import * as Tone from 'tone';
 import { withStyles } from '@material-ui/styles';
@@ -51,6 +51,7 @@ class PlayUI extends Component {
         this.createRound()
         window.addEventListener('resize', this.onWindowResizeThrottled)
         window.addEventListener('keypress', this.onKeypress)
+        window.addEventListener('dblclick', () => this.onMuteToggle(this.props))
         this.addBackgroundEventListeners()
         this.checkOrientation()
     }
@@ -58,6 +59,7 @@ class PlayUI extends Component {
     async componentWillUnmount() {
         window.removeEventListener('resize', this.onWindowResizeThrottled)
         window.removeEventListener('keypress', this.onKeypress)
+        window.removeEventListener('dblclick', this.onMuteToggle)
         this.removeBackgroundEventListeners()
         this.clear()
         this.disposeToneEvents()
@@ -427,6 +429,13 @@ class PlayUI extends Component {
             */
     }
 
+    onMuteToggle(props) {
+        const isMuted = !props.selectedLayer.isMuted
+        AudioEngine.tracksById[props.selectedLayer.id].setMute(isMuted)
+        props.dispatch({ type: SET_LAYER_MUTE, payload: { id: props.selectedLayer.id, value: isMuted, user: props.user.id } })
+        this.context.updateLayer(props.round.id, props.selectedLayer.id, { isMuted })
+    }
+
     getStep(id) {
         let steps = []
         for (let layer of this.round.layers) {
@@ -775,7 +784,7 @@ class PlayUI extends Component {
         if (layer.createdBy === this.props.user.id) {
             layerStrokeSize = HTML_UI_Params.layerStrokeMax
         }
-        const layerGraphic = this.container.circle(layerDiameter, layerDiameter).attr({ fill: 'none' }).stroke({ color: this.userColors[layer.createdBy], width: layerStrokeSize + 'px', opacity: 0 })
+        const layerGraphic = this.container.circle(layerDiameter, layerDiameter).attr({ fill: 'none' }).stroke({ color: layer.isMuted ? 'rgba(255,255,255,0.2)' : this.userColors[layer.createdBy], width: layerStrokeSize + 'px', opacity: 0 })
         layerGraphic.x(xOffset)
         layerGraphic.y(yOffset)
         layerGraphic.id = layer.id
@@ -827,6 +836,7 @@ class PlayUI extends Component {
             stepGraphic.stroke({ color: this.userColors[layer.createdBy], width: stepStrokeWidth + 'px', opacity: 0 })
             //stepGraphic.animate(animateTime).stroke({ opacity: 1 })
             stepGraphic.stroke({ opacity: 1 })
+            layer.isMuted && stepGraphic.stroke({ color: 'rgba(255,255,255,0.1)' })
             stepGraphic.x(x)
             stepGraphic.y(y)
             angle += stepSize
@@ -1568,10 +1578,15 @@ PlayUI.propTypes = {
 
 const mapStateToProps = state => {
     //console.log('mapStateToProps', state);
+    let selectedLayer = null;
+    if (!_.isNil(state.display.selectedLayerId) && !_.isNil(state.round) && !_.isNil(state.round.layers)) {
+        selectedLayer = _.find(state.round.layers, { id: state.display.selectedLayerId })
+    }
     return {
         round: state.round,
         user: state.user,
         users: state.users,
+        selectedLayer,
         disableKeyListener: state.display.disableKeyListener
     };
 };
