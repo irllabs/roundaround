@@ -83,8 +83,8 @@ class PlayUI extends Component {
     async componentDidMount() {
         // register this component with parent so we can do some instant updates bypassing redux for speed
         this.props.childRef(this)
-        this.isPlayingSequence = round.userPatterns[user.id].isPlayingSequence
-        window.addEventListener('click', this.interfaceClicked)
+
+        await this.createRound()
         window.addEventListener('resize', this.onWindowResizeThrottled)
         window.addEventListener('keypress', this.onKeypress)
         window.addEventListener('dblclick', () => this.onMuteToggle(this.props))
@@ -106,7 +106,7 @@ class PlayUI extends Component {
         this.disposeToneEvents()
     }
 
-    createRound() {
+    async createRound() {
         //  console.log('createRound()');
         this.round = _.cloneDeep(this.props.round)
         this.userColors = this.getUserColors()
@@ -280,7 +280,7 @@ class PlayUI extends Component {
         return _.find(steps, { id })
     }
 
-    draw(shouldAnimate) {
+    async draw(shouldAnimate) {
         // console.log('draw()', this.containerWidth, this.containerheight);
         this.clear()
 
@@ -300,25 +300,19 @@ class PlayUI extends Component {
         this.activityIndicator = this.container.circle(HTML_UI_Params.activityIndicatorDiameter).fill({ color: '#fff', opacity: 0 })
 
         // add layer button
-        this.playbackToggle = this.container.circle(HTML_UI_Params.addNewLayerButtonDiameter).stroke({ width: 1, color: 'rgba(0,0,0,0)' }).fill('white').opacity('0.1')
-        this.playbackToggle.x((this.containerWidth / 2) - (HTML_UI_Params.addNewLayerButtonDiameter / 2))
-        this.playbackToggle.y((this.containerHeight / 2) - (HTML_UI_Params.addNewLayerButtonDiameter / 2))
-        this.playbackToggle.click(this.onPlaybackToggle)
-        this.playbackToggle.addClass(this.props.classes.button)
-        this.playbackToggleIcon = this.container.nested()
-        if (!isPlaying)
-            this.playbackToggleIcon.svg(`<svg width="36" height="39" viewBox="0 0 36 39" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <path fill-rule="evenodd" clip-rule="evenodd" d="M32.744 24.2206L8.57602 38.174C5.19566 40.1256 0.970215 37.6861 0.970215 33.7828L0.970215 5.87595C0.970215 1.97265 5.19567 -0.46691 8.57602 1.48474L32.744 15.4382C36.1244 17.3898 36.1244 22.2689 32.744 24.2206ZM31.0144 21.2247C32.0885 20.6046 32.0885 19.0542 31.0144 18.434L6.84635 4.48061C5.77222 3.86046 4.42955 4.63565 4.42955 5.87595L4.42955 33.7828C4.42955 35.0231 5.77222 35.7983 6.84635 35.1781L31.0144 21.2247Z" fill="#fff" width="38.06px" height="34.31px" fill-opacity="0.9" /></svg>`)
-        if (isPlaying)
-            this.playbackToggleIcon.svg(`<svg width="36" height="39" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px" viewBox="0 0 36 39" style="enable-background:new 0 0 36 39;" xml:space="preserve">
-            <style type="text/css">
-                .st0{fill-rule:evenodd;clip-rule:evenodd;fill:#fff;fill-opacity:0.9;}
-            </style>
-            <path class="st0" d="M15.5,30.8V8c0-4.1-3.3-7.4-7.4-7.4S0.7,3.9,0.7,8v22.8c0,4.1,3.3,7.4,7.4,7.4S15.5,34.9,15.5,30.8z M4.1,8 c0-2.2,1.8-4,4-4c2.2,0,4,1.8,4,4v22.8c0,2.2-1.8,4-4,4c-2.2,0-4-1.8-4-4V8z" />
-            <path class="st0" d="M34.9,30.8V8c0-4.1-3.3-7.4-7.4-7.4S20.1,3.9,20.1,8v22.8c0,4.1,3.3,7.4,7.4,7.4S34.9,34.9,34.9,30.8z M23.5,8 c0-2.2,1.8-4,4-4s4,1.8,4,4v22.8c0,2.2-1.8,4-4,4s-4-1.8-4-4V8z" /></svg>`)
-        this.playbackToggleIcon.x((this.containerWidth / 2) - 17.5)
-        this.playbackToggleIcon.y((this.containerHeight / 2) - 19.5)
-        this.playbackToggleIcon.addClass(this.props.classes.buttonIcon)
+        this.addLayerButton = this.container.circle(HTML_UI_Params.addNewLayerButtonDiameter).attr({ fill: '#1B1B1B' }).stroke({ width: 1, color: this.userColors[this.props.user.id], dasharray: '5,5' })
+        this.addLayerButton.x((this.containerWidth / 2) - (HTML_UI_Params.addNewLayerButtonDiameter / 2))
+        this.addLayerButton.y((this.containerHeight / 2) - (HTML_UI_Params.addNewLayerButtonDiameter / 2))
+        this.addLayerButton.click(async () => {
+            await _this.onAddLayerClick()
+        })
+        this.addLayerButton.addClass(this.props.classes.button)
+        //this.addLayerButton.svg('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="white" width="18px" height="18px"><path d="M0 0h24v24H0z" fill="white"/><path fill="white" d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/></svg>')
+        this.addLayerButtonIcon = this.container.nested()
+        this.addLayerButtonIcon.svg('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="' + this.userColors[this.props.user.id] + '" width="48px" height="48px"><path d="M0 0h24v24H0z" fill="none"/><path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/></svg>')
+        this.addLayerButtonIcon.x((this.containerWidth / 2) - 24)
+        this.addLayerButtonIcon.y((this.containerHeight / 2) - 25)
+        this.addLayerButtonIcon.addClass(this.props.classes.buttonIcon)
 
         this.stepModal = this.container.nested()
         this.stepModalBackground = this.stepModal.rect(HTML_UI_Params.stepModalDimensions, HTML_UI_Params.stepModalDimensions).fill({ color: '#000', opacity: 0.8 }).radius(HTML_UI_Params.stepModalThumbDiameter / 2)
@@ -605,7 +599,7 @@ class PlayUI extends Component {
             this.container.circle(layerDiameter, layerDiameter).attr({ fill: 'none' })
                 .stroke({ color: this.userColors[layer.createdBy], width: layerStrokeSize + 'px' })
                 .opacity(!createdByThisUser ? 0.5 : 1)
-
+        layer.isMuted && layerGraphic.stroke({ color: 'rgba(255,255,255,0.1)' })
         layerGraphic.x(xOffset)
         layerGraphic.y(yOffset)
         layerGraphic.id = layer.id
@@ -1219,8 +1213,8 @@ class PlayUI extends Component {
         this.draw()
     }
 
-    onAddLayerClick() {
-        const newLayer = getDefaultLayerData(this.props.user.id);
+    async onAddLayerClick() {
+        const newLayer = await getDefaultLayerData(this.props.user.id);
         newLayer.name = 'Layer ' + (this.props.round.layers.length + 1)
         this.props.dispatch({ type: ADD_LAYER, payload: { layer: newLayer, user: this.props.user.id } })
         this.highlightNewLayer = newLayer.id
