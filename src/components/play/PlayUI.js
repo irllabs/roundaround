@@ -161,8 +161,6 @@ class PlayUI extends Component {
             }
         }
 
-
-
         // Check for layer type or instrument changes
         for (let layer of this.round.layers) {
             let newLayer = _.find(this.props.round.layers, { id: layer.id })
@@ -775,7 +773,7 @@ class PlayUI extends Component {
     addLayer(layer, order, shouldAnimate = true) {
         // console.log('addLayer', layer);
         // let animateTime = shouldAnimate ? 600 : 0
-
+        const createdByThisUser = layer.createdBy === this.props.user.id;
         //const layerDiameter = HTML_UI_Params.addNewLayerButtonDiameter + HTML_UI_Params.initialLayerPadding + ((HTML_UI_Params.stepDiameter + HTML_UI_Params.layerPadding + HTML_UI_Params.layerPadding + HTML_UI_Params.stepDiameter) * (order + 1))
         const layerDiameter = this.getLayerDiameter(order)
         const xOffset = (this.containerWidth / 2) - (layerDiameter / 2)
@@ -784,7 +782,12 @@ class PlayUI extends Component {
         if (layer.createdBy === this.props.user.id) {
             layerStrokeSize = HTML_UI_Params.layerStrokeMax
         }
-        const layerGraphic = this.container.circle(layerDiameter, layerDiameter).attr({ fill: 'none' }).stroke({ color: layer.isMuted ? 'rgba(255,255,255,0.2)' : this.userColors[layer.createdBy], width: layerStrokeSize + 'px', opacity: 0 })
+
+        const layerGraphic =
+            this.container.circle(layerDiameter, layerDiameter).attr({ fill: 'none' })
+                .stroke({ color: this.userColors[layer.createdBy], width: layerStrokeSize + 'px' })
+                .opacity(!createdByThisUser ? 0.5 : 1)
+
         layerGraphic.x(xOffset)
         layerGraphic.y(yOffset)
         layerGraphic.id = layer.id
@@ -833,8 +836,7 @@ class PlayUI extends Component {
             const x = Math.round(layerDiameter / 2 + radius * Math.cos(angle) - stepDiameter / 2) + xOffset;
             const y = Math.round(layerDiameter / 2 + radius * Math.sin(angle) - stepDiameter / 2) + yOffset;
             const stepGraphic = this.container.circle(stepDiameter)
-            stepGraphic.stroke({ color: this.userColors[layer.createdBy], width: stepStrokeWidth + 'px', opacity: 0 })
-            //stepGraphic.animate(animateTime).stroke({ opacity: 1 })
+            stepGraphic.stroke({ color: this.userColors[layer.createdBy], width: stepStrokeWidth + 'px' }).opacity(!createdByThisUser ? 0.5 : 1)
             stepGraphic.stroke({ opacity: 1 })
             layer.isMuted && stepGraphic.stroke({ color: 'rgba(255,255,255,0.1)' })
             stepGraphic.x(x)
