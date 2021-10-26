@@ -23,35 +23,6 @@ const Instruments = {
             this.instrumentClasses[instrumentClass.instrumentName] = instrumentClass;
         }
     },
-    async getRandomArticulation(instrumentName) {
-        const instruments = await this.classes();
-        let randomSoundNo = 0;
-        const instrument = instruments[instrumentName];
-        const sampleKeys = instrument['sampleKeys'];
-        randomSoundNo = randomInt(0, sampleKeys.length - 1);
-        return sampleKeys[randomSoundNo];
-    },
-    async classes() {
-        const classes = [
-            HiHats,
-            Kicks,
-            Snares,
-            Perc,
-            Custom
-        ];
-        const inst = {};
-        for (let instrument of classes) {
-            inst[instrument.instrumentName] = {
-                instrumentName: instrument.instrumentName,
-                name: instrument.name,
-                label: instrument.label,
-                samples: instrument.articulations,
-                sampleKeys: Object.keys(instrument.articulations)
-            };
-        }
-        return inst;
-    },
-
     create(instrumentName, articulation) {
         if (!_.isNil(instrumentName)) {
             let _this = this;
