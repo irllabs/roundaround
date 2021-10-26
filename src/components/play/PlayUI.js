@@ -6,7 +6,7 @@ import { HTML_UI_Params, KEY_MAPPINGS } from '../../utils/constants'
 import { connect } from "react-redux";
 import AudioEngine from '../../audio-engine/AudioEngine'
 import { getDefaultLayerData } from '../../utils/defaultData';
-import { TOGGLE_STEP, ADD_LAYER, SET_SELECTED_LAYER_ID, SET_IS_SHOWING_LAYER_SETTINGS, SET_IS_PLAYING, UPDATE_STEP, SET_IS_SHOWING_ORIENTATION_DIALOG, UPDATE_LAYERS, SET_CURRENT_SEQUENCE_PATTERN } from '../../redux/actionTypes'
+import { SET_LAYER_MUTE, TOGGLE_STEP, ADD_LAYER, SET_SELECTED_LAYER_ID, SET_IS_SHOWING_LAYER_SETTINGS, SET_IS_PLAYING, UPDATE_STEP, SET_IS_SHOWING_ORIENTATION_DIALOG, UPDATE_LAYERS, SET_CURRENT_SEQUENCE_PATTERN } from '../../redux/actionTypes'
 import { FirebaseContext } from '../../firebase/'
 import * as Tone from 'tone';
 import { withStyles } from '@material-ui/styles';
@@ -51,6 +51,7 @@ class PlayUI extends Component {
         await this.createRound()
         window.addEventListener('resize', this.onWindowResizeThrottled)
         window.addEventListener('keypress', this.onKeypress)
+        window.addEventListener('dblclick', () => this.onMuteToggle(this.props))
         this.addBackgroundEventListeners()
         this.checkOrientation()
     }
@@ -58,6 +59,7 @@ class PlayUI extends Component {
     async componentWillUnmount() {
         window.removeEventListener('resize', this.onWindowResizeThrottled)
         window.removeEventListener('keypress', this.onKeypress)
+        window.removeEventListener('dblclick', this.onMuteToggle)
         this.removeBackgroundEventListeners()
         this.clear()
         this.disposeToneEvents()
@@ -158,8 +160,6 @@ class PlayUI extends Component {
                 redraw = true
             }
         }
-
-
 
         // Check for layer type or instrument changes
         for (let layer of this.round.layers) {
@@ -427,6 +427,13 @@ class PlayUI extends Component {
             */
     }
 
+    onMuteToggle(props) {
+        const isMuted = !props.selectedLayer.isMuted
+        AudioEngine.tracksById[props.selectedLayer.id].setMute(isMuted)
+        props.dispatch({ type: SET_LAYER_MUTE, payload: { id: props.selectedLayer.id, value: isMuted, user: props.user.id } })
+        this.context.updateLayer(props.round.id, props.selectedLayer.id, { isMuted })
+    }
+      
     getStep(id) {
         let steps = []
         for (let layer of this.round.layers) {
@@ -766,7 +773,7 @@ class PlayUI extends Component {
     addLayer(layer, order, shouldAnimate = true) {
         // console.log('addLayer', layer);
         // let animateTime = shouldAnimate ? 600 : 0
-
+        const createdByThisUser = layer.createdBy === this.props.user.id;
         //const layerDiameter = HTML_UI_Params.addNewLayerButtonDiameter + HTML_UI_Params.initialLayerPadding + ((HTML_UI_Params.stepDiameter + HTML_UI_Params.layerPadding + HTML_UI_Params.layerPadding + HTML_UI_Params.stepDiameter) * (order + 1))
         const layerDiameter = this.getLayerDiameter(order)
         const xOffset = (this.containerWidth / 2) - (layerDiameter / 2)
@@ -775,7 +782,12 @@ class PlayUI extends Component {
         if (layer.createdBy === this.props.user.id) {
             layerStrokeSize = HTML_UI_Params.layerStrokeMax
         }
-        const layerGraphic = this.container.circle(layerDiameter, layerDiameter).attr({ fill: 'none' }).stroke({ color: this.userColors[layer.createdBy], width: layerStrokeSize + 'px', opacity: 0 })
+
+        const layerGraphic =
+            this.container.circle(layerDiameter, layerDiameter).attr({ fill: 'none' })
+                .stroke({ color: this.userColors[layer.createdBy], width: layerStrokeSize + 'px' })
+                .opacity(!createdByThisUser ? 0.5 : 1)
+
         layerGraphic.x(xOffset)
         layerGraphic.y(yOffset)
         layerGraphic.id = layer.id
@@ -824,9 +836,9 @@ class PlayUI extends Component {
             const x = Math.round(layerDiameter / 2 + radius * Math.cos(angle) - stepDiameter / 2) + xOffset;
             const y = Math.round(layerDiameter / 2 + radius * Math.sin(angle) - stepDiameter / 2) + yOffset;
             const stepGraphic = this.container.circle(stepDiameter)
-            stepGraphic.stroke({ color: this.userColors[layer.createdBy], width: stepStrokeWidth + 'px', opacity: 0 })
-            //stepGraphic.animate(animateTime).stroke({ opacity: 1 })
+            stepGraphic.stroke({ color: this.userColors[layer.createdBy], width: stepStrokeWidth + 'px' }).opacity(!createdByThisUser ? 0.5 : 1)
             stepGraphic.stroke({ opacity: 1 })
+            layer.isMuted && stepGraphic.stroke({ color: 'rgba(255,255,255,0.1)' })
             stepGraphic.x(x)
             stepGraphic.y(y)
             angle += stepSize
@@ -1330,7 +1342,6 @@ class PlayUI extends Component {
         let step = this.getStep(stepGraphic.id)
         step.probability = _.round(stepGraphic.probability, 1)
         step.velocity = _.round(stepGraphic.velocity, 1)
-        this.props.dispatch({ type: UPDATE_STEP, payload: { step: step, layerId: stepGraphic.layerId } })
         this.saveLayer(stepGraphic.layerId)
         AudioEngine.recalculateParts(this.props.round)
     }
@@ -1577,10 +1588,15 @@ PlayUI.propTypes = {
 
 const mapStateToProps = state => {
     //console.log('mapStateToProps', state);
+    let selectedLayer = null;
+    if (!_.isNil(state.display.selectedLayerId) && !_.isNil(state.round) && !_.isNil(state.round.layers)) {
+        selectedLayer = _.find(state.round.layers, { id: state.display.selectedLayerId })
+    }
     return {
         round: state.round,
         user: state.user,
         users: state.users,
+        selectedLayer,
         disableKeyListener: state.display.disableKeyListener
     };
 };

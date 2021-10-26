@@ -4,7 +4,6 @@ import HiHats from './instruments/HiHats'
 import Kicks from './instruments/Kicks'
 import Snares from './instruments/Snares'
 import Perc from './instruments/Perc'
-import Metal from './instruments/Metal'
 import Custom from './instruments/Custom'
 import CustomSamples from './CustomSamples'
 import { randomInt } from "../utils";
@@ -18,7 +17,6 @@ const Instruments = {
             Kicks,
             Snares,
             Perc,
-            Metal,
             Custom
         ];
         for (let instrumentClass of classes) {
@@ -54,6 +52,7 @@ const Instruments = {
         }
         return inst;
     },
+
     create(instrumentName, articulation) {
         if (!_.isNil(instrumentName)) {
             let _this = this;
