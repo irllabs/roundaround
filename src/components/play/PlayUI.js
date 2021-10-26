@@ -1342,7 +1342,6 @@ class PlayUI extends Component {
         let step = this.getStep(stepGraphic.id)
         step.probability = _.round(stepGraphic.probability, 1)
         step.velocity = _.round(stepGraphic.velocity, 1)
-        this.props.dispatch({ type: UPDATE_STEP, payload: { step: step, layerId: stepGraphic.layerId } })
         this.saveLayer(stepGraphic.layerId)
         AudioEngine.recalculateParts(this.props.round)
     }
