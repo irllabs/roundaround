@@ -37,7 +37,6 @@ const Instruments = {
             Kicks,
             Snares,
             Perc,
-            Metal,
             Custom
         ];
         const inst = {};

@@ -433,7 +433,7 @@ class PlayUI extends Component {
         props.dispatch({ type: SET_LAYER_MUTE, payload: { id: props.selectedLayer.id, value: isMuted, user: props.user.id } })
         this.context.updateLayer(props.round.id, props.selectedLayer.id, { isMuted })
     }
-      
+
     getStep(id) {
         let steps = []
         for (let layer of this.round.layers) {
@@ -787,7 +787,7 @@ class PlayUI extends Component {
             this.container.circle(layerDiameter, layerDiameter).attr({ fill: 'none' })
                 .stroke({ color: this.userColors[layer.createdBy], width: layerStrokeSize + 'px' })
                 .opacity(!createdByThisUser ? 0.5 : 1)
-
+        layer.isMuted && layerGraphic.stroke({ color: 'rgba(255,255,255,0.1)' })
         layerGraphic.x(xOffset)
         layerGraphic.y(yOffset)
         layerGraphic.id = layer.id
