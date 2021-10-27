@@ -1131,26 +1131,28 @@ class PlayUI extends Component {
         this.removeStepEventListeners(stepGraphic)
         const _this = this
         if (stepGraphic.isAllowedInteraction) {
+
+            stepGraphic.on('mouseout', (e) => {
+                //console.log('mouseout');
+                if (!_.isNil(_this.stepMoveTimer)) {
+                    // we've swiped / dragged out of the step, toggle this step and listen for mouseovers on all other steps
+                    // add listener to layergraphic to cancel swiping
+                    _this.addStepSwipeListeners(stepGraphic)
+                    _this.swipeToggleActive = true
+                    _this.touchStartStepGraphic = stepGraphic
+                    _this.onStepClick(stepGraphic)
+
+                    // _this.addStepSwipeCancelListener(stepGraphic)
+                }
+
+            })
+
             stepGraphic.on('mousedown', (e) => {
                 // console.log('mousedown');
                 e.stopPropagation()
                 e.preventDefault()
                 _this.swipeToggleActive = false
                 _this.startStepMoveTimer(stepGraphic, e.pageX, e.pageY)
-                stepGraphic.on('mouseout', (e) => {
-                    //console.log('mouseout');
-                    if (!_.isNil(_this.stepMoveTimer)) {
-                        // we've swiped / dragged out of the step, toggle this step and listen for mouseovers on all other steps
-                        // add listener to layergraphic to cancel swiping
-                        _this.swipeToggleActive = true
-                        _this.touchStartStepGraphic = stepGraphic
-                        _this.onStepClick(stepGraphic)
-                        _this.addStepSwipeListeners(stepGraphic)
-
-                        // _this.addStepSwipeCancelListener(stepGraphic)
-                    }
-
-                })
 
                 _this.container.on('mouseup', (e) => {
                     //console.log('_this.container.on(mouseup)');
@@ -1173,6 +1175,7 @@ class PlayUI extends Component {
                     this.swipeToggleActive = false
                 })
             })
+
             stepGraphic.on('touchstart', (e) => {
                 //  console.log('touchstart');
                 e.stopPropagation()
