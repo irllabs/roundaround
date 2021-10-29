@@ -158,6 +158,8 @@ class PlayUI extends Component {
             for (let [, layer] of Object.entries(diff.added.layers)) {
                 await AudioEngine.createTrack(layer)
             }
+            AudioEngine.recalculateParts(this.props.round)
+            AudioEngine.load(this.props.round)
             redraw = true
         }
 
