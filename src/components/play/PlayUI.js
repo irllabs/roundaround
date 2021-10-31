@@ -6,7 +6,7 @@ import { HTML_UI_Params } from '../../utils/constants'
 import { connect } from "react-redux";
 import AudioEngine from '../../audio-engine/AudioEngine'
 import { getDefaultLayerData } from '../../utils/defaultData';
-import { SET_LAYER_MUTE, TOGGLE_STEP, ADD_LAYER, SET_SELECTED_LAYER_ID, SET_IS_SHOWING_LAYER_SETTINGS, UPDATE_STEP, SET_IS_SHOWING_ORIENTATION_DIALOG, UPDATE_LAYERS, SET_CURRENT_SEQUENCE_PATTERN } from '../../redux/actionTypes'
+import { SET_LAYER_MUTE, SET_IS_PLAYING, TOGGLE_STEP, ADD_LAYER, SET_SELECTED_LAYER_ID, SET_IS_SHOWING_LAYER_SETTINGS, UPDATE_STEP, SET_IS_SHOWING_ORIENTATION_DIALOG, UPDATE_LAYERS, SET_CURRENT_SEQUENCE_PATTERN } from '../../redux/actionTypes'
 import { FirebaseContext } from '../../firebase/'
 import * as Tone from 'tone';
 import { withStyles } from '@material-ui/styles';
@@ -52,7 +52,7 @@ class PlayUI extends Component {
         window.addEventListener('resize', this.onWindowResizeThrottled)
         window.addEventListener('keypress', this.onKeypress)
         window.addEventListener('dblclick', () => this.onMuteToggle(this.props))
-        this.addBackgroundEventListeners()
+        this.addBackgroundEventListeners && this.addBackgroundEventListeners()
         this.checkOrientation()
     }
 
@@ -87,6 +87,18 @@ class PlayUI extends Component {
         })
         this.container.viewbox(0, 0, this.containerWidth, this.containerHeight)
         this.draw()
+        if (this.props.round.isPlaying) {
+            setTimeout(() => {
+                // AudioEngine.stop()
+                // this.props.dispatch({ type: SET_IS_PLAYING, payload: { value: false } });
+                // this.context.updateRound(this.props.round.id, { isPlaying: false })
+                setTimeout(() => {
+                    AudioEngine.startAudioContext();
+                    this.props.dispatch({ type: SET_IS_PLAYING, payload: { value: true } });
+                    //this.context.updateRound(this.props.round.id, { isPlaying: true })
+                }, 100);
+            }, 700)
+        }
     }
 
     async componentDidUpdate() {
@@ -428,7 +440,7 @@ class PlayUI extends Component {
     }
 
     onMuteToggle(props) {
-        const isMuted = !props.selectedLayer.isMuted
+        const isMuted = !props.selectedLayer?.isMuted
         AudioEngine.tracksById[props.selectedLayer.id].setMute(isMuted)
         props.dispatch({ type: SET_LAYER_MUTE, payload: { id: props.selectedLayer.id, value: isMuted, user: props.user.id } })
         this.context.updateLayer(props.round.id, props.selectedLayer.id, { isMuted })
