@@ -90,8 +90,8 @@ class PlayUI extends Component {
     }
 
     async componentDidUpdate() {
-        console.log('componentDidUpdate()', this.round, this.props.round)
-        console.time('componentDidUpdate')
+        // console.log('componentDidUpdate()', this.round, this.props.round)
+        // console.time('componentDidUpdate')
 
         // whole round has changed
         if (this.round.id !== this.props.round.id) {
@@ -107,6 +107,13 @@ class PlayUI extends Component {
         let redraw = false
         let shouldRecalculateParts = false
         const _this = this
+
+        // user joined 
+        if (!_.isEmpty(diff.added.userBuses)) {
+            _this.round = _.cloneDeep(_this.props.round)
+            AudioEngine.load(_this.props.round)
+            return
+        }
 
         // remove layer
         for (let layer of this.round.layers) {
@@ -135,7 +142,7 @@ class PlayUI extends Component {
 
         // step updates
         if (!_.isNil(diff.updated.layers)) {
-            shouldRecalculateParts = true
+            shouldRecalculateParts = true;
             redraw = true
         }
 
@@ -157,8 +164,9 @@ class PlayUI extends Component {
         if (!_.isNil(diff.added.layers)) {
             for (let [, layer] of Object.entries(diff.added.layers)) {
                 await AudioEngine.createTrack(layer)
-                redraw = true
             }
+            AudioEngine.load(_this.props.round)
+            shouldRecalculateParts = true
         }
 
         // Check for layer type or instrument changes
@@ -213,9 +221,6 @@ class PlayUI extends Component {
         }
 
 
-
-
-
         if (shouldRecalculateParts) {
             AudioEngine.recalculateParts(this.props.round)
         }
@@ -227,7 +232,6 @@ class PlayUI extends Component {
             this.round = _.cloneDeep(this.props.round)
         }
 
-        console.timeEnd('componentDidUpdate')
         /*
     
             if (this.round.id !== this.props.round.id) {
