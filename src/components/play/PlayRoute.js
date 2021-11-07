@@ -39,7 +39,7 @@ const styles = theme => ({
 
 class PlayRoute extends Component {
     static contextType = FirebaseContext;
-    constructor (props) {
+    constructor(props) {
         super(props)
         this.isLoadingRound = false;
         this.hasLoadedRound = false;
@@ -50,7 +50,7 @@ class PlayRoute extends Component {
         this.reloadCollaborationLayersThrottled = _.debounce(this.reloadCollaborationLayers, 1000)
         this.playUIRef = null;
     }
-    componentDidMount () {
+    componentDidMount() {
         //console.log('PlayRoute::componentDidMount()', this.props.user, this.isLoadingRound, this.hasLoadedRound, this.props.round);
         this.addStartAudioContextListener()
         if (!this.isLoadingRound && !this.hasLoadedRound && !_.isNil(this.props.user)) {
@@ -58,14 +58,21 @@ class PlayRoute extends Component {
         }
     }
 
-    componentDidUpdate () {
+    async componentDidUpdate() {
         //  console.log('PlayRoute::componentDidUpdate()', this.props.user);
+        if (this.props.round) {
+            const userBusKeys = Object.keys(this.props.round?.userBuses)
+            const userPatternKeys = Object.keys(this.props.round?.userPatterns)
+            if (userBusKeys.length !== userPatternKeys.length) {
+                await this.loadRound()
+            }
+        }
         if (!this.isLoadingRound && !this.hasLoadedRound && _.isNil(this.props.round) && !_.isNil(this.props.user)) {
-            this.loadRound()
+            await this.loadRound()
         }
     }
 
-    async componentWillUnmount () {
+    async componentWillUnmount() {
         this.isDisposing = true;
         this.removeFirebaseListeners()
         AudioEngine.stop()
@@ -81,7 +88,7 @@ class PlayRoute extends Component {
         this.hasLoadedRound = false;
     }
 
-    async loadRound () {
+    async loadRound() {
         this.isLoadingRound = true;
         let roundId = this.props.location.pathname.split('/play/')[1]
         // console.log('PlayRoute::loadRound()', roundId);
@@ -133,7 +140,7 @@ class PlayRoute extends Component {
         this.addUsersListeners()
     }
 
-    addFirebaseListeners () {
+    addFirebaseListeners() {
         const _this = this
 
         // Round
@@ -246,7 +253,7 @@ class PlayRoute extends Component {
         })
     }
 
-    removeFirebaseListeners () {
+    removeFirebaseListeners() {
         //console.log('removeFirebaseListeners()');
         if (!_.isNil(this.layersChangeListenerUnsubscribe)) {
             this.layersChangeListenerUnsubscribe();
@@ -257,7 +264,7 @@ class PlayRoute extends Component {
         this.removeUsersListeners()
     }
 
-    addUsersListeners () {
+    addUsersListeners() {
         this.removeUsersListeners()
         this.usersChangeListenersUnsubscribe = []
         const _this = this;
@@ -270,7 +277,7 @@ class PlayRoute extends Component {
         }
     }
 
-    async loadUsers () {
+    async loadUsers() {
         let users = []
         for (const userId of this.props.round.currentUsers) {
             let user = await this.context.loadUser(userId)
@@ -281,7 +288,7 @@ class PlayRoute extends Component {
         this.props.setRoundCurrentUsers(this.props.round.currentUsers)
     }
 
-    removeUsersListeners () {
+    removeUsersListeners() {
         if (!_.isNil(this.usersChangeListenersUnsubscribe)) {
             for (const unsubscribe of this.usersChangeListenersUnsubscribe) {
                 unsubscribe()
@@ -289,7 +296,7 @@ class PlayRoute extends Component {
         }
     }
 
-    handleUserBusChange (userBus) {
+    handleUserBusChange(userBus) {
         let fxOrderChanged = false
         for (let fx of userBus.fx) {
             const currentFx = _.find(this.props.round.userBuses[userBus.id].fx, { id: fx.id })
@@ -307,14 +314,14 @@ class PlayRoute extends Component {
         }
     }
 
-    handleUserPatternsChange (userPatterns) {
+    handleUserPatternsChange(userPatterns) {
         console.log('userPatternsChange', userPatterns);
         this.props.setIsPlayingSequence(userPatterns.id, userPatterns.isPlayingSequence)
     }
 
     // if any of the subcollections for a collaboration user change, trigger a (throttled) reload of all collaboration layers as there could be multiple changes
     // to do: maybe add an id to the query to make sure we don't overwrite the local round with an await result that comes in late
-    async reloadCollaborationLayers () {
+    async reloadCollaborationLayers() {
         //console.log('reloadCollaborationLayers()');
         const _this = this;
         if (!_.isNil(this.props.round)) {
@@ -339,23 +346,23 @@ class PlayRoute extends Component {
     }
 
     // user needs to click something in order to start audio context, if they're a collaborator then they may not click play so use the first click to start audio context
-    addStartAudioContextListener () {
+    addStartAudioContextListener() {
         window.addEventListener('touchstart', this.startAudioContext)
     }
-    startAudioContext () {
+    startAudioContext() {
         //console.log('startAudioContext()');
         AudioEngine.startAudioContext()
         this.removeStartAudioContextListener()
     }
-    removeStartAudioContextListener () {
+    removeStartAudioContextListener() {
         window.removeEventListener('touchstart', this.startAudioContext)
     }
 
-    adjustLayerTimingInstant (id, percent) {
+    adjustLayerTimingInstant(id, percent) {
         this.playUIRef.adjustLayerTiming(id, percent)
     }
 
-    render () {
+    render() {
         //  console.log('PlayRoute::render()', this.props.round);
         const { classes, round } = this.props;
         return (

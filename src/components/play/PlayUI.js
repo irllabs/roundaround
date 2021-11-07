@@ -108,13 +108,6 @@ class PlayUI extends Component {
         let shouldRecalculateParts = false
         const _this = this
 
-        // user joined 
-        if (!_.isEmpty(diff.added.userBuses)) {
-            _this.round = _.cloneDeep(_this.props.round)
-            AudioEngine.load(_this.props.round)
-            return
-        }
-
         // remove layer
         for (let layer of this.round.layers) {
             let newLayer = _.find(this.props.round.layers, { id: layer.id })
@@ -162,10 +155,10 @@ class PlayUI extends Component {
 
         // add layer
         if (!_.isNil(diff.added.layers)) {
+            await AudioEngine.load(this.props.round)
             for (let [, layer] of Object.entries(diff.added.layers)) {
                 await AudioEngine.createTrack(layer)
             }
-            AudioEngine.load(_this.props.round)
             shouldRecalculateParts = true
         }
 
