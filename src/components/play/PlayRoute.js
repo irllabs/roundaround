@@ -59,14 +59,6 @@ class PlayRoute extends Component {
     }
 
     async componentDidUpdate() {
-        //  console.log('PlayRoute::componentDidUpdate()', this.props.user);
-        if (this.props.round) {
-            const userBusKeys = Object.keys(this.props.round?.userBuses)
-            const userPatternKeys = Object.keys(this.props.round?.userPatterns)
-            if (userBusKeys.length !== userPatternKeys.length) {
-                await this.loadRound()
-            }
-        }
         if (!this.isLoadingRound && !this.hasLoadedRound && _.isNil(this.props.round) && !_.isNil(this.props.user)) {
             await this.loadRound()
         }
@@ -234,16 +226,28 @@ class PlayRoute extends Component {
         // UserPatterns
         this.userPatternsChangeListenerUnsubscribe = this.context.db.collection('rounds').doc(this.props.round.id).collection('userPatterns').onSnapshot((userPatternsCollectionSnapshot) => {
             //  console.log('### layer change listener fired');
-            userPatternsCollectionSnapshot.docChanges().forEach(change => {
+            userPatternsCollectionSnapshot.docChanges().forEach(async change => {
+                const data = change.doc.data();
+                const userId = change.doc.id;
+                const newUser = await _this.context.loadUser(userId)
+                const newUsers = _.cloneDeep(this.props.users)
                 if (change.type === 'modified') {
-                    //  console.log('Modified layer: ', change.doc.data());
                     const userPatterns = change.doc.data()
                     userPatterns.id = change.doc.id
                     _this.handleUserPatternsChange(userPatterns)
                 }
                 if (change.type === 'added') {
-                    //   console.log('New layer: ', change.doc.data());
-                    // _this.reloadCollaborationLayersThrottled()
+                    let newRound = _.cloneDeep(this.props.round)
+                    let userPatterns = newRound.userPatterns
+                    if (_.isNil(userPatterns[userId]) && this.props.user.id !== userId) {
+                        /** Feels like all these should be implemented elsewhere */
+                        newRound.userPatterns[userId] = data
+                        newRound.currentUsers.push(userId)
+                        newUsers.push(newUser)
+                        _this.props.setUsers(newUsers)
+                        _this.props.setRoundCurrentUsers(newRound.currentUsers)
+                        _this.props.setRound(newRound)
+                    }
                 }
                 if (change.type === 'removed') {
                     //    console.log('Removed layer: ', change.doc.data());
