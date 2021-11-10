@@ -21,7 +21,7 @@ const playButtonStyles = makeStyles(function (theme) {
 })
 
 
-function PlayButton ({ isPlaying, setIsPlaying, roundId }) {
+function PlayButton({ isPlaying, setIsPlaying, roundId }) {
     const firebase = useContext(FirebaseContext);
     const onPlayClick = () => {
         if (isPlaying) {

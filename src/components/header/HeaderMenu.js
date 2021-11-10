@@ -33,7 +33,7 @@ const useStyles = makeStyles((theme) => ({
     }
 }));
 
-export default function HeaderMenu ({ name }) {
+export default function HeaderMenu({ name }) {
     const classes = useStyles();
     const [open, setOpen] = React.useState(false);
     const anchorRef = React.useRef(null);
@@ -50,7 +50,7 @@ export default function HeaderMenu ({ name }) {
         setOpen(false);
     };
 
-    function handleListKeyDown (event) {
+    function handleListKeyDown(event) {
         if (event.key === 'Tab') {
             event.preventDefault();
             setOpen(false);
@@ -116,8 +116,6 @@ export default function HeaderMenu ({ name }) {
                                             <Divider />
                                         </MenuList>
                                         <TempoSlider />
-
-
                                     </Box>
                                 </ClickAwayListener>
                             </Paper>

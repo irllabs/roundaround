@@ -56,7 +56,7 @@ const headerStyles = makeStyles((theme) => ({
     }
 }))
 
-function Header ({ user, users, round, setUser, setIsShowingSignInDialog, redirectAfterSignIn, setRedirectAfterSignIn, rounds, setRounds, signupDisplayName, setIsShowingShareDialog }) {
+function Header({ user, users, round, setUser, setIsShowingSignInDialog, redirectAfterSignIn, setRedirectAfterSignIn, rounds, setRounds, signupDisplayName, setIsShowingShareDialog }) {
     const firebaseContext = useContext(FirebaseContext);
     const classes = headerStyles();
     const location = useLocation();
