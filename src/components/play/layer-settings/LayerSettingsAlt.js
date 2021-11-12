@@ -9,16 +9,22 @@ import Box from '@material-ui/core/Box';
 import { withStyles } from '@material-ui/core/styles';
 import AudioEngine from '../../../audio-engine/AudioEngine'
 
+/** SVGs */
+import Close from './resources/svg/close.svg'
 import AddLayer from './resources/svg/add.svg'
+import LayerIcon from './resources/svg/layer.svg'
 import ChangeInstrument from './resources/svg/instruments.svg'
+import HiHats from './resources/svg/hihat.svg'
+import Kick from './resources/svg/kick.svg'
+import Snare from './resources/svg/snare.svg'
 
 import VolumeSlider from './VolumeSlider'
 import LayerInstrument from './LayerInstrument'
-import LayerNumberOfSteps from './LayerNumberOfSteps'
+//import LayerNumberOfSteps from './LayerNumberOfSteps'
 import { FirebaseContext } from '../../../firebase';
 import LayerAutomation from './LayerAutomation';
 import Track from '../../../audio-engine/Track'
-import LayerPercentOffset from './LayerPercentOffset'
+//import LayerPercentOffset from './LayerPercentOffset'
 import LayerCustomSounds from './LayerCustomSounds'
 
 const styles = theme => ({
@@ -29,8 +35,8 @@ const styles = theme => ({
         alignItems: 'flex-start',
         backgroundColor: 'transparent',
         bottom: 0,
-        right: 0,
-        left: 0
+        right: '20%',
+        left: '20%'
     },
     drawer: {
         backgroundColor: '#2E2E2E',
@@ -39,6 +45,7 @@ const styles = theme => ({
         }
     },
     root: {
+        position: 'relative',
         display: "flex",
         flexDirection: "row",
         height: 48,
@@ -46,11 +53,38 @@ const styles = theme => ({
         marginBottom: 20,
         justifyContent: "flex-start",
         alignItems: "center",
-        width: '60%',
+        width: '100%',
         /*'& > *': {
             marginBottom: '1rem'
         },*/
         backgroundColor: '#333333',
+    },
+    mixerPopup: {
+        position: 'absolute',
+        opacity: 1,
+        bottom: 52,
+        right: 0,
+        left: 50,
+        borderRadius: 8,
+        zIndex: 100,
+        boxShadow: '0px 0px 2px rgba(0, 0, 0, 0.15), 0px 4px 6px rgba(0, 0, 0, 0.15)',
+        backgroundColor: '#333333',
+        overflow: 'hidden',
+        transition: 'opacity 0.3s linear',
+        [theme.breakpoints.down('sm')]: {
+            left: 0,
+        },
+    },
+    mixerPopupHeader: {
+        display: 'flex',
+        justifyContent: 'flex-start',
+        alignItems: 'center',
+        padding: 10,
+        borderBottom: 'thin solid rgba(255, 255, 255, 0.1)'
+    },
+    mixerPopupHeaderText: {
+        marginLeft: 10,
+        fontSize: 18
     },
     addLayerContainer: {
         display: 'flex',
@@ -65,15 +99,55 @@ const styles = theme => ({
         height: 48,
         '&:hover': {
             backgroundColor: 'rgba(255, 255, 255, 0.2)'
-        }
+        },
+        [theme.breakpoints.down('sm')]: {
+            width: 32,
+            height: 32,
+        },
+    },
+    mixerButton: {
+        display: 'flex',
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'center',
+        backgroundColor: 'rgba(255, 255, 255, 0.1)',
+        height: 40,
+        width: 40,
+        marginLeft: 5,
+        marginRight: 5,
+        [theme.breakpoints.down('sm')]: {
+            width: 32,
+            height: 32,
+        },
+    },
+    instrumentIcon: {
+
     },
     msg: {
     },
+    layerContainer: {
+        marginLeft: 20,
+        marginRight: 20,
+        paddingTop: 10,
+        paddingBottom: 10
+    },
+    layer: {
+        display: 'flex',
+        flexDirection: 'row',
+        paddingTop: 10,
+        paddingBottom: 10
+    },
     layerOptions: {
+        position: 'relative',
         width: '90%',
         display: 'flex',
         justifyContent: 'center',
         alignItems: 'center'
+    },
+    plainButton: {
+        '&:hover': {
+            backgroundColor: 'transparent'
+        }
     },
     buttonContainer: {
         width: '100%',
@@ -97,10 +171,23 @@ const styles = theme => ({
         width: '100%',
         marginTop: theme.spacing(2),
         marginBottom: theme.spacing(2),
+    },
+    hidden: {
+        opacity: 0,
+        position: 'absolute',
+        left: '200%',
+        transition: 'opacity 0.3s linear'
     }
 })
 
 class LayerSettings extends Component {
+    constructor() {
+        super()
+        this.state = {
+            showMixerPopup: false
+        }
+    }
+
     static contextType = FirebaseContext;
 
     onCloseClick() {
@@ -136,12 +223,12 @@ class LayerSettings extends Component {
 
     render() {
         // console.log('Layer settings render()', this.props.user);
+        const { showMixerPopup } = this.state;
         const { classes } = this.props
         const selectedLayer = this.props.selectedLayer
-        let form = '';
+        let layerTypeFormItems;
         if (!_.isNil(selectedLayer)) {
             //layerVolumePercent = convertDBToPercent(selectedLayer.instrument.gain)
-            let layerTypeFormItems;
             if (selectedLayer.type === Track.TRACK_TYPE_AUTOMATION) {
                 layerTypeFormItems = (
                     <>
@@ -168,24 +255,84 @@ class LayerSettings extends Component {
                 )
             }
         }
-        form = (
+
+        const instrumentIcon = (name) => {
+            let Icon = <></>;
+            if (name === 'HiHats')
+                Icon = HiHats
+            if (name === 'Kicks')
+                Icon = Kick
+            if (name === 'Snares')
+                Icon = Snare
+            return <Box style={{ marginRight: 5 }}>
+                <img alt={name} className={classes.instrumentIcon} src={Icon} />
+            </Box>
+        }
+
+        const mixerPopup = (
+            <Box className={showMixerPopup ? classes.mixerPopup : classes.hidden}>
+                <Box className={classes.mixerPopupHeader}>
+                    <IconButton className={classes.plainButton} onClick={() => this.setState(prevState => ({ showMixerPopup: !prevState.showMixerPopup }))}><img alt='close popup' src={Close} /></IconButton>
+                    <Typography className={classes.mixerPopupHeaderText}>Mixer</Typography>
+                </Box>
+                <Box className={classes.layerContainer}>
+                    {
+                        this.props.round && this.props.round?.layers.map((layer, i) =>
+                            <Box key={i} className={classes.layer}>
+                                <Box style={{ display: 'flex', flexDirection: 'column', flex: 4 }}>
+                                    <Box style={{ display: 'flex', flexDirection: 'row', alignItems: 'flex-start' }}>
+                                        {instrumentIcon(layer?.instrument?.sampler)}
+                                        <Typography style={{ textTransform: 'capitalize', display: 'flex', alignItems: 'flex-start', lineHeight: 1 }}>
+                                            {layer.instrument?.sample}
+                                        </Typography>
+                                    </Box>
+                                    <Box style={{ display: 'flex', flexDirection: 'row', alignItems: 'center' }}>
+                                        <Box style={{ display: 'flex', flexDirection: 'row', alignItems: 'center', marginRight: 5 }}>
+                                            <img alt='layer-small' src={LayerIcon} />
+                                        </Box>
+                                        <Typography style={{ display: 'flex', alignItems: 'flex-start', lineHeight: 1 }}>{layer.steps.length}</Typography>
+                                    </Box>
+                                </Box>
+                                <Box style={{ flex: 2, flexDirection: 'row', alignItems: 'center' }}>
+                                    <VolumeSlider hideText={true} selectedLayer={selectedLayer} roundId={this.props.round.id} user={this.props.user} />
+                                </Box>
+                                <Box style={{ flex: 1, display: 'flex', paddingLeft: 20, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
+                                    <IconButton className={classes.mixerButton}>
+                                        <Typography>S</Typography>
+                                    </IconButton>
+                                    <IconButton className={classes.mixerButton}>
+                                        <Typography>M</Typography>
+                                    </IconButton>
+                                </Box>
+                            </Box>)
+                    }
+                </Box>
+            </Box>
+        )
+        const form = (
             <Box className={classes.root}>
-                <Box class={classes.addLayerContainer}>
-                    <IconButton className={classes.iconButtons}><img alt='add layer' src={AddLayer} /></IconButton>
-                    <IconButton className={classes.iconButtons}><img alt='change instrument' src={ChangeInstrument} /></IconButton>
+                {mixerPopup}
+                <Box className={classes.addLayerContainer}>
+                    <IconButton className={classes.iconButtons}>
+                        <img alt='add layer' src={AddLayer} />
+                    </IconButton>
+                    <IconButton className={classes.iconButtons} onClick={() => this.setState(prevState => ({ showMixerPopup: !prevState.showMixerPopup }))}>
+                        <img alt='change instrument' src={ChangeInstrument} />
+                    </IconButton>
                 </Box>
                 <Box className={classes.layerOptions}>
                     <Typography className={classes.msg}>Long Press a round to edit</Typography>
                     {/* <LayerNumberOfSteps selectedLayer={selectedLayer} roundId={this.props.round.id} user={this.props.user} />
                     <LayerPercentOffset selectedLayer={selectedLayer} roundId={this.props.round.id} user={this.props.user} playUIRef={this.props.playUIRef} />
                     {/* <LayerTimeOffset selectedLayer={selectedLayer} roundId={this.props.round.id} user={this.props.user} playUIRef={this.props.playUIRef} /> */}
-                    {/*layerTypeFormItems} */}
+                    {/** Temp disable */}
+                    {false && layerTypeFormItems}
                 </Box>
             </Box>
         )
 
         return (
-            <div className={classes.container}>
+            <div className={classes.container} >
                 {form}
             </div>
         )

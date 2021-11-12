@@ -13,16 +13,20 @@ import { Box } from '@material-ui/core';
 const styles = makeStyles(function (theme) {
     return {
         root: {
+            display: 'flex',
+            flexDirection: 'column',
+            justifyContent: 'center',
             width: '100%',
             padding: theme.spacing(1)
         },
         slider: {
+            minWidth: 108,
             width: '100%'
         }
     }
 })
 
-export default function VolumeSlider ({ selectedLayer, user, roundId }) {
+export default function VolumeSlider({ selectedLayer, user, roundId, hideText }) {
     const dispatch = useDispatch();
     const firebase = useContext(FirebaseContext);
     const [sliderValue, setSliderValue] = useState(80)
@@ -77,11 +81,11 @@ export default function VolumeSlider ({ selectedLayer, user, roundId }) {
     return (
 
         <Box className={classes.root}>
-            <Typography variant="caption">Volume</Typography>
+            {!hideText && <Typography variant="caption">Volume</Typography>}
             <Slider
                 className={classes.slider}
                 orientation="horizontal"
-                value={sliderValue}
+                value={Math.floor(sliderValue)}
                 min={0}
                 max={100}
                 aria-labelledby="vertical-slider"
