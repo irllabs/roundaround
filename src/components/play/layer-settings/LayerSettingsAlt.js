@@ -257,7 +257,7 @@ class LayerSettings extends Component {
         }
 
         const instrumentIcon = (name) => {
-            let Icon = <></>;
+            let Icon = <svg></svg>;
             if (name === 'HiHats')
                 Icon = HiHats
             if (name === 'Kicks')
