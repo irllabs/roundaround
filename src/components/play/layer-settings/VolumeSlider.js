@@ -46,38 +46,11 @@ export default function VolumeSlider({ selectedLayer, user, roundId, hideText })
     }
 
     useEffect(() => {
-        //console.log('selectedLayer.id changed', selectedLayer.id, selectedLayer.instrument.gain);
         setSliderValue(convertDBToPercent(selectedLayer.gain))
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [selectedLayer.id])
-
-    /* const verticalSliderMarks = [
-         {
-             value: 100,
-             label: '+6',
-         },
-         {
-             value: 80,
-             label: '0',
-         },
-         {
-             value: 60,
-             label: '-6',
-         },
- 
-         {
-             value: 34,
-             label: '-24',
-         },
- 
-         {
-             value: 0,
-             label: '-96',
-         }
-     ];*/
+    }, [selectedLayer.id, selectedLayer.gain])
 
     const classes = styles()
-    //console.log('rendering volume slider', selectedLayer.id);
+
     return (
 
         <Box className={classes.root}>

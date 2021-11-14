@@ -17,6 +17,10 @@ import ChangeInstrument from './resources/svg/instruments.svg'
 import HiHats from './resources/svg/hihat.svg'
 import Kick from './resources/svg/kick.svg'
 import Snare from './resources/svg/snare.svg'
+import Perc from './resources/svg/perc.svg'
+import Volume from './resources/svg/volume.svg'
+import Erasor from './resources/svg/erasor.svg'
+import Trash from './resources/svg/trash.svg'
 
 import VolumeSlider from './VolumeSlider'
 import LayerInstrument from './LayerInstrument'
@@ -35,8 +39,12 @@ const styles = theme => ({
         alignItems: 'flex-start',
         backgroundColor: 'transparent',
         bottom: 0,
-        right: '20%',
-        left: '20%'
+        right: '30%',
+        left: '30%',
+        [theme.breakpoints.down('md')]: {
+            right: '20%',
+            left: '20%'
+        },
     },
     drawer: {
         backgroundColor: '#2E2E2E',
@@ -48,7 +56,7 @@ const styles = theme => ({
         position: 'relative',
         display: "flex",
         flexDirection: "row",
-        height: 48,
+        height: 52,
         borderRadius: 32,
         marginBottom: 20,
         justifyContent: "flex-start",
@@ -58,11 +66,14 @@ const styles = theme => ({
             marginBottom: '1rem'
         },*/
         backgroundColor: '#333333',
+        [theme.breakpoints.down('md')]: {
+            height: 48,
+        },
     },
     mixerPopup: {
         position: 'absolute',
         opacity: 1,
-        bottom: 52,
+        bottom: 56,
         right: 0,
         left: 50,
         borderRadius: 8,
@@ -71,6 +82,9 @@ const styles = theme => ({
         backgroundColor: '#333333',
         overflow: 'hidden',
         transition: 'opacity 0.3s linear',
+        [theme.breakpoints.down('sm')]: {
+            bottom: 52,
+        },
         [theme.breakpoints.down('sm')]: {
             left: 0,
         },
@@ -89,6 +103,8 @@ const styles = theme => ({
     addLayerContainer: {
         display: 'flex',
         flexDirection: 'row',
+        justifyContent: 'center',
+        alignItems: 'center',
         padding: 0,
         backgroundColor: '#4D4D4D',
         height: '100%',
@@ -120,28 +136,90 @@ const styles = theme => ({
             height: 32,
         },
     },
+    volumeSliderContainer: {
+        flex: 2,
+        flexDirection: 'row',
+        alignItems: 'center'
+    },
+    stepLength: {
+        display: 'flex',
+        alignItems: 'flex-start',
+        lineHeight: 1,
+    },
     instrumentIcon: {
 
     },
+    instrumentSummary: {
+        display: 'flex',
+        flexDirection: 'row',
+        alignItems: 'center',
+        margin: '10px',
+        width: 216,
+        fontWeight: 'bold',
+        padding: '6px 15px',
+        borderRadius: 24,
+        backgroundColor: 'rgba(255,255,255, 0.1)'
+    },
+    stepCount: {
+        display: 'flex',
+        flexDirection: 'row',
+        alignItems: 'center',
+        margin: '10px',
+        padding: '6px 15px',
+        borderRadius: 24,
+        backgroundColor: 'rgba(255,255,255, 0.1)'
+    },
+    actionButton: {
+        display: 'flex',
+        flexDirection: 'row',
+        alignItems: 'center',
+        height: 'auto',
+        width: 'auto',
+        margin: '10px',
+        backgroundColor: 'rgba(255,255,255, 0.1)',
+        [theme.breakpoints.down('md')]: {
+            margin: '10px 5px',
+        },
+    },
     msg: {
+        flex: 1,
+        textAlign: 'center'
+    },
+    containerSoloMute: {
+        flex: 1,
+        display: 'flex',
+        paddingLeft: 20,
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'space-between'
     },
     layerContainer: {
-        marginLeft: 20,
-        marginRight: 20,
-        paddingTop: 10,
-        paddingBottom: 10
+        display: 'flex',
+        flexDirection: 'column',
     },
-    layer: {
+    layerSubContainer: {
+        flex: 1,
         display: 'flex',
         flexDirection: 'row',
         paddingTop: 10,
-        paddingBottom: 10
+        paddingBottom: 10,
+        cursor: 'pointer',
+        '&:hover': {
+            backgroundColor: 'rgba(255, 255, 255, 0.1)'
+        }
+    },
+    layer: {
+        flex: 1,
+        display: 'flex',
+        flexDirection: 'row',
+        marginLeft: 20,
+        marginRight: 20
     },
     layerOptions: {
         position: 'relative',
         width: '90%',
         display: 'flex',
-        justifyContent: 'center',
+        justifyContent: 'flex-start',
         alignItems: 'center'
     },
     plainButton: {
@@ -195,14 +273,18 @@ class LayerSettings extends Component {
     }
 
     onPreviewClick() {
-        // todo: only audible to this user (mute for all others)
+        // TODO: only audible to this user (mute for all others)
     }
 
-    onMuteClick() {
-        const isMuted = !this.props.selectedLayer.isMuted
-        AudioEngine.tracksById[this.props.selectedLayer.id].setMute(isMuted)
-        this.props.dispatch({ type: SET_LAYER_MUTE, payload: { id: this.props.selectedLayer.id, value: isMuted, user: this.props.user.id } })
-        this.context.updateLayer(this.props.round.id, this.props.selectedLayer.id, { isMuted })
+    onSoloClick = () => {
+        //TODO: play single layer on solo click
+    }
+
+    onMuteClick(selectedLayer) {
+        const isMuted = !selectedLayer.isMuted
+        AudioEngine.tracksById[selectedLayer.id].setMute(isMuted)
+        this.props.dispatch({ type: SET_LAYER_MUTE, payload: { id: selectedLayer.id, value: isMuted, user: this.props.user.id } })
+        this.context.updateLayer(this.props.round.id, selectedLayer.id, { isMuted })
     }
 
     onDeleteLayerClick() {
@@ -264,7 +346,9 @@ class LayerSettings extends Component {
                 Icon = Kick
             if (name === 'Snares')
                 Icon = Snare
-            return <Box style={{ marginRight: 5 }}>
+            if (name === 'Perc')
+                Icon = Perc
+            return <Box style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', margin: 0, padding: 0 }}>
                 <img alt={name} className={classes.instrumentIcon} src={Icon} />
             </Box>
         }
@@ -278,37 +362,40 @@ class LayerSettings extends Component {
                 <Box className={classes.layerContainer}>
                     {
                         this.props.round && this.props.round?.layers.map((layer, i) =>
-                            <Box key={i} className={classes.layer}>
-                                <Box style={{ display: 'flex', flexDirection: 'column', flex: 4 }}>
-                                    <Box style={{ display: 'flex', flexDirection: 'row', alignItems: 'flex-start' }}>
-                                        {instrumentIcon(layer?.instrument?.sampler)}
-                                        <Typography style={{ textTransform: 'capitalize', display: 'flex', alignItems: 'flex-start', lineHeight: 1 }}>
-                                            {layer.instrument?.sample}
-                                        </Typography>
-                                    </Box>
-                                    <Box style={{ display: 'flex', flexDirection: 'row', alignItems: 'center' }}>
-                                        <Box style={{ display: 'flex', flexDirection: 'row', alignItems: 'center', marginRight: 5 }}>
-                                            <img alt='layer-small' src={LayerIcon} />
+                            <Box key={i} className={classes.layerSubContainer}>
+                                <Box className={classes.layer}>
+                                    <Box style={{ display: 'flex', flexDirection: 'column', flex: 4 }}>
+                                        <Box style={{ display: 'flex', flexDirection: 'row', alignItems: 'center', paddingBottom: 5 }}>
+                                            <Box style={{ marginRight: 5 }}>{instrumentIcon(layer?.instrument?.sampler)}</Box>
+                                            <Typography style={{ textTransform: 'capitalize', display: 'flex', alignItems: 'flex-start', lineHeight: 1 }}>
+                                                {layer.instrument?.sample}
+                                            </Typography>
                                         </Box>
-                                        <Typography style={{ display: 'flex', alignItems: 'flex-start', lineHeight: 1 }}>{layer.steps.length}</Typography>
+                                        <Box style={{ display: 'flex', flexDirection: 'row', alignItems: 'center' }}>
+                                            <Box style={{ display: 'flex', flexDirection: 'row', alignItems: 'center', marginRight: 5 }}>
+                                                <img alt='layer-small' src={LayerIcon} />
+                                            </Box>
+                                            <Typography className={classes.stepLength}>{layer.steps.length}</Typography>
+                                        </Box>
                                     </Box>
-                                </Box>
-                                <Box style={{ flex: 2, flexDirection: 'row', alignItems: 'center' }}>
-                                    <VolumeSlider hideText={true} selectedLayer={selectedLayer} roundId={this.props.round.id} user={this.props.user} />
-                                </Box>
-                                <Box style={{ flex: 1, display: 'flex', paddingLeft: 20, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
-                                    <IconButton className={classes.mixerButton}>
-                                        <Typography>S</Typography>
-                                    </IconButton>
-                                    <IconButton className={classes.mixerButton}>
-                                        <Typography>M</Typography>
-                                    </IconButton>
+                                    <Box className={classes.volumeSliderContainer}>
+                                        <VolumeSlider hideText={true} selectedLayer={layer} roundId={this.props.round.id} user={this.props.user} />
+                                    </Box>
+                                    <Box className={classes.containerSoloMute}>
+                                        <IconButton className={classes.mixerButton}>
+                                            <Typography style={{ fontWeight: 'bold' }}>S</Typography>
+                                        </IconButton>
+                                        <IconButton onClick={this.onMuteClick.bind(this, layer)} className={classes.mixerButton}>
+                                            <Typography style={{ fontWeight: 'bold' }}>M</Typography>
+                                        </IconButton>
+                                    </Box>
                                 </Box>
                             </Box>)
                     }
                 </Box>
             </Box>
         )
+
         const form = (
             <Box className={classes.root}>
                 {mixerPopup}
@@ -321,7 +408,39 @@ class LayerSettings extends Component {
                     </IconButton>
                 </Box>
                 <Box className={classes.layerOptions}>
-                    <Typography className={classes.msg}>Long Press a round to edit</Typography>
+                    {!selectedLayer && <Typography className={classes.msg}>Long Press a round to edit</Typography>}
+                    {selectedLayer &&
+                        <Box style={{ display: 'flex', flex: 1, flexDirection: 'row', justifyContent: 'space-between' }}>
+                            <Box className={classes.instrumentSummary}>
+                                <Box style={{ display: 'flex', flexDirection: 'row', alignItems: 'center', justifyContent: 'center', paddingRight: 5 }}>
+                                    {instrumentIcon(selectedLayer?.instrument?.sampler)}
+                                </Box>
+                                <Typography style={{ fontWeight: 'bold', lineHeight: 1, textTransform: 'capitalize' }}>{selectedLayer?.instrument?.sampler}</Typography>
+                                <Box style={{ fontSize: 30, marginLeft: 5, marginRight: 5, lineHeight: .3 }}>&#183;</Box>
+                                <Typography style={{ fontWeight: 'bold', lineHeight: 1, textTransform: 'capitalize' }}>{selectedLayer?.instrument?.sample}</Typography>
+                            </Box>
+                            <Box className={classes.stepCount}>
+                                <Box style={{ display: 'flex', flexDirection: 'row', alignItems: 'center', marginRight: 5 }}>
+                                    <img alt='layer-small' src={LayerIcon} />
+                                </Box>
+                                <Typography className={classes.stepLength} style={{ fontWeight: 'bold' }}>{selectedLayer.steps.length}</Typography>
+                            </Box>
+                            <Box style={{ display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
+                                <IconButton className={classes.actionButton}>
+                                    <img alt='layer-small' src={Volume} />
+                                </IconButton>
+                            </Box>
+                            <Box style={{ display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
+                                <IconButton className={classes.actionButton}>
+                                    <img alt='layer-small' src={Erasor} />
+                                </IconButton>
+                            </Box>
+                            <Box style={{ display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
+                                <IconButton className={classes.actionButton}>
+                                    <img alt='layer-small' src={Trash} />
+                                </IconButton>
+                            </Box>
+                        </Box>}
                     {/* <LayerNumberOfSteps selectedLayer={selectedLayer} roundId={this.props.round.id} user={this.props.user} />
                     <LayerPercentOffset selectedLayer={selectedLayer} roundId={this.props.round.id} user={this.props.user} playUIRef={this.props.playUIRef} />
                     {/* <LayerTimeOffset selectedLayer={selectedLayer} roundId={this.props.round.id} user={this.props.user} playUIRef={this.props.playUIRef} /> */}
