@@ -8,6 +8,7 @@ import { SET_LAYER_MUTE, REMOVE_LAYER, SET_IS_SHOWING_LAYER_SETTINGS, SET_LAYER_
 import Box from '@material-ui/core/Box';
 import { withStyles } from '@material-ui/core/styles';
 import AudioEngine from '../../../audio-engine/AudioEngine'
+import Instruments from '../../../audio-engine/Instruments'
 
 /** SVGs */
 import Close from './resources/svg/close.svg'
@@ -21,6 +22,9 @@ import Perc from './resources/svg/perc.svg'
 import Volume from './resources/svg/volume.svg'
 import Erasor from './resources/svg/erasor.svg'
 import Trash from './resources/svg/trash.svg'
+import RightArrow from './resources/svg/rightArrow.svg'
+import Check from './resources/svg/check.svg'
+import LeftArrow from './resources/svg/leftArrow.svg'
 
 import VolumeSlider from './VolumeSlider'
 import LayerInstrument from './LayerInstrument'
@@ -81,7 +85,7 @@ const styles = theme => ({
         boxShadow: '0px 0px 2px rgba(0, 0, 0, 0.15), 0px 4px 6px rgba(0, 0, 0, 0.15)',
         backgroundColor: '#333333',
         overflow: 'hidden',
-        transition: 'opacity 0.3s linear',
+        transition: 'opacity 0.3s ease-in',
         [theme.breakpoints.down('sm')]: {
             bottom: 52,
         },
@@ -99,6 +103,19 @@ const styles = theme => ({
     mixerPopupHeaderText: {
         marginLeft: 10,
         fontSize: 18
+    },
+    instrumentPopup: {
+        position: 'absolute',
+        bottom: 45,
+        backgroundColor: '#333333',
+        right: 0,
+        left: 0,
+        borderRadius: 8,
+        padding: '5px 0',
+        zIndex: 100,
+        boxShadow: '0px 0px 2px rgba(0, 0, 0, 0.15), 0px 4px 6px rgba(0, 0, 0, 0.15)',
+        overflow: 'hidden',
+        transition: 'opacity 0.3s ease-in',
     },
     addLayerContainer: {
         display: 'flex',
@@ -120,6 +137,13 @@ const styles = theme => ({
             width: 32,
             height: 32,
         },
+    },
+    rectButton: {
+        display: 'flex',
+        flexDirection: 'row',
+        padding: '5px 10px',
+        width: '100%',
+        borderRadius: 0
     },
     mixerButton: {
         display: 'flex',
@@ -153,8 +177,10 @@ const styles = theme => ({
         display: 'flex',
         flexDirection: 'row',
         alignItems: 'center',
-        margin: '10px',
+        justifyContent: 'flex-start',
+        margin: '10px 0',
         width: 216,
+        height: 32,
         fontWeight: 'bold',
         padding: '6px 15px',
         borderRadius: 24,
@@ -164,22 +190,26 @@ const styles = theme => ({
         display: 'flex',
         flexDirection: 'row',
         alignItems: 'center',
-        margin: '10px',
+        margin: '10px 0',
+        height: 32,
         padding: '6px 15px',
         borderRadius: 24,
         backgroundColor: 'rgba(255,255,255, 0.1)'
+    },
+    actionButtonContainer: {
+        position: 'relative',
+        display: 'flex',
+        justifyContent: 'center',
+        alignItems: 'center',
     },
     actionButton: {
         display: 'flex',
         flexDirection: 'row',
         alignItems: 'center',
-        height: 'auto',
-        width: 'auto',
-        margin: '10px',
+        height: 32,
+        width: 32,
+        margin: '10px 0',
         backgroundColor: 'rgba(255,255,255, 0.1)',
-        [theme.breakpoints.down('md')]: {
-            margin: '10px 5px',
-        },
     },
     msg: {
         flex: 1,
@@ -253,16 +283,20 @@ const styles = theme => ({
     hidden: {
         opacity: 0,
         position: 'absolute',
-        left: '200%',
-        transition: 'opacity 0.3s linear'
+        top: '200%',
+        transition: 'opacity 0.3s ease-out'
     }
 })
 
 class LayerSettings extends Component {
-    constructor() {
-        super()
+    constructor(props) {
+        super(props)
         this.state = {
-            showMixerPopup: false
+            showMixerPopup: false,
+            showInstrumentsPopup: false,
+            showInstrumentsList: false,
+            showSoundsList: false,
+            selectedInstrument: props.selectedLayer?.instrument?.sampler
         }
     }
 
@@ -302,12 +336,24 @@ class LayerSettings extends Component {
         this.context.updateLayer(this.props.round.id, selectedLayerClone.id, { steps: selectedLayerClone.steps })
     }
 
+    toggleInstrumentPopup = () => this.setState(prevState => ({ showInstrumentsPopup: !prevState.showInstrumentsPopup }))
+
+    toggleShowInstrumentList = () => this.setState(prevState => ({ showInstrumentsList: !prevState.showInstrumentsList }))
 
     render() {
         // console.log('Layer settings render()', this.props.user);
-        const { showMixerPopup } = this.state;
-        const { classes } = this.props
+        const {
+            showMixerPopup,
+            showInstrumentsPopup,
+            showInstrumentsList,
+            showSoundsList,
+            selectedInstrument
+        } = this.state;
+        const { classes, user } = this.props
         const selectedLayer = this.props.selectedLayer
+        const instrumentOptions = Instruments.getInstrumentOptions(false)
+        const articulationOptions = user && selectedInstrument && Instruments.getInstrumentArticulationOptions(selectedInstrument, user.id)
+
         let layerTypeFormItems;
         if (!_.isNil(selectedLayer)) {
             //layerVolumePercent = convertDBToPercent(selectedLayer.instrument.gain)
@@ -348,7 +394,7 @@ class LayerSettings extends Component {
                 Icon = Snare
             if (name === 'Perc')
                 Icon = Perc
-            return <Box style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', margin: 0, padding: 0 }}>
+            return <Box style={{ display: 'flex', width: 20, height: 20, justifyContent: 'center', alignItems: 'center', margin: 0, padding: 0 }}>
                 <img alt={name} className={classes.instrumentIcon} src={Icon} />
             </Box>
         }
@@ -372,7 +418,7 @@ class LayerSettings extends Component {
                                             </Typography>
                                         </Box>
                                         <Box style={{ display: 'flex', flexDirection: 'row', alignItems: 'center' }}>
-                                            <Box style={{ display: 'flex', flexDirection: 'row', alignItems: 'center', marginRight: 5 }}>
+                                            <Box style={{ display: 'flex', width: 20, height: 20, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', marginRight: 5 }}>
                                                 <img alt='layer-small' src={LayerIcon} />
                                             </Box>
                                             <Typography className={classes.stepLength}>{layer.steps.length}</Typography>
@@ -396,6 +442,45 @@ class LayerSettings extends Component {
             </Box>
         )
 
+        const instrumentPopup = (
+            <Box className={showInstrumentsPopup ? classes.instrumentPopup : classes.hidden}>
+                <Box>
+                    <IconButton id='instrument' onClick={this.toggleShowInstrumentList} style={{ borderBottom: 'thin solid rgba(255, 255, 255, 0.1)' }} className={classes.rectButton}>
+                        {showInstrumentsList && <Box style={{ display: 'flex', justifyContent: 'flex-start', flex: 1 }}>
+                            <img alt='right arrow' src={LeftArrow} />
+                        </Box>}
+                        <Box style={{ flex: showInstrumentsList ? 7 : 5, display: 'flex', justifyContent: 'flex-start' }}>
+                            <Typography style={{ textAlign: 'left', textTransform: 'Capitalize' }}>Instrument</Typography>
+                        </Box>
+                        {!showInstrumentsList && <>
+                            <Typography style={{ flex: 3, textAlign: 'left', textTransform: 'Capitalize' }}>{selectedLayer?.instrument?.sampler}</Typography>
+                            <Box style={{ display: 'flex', justifyContent: 'flex-end', flex: 1 }}>
+                                <img alt='right arrow' src={RightArrow} />
+                            </Box>
+                        </>
+                        }
+                    </IconButton>
+                    {showInstrumentsList &&
+                        <Box style={{ display: 'flex', flexDirection: 'column' }}>
+                            {instrumentOptions.map((instrument, i) =>
+                                <IconButton key={i} style={{ justifyContent: 'space-between' }} className={classes.rectButton}>
+                                    <Typography style={{ textAlign: 'left' }}>{instrument.label}</Typography>
+                                    {selectedInstrument === instrument.name && <img alt='checked' src={Check} />}
+                                </IconButton>
+                            )}
+                        </Box>
+                    }
+                </Box>
+                {!showInstrumentsList && <Box>
+                    <IconButton id='sound' className={classes.rectButton}>
+                        <Typography style={{ flex: 5, textAlign: 'left', textTransform: 'Capitalize' }}>Sound</Typography>
+                        <Typography style={{ flex: 3, textAlign: 'left', textTransform: 'Capitalize' }}>{selectedLayer?.instrument?.sample}</Typography>
+                        <Box style={{ display: 'flex', justifyContent: 'flex-end', flex: 1 }}><img alt='right arrow' src={RightArrow} /></Box>
+                    </IconButton>
+                </Box>}
+            </Box>
+        )
+
         const form = (
             <Box className={classes.root}>
                 {mixerPopup}
@@ -410,33 +495,42 @@ class LayerSettings extends Component {
                 <Box className={classes.layerOptions}>
                     {!selectedLayer && <Typography className={classes.msg}>Long Press a round to edit</Typography>}
                     {selectedLayer &&
-                        <Box style={{ display: 'flex', flex: 1, flexDirection: 'row', justifyContent: 'space-between' }}>
-                            <Box className={classes.instrumentSummary}>
-                                <Box style={{ display: 'flex', flexDirection: 'row', alignItems: 'center', justifyContent: 'center', paddingRight: 5 }}>
-                                    {instrumentIcon(selectedLayer?.instrument?.sampler)}
-                                </Box>
-                                <Typography style={{ fontWeight: 'bold', lineHeight: 1, textTransform: 'capitalize' }}>{selectedLayer?.instrument?.sampler}</Typography>
-                                <Box style={{ fontSize: 30, marginLeft: 5, marginRight: 5, lineHeight: .3 }}>&#183;</Box>
-                                <Typography style={{ fontWeight: 'bold', lineHeight: 1, textTransform: 'capitalize' }}>{selectedLayer?.instrument?.sample}</Typography>
+                        <Box style={{ display: 'flex', flex: 1, flexDirection: 'row', justifyContent: 'space-between', marginLeft: 10, marginRight: 10 }}>
+                            <Box className={classes.actionButtonContainer}>
+                                {instrumentPopup}
+                                <IconButton id='instrument-summary' className={classes.instrumentSummary} onClick={this.toggleInstrumentPopup}>
+                                    <Box style={{ display: 'flex', flexDirection: 'row', alignItems: 'center', justifyContent: 'center', paddingRight: 5 }}>
+                                        {instrumentIcon(selectedLayer?.instrument?.sampler)}
+                                    </Box>
+                                    <Typography style={{ fontWeight: 'bold', lineHeight: 1, textTransform: 'capitalize' }}>
+                                        {selectedLayer?.instrument?.sampler}
+                                    </Typography>
+                                    <Box style={{ fontSize: 30, marginLeft: 5, marginRight: 5, lineHeight: .3 }}>&#183;</Box>
+                                    <Typography style={{ fontWeight: 'bold', lineHeight: 1, textTransform: 'capitalize' }}>
+                                        {selectedLayer?.instrument?.sample}
+                                    </Typography>
+                                </IconButton>
                             </Box>
-                            <Box className={classes.stepCount}>
-                                <Box style={{ display: 'flex', flexDirection: 'row', alignItems: 'center', marginRight: 5 }}>
-                                    <img alt='layer-small' src={LayerIcon} />
-                                </Box>
-                                <Typography className={classes.stepLength} style={{ fontWeight: 'bold' }}>{selectedLayer.steps.length}</Typography>
+                            <Box className={classes.actionButtonContainer}>
+                                <IconButton className={classes.stepCount}>
+                                    <Box style={{ display: 'flex', flexDirection: 'row', alignItems: 'center', marginRight: 5 }}>
+                                        <img alt='layer-small' src={LayerIcon} />
+                                    </Box>
+                                    <Typography className={classes.stepLength} style={{ fontWeight: 'bold' }}>{selectedLayer.steps.length}</Typography>
+                                </IconButton>
                             </Box>
-                            <Box style={{ display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
-                                <IconButton className={classes.actionButton}>
+                            <Box className={classes.actionButtonContainer}>
+                                <IconButton onClick={this.onMuteClick.bind(this, selectedLayer)} className={classes.actionButton}>
                                     <img alt='layer-small' src={Volume} />
                                 </IconButton>
                             </Box>
-                            <Box style={{ display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
-                                <IconButton className={classes.actionButton}>
+                            <Box className={classes.actionButtonContainer}>
+                                <IconButton onClick={this.onClearStepsClick.bind(this)} className={classes.actionButton}>
                                     <img alt='layer-small' src={Erasor} />
                                 </IconButton>
                             </Box>
-                            <Box style={{ display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
-                                <IconButton className={classes.actionButton}>
+                            <Box className={classes.actionButtonContainer}>
+                                <IconButton onClick={this.onDeleteLayerClick.bind(this)} className={classes.actionButton}>
                                     <img alt='layer-small' src={Trash} />
                                 </IconButton>
                             </Box>
