@@ -8,25 +8,44 @@ import { makeStyles } from '@material-ui/core/styles';
 import { FirebaseContext } from '../../../firebase';
 import _ from 'lodash'
 import { SET_LAYER_PERCENT_OFFSET } from '../../../redux/actionTypes'
+import Percentage from './resources/svg/percentage.svg'
 
 
 const useStyles = makeStyles((theme) => ({
     root: {
-        width: '100%'
+        width: '100%',
     },
     formControl: {
         margin: theme.spacing(1),
-        minWidth: 188,
+        minWidth: 50,
         [theme.breakpoints.down('sm')]: {
             minWidth: 100
         },
+    },
+    offsetDisplay: {
+        width: '80%',
+        display: 'flex',
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        border: 'thin solid rgba(255, 255, 255, 0.1)',
+        alignItems: 'center',
+        marginBottom: 15,
+        padding: 10,
+        borderRadius: 5,
+    },
+    percentageSect: {
+        display: 'flex',
+        flexDirection: 'row',
+        backgroundColor: 'rgba(255,255,255,0.1)',
+        padding: 5,
+        borderRadius: 4
     },
     selectEmpty: {
         marginTop: theme.spacing(2),
     },
 }));
 
-export default function LayerPercentOffset ({ selectedLayer, user, roundId, playUIRef }) {
+export default function LayerPercentOffset({ selectedLayer, user, horizontal, roundId, playUIRef }) {
     const dispatch = useDispatch();
     const classes = useStyles();
     const firebase = useContext(FirebaseContext);
@@ -56,11 +75,20 @@ export default function LayerPercentOffset ({ selectedLayer, user, roundId, play
 
         <Box className={classes.root} display="flex" flexDirection="column">
             <FormControl className={classes.formControl}>
-                <Typography id="continuous-slider" variant="caption" gutterBottom>
-                    Time Offset (%)
-                    </Typography>
-                <Slider value={sliderValue} min={-100} max={100} valueLabelDisplay="auto" onChange={onSliderChange} aria-labelledby="continuous-slider" />
-            </FormControl>
-        </Box>
+                <Typography style={{ marginBottom: 10 }} id="continuous-slider" variant="caption" gutterBottom>
+                    Time Offset
+                </Typography>
+                {horizontal &&
+                    <Box className={classes.offsetDisplay}>
+                        <Box className={classes.percentageSect}>
+                            <Typography style={{ marginRight: 3 }}>{sliderValue}</Typography>
+                            <img alt='percentage' src={Percentage} />
+                        </Box>
+                        <Typography style={{ fontWeight: '600' }}>ms</Typography>
+                    </Box >
+                }
+                <Slider value={sliderValue} min={-100} max={100} valueLabelDisplay="off" onChange={onSliderChange} aria-labelledby="continuous-slider" />
+            </FormControl >
+        </Box >
     )
 }
