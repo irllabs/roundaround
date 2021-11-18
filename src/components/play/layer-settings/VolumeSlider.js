@@ -50,15 +50,13 @@ export default function VolumeSlider({ selectedLayer, user, roundId, hideText })
     }, [selectedLayer.id, selectedLayer.gain])
 
     const classes = styles()
-
     return (
-
         <Box className={classes.root}>
             {!hideText && <Typography variant="caption">Volume</Typography>}
             <Slider
                 className={classes.slider}
                 orientation="horizontal"
-                value={Math.floor(sliderValue)}
+                value={selectedLayer.isMuted ? 0 : Math.floor(sliderValue)}
                 min={0}
                 max={100}
                 aria-labelledby="vertical-slider"

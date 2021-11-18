@@ -25,6 +25,7 @@ import Kick from './resources/svg/kick.svg'
 import Snare from './resources/svg/snare.svg'
 import Perc from './resources/svg/perc.svg'
 import Volume from './resources/svg/volume.svg'
+import Muted from './resources/svg/muted.svg'
 import Erasor from './resources/svg/erasor.svg'
 import Trash from './resources/svg/trash.svg'
 
@@ -35,7 +36,8 @@ import { FirebaseContext } from '../../../firebase';
 import LayerAutomation from './LayerAutomation';
 import Track from '../../../audio-engine/Track'
 import LayerInstrumentAlt from './LayerInstrumentAlt'
-import StepsPopup from './StepsPopup';
+import StepsPopup from './StepsPopup'
+import VolumePopup from './VolumePopup'
 import LayerCustomSounds from './LayerCustomSounds'
 import { getDefaultLayerData } from '../../../utils/defaultData';
 
@@ -302,6 +304,7 @@ class LayerSettings extends Component {
             showSoundsList: false,
             showArticulationOptions: false,
             showStepPopup: false,
+            showVolumePopup: false,
             selectedInstrument: props.selectedLayer?.instrument?.sampler
         }
     }
@@ -357,6 +360,8 @@ class LayerSettings extends Component {
 
     toggleStepsPopup = () => this.setState(prevState => ({ showStepPopup: !prevState.showStepPopup }))
 
+    toggleVolumePopup = () => this.setState(prevState => ({ showVolumePopup: !prevState.showVolumePopup }))
+
     render() {
         // console.log('Layer settings render()', this.props.user);
         const {
@@ -364,12 +369,12 @@ class LayerSettings extends Component {
             showInstrumentsPopup,
             showInstrumentsList,
             showArticulationOptions,
-            showStepPopup
+            showStepPopup,
+            showVolumePopup
         } = this.state;
 
         const { classes, user } = this.props
         const selectedLayer = this.props.selectedLayer
-
         let layerTypeFormItems;
         if (!_.isNil(selectedLayer)) {
             //layerVolumePercent = convertDBToPercent(selectedLayer.instrument.gain)
@@ -508,8 +513,9 @@ class LayerSettings extends Component {
                                 </IconButton>
                             </Box>
                             <Box className={classes.actionButtonContainer}>
-                                <IconButton onClick={this.onMuteClick.bind(this, selectedLayer)} className={classes.actionButton}>
-                                    <img alt='layer-small' src={Volume} />
+                                <VolumePopup onMute={this.onMuteClick.bind(this, selectedLayer)} showVolumePopup={showVolumePopup} selectedLayer={selectedLayer} round={this.props.round} user={user} />
+                                <IconButton onClick={this.toggleVolumePopup} className={classes.actionButton}>
+                                    <img alt='layer-small' src={selectedLayer.isMuted ? Muted : Volume} />
                                 </IconButton>
                             </Box>
                             <Box className={classes.actionButtonContainer}>
