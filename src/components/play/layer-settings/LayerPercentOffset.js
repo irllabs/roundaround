@@ -9,11 +9,13 @@ import { FirebaseContext } from '../../../firebase';
 import _ from 'lodash'
 import { SET_LAYER_PERCENT_OFFSET } from '../../../redux/actionTypes'
 import Percentage from './resources/svg/percentage.svg'
+import { IconButton } from '@material-ui/core';
 
 
 const useStyles = makeStyles((theme) => ({
     root: {
         width: '100%',
+        margin: '0 0 20px 0'
     },
     formControl: {
         margin: theme.spacing(1),
@@ -23,7 +25,8 @@ const useStyles = makeStyles((theme) => ({
         },
     },
     offsetDisplay: {
-        width: '80%',
+        width: 88,
+        height: 48,
         display: 'flex',
         flexDirection: 'row',
         justifyContent: 'space-between',
@@ -33,12 +36,18 @@ const useStyles = makeStyles((theme) => ({
         padding: 10,
         borderRadius: 5,
     },
-    percentageSect: {
+    switchButton: {
         display: 'flex',
         flexDirection: 'row',
-        backgroundColor: 'rgba(255,255,255,0.1)',
+        justifyContent: 'center',
+        alignItems: 'center',
+        height: 32,
+        width: 32,
         padding: 5,
-        borderRadius: 4
+        borderRadius: 4,
+        '&:active': {
+            backgroundColor: 'rgba(255,255,255,0.1)',
+        }
     },
     selectEmpty: {
         marginTop: theme.spacing(2),
@@ -50,6 +59,7 @@ export default function LayerPercentOffset({ selectedLayer, user, horizontal, ro
     const classes = useStyles();
     const firebase = useContext(FirebaseContext);
     const [sliderValue, setSliderValue] = useState(selectedLayer.percentOffset || 0)
+    const [type, updateType] = useState('perc')
 
     const updateLayerPercentOffsetState = (percent, selectedLayerId) => {
         dispatch({ type: SET_LAYER_PERCENT_OFFSET, payload: { id: selectedLayerId, value: percent } })
@@ -75,16 +85,17 @@ export default function LayerPercentOffset({ selectedLayer, user, horizontal, ro
 
         <Box className={classes.root} display="flex" flexDirection="column">
             <FormControl className={classes.formControl}>
-                <Typography style={{ marginBottom: 10 }} id="continuous-slider" variant="caption" gutterBottom>
+                <Typography style={{ marginBottom: 5, fontSize: 14 }} id="continuous-slider" variant="caption" gutterBottom>
                     Time Offset
                 </Typography>
                 {horizontal &&
                     <Box className={classes.offsetDisplay}>
-                        <Box className={classes.percentageSect}>
-                            <Typography style={{ marginRight: 3 }}>{sliderValue}</Typography>
-                            <img alt='percentage' src={Percentage} />
-                        </Box>
-                        <Typography style={{ fontWeight: '600' }}>ms</Typography>
+                        <IconButton onClick={() => updateType('perc')} className={classes.switchButton} style={type === 'perc' ? { backgroundColor: 'rgba(255,255,255,0.1)', } : {}}>
+                            <img style={{ width: 13, height: 18 }} alt='percentage' src={Percentage} />
+                        </IconButton>
+                        <IconButton onClick={() => updateType('ms')} className={classes.switchButton} style={type === 'ms' ? { backgroundColor: 'rgba(255,255,255,0.1)' } : {}}>
+                            <Typography style={{ fontWeight: '600', lineHeight: 1.5 }}>ms</Typography>
+                        </IconButton>
                     </Box >
                 }
                 <Slider value={sliderValue} min={-100} max={100} valueLabelDisplay="off" onChange={onSliderChange} aria-labelledby="continuous-slider" />

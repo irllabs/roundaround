@@ -19,10 +19,11 @@ const styles = theme => ({
         flexDirection: "column",
         borderRadius: 8,
         left: 0,
-        bottom: 45,
+        top: -253,
         justifyContent: "flex-start",
         alignItems: "center",
-        width: 180,
+        width: 155,
+        height: 257,
         minHeight: 48,
         backgroundColor: '#333333',
         transition: 'opacity 0.2s ease-in',
@@ -34,10 +35,10 @@ const styles = theme => ({
     },
     offsetSlider: {
         width: '100%',
-        padding: 10,
+        padding: '5px 10px',
     },
     stepCount: {
-        padding: 10,
+        padding: '5px 10px',
         borderRadius: 4,
         backgroundColor: 'rgba(255, 255, 255, 0.1)'
     },
@@ -89,7 +90,7 @@ const StepsDisplay = ({ steps, user, round, classes, selectedLayer }) => {
     }
     return (
         <Box style={{ borderBottom: 'thin solid rgba(255, 255, 255, 0.1)', padding: 20 }}>
-            <Typography id="step-count" variant="caption" gutterBottom>Steps</Typography>
+            <Typography style={{ fontSize: 14 }} id="step-count" variant="caption" gutterBottom>Steps</Typography>
             <Box className={classes.stepControls}>
                 <IconButton onClick={decreaseSteps} className={classes.stepButtons}>
                     <img alt='less' src={Minus} />

@@ -66,12 +66,12 @@ const styles = theme => ({
         position: 'relative',
         display: "flex",
         flexDirection: "row",
-        height: 52,
+        height: 48,
         borderRadius: 32,
         marginBottom: 20,
         justifyContent: "flex-start",
         alignItems: "center",
-        width: '100%',
+        width: 547,
         /*'& > *': {
             marginBottom: '1rem'
         },*/
@@ -83,9 +83,10 @@ const styles = theme => ({
     mixerPopup: {
         position: 'absolute',
         opacity: 1,
-        bottom: 56,
+        top: -247,
+        height: 243,
         right: 0,
-        left: 50,
+        left: 48,
         borderRadius: 8,
         zIndex: 100,
         boxShadow: '0px 0px 2px rgba(0, 0, 0, 0.15), 0px 4px 6px rgba(0, 0, 0, 0.15)',
@@ -93,7 +94,7 @@ const styles = theme => ({
         overflow: 'hidden',
         transition: 'opacity 0.2s ease-in',
         [theme.breakpoints.down('sm')]: {
-            bottom: 52,
+            top: -247,
         },
         [theme.breakpoints.down('sm')]: {
             left: 0,
@@ -103,16 +104,16 @@ const styles = theme => ({
         display: 'flex',
         justifyContent: 'flex-start',
         alignItems: 'center',
-        padding: 10,
+        padding: '10px 15px',
         borderBottom: 'thin solid rgba(255, 255, 255, 0.1)'
     },
     mixerPopupHeaderText: {
-        marginLeft: 10,
+        marginLeft: 13,
         fontSize: 18
     },
     instrumentPopup: {
         position: 'absolute',
-        bottom: 45,
+        bottom: 47,
         backgroundColor: '#333333',
         right: 0,
         left: 0,
@@ -147,7 +148,7 @@ const styles = theme => ({
     rectButton: {
         display: 'flex',
         flexDirection: 'row',
-        padding: '5px 10px',
+        padding: '5px 15px',
         width: '100%',
         borderRadius: 0
     },
@@ -157,8 +158,8 @@ const styles = theme => ({
         alignItems: 'center',
         justifyContent: 'center',
         backgroundColor: 'rgba(255, 255, 255, 0.1)',
-        height: 40,
-        width: 40,
+        height: 32,
+        width: 32,
         marginLeft: 5,
         marginRight: 5,
         [theme.breakpoints.down('sm')]: {
@@ -171,13 +172,9 @@ const styles = theme => ({
         flexDirection: 'row',
         alignItems: 'center'
     },
-    stepLength: {
-        display: 'flex',
-        alignItems: 'flex-start',
-        lineHeight: 1,
-    },
     instrumentIcon: {
-
+        width: 13.5,
+        height: 16
     },
     instrumentSummary: {
         display: 'flex',
@@ -197,10 +194,16 @@ const styles = theme => ({
         flexDirection: 'row',
         alignItems: 'center',
         margin: '10px 0',
+        width: 59,
         height: 32,
-        padding: '6px 15px',
+        padding: '5px 15px',
         borderRadius: 24,
         backgroundColor: 'rgba(255,255,255, 0.1)'
+    },
+    stepLength: {
+        display: 'flex',
+        alignItems: 'flex-start',
+        lineHeight: 1,
     },
     actionButtonContainer: {
         position: 'relative',
@@ -237,8 +240,6 @@ const styles = theme => ({
         flex: 1,
         display: 'flex',
         flexDirection: 'row',
-        paddingTop: 10,
-        paddingBottom: 10,
         cursor: 'pointer',
         '&:hover': {
             backgroundColor: 'rgba(255, 255, 255, 0.1)'
@@ -248,6 +249,9 @@ const styles = theme => ({
         flex: 1,
         display: 'flex',
         flexDirection: 'row',
+        borderBottom: 'thin solid rgba(255, 255, 255, 0.1)',
+        paddingTop: 10,
+        paddingBottom: 10,
         marginLeft: 20,
         marginRight: 20
     },
@@ -415,7 +419,7 @@ class LayerSettings extends Component {
                 Icon = Snare
             if (name === 'Perc')
                 Icon = Perc
-            return <Box style={{ display: 'flex', width: 20, height: 20, justifyContent: 'center', alignItems: 'center', margin: 0, padding: 0 }}>
+            return <Box style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', margin: 0, padding: 0 }}>
                 <img alt={name} className={classes.instrumentIcon} src={Icon} />
             </Box>
         }
@@ -423,24 +427,24 @@ class LayerSettings extends Component {
         const mixerPopup = (
             <Box className={showMixerPopup ? classes.mixerPopup : classes.hidden}>
                 <Box className={classes.mixerPopupHeader}>
-                    <IconButton className={classes.plainButton} onClick={() => this.setState(prevState => ({ showMixerPopup: !prevState.showMixerPopup }))}><img alt='close popup' src={Close} /></IconButton>
+                    <IconButton className={classes.plainButton} style={{ width: 16, height: 16 }} onClick={() => this.setState(prevState => ({ showMixerPopup: !prevState.showMixerPopup }))}><img alt='close popup' src={Close} /></IconButton>
                     <Typography className={classes.mixerPopupHeaderText}>Mixer</Typography>
                 </Box>
                 <Box className={classes.layerContainer}>
                     {
                         this.props.round && this.props.round?.layers.map((layer, i) =>
                             <Box key={i} className={classes.layerSubContainer}>
-                                <Box className={classes.layer}>
-                                    <Box style={{ display: 'flex', flexDirection: 'column', flex: 4 }}>
-                                        <Box style={{ display: 'flex', flexDirection: 'row', alignItems: 'center', paddingBottom: 5 }}>
+                                <Box className={classes.layer} style={(this.props.round.layers.length - 1) === i ? { borderBottom: 'none' } : {}}>
+                                    <Box style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', flex: 4 }}>
+                                        <Box style={{ display: 'flex', flexDirection: 'row', justifyContent: 'flex-start', alignItems: 'center', paddingBottom: 5 }}>
                                             <Box style={{ marginRight: 5 }}>{instrumentIcon(layer?.instrument?.sampler)}</Box>
                                             <Typography style={{ textTransform: 'capitalize', display: 'flex', alignItems: 'flex-start', lineHeight: 1 }}>
                                                 {layer.instrument?.sample}
                                             </Typography>
                                         </Box>
-                                        <Box style={{ display: 'flex', flexDirection: 'row', alignItems: 'center' }}>
-                                            <Box style={{ display: 'flex', width: 20, height: 20, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', marginRight: 5 }}>
-                                                <img alt='layer-small' src={LayerIcon} />
+                                        <Box style={{ display: 'flex', flexDirection: 'row', alignItems: 'center', width: 36, height: 20 }}>
+                                            <Box style={{ display: 'flex', flexDirection: 'row', alignItems: 'center', justifyContent: 'center', marginRight: 5 }}>
+                                                <img style={{ width: 12, height: 12, }} alt='layer-small' src={LayerIcon} />
                                             </Box>
                                             <Typography className={classes.stepLength}>{layer.steps.length}</Typography>
                                         </Box>
