@@ -50,13 +50,15 @@ class PlayRoute extends Component {
         this.playUIRef = null;
     }
     componentDidMount() {
+        //console.log('PlayRoute::componentDidMount()', this.props.user, this.isLoadingRound, this.hasLoadedRound, this.props.round);
         this.addStartAudioContextListener()
         if (!this.isLoadingRound && !this.hasLoadedRound && !_.isNil(this.props.user)) {
             this.loadRound()
         }
     }
 
-    async componentDidUpdate() {
+    componentDidUpdate() {
+        //  console.log('PlayRoute::componentDidUpdate()', this.props.user);
         if (!this.isLoadingRound && !this.hasLoadedRound && _.isNil(this.props.round) && !_.isNil(this.props.user)) {
             await this.loadRound()
         }
@@ -219,6 +221,7 @@ class PlayRoute extends Component {
     }
 
     removeFirebaseListeners() {
+        //console.log('removeFirebaseListeners()');
         if (!_.isNil(this.layersChangeListenerUnsubscribe)) {
             this.layersChangeListenerUnsubscribe();
         }
@@ -276,12 +279,14 @@ class PlayRoute extends Component {
     }
 
     handleUserPatternsChange(userPatterns) {
+        console.log('userPatternsChange', userPatterns);
         this.props.setIsPlayingSequence(userPatterns.id, userPatterns.isPlayingSequence)
     }
 
     // if any of the subcollections for a collaboration user change, trigger a (throttled) reload of all collaboration layers as there could be multiple changes
     // to do: maybe add an id to the query to make sure we don't overwrite the local round with an await result that comes in late
     async reloadCollaborationLayers() {
+        //console.log('reloadCollaborationLayers()');
         const _this = this;
         if (!_.isNil(this.props.round)) {
             const newRound = await this.context.getRound(this.props.round.id)
@@ -308,6 +313,7 @@ class PlayRoute extends Component {
         window.addEventListener('touchstart', this.startAudioContext)
     }
     startAudioContext() {
+        //console.log('startAudioContext()');
         AudioEngine.startAudioContext()
         this.removeStartAudioContextListener()
     }
@@ -320,6 +326,7 @@ class PlayRoute extends Component {
     }
 
     render() {
+        //  console.log('PlayRoute::render()', this.props.round);
         const { classes, round } = this.props;
         return (
             <Box className={classes.root}>

@@ -107,7 +107,6 @@ class PlayUI extends Component {
     }
 
     async createRound() {
-        //  console.log('createRound()');
         this.round = _.cloneDeep(this.props.round)
         this.userColors = this.getUserColors()
         // Create SVG container
@@ -130,8 +129,8 @@ class PlayUI extends Component {
     }
 
     async componentDidUpdate() {
-        console.log('componentDidUpdate()', this.round, this.props.round)
-        console.time('componentDidUpdate')
+        // console.log('componentDidUpdate()', this.round, this.props.round)
+        // console.time('componentDidUpdate')
 
         // whole round has changed
         if (this.round.id !== this.props.round.id) {
@@ -141,9 +140,12 @@ class PlayUI extends Component {
             return
         }
 
-        if (!sameLayerLength) {
-            await this.onSavePattern(this.activePatternId)
-        }
+        let diff = detailedDiff(this.round, this.props.round)
+        // console.log('diff', diff);
+
+        let redraw = false
+        let shouldRecalculateParts = false
+        const _this = this
 
         //layer removal
         for (let layer of this.round.layers) {
