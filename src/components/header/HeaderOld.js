@@ -119,8 +119,6 @@ function Header({ user, users, round, setUser, setIsShowingSignInDialog, redirec
 
     }, [])
 
-
-
     return (
 
         <Box className={classes.root} bgcolor={"background.default"}>
@@ -178,8 +176,6 @@ function Header({ user, users, round, setUser, setIsShowingSignInDialog, redirec
 
                 </>
             }
-
-
         </Box >
     )
 }

@@ -66,7 +66,6 @@ class PlayUI extends Component {
     }
 
     async createRound() {
-        //  console.log('createRound()');
         this.round = _.cloneDeep(this.props.round)
         this.userColors = this.getUserColors()
         // Create SVG container
@@ -102,7 +101,7 @@ class PlayUI extends Component {
         }
 
         let diff = detailedDiff(this.round, this.props.round)
-        console.log('diff', diff);
+        // console.log('diff', diff);
 
         let redraw = false
         let shouldRecalculateParts = false

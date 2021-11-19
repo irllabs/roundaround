@@ -1,4 +1,4 @@
-import React, { useContext } from 'react'
+import React from 'react'
 import { connect } from "react-redux";
 import IconButton from '@material-ui/core/IconButton';
 import PlayIcon from '@material-ui/icons/PlayArrowOutlined';
@@ -7,7 +7,6 @@ import { makeStyles } from '@material-ui/core/styles';
 import AudioEngine from '../../audio-engine/AudioEngine'
 import { setIsPlaying, } from '../../redux/actions'
 import _ from 'lodash'
-import { FirebaseContext } from '../../firebase';
 
 
 const playButtonStyles = makeStyles(function (theme) {
@@ -20,19 +19,15 @@ const playButtonStyles = makeStyles(function (theme) {
     }
 })
 
-
-function PlayButton({ isPlaying, setIsPlaying, roundId }) {
-    const firebase = useContext(FirebaseContext);
+function PlayButton({ isPlaying, setIsPlaying }) {
     const onPlayClick = () => {
         if (isPlaying) {
             AudioEngine.stop()
             setIsPlaying(false)
-            firebase.updateRound(roundId, { isPlaying: false })
 
         } else {
             AudioEngine.play()
             setIsPlaying(true)
-            firebase.updateRound(roundId, { isPlaying: true })
         }
     }
     const classes = playButtonStyles();
@@ -46,8 +41,6 @@ function PlayButton({ isPlaying, setIsPlaying, roundId }) {
                 isPlaying &&
                 <PauseIcon />
             }
-
-
         </IconButton>
     )
 }
