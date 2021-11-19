@@ -106,7 +106,7 @@ const StepsDisplay = ({ steps, user, round, classes, selectedLayer }) => {
     )
 }
 
-const StepsPopup = ({
+const LayerPopup = ({
     classes,
     round,
     user,
@@ -132,4 +132,4 @@ const StepsPopup = ({
     )
 }
 
-export default withStyles(styles)(StepsPopup)
+export default withStyles(styles)(LayerPopup)

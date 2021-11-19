@@ -36,7 +36,7 @@ import { FirebaseContext } from '../../../firebase';
 import LayerAutomation from './LayerAutomation';
 import Track from '../../../audio-engine/Track'
 import LayerInstrumentAlt from './LayerInstrumentAlt'
-import StepsPopup from './StepsPopup'
+import LayerPopup from './LayerPopup'
 import VolumePopup from './VolumePopup'
 import LayerCustomSounds from './LayerCustomSounds'
 import { getDefaultLayerData } from '../../../utils/defaultData';
@@ -312,6 +312,10 @@ class LayerSettings extends Component {
             showVolumePopup: false,
             selectedInstrument: props.selectedLayer?.instrument?.sampler
         }
+        this.mixerPopupButton = React.createRef()
+        this.instrumentPopupButton = React.createRef()
+        this.layerPopupButton = React.createRef()
+        this.volumePopupButton = React.createRef()
     }
 
     static contextType = FirebaseContext;
@@ -363,7 +367,7 @@ class LayerSettings extends Component {
 
     toggleArticulationOptions = () => this.setState(prevState => ({ showArticulationOptions: !prevState.showArticulationOptions }))
 
-    toggleStepsPopup = () => this.setState(prevState => ({ showStepPopup: !prevState.showStepPopup }))
+    toggleLayerPopup = () => this.setState(prevState => ({ showStepPopup: !prevState.showStepPopup }))
 
     toggleVolumePopup = () => this.setState(prevState => ({ showVolumePopup: !prevState.showVolumePopup }))
 
@@ -474,8 +478,8 @@ class LayerSettings extends Component {
                                 </IconButton>
                             </Box>
                             <Box className={classes.actionButtonContainer}>
-                                <StepsPopup showStepPopup={showStepPopup} selectedLayer={selectedLayer} round={this.props.round} user={user} playUIRef={this.props.playUIRef} />
-                                <IconButton onClick={this.toggleStepsPopup} className={classes.stepCount}>
+                                <LayerPopup showStepPopup={showStepPopup} selectedLayer={selectedLayer} round={this.props.round} user={user} playUIRef={this.props.playUIRef} />
+                                <IconButton onClick={this.toggleLayerPopup} className={classes.stepCount}>
                                     <Box style={{ display: 'flex', flexDirection: 'row', alignItems: 'center', marginRight: 5 }}>
                                         <img alt='layer-small' src={LayerIcon} />
                                     </Box>
