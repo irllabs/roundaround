@@ -9,6 +9,7 @@ import {
     REMOVE_LAYER,
     SET_IS_SHOWING_LAYER_SETTINGS,
     SET_LAYER_STEPS,
+    SET_SELECTED_LAYER_ID,
     ADD_LAYER
 } from '../../../redux/actionTypes'
 import Box from '@material-ui/core/Box';
@@ -94,6 +95,7 @@ const styles = theme => ({
         boxShadow: '0px 0px 2px rgba(0, 0, 0, 0.15), 0px 4px 6px rgba(0, 0, 0, 0.15)',
         backgroundColor: '#333333',
         overflow: 'hidden',
+        overflowY: 'scroll',
         transition: 'opacity 0.2s ease-in',
         [theme.breakpoints.down('sm')]: {
             top: -247,
@@ -344,12 +346,19 @@ class LayerSettings extends Component {
         window.removeEventListener('click', this.onClick)
     }
 
-    setSelectedInstrument = async (selectedLayer) => {
+    setSelectedInstrument = (selectedLayer) => {
         const { instrumentOptions } = this.state;
-        if (instrumentOptions) {
-            const sampler = selectedLayer?.instrument?.sampler;
-            const instrument = instrumentOptions.find(inst => inst.name === sampler);
-            this.setState({ selectedInstrument: instrument.label });
+        if (instrumentOptions && this.props.round) {
+            const localLayer = _.find(this.props.round.layers, { id: this.props.selectedLayerId })
+            const sampler = selectedLayer?.instrument?.sampler || localLayer?.instrument?.sampler;
+            const instrument = _.find(instrumentOptions, { name: sampler })
+            const newSamplerArr = sampler.split('')
+            const lastLetter = newSamplerArr.pop()
+            let letterFix = sampler;
+            if (lastLetter === 's') {
+                letterFix = newSamplerArr.join('')
+            }
+            this.setState({ selectedInstrument: instrument ? instrument.label : letterFix })
         }
     }
 
@@ -382,6 +391,13 @@ class LayerSettings extends Component {
 
     onCloseClick() {
         this.props.dispatch({ type: SET_IS_SHOWING_LAYER_SETTINGS, payload: { value: false } })
+    }
+
+    onLayerClicked = (layerId) => {
+        //this.selectedLayerId = layerId
+        this.props.dispatch({ type: SET_SELECTED_LAYER_ID, payload: { layerId } })
+        //this.props.dispatch({ type: SET_IS_SHOWING_LAYER_SETTINGS, payload: { value: true } })
+        //this.highlightLayer(_.find(this.layerGraphics, { id: layerId }))
     }
 
     onPreviewClick() {
@@ -517,6 +533,7 @@ class LayerSettings extends Component {
                     classes={classes}
                     round={this.props.round}
                     user={user}
+                    onLayerSelect={this.onLayerClicked}
                     onMuteClick={this.onMuteClick.bind(this)}
                     toggleShowMixerPopup={() => this.setState(prevState => ({ showMixerPopup: !prevState.showMixerPopup }))}
                     showMixerPopup={showMixerPopup}
@@ -623,6 +640,7 @@ const mapStateToProps = state => {
     return {
         round: state.round,
         user: state.user,
+        selectedLayerId: state.display.selectedLayerId,
         selectedLayer,
         isOpen: state.display.isShowingLayerSettings
     };

@@ -11,6 +11,7 @@ const MixerPopup = ({
     instrumentIcon,
     onMuteClick,
     toggleShowMixerPopup,
+    onLayerSelect,
     ref,
     user,
     round,
@@ -26,7 +27,15 @@ const MixerPopup = ({
         <Box className={classes.layerContainer}>
             {
                 round && round?.layers.map((layer, i) =>
-                    <Box key={i} className={classes.layerSubContainer}>
+                    <Box
+                        onClick={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            onLayerSelect(layer.id)
+                        }}
+                        key={i}
+                        className={classes.layerSubContainer}
+                    >
                         <Box className={classes.layer} style={(round.layers.length - 1) === i ? { borderBottom: 'none' } : {}}>
                             <Box style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', flex: 4 }}>
                                 <Box style={{ display: 'flex', flexDirection: 'row', justifyContent: 'flex-start', alignItems: 'center', paddingBottom: 5 }}>

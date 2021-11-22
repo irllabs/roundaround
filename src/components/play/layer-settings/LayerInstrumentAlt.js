@@ -36,10 +36,6 @@ const LayerInstrument = ({
     const articulationOptions = Instruments.getInstrumentArticulationOptions(selectedInstrument, user.id)
     const firebase = useContext(FirebaseContext);
 
-    // useEffect(() => {
-
-    // }, [])
-
     const onInstrumentSelect = async (instrument) => {
         setSelectedInstrument(instrument.name)
         let defaultArticulation = await Instruments.getRandomArticulation(instrument.name)
@@ -58,7 +54,6 @@ const LayerInstrument = ({
     }
 
     const onArticulationSelect = async (articulation) => {
-        console.log('articulation', articulation)
         setSelectedArticulation(articulation.value);
         // console.log('UPDATE_LAYER_INSTRUMENT', selectedInstrument, event.target.value);
         dispatch({ type: UPDATE_LAYER_INSTRUMENT, payload: { id: selectedLayer.id, instrument: { sampler: selectedInstrument, sample: articulation.value }, user: user.id } })
