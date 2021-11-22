@@ -14,6 +14,7 @@ import {
 import Box from '@material-ui/core/Box';
 import { withStyles } from '@material-ui/core/styles';
 import AudioEngine from '../../../audio-engine/AudioEngine'
+import Instruments from '../../../audio-engine/Instruments'
 
 /** SVGs */
 import Close from './resources/svg/close.svg'
@@ -310,15 +311,74 @@ class LayerSettings extends Component {
             showArticulationOptions: false,
             showStepPopup: false,
             showVolumePopup: false,
+            instrumentOptions: Instruments.getInstrumentOptions(false),
             selectedInstrument: props.selectedLayer?.instrument?.sampler
         }
+        this.addLayerButton = React.createRef()
         this.mixerPopupButton = React.createRef()
         this.instrumentPopupButton = React.createRef()
         this.layerPopupButton = React.createRef()
         this.volumePopupButton = React.createRef()
+        this.instrumentsButton = React.createRef()
+        this.soundsButton = React.createRef()
+        this.addStepsButton = React.createRef()
+        this.subtractStepsButton = React.createRef()
+        this.percentageButton = React.createRef()
+        this.msButton = React.createRef()
     }
 
     static contextType = FirebaseContext;
+
+    componentDidMount() {
+        window.addEventListener('click', this.onClick)
+        this.setSelectedInstrument(this.props.selectedLayer)
+    }
+
+    componentDidUpdate(prevProps) {
+        if (!_.isEqual(prevProps.selectedLayer, this.props.selectedLayer)) {
+            this.setSelectedInstrument(this.props.selectedLayer)
+        }
+    }
+
+    componentWillUnmount() {
+        window.removeEventListener('click', this.onClick)
+    }
+
+    setSelectedInstrument = async (selectedLayer) => {
+        const { instrumentOptions } = this.state;
+        if (instrumentOptions) {
+            const sampler = selectedLayer?.instrument?.sampler;
+            const instrument = instrumentOptions.find(inst => inst.name === sampler);
+            this.setState({ selectedInstrument: instrument.label });
+        }
+    }
+
+    onClick = (e) => {
+        const target = e.target;
+        if ((
+            (!this.instrumentPopupButton.current || (this.instrumentPopupButton.current && !this.instrumentPopupButton.current.contains(target)))
+            //&& (!this.addLayerButton.current || (this.addLayerButton.current && !this.addLayerButton.current.contains(target)))
+            && (!this.instrumentsButton.current || (this.instrumentsButton.current && !this.instrumentsButton.current.contains(target)))
+            && (!this.soundsButton.current || (this.soundsButton.current && !this.soundsButton.current.contains(target)))
+            && (!this.addStepsButton.current || (this.addStepsButton.current && !this.addStepsButton.current.contains(target)))
+            && (!this.subtractStepsButton.current || (this.subtractStepsButton.current && !this.subtractStepsButton.current.contains(target)))
+            && (!this.percentageButton.current || (this.percentageButton.current && !this.percentageButton.current.contains(target)))
+            && (!this.msButton.current || (this.msButton.current && !this.msButton.current.contains(target)))
+            && (!this.layerPopupButton.current || (this.layerPopupButton.current && !this.layerPopupButton.current.contains(target)))
+            && (!this.mixerPopupButton.current || (this.mixerPopupButton.current && !this.mixerPopupButton.current.contains(target)))
+            && (!this.volumePopupButton.current || (this.volumePopupButton && !this.volumePopupButton.current.contains(target)))
+        )) {
+            this.setState({
+                showMixerPopup: false,
+                showInstrumentsPopup: false,
+                showInstrumentsList: false,
+                showSoundsList: false,
+                showArticulationOptions: false,
+                showStepPopup: false,
+                showVolumePopup: false,
+            });
+        }
+    }
 
     onCloseClick() {
         this.props.dispatch({ type: SET_IS_SHOWING_LAYER_SETTINGS, payload: { value: false } })
@@ -361,15 +421,35 @@ class LayerSettings extends Component {
         this.context.updateLayer(this.props.round.id, selectedLayerClone.id, { steps: selectedLayerClone.steps })
     }
 
-    toggleInstrumentPopup = () => this.setState(prevState => ({ showInstrumentsPopup: !prevState.showInstrumentsPopup }))
+    toggleInstrumentPopup = (e) => {
+        e.preventDefault()
+        e.stopPropagation()
+        this.setState(prevState => ({ showInstrumentsPopup: !prevState.showInstrumentsPopup }))
+    }
 
-    toggleShowInstrumentList = () => this.setState(prevState => ({ showInstrumentsList: !prevState.showInstrumentsList }))
+    toggleShowInstrumentList = (e) => {
+        e.preventDefault()
+        e.stopPropagation()
+        this.setState(prevState => ({ showInstrumentsList: !prevState.showInstrumentsList }))
+    }
 
-    toggleArticulationOptions = () => this.setState(prevState => ({ showArticulationOptions: !prevState.showArticulationOptions }))
+    toggleArticulationOptions = (e) => {
+        e.preventDefault()
+        e.stopPropagation()
+        this.setState(prevState => ({ showArticulationOptions: !prevState.showArticulationOptions }))
+    }
 
-    toggleLayerPopup = () => this.setState(prevState => ({ showStepPopup: !prevState.showStepPopup }))
+    toggleLayerPopup = (e) => {
+        e.preventDefault()
+        e.stopPropagation()
+        this.setState(prevState => ({ showStepPopup: !prevState.showStepPopup }))
+    }
 
-    toggleVolumePopup = () => this.setState(prevState => ({ showVolumePopup: !prevState.showVolumePopup }))
+    toggleVolumePopup = (e) => {
+        e.preventDefault()
+        e.stopPropagation()
+        this.setState(prevState => ({ showVolumePopup: !prevState.showVolumePopup }))
+    }
 
     render() {
         // console.log('Layer settings render()', this.props.user);
@@ -379,6 +459,7 @@ class LayerSettings extends Component {
             showInstrumentsList,
             showArticulationOptions,
             showStepPopup,
+            selectedInstrument,
             showVolumePopup
         } = this.state;
 
@@ -437,14 +518,15 @@ class LayerSettings extends Component {
                     round={this.props.round}
                     user={user}
                     onMuteClick={this.onMuteClick.bind(this)}
+                    toggleShowMixerPopup={() => this.setState(prevState => ({ showMixerPopup: !prevState.showMixerPopup }))}
                     showMixerPopup={showMixerPopup}
                     Close={Close}
                 />
                 <Box className={classes.addLayerContainer}>
-                    <IconButton onClick={this.onAddLayerClick} className={classes.iconButtons}>
+                    <IconButton ref={this.addLayerButton} onClick={this.onAddLayerClick} className={classes.iconButtons}>
                         <img alt='add layer' src={AddLayer} />
                     </IconButton>
-                    <IconButton className={classes.iconButtons} onClick={() => this.setState(prevState => ({ showMixerPopup: !prevState.showMixerPopup }))}>
+                    <IconButton ref={this.mixerPopupButton} className={classes.iconButtons} onClick={() => this.setState(prevState => ({ showMixerPopup: !prevState.showMixerPopup }))}>
                         <img alt='change instrument' src={ChangeInstrument} />
                     </IconButton>
                 </Box>
@@ -462,14 +544,16 @@ class LayerSettings extends Component {
                                     showArticulationOptions={showArticulationOptions}
                                     selectedLayer={selectedLayer}
                                     roundId={this.props.round.id}
+                                    instrumentsButtonRef={this.instrumentsButton}
+                                    soundsButtonRef={this.soundsButton}
                                     user={user}
                                 />
-                                <IconButton id='instrument-summary' className={classes.instrumentSummary} onClick={this.toggleInstrumentPopup}>
+                                <IconButton ref={this.instrumentPopupButton} id='instrument-summary' className={classes.instrumentSummary} onClick={this.toggleInstrumentPopup}>
                                     <Box style={{ display: 'flex', flexDirection: 'row', alignItems: 'center', justifyContent: 'center', paddingRight: 5 }}>
                                         {instrumentIcon(selectedLayer?.instrument?.sampler)}
                                     </Box>
                                     <Typography style={{ fontWeight: 'bolder', lineHeight: 1, textTransform: 'capitalize' }}>
-                                        {selectedLayer?.instrument?.sampler}
+                                        {selectedInstrument}
                                     </Typography>
                                     <Box style={{ fontSize: 30, marginLeft: 5, marginRight: 5, lineHeight: .3 }}>&#183;</Box>
                                     <Typography style={{ fontWeight: 'bolder', lineHeight: 1, textTransform: 'capitalize' }}>
@@ -478,8 +562,18 @@ class LayerSettings extends Component {
                                 </IconButton>
                             </Box>
                             <Box className={classes.actionButtonContainer}>
-                                <LayerPopup showStepPopup={showStepPopup} selectedLayer={selectedLayer} round={this.props.round} user={user} playUIRef={this.props.playUIRef} />
-                                <IconButton onClick={this.toggleLayerPopup} className={classes.stepCount}>
+                                <LayerPopup
+                                    addStepsButtonRef={this.addStepsButton}
+                                    subtractStepsButtonRef={this.subtractStepsButton}
+                                    percentageButtonRef={this.percentageButton}
+                                    msButtonRef={this.msButton}
+                                    showStepPopup={showStepPopup}
+                                    selectedLayer={selectedLayer}
+                                    round={this.props.round}
+                                    user={user}
+                                    playUIRef={this.props.playUIRef}
+                                />
+                                <IconButton ref={this.layerPopupButton} onClick={this.toggleLayerPopup} className={classes.stepCount}>
                                     <Box style={{ display: 'flex', flexDirection: 'row', alignItems: 'center', marginRight: 5 }}>
                                         <img alt='layer-small' src={LayerIcon} />
                                     </Box>
@@ -488,7 +582,7 @@ class LayerSettings extends Component {
                             </Box>
                             <Box className={classes.actionButtonContainer}>
                                 <VolumePopup onMute={this.onMuteClick.bind(this, selectedLayer)} showVolumePopup={showVolumePopup} selectedLayer={selectedLayer} round={this.props.round} user={user} />
-                                <IconButton onClick={this.toggleVolumePopup} className={classes.actionButton}>
+                                <IconButton ref={this.volumePopupButton} onClick={this.toggleVolumePopup} className={classes.actionButton}>
                                     <img alt='layer-small' src={selectedLayer.isMuted ? Muted : Volume} />
                                 </IconButton>
                             </Box>

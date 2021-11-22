@@ -54,7 +54,15 @@ const useStyles = makeStyles((theme) => ({
     },
 }));
 
-export default function LayerPercentOffset({ selectedLayer, user, horizontal, roundId, playUIRef }) {
+export default function LayerPercentOffset({
+    selectedLayer,
+    user,
+    horizontal,
+    roundId,
+    playUIRef,
+    percentageButtonRef,
+    msButtonRef,
+}) {
     const dispatch = useDispatch();
     const classes = useStyles();
     const firebase = useContext(FirebaseContext);
@@ -90,10 +98,10 @@ export default function LayerPercentOffset({ selectedLayer, user, horizontal, ro
                 </Typography>
                 {horizontal &&
                     <Box className={classes.offsetDisplay}>
-                        <IconButton onClick={() => updateType('perc')} className={classes.switchButton} style={type === 'perc' ? { backgroundColor: 'rgba(255,255,255,0.1)', } : {}}>
+                        <IconButton ref={percentageButtonRef} onClick={() => updateType('perc')} className={classes.switchButton} style={type === 'perc' ? { backgroundColor: 'rgba(255,255,255,0.1)', } : {}}>
                             <img style={{ width: 13, height: 18 }} alt='percentage' src={Percentage} />
                         </IconButton>
-                        <IconButton onClick={() => updateType('ms')} className={classes.switchButton} style={type === 'ms' ? { backgroundColor: 'rgba(255,255,255,0.1)' } : {}}>
+                        <IconButton ref={msButtonRef} onClick={() => updateType('ms')} className={classes.switchButton} style={type === 'ms' ? { backgroundColor: 'rgba(255,255,255,0.1)' } : {}}>
                             <Typography style={{ fontWeight: '600', lineHeight: 1.5 }}>ms</Typography>
                         </IconButton>
                     </Box >

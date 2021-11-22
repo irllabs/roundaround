@@ -72,7 +72,15 @@ const styles = theme => ({
     }
 })
 
-const StepsDisplay = ({ steps, user, round, classes, selectedLayer }) => {
+const StepsDisplay = ({
+    steps,
+    user,
+    round,
+    classes,
+    selectedLayer,
+    addStepsButtonRef,
+    subtractStepsButtonRef,
+}) => {
     const firebase = useContext(FirebaseContext)
     const dispatch = useDispatch()
 
@@ -92,13 +100,13 @@ const StepsDisplay = ({ steps, user, round, classes, selectedLayer }) => {
         <Box style={{ borderBottom: 'thin solid rgba(255, 255, 255, 0.1)', padding: 20 }}>
             <Typography style={{ fontSize: 14 }} id="step-count" variant="caption" gutterBottom>Steps</Typography>
             <Box className={classes.stepControls}>
-                <IconButton onClick={decreaseSteps} className={classes.stepButtons}>
+                <IconButton ref={subtractStepsButtonRef} onClick={decreaseSteps} className={classes.stepButtons}>
                     <img alt='less' src={Minus} />
                 </IconButton>
                 <Box className={classes.stepCount}>
                     <input disabled className={classes.stepsInput} value={steps || 0} />
                 </Box>
-                <IconButton onClick={increaseSteps} className={classes.stepButtons}>
+                <IconButton ref={addStepsButtonRef} onClick={increaseSteps} className={classes.stepButtons}>
                     <img alt='more' src={Plus} />
                 </IconButton>
             </Box>
@@ -112,12 +120,18 @@ const LayerPopup = ({
     user,
     showStepPopup,
     playUIRef,
-    selectedLayer
+    selectedLayer,
+    addStepsButtonRef,
+    subtractStepsButtonRef,
+    percentageButtonRef,
+    msButtonRef,
 }) => {
     return (
         <Box className={showStepPopup ? classes.root : classes.hidden}>
             <Box style={{ width: '100%' }}>
                 <StepsDisplay
+                    addStepsButtonRef={addStepsButtonRef}
+                    subtractStepsButtonRef={subtractStepsButtonRef}
                     steps={selectedLayer?.steps?.length}
                     classes={classes}
                     user={user}
@@ -126,7 +140,14 @@ const LayerPopup = ({
                 />
             </Box>
             <Box className={classes.offsetSlider}>
-                <LayerPercentOffset horizontal={true} selectedLayer={selectedLayer} roundId={round.id} user={user} playUIRef={playUIRef} />
+                <LayerPercentOffset
+                    percentageButtonRef={percentageButtonRef}
+                    msButtonRef={msButtonRef}
+                    horizontal={true}
+                    selectedLayer={selectedLayer}
+                    roundId={round.id}
+                    user={user}
+                    playUIRef={playUIRef} />
             </Box>
         </Box>
     )

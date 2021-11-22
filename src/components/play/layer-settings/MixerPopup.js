@@ -10,13 +10,15 @@ const MixerPopup = ({
     showMixerPopup,
     instrumentIcon,
     onMuteClick,
+    toggleShowMixerPopup,
+    ref,
     user,
     round,
     Close
 }) => (
     <Box className={showMixerPopup ? classes.mixerPopup : classes.hidden}>
         <Box className={classes.mixerPopupHeader}>
-            <IconButton className={classes.plainButton} style={{ width: 16, height: 16 }} onClick={() => this.setState(prevState => ({ showMixerPopup: !prevState.showMixerPopup }))}>
+            <IconButton className={classes.plainButton} style={{ width: 16, height: 16 }} onClick={toggleShowMixerPopup}>
                 <img alt='close popup' src={Close} />
             </IconButton>
             <Typography className={classes.mixerPopupHeaderText}>Mixer</Typography>

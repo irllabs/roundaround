@@ -24,6 +24,8 @@ const LayerInstrument = ({
     classes,
     selectedLayer,
     roundId,
+    instrumentsButtonRef,
+    soundsButtonRef,
     user
 }) => {
     const [selectedInstrument, setSelectedInstrument] = React.useState(selectedLayer.instrument.sampler)
@@ -34,9 +36,12 @@ const LayerInstrument = ({
     const articulationOptions = Instruments.getInstrumentArticulationOptions(selectedInstrument, user.id)
     const firebase = useContext(FirebaseContext);
 
+    // useEffect(() => {
+
+    // }, [])
+
     const onInstrumentSelect = async (instrument) => {
-        console.log('instrument', instrument)
-        setSelectedInstrument(instrument.name);
+        setSelectedInstrument(instrument.name)
         let defaultArticulation = await Instruments.getRandomArticulation(instrument.name)
         if (!_.isNil(defaultArticulation)) {
             setSelectedArticulation(defaultArticulation)
@@ -68,7 +73,7 @@ const LayerInstrument = ({
         <Box className={showInstrumentsPopup ? classes.instrumentPopup : classes.hidden}>
             {!showArticulationOptions &&
                 <Box>
-                    <IconButton id='instrument' onClick={toggleShowInstrumentList} style={{ borderBottom: showInstrumentsList ? 'thin solid rgba(255, 255, 255, 0.1)' : 'none' }} className={classes.rectButton}>
+                    <IconButton ref={instrumentsButtonRef} id='instrument' onClick={toggleShowInstrumentList} style={{ borderBottom: showInstrumentsList ? 'thin solid rgba(255, 255, 255, 0.1)' : 'none' }} className={classes.rectButton}>
                         {showInstrumentsList && <Box style={{ display: 'flex', justifyContent: 'flex-start', flex: 1 }}>
                             <img alt='right arrow' src={LeftArrow} />
                         </Box>}
@@ -98,14 +103,23 @@ const LayerInstrument = ({
             }
             {!showInstrumentsList &&
                 <Box>
-                    <IconButton id='sound' onClick={toggleArticulationOptions} style={{ borderBottom: showArticulationOptions ? 'thin solid rgba(255, 255, 255, 0.1)' : 'none' }} className={classes.rectButton}>
-                        {showArticulationOptions && <Box style={{ display: 'flex', justifyContent: 'flex-start', flex: 1 }}>
-                            <img alt='right arrow' src={LeftArrow} />
-                        </Box>}
+                    <IconButton
+                        id='sound'
+                        ref={soundsButtonRef}
+                        onClick={toggleArticulationOptions}
+                        style={{ borderBottom: showArticulationOptions ? 'thin solid rgba(255, 255, 255, 0.1)' : 'none' }}
+                        className={classes.rectButton}
+                    >
+                        {showArticulationOptions &&
+                            <Box style={{ display: 'flex', justifyContent: 'flex-start', flex: 1 }}>
+                                <img alt='right arrow' src={LeftArrow} />
+                            </Box>}
                         <Typography style={{ flex: 5, textAlign: 'left', textTransform: 'Capitalize' }}>Sound</Typography>
                         {!showArticulationOptions &&
                             <>
-                                <Typography style={{ flex: 3, textAlign: 'left', textTransform: 'Capitalize' }}>{selectedLayer?.instrument?.sample}</Typography>
+                                <Typography style={{ flex: 3, textAlign: 'left', textTransform: 'Capitalize' }}>
+                                    {selectedLayer?.instrument?.sample}
+                                </Typography>
                                 <Box style={{ display: 'flex', justifyContent: 'flex-end', flex: 1 }}><img alt='right arrow' src={RightArrow} /></Box>
                             </>
                         }
