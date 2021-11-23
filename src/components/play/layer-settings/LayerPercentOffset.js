@@ -7,7 +7,10 @@ import Box from '@material-ui/core/Box';
 import { makeStyles } from '@material-ui/core/styles';
 import { FirebaseContext } from '../../../firebase';
 import _ from 'lodash'
-import { SET_LAYER_PERCENT_OFFSET } from '../../../redux/actionTypes'
+import {
+    SET_LAYER_PERCENT_OFFSET,
+    SET_LAYER_TIME_OFFSET
+} from '../../../redux/actionTypes'
 import Percentage from './resources/svg/percentage.svg'
 import { IconButton } from '@material-ui/core';
 
@@ -69,16 +72,42 @@ export default function LayerPercentOffset({
     const [sliderValue, setSliderValue] = useState(selectedLayer.percentOffset || 0)
     const [type, updateType] = useState('perc')
 
+    useEffect(() => {
+        if (type === 'perc') {
+            setSliderValue(selectedLayer.percentOffset)
+        } else {
+            setSliderValue(selectedLayer.timeOffset)
+        }
+    }, [type, selectedLayer])
+
     const updateLayerPercentOffsetState = (percent, selectedLayerId) => {
         dispatch({ type: SET_LAYER_PERCENT_OFFSET, payload: { id: selectedLayerId, value: percent } })
         firebase.updateLayer(roundId, selectedLayer.id, { percentOffset: percent })
     }
+    const updateLayerTimeOffsetState = (ms, selectedLayerId) => {
+        dispatch({ type: SET_LAYER_TIME_OFFSET, payload: { id: selectedLayerId, value: ms } })
+        firebase.updateLayer(roundId, selectedLayer.id, { timeOffset: ms })
+    }
+
+
     // eslint-disable-next-line react-hooks/exhaustive-deps
     const updateLayerPercentOffsetStateThrottled = useCallback(_.throttle(function (percent, selectedLayerId) {
         updateLayerPercentOffsetState(percent, selectedLayerId)
     }, 1000), []);
 
-    const onSliderChange = (e, percent) => {
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    const updateLayerTimeOffsetStateThrottled = useCallback(_.throttle(function (ms, selectedLayerId) {
+        updateLayerTimeOffsetState(ms, selectedLayerId)
+    }, 1000), []);
+
+    const onSliderTimeChange = (e, ms) => {
+        setSliderValue(ms)
+        updateLayerTimeOffsetStateThrottled(ms, selectedLayer.id)
+        // Update UI directly for performance reasons (instead of going via redux)
+        playUIRef.adjustLayerOffset(selectedLayer.id, selectedLayer.percentOffset, ms)
+    }
+
+    const onSliderPercChange = (e, percent) => {
         setSliderValue(percent)
         updateLayerPercentOffsetStateThrottled(percent, selectedLayer.id)
         // Update UI directly for performance reasons (instead of going via redux)
@@ -89,8 +118,12 @@ export default function LayerPercentOffset({
         setSliderValue(selectedLayer.percentOffset || 0)
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [selectedLayer.id])
-    return (
 
+    const _onChange = (e, v) => {
+        if (type === 'perc') onSliderPercChange(e, v)
+        else if (type === 'ms') onSliderTimeChange(e, v)
+    }
+    return (
         <Box className={classes.root} display="flex" flexDirection="column">
             <FormControl className={classes.formControl}>
                 <Typography style={{ marginBottom: 5, fontSize: 14 }} id="continuous-slider" variant="caption" gutterBottom>
@@ -106,7 +139,7 @@ export default function LayerPercentOffset({
                         </IconButton>
                     </Box >
                 }
-                <Slider value={sliderValue} min={-100} max={100} valueLabelDisplay="off" onChange={onSliderChange} aria-labelledby="continuous-slider" />
+                <Slider value={sliderValue} min={-100} max={100} valueLabelDisplay="off" onChange={_onChange} aria-labelledby="continuous-slider" />
             </FormControl >
         </Box >
     )
