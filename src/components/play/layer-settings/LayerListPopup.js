@@ -8,6 +8,7 @@ import VolumeSlider from './VolumeSlider'
 const MixerPopup = ({
     classes,
     showMixerPopup,
+    selectedInstrument,
     instrumentIcon,
     onMuteClick,
     toggleShowMixerPopup,

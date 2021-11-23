@@ -89,9 +89,15 @@ class PlayUI extends Component {
         this.draw()
     }
 
-    async componentDidUpdate() {
+    async componentDidUpdate(prevProps) {
         console.log('componentDidUpdate()', this.round, this.props.round)
         console.time('componentDidUpdate')
+
+        if (this.props.round && this.props.selectedLayerId) {
+            if (prevProps.selectedLayerId !== this.props.selectedLayerId) {
+                this.onLayerClicked(this.props.selectedLayerId)
+            }
+        }
 
         // whole round has changed
         if (this.round.id !== this.props.round.id) {
@@ -1588,6 +1594,7 @@ const mapStateToProps = state => {
         user: state.user,
         users: state.users,
         selectedLayer,
+        selectedLayerId: state.display.selectedLayerId,
         disableKeyListener: state.display.disableKeyListener
     };
 };

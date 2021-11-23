@@ -42,7 +42,7 @@ import LayerPopup from './LayerPopup'
 import VolumePopup from './VolumePopup'
 import LayerCustomSounds from './LayerCustomSounds'
 import { getDefaultLayerData } from '../../../utils/defaultData';
-import MixerPopup from './MixerPopup';
+import LayerListPopup from './LayerListPopup';
 
 const styles = theme => ({
     container: {
@@ -314,7 +314,7 @@ class LayerSettings extends Component {
             showStepPopup: false,
             showVolumePopup: false,
             instrumentOptions: Instruments.getInstrumentOptions(false),
-            selectedInstrument: props.selectedLayer?.instrument?.sampler
+            selectedInstrument: ''
         }
         this.addLayerButton = React.createRef()
         this.mixerPopupButton = React.createRef()
@@ -333,12 +333,30 @@ class LayerSettings extends Component {
 
     componentDidMount() {
         window.addEventListener('click', this.onClick)
-        this.setSelectedInstrument(this.props.selectedLayer)
+        if (this.props.round && this.props.selectedLayerId) {
+            const selectedLayer = _.find(this.props.round.layers, { id: this.props.selectedLayerId })
+            this.setSelectedInstrument(selectedLayer)
+        }
     }
 
     componentDidUpdate(prevProps) {
-        if (!_.isEqual(prevProps.selectedLayer, this.props.selectedLayer)) {
-            this.setSelectedInstrument(this.props.selectedLayer)
+        if (this.props.round && this.props.selectedLayerId) {
+            const selectedLayer = _.find(this.props.round.layers, { id: this.props.selectedLayerId })
+            //console.log('instrument in sampler', !selectedLayer.instrument.sampler.indexOf(this.state.selectedInstrument) > -1)
+            if (selectedLayer &&
+                (
+                    (prevProps.selectedLayerId !== this.props.selectedLayerId) ||
+                    (!this.state.selectedInstrument && selectedLayer)
+                    //|| (this.state.selectedInstrument && (selectedLayer.instrument.sampler.indexOf(this.state.selectedInstrument) === -1))
+                )
+            ) {
+                this.setSelectedInstrument(selectedLayer)
+            }
+            if (this.state.selectedInstrument) {
+                const selectedInstArray = this.state.selectedInstrument.split('');
+                const firstTwo = selectedInstArray[0] + selectedInstArray[1];
+                selectedLayer.instrument.sampler.indexOf(firstTwo) === -1 && this.setSelectedInstrument(selectedLayer)
+            }
         }
     }
 
@@ -346,19 +364,14 @@ class LayerSettings extends Component {
         window.removeEventListener('click', this.onClick)
     }
 
-    setSelectedInstrument = (selectedLayer) => {
-        const { instrumentOptions } = this.state;
+    setSelectedInstrument = async (selectedLayer) => {
+        const instrumentOptions = await Instruments.getInstrumentOptions(false)
         if (instrumentOptions && this.props.round) {
             const localLayer = _.find(this.props.round.layers, { id: this.props.selectedLayerId })
             const sampler = selectedLayer?.instrument?.sampler || localLayer?.instrument?.sampler;
             const instrument = _.find(instrumentOptions, { name: sampler })
-            const newSamplerArr = sampler.split('')
-            const lastLetter = newSamplerArr.pop()
-            let letterFix = sampler;
-            if (lastLetter === 's') {
-                letterFix = newSamplerArr.join('')
-            }
-            this.setState({ selectedInstrument: instrument ? instrument.label : letterFix })
+            if (instrument)
+                this.setState({ selectedInstrument: instrument.label })
         }
     }
 
@@ -528,7 +541,7 @@ class LayerSettings extends Component {
 
         const form = (
             <Box className={classes.root}>
-                <MixerPopup
+                <LayerListPopup
                     instrumentIcon={instrumentIcon}
                     classes={classes}
                     round={this.props.round}
@@ -555,6 +568,7 @@ class LayerSettings extends Component {
                                 <LayerInstrumentAlt
                                     showInstrumentsPopup={showInstrumentsPopup}
                                     showInstrumentsList={showInstrumentsList}
+                                    selectedInstrumentLabel={selectedInstrument}
                                     toggleShowInstrumentList={this.toggleShowInstrumentList}
                                     toggleArticulationOptions={this.toggleArticulationOptions}
                                     classes={classes}

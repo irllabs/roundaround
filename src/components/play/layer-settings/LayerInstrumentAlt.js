@@ -19,6 +19,7 @@ const LayerInstrument = ({
     showInstrumentsPopup,
     toggleShowInstrumentList,
     toggleArticulationOptions,
+    selectedInstrumentLabel,
     showArticulationOptions,
     showInstrumentsList,
     classes,
@@ -77,7 +78,7 @@ const LayerInstrument = ({
                         </Box>
                         {!showInstrumentsList &&
                             <>
-                                <Typography style={{ flex: 3, textAlign: 'left', textTransform: 'Capitalize' }}>{selectedLayer?.instrument?.sampler}</Typography>
+                                <Typography style={{ flex: 3, textAlign: 'left', textTransform: 'Capitalize' }}>{selectedInstrumentLabel}</Typography>
                                 <Box style={{ display: 'flex', justifyContent: 'flex-end', flex: 1 }}>
                                     <img alt='right arrow' src={RightArrow} />
                                 </Box>
