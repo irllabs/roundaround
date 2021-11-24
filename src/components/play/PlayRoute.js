@@ -159,15 +159,6 @@ class PlayRoute extends Component {
                     _this.props.setRoundCurrentUsers(updatedRound.currentUsers)
                     _this.addUsersListeners()
                 }
-                if (!_.isEqual(_this.props.round.isPlaying, updatedRound.isPlaying)) {
-                    if (updatedRound.isPlaying) {
-                        AudioEngine.play()
-                        _this.props.setIsPlaying(true)
-                    } else {
-                        AudioEngine.stop()
-                        _this.props.setIsPlaying(false)
-                    }
-                }
                 if (!_.isEqual(_this.props.round.bpm, updatedRound.bpm)) {
                     AudioEngine.setTempo(updatedRound.bpm)
                     _this.props.setRoundBpm(updatedRound.bpm)
