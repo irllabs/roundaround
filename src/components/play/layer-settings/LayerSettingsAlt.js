@@ -19,9 +19,6 @@ import Instruments from '../../../audio-engine/Instruments'
 
 /** SVGs */
 import Close from './resources/svg/close.svg'
-import AddLayer from './resources/svg/add.svg'
-import LayerIcon from './resources/svg/layer.svg'
-import ChangeInstrument from './resources/svg/instruments.svg'
 import HiHats from './resources/svg/hihat.svg'
 import Kick from './resources/svg/kick.svg'
 import Snare from './resources/svg/snare.svg'
@@ -375,6 +372,14 @@ class LayerSettings extends Component {
         }
     }
 
+    getUserColors() {
+        let userColors = {};
+        for (const user of this.props.users) {
+            userColors[user.id] = user.color
+        }
+        return userColors
+    }
+
     onClick = (e) => {
         const target = e.target;
         if ((
@@ -494,6 +499,8 @@ class LayerSettings extends Component {
 
         const { classes, user } = this.props
         const selectedLayer = this.props.selectedLayer
+        const userColors = this.getUserColors()
+
         let layerTypeFormItems;
         if (!_.isNil(selectedLayer)) {
             //layerVolumePercent = convertDBToPercent(selectedLayer.instrument.gain)
@@ -539,6 +546,8 @@ class LayerSettings extends Component {
             </Box>
         }
 
+        //selectedLayer ? userColors[user.id] : '#E6D64C'
+
         const form = (
             <Box className={classes.root}>
                 <LayerListPopup
@@ -548,13 +557,16 @@ class LayerSettings extends Component {
                     user={user}
                     onLayerSelect={this.onLayerClicked}
                     onMuteClick={this.onMuteClick.bind(this)}
+                    userColors={userColors}
                     toggleShowMixerPopup={() => this.setState(prevState => ({ showMixerPopup: !prevState.showMixerPopup }))}
                     showMixerPopup={showMixerPopup}
                     Close={Close}
                 />
                 <Box className={classes.addLayerContainer}>
                     <IconButton ref={this.addLayerButton} onClick={this.onAddLayerClick} className={classes.iconButtons}>
-                        <img alt='add layer' src={AddLayer} />
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M12 0C11.2353 0 10.6154 0.619913 10.6154 1.38461V10.6154H1.38462C0.619913 10.6154 0 11.2353 0 12C0 12.7647 0.619913 13.3846 1.38461 13.3846H10.6154L10.6154 22.6154C10.6154 23.3801 11.2353 24 12 24C12.7647 24 13.3846 23.3801 13.3846 22.6154L13.3846 13.3846L22.6154 13.3846C23.3801 13.3846 24 12.7647 24 12C24 11.2353 23.3801 10.6154 22.6154 10.6154L13.3846 10.6154V1.38462C13.3846 0.619914 12.7647 0 12 0Z" fill={user && user.id && userColors[user.id]} />
+                        </svg>
                     </IconButton>
                     <IconButton
                         style={showMixerPopup ? { backgroundColor: 'rgba(255, 255, 255, 0.2)' } : {}}
@@ -562,7 +574,11 @@ class LayerSettings extends Component {
                         className={classes.iconButtons}
                         onClick={() => this.setState(prevState => ({ showMixerPopup: !prevState.showMixerPopup }))}
                     >
-                        <img alt='change instrument' src={ChangeInstrument} />
+                        <svg width="18" height="20" viewBox="0 0 18 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path fillRule="evenodd" clipRule="evenodd" d="M4.2006 3.24925C5.25982 3.71232 6 4.7694 6 5.99936C6 7.22932 5.25982 8.2864 4.2006 8.74947L4.2006 18.3994C4.2006 19.0716 3.67279 19.5994 3.0006 19.5994C2.32841 19.5994 1.8006 19.0716 1.8006 18.3994L1.8006 8.74999C0.740735 8.2872 1.47506e-07 7.22978 1.62178e-07 5.99936C1.76851e-07 4.76894 0.740736 3.71152 1.8006 3.24872L1.8006 1.59937C1.8006 0.927176 2.32841 0.399366 3.0006 0.399366C3.67279 0.399366 4.2006 0.927176 4.2006 1.59937L4.2006 3.24925ZM3 4.99936C3.55228 4.99936 4 5.44707 4 5.99936C4 6.55164 3.55228 6.99936 3 6.99936C2.44772 6.99936 2 6.55164 2 5.99936C2 5.44707 2.44772 4.99936 3 4.99936Z" fill={user && user.id && userColors[user.id]} />
+                            <path fillRule="evenodd" clipRule="evenodd" d="M10.2006 11.2492L10.2006 1.59937C10.2006 0.927176 9.67279 0.399366 9.0006 0.399366C8.32841 0.399366 7.8006 0.927176 7.8006 1.59937L7.8006 11.2487C6.74074 11.7115 6 12.7689 6 13.9994C6 15.2298 6.74074 16.2872 7.8006 16.75L7.8006 18.3994C7.8006 19.0716 8.32841 19.5994 9.0006 19.5994C9.67279 19.5994 10.2006 19.0716 10.2006 18.3994L10.2006 16.7495C11.2598 16.2864 12 15.2293 12 13.9994C12 12.7694 11.2598 11.7123 10.2006 11.2492ZM9 12.9994C9.55228 12.9994 10 13.4471 10 13.9994C10 14.5516 9.55228 14.9994 9 14.9994C8.44772 14.9994 8 14.5516 8 13.9994C8 13.4471 8.44772 12.9994 9 12.9994Z" fill={user && user.id && userColors[user.id]} />
+                            <path fillRule="evenodd" clipRule="evenodd" d="M13.8006 1.59937L13.8006 3.24872C12.7407 3.71152 12 4.76894 12 5.99936C12 7.22978 12.7407 8.2872 13.8006 8.74999L13.8006 18.3994C13.8006 19.0716 14.3284 19.5994 15.0006 19.5994C15.6728 19.5994 16.2006 19.0716 16.2006 18.3994L16.2006 8.74947C17.2598 8.2864 18 7.22932 18 5.99936C18 4.7694 17.2598 3.71232 16.2006 3.24925L16.2006 1.59937C16.2006 0.927176 15.6728 0.399367 15.0006 0.399367C14.3284 0.399367 13.8006 0.927176 13.8006 1.59937ZM15 4.99936C15.5523 4.99936 16 5.44708 16 5.99936C16 6.55164 15.5523 6.99936 15 6.99936C14.4477 6.99936 14 6.55164 14 5.99936C14 5.44708 14.4477 4.99936 15 4.99936Z" fill={user && user.id && userColors[user.id]} />
+                        </svg>
                     </IconButton>
                 </Box>
                 <Box className={classes.layerOptions}>
@@ -622,7 +638,9 @@ class LayerSettings extends Component {
                                     className={classes.stepCount}
                                 >
                                     <Box style={{ display: 'flex', flexDirection: 'row', alignItems: 'center', marginRight: 5 }}>
-                                        <img alt='layer-small' src={LayerIcon} />
+                                        <svg width="12" height="12" viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                            <circle cx="6" cy="6" r="5" stroke={user && user.id && userColors[user.id]} strokeWidth="2" />
+                                        </svg>
                                     </Box>
                                     <Typography className={classes.stepLength} style={{ fontWeight: 'bolder' }}>{selectedLayer.steps.length}</Typography>
                                 </IconButton>
@@ -665,7 +683,7 @@ class LayerSettings extends Component {
 
         return (
             <div className={classes.container} >
-                {form}
+                {user && user.id && form}
             </div>
         )
     }
@@ -680,6 +698,7 @@ const mapStateToProps = state => {
     return {
         round: state.round,
         user: state.user,
+        users: state.users,
         selectedLayerId: state.display.selectedLayerId,
         selectedLayer,
         isOpen: state.display.isShowingLayerSettings

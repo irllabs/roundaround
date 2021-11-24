@@ -1,7 +1,6 @@
 import React from 'react'
 import { Box, Typography, IconButton } from '@material-ui/core'
 
-import LayerIcon from './resources/svg/layer.svg'
 import VolumeSlider from './VolumeSlider'
 
 
@@ -14,6 +13,7 @@ const MixerPopup = ({
     toggleShowMixerPopup,
     onLayerSelect,
     ref,
+    userColors,
     user,
     round,
     Close
@@ -47,7 +47,9 @@ const MixerPopup = ({
                                 </Box>
                                 <Box style={{ display: 'flex', flexDirection: 'row', alignItems: 'center', width: 36, height: 20 }}>
                                     <Box style={{ display: 'flex', flexDirection: 'row', alignItems: 'center', justifyContent: 'center', marginRight: 5 }}>
-                                        <img style={{ width: 12, height: 12, }} alt='layer-small' src={LayerIcon} />
+                                        {userColors && layer && layer.createdBy && <svg width="12" height="12" viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                            <circle cx="6" cy="6" r="5" stroke={userColors[layer.createdBy]} strokeWidth="2" />
+                                        </svg>}
                                     </Box>
                                     <Typography className={classes.stepLength}>{layer.steps.length}</Typography>
                                 </Box>
