@@ -311,7 +311,7 @@ class LayerSettings extends Component {
             showInstrumentsList: false,
             showSoundsList: false,
             showArticulationOptions: false,
-            showStepPopup: false,
+            showLayerPopup: false,
             showVolumePopup: false,
             instrumentOptions: Instruments.getInstrumentOptions(false),
             selectedInstrument: ''
@@ -396,7 +396,7 @@ class LayerSettings extends Component {
                 showInstrumentsList: false,
                 showSoundsList: false,
                 showArticulationOptions: false,
-                showStepPopup: false,
+                showLayerPopup: false,
                 showVolumePopup: false,
             });
         }
@@ -471,7 +471,7 @@ class LayerSettings extends Component {
     toggleLayerPopup = (e) => {
         e.preventDefault()
         e.stopPropagation()
-        this.setState(prevState => ({ showStepPopup: !prevState.showStepPopup }))
+        this.setState(prevState => ({ showLayerPopup: !prevState.showLayerPopup }))
     }
 
     toggleVolumePopup = (e) => {
@@ -487,7 +487,7 @@ class LayerSettings extends Component {
             showInstrumentsPopup,
             showInstrumentsList,
             showArticulationOptions,
-            showStepPopup,
+            showLayerPopup,
             selectedInstrument,
             showVolumePopup
         } = this.state;
@@ -556,7 +556,12 @@ class LayerSettings extends Component {
                     <IconButton ref={this.addLayerButton} onClick={this.onAddLayerClick} className={classes.iconButtons}>
                         <img alt='add layer' src={AddLayer} />
                     </IconButton>
-                    <IconButton ref={this.mixerPopupButton} className={classes.iconButtons} onClick={() => this.setState(prevState => ({ showMixerPopup: !prevState.showMixerPopup }))}>
+                    <IconButton
+                        style={showMixerPopup ? { backgroundColor: 'rgba(255, 255, 255, 0.2)' } : {}}
+                        ref={this.mixerPopupButton}
+                        className={classes.iconButtons}
+                        onClick={() => this.setState(prevState => ({ showMixerPopup: !prevState.showMixerPopup }))}
+                    >
                         <img alt='change instrument' src={ChangeInstrument} />
                     </IconButton>
                 </Box>
@@ -579,7 +584,13 @@ class LayerSettings extends Component {
                                     soundsButtonRef={this.soundsButton}
                                     user={user}
                                 />
-                                <IconButton ref={this.instrumentPopupButton} id='instrument-summary' className={classes.instrumentSummary} onClick={this.toggleInstrumentPopup}>
+                                <IconButton
+                                    ref={this.instrumentPopupButton}
+                                    id='instrument-summary'
+                                    style={showInstrumentsPopup ? { backgroundColor: 'rgba(255, 255, 255, 0.2)' } : {}}
+                                    className={classes.instrumentSummary}
+                                    onClick={this.toggleInstrumentPopup}
+                                >
                                     <Box style={{ display: 'flex', flexDirection: 'row', alignItems: 'center', justifyContent: 'center', paddingRight: 5 }}>
                                         {instrumentIcon(selectedLayer?.instrument?.sampler)}
                                     </Box>
@@ -598,13 +609,18 @@ class LayerSettings extends Component {
                                     subtractStepsButtonRef={this.subtractStepsButton}
                                     percentageButtonRef={this.percentageButton}
                                     msButtonRef={this.msButton}
-                                    showStepPopup={showStepPopup}
+                                    showLayerPopup={showLayerPopup}
                                     selectedLayer={selectedLayer}
                                     round={this.props.round}
                                     user={user}
                                     playUIRef={this.props.playUIRef}
                                 />
-                                <IconButton ref={this.layerPopupButton} onClick={this.toggleLayerPopup} className={classes.stepCount}>
+                                <IconButton
+                                    ref={this.layerPopupButton}
+                                    onClick={this.toggleLayerPopup}
+                                    style={showLayerPopup ? { backgroundColor: 'rgba(255, 255, 255, 0.2)' } : {}}
+                                    className={classes.stepCount}
+                                >
                                     <Box style={{ display: 'flex', flexDirection: 'row', alignItems: 'center', marginRight: 5 }}>
                                         <img alt='layer-small' src={LayerIcon} />
                                     </Box>
@@ -612,8 +628,18 @@ class LayerSettings extends Component {
                                 </IconButton>
                             </Box>
                             <Box className={classes.actionButtonContainer}>
-                                <VolumePopup onMute={this.onMuteClick.bind(this, selectedLayer)} showVolumePopup={showVolumePopup} selectedLayer={selectedLayer} round={this.props.round} user={user} />
-                                <IconButton ref={this.volumePopupButton} onClick={this.toggleVolumePopup} className={classes.actionButton}>
+                                <VolumePopup
+                                    onMute={this.onMuteClick.bind(this, selectedLayer)}
+                                    showVolumePopup={showVolumePopup}
+                                    selectedLayer={selectedLayer}
+                                    round={this.props.round} user={user}
+                                />
+                                <IconButton
+                                    ref={this.volumePopupButton}
+                                    onClick={this.toggleVolumePopup}
+                                    style={showVolumePopup ? { backgroundColor: 'rgba(255, 255, 255, 0.2)' } : {}}
+                                    className={classes.actionButton}
+                                >
                                     <img alt='layer-small' src={selectedLayer.isMuted ? Muted : Volume} />
                                 </IconButton>
                             </Box>

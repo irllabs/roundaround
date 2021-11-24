@@ -84,11 +84,11 @@ export default function LayerPercentOffset({
         dispatch({ type: SET_LAYER_PERCENT_OFFSET, payload: { id: selectedLayerId, value: percent } })
         firebase.updateLayer(roundId, selectedLayer.id, { percentOffset: percent })
     }
+
     const updateLayerTimeOffsetState = (ms, selectedLayerId) => {
         dispatch({ type: SET_LAYER_TIME_OFFSET, payload: { id: selectedLayerId, value: ms } })
         firebase.updateLayer(roundId, selectedLayer.id, { timeOffset: ms })
     }
-
 
     // eslint-disable-next-line react-hooks/exhaustive-deps
     const updateLayerPercentOffsetStateThrottled = useCallback(_.throttle(function (percent, selectedLayerId) {
