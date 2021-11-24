@@ -118,7 +118,7 @@ const LayerPopup = ({
     classes,
     round,
     user,
-    showStepPopup,
+    showLayerPopup,
     playUIRef,
     selectedLayer,
     addStepsButtonRef,
@@ -127,7 +127,7 @@ const LayerPopup = ({
     msButtonRef,
 }) => {
     return (
-        <Box className={showStepPopup ? classes.root : classes.hidden}>
+        <Box className={showLayerPopup ? classes.root : classes.hidden}>
             <Box style={{ width: '100%' }}>
                 <StepsDisplay
                     addStepsButtonRef={addStepsButtonRef}
