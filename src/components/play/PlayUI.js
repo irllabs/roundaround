@@ -51,7 +51,13 @@ class PlayUI extends Component {
         await this.createRound()
         window.addEventListener('resize', this.onWindowResizeThrottled)
         window.addEventListener('keypress', this.onKeypress)
-        window.addEventListener('dblclick', () => this.onMuteToggle(this.props))
+        window.addEventListener('dblclick', (e) => {
+            // should be a layer to mute toggle
+            const styleClass = e.target.classList[0]
+            if (styleClass && styleClass.indexOf('PlayUI-button-') > -1) {
+                this.onMuteToggle(this.props)
+            }
+        })
         this.addBackgroundEventListeners()
         this.checkOrientation()
     }
@@ -427,10 +433,12 @@ class PlayUI extends Component {
     }
 
     onMuteToggle(props) {
-        const isMuted = !props.selectedLayer.isMuted
-        AudioEngine.tracksById[props.selectedLayer.id].setMute(isMuted)
-        props.dispatch({ type: SET_LAYER_MUTE, payload: { id: props.selectedLayer.id, value: isMuted, user: props.user.id } })
-        this.context.updateLayer(props.round.id, props.selectedLayer.id, { isMuted })
+        const isMuted = props.selectedLayer?.isMuted
+        if (props.selectedLayer) {
+            AudioEngine.tracksById[props.selectedLayer.id].setMute(!isMuted)
+            props.dispatch({ type: SET_LAYER_MUTE, payload: { id: props.selectedLayer.id, value: !isMuted, user: props.user.id } })
+            this.context.updateLayer(props.round.id, props.selectedLayer.id, { isMuted: !isMuted })
+        }
     }
 
     getStep(id) {
@@ -485,6 +493,7 @@ class PlayUI extends Component {
             await _this.onAddLayerClick()
         })
         this.addLayerButton.addClass(this.props.classes.button)
+        this.addLayerButton.attr({ id: this.highlightNewLayer })
         //this.addLayerButton.svg('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="white" width="18px" height="18px"><path d="M0 0h24v24H0z" fill="white"/><path fill="white" d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/></svg>')
         this.addLayerButtonIcon = this.container.nested()
         this.addLayerButtonIcon.svg('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="' + this.userColors[this.props.user.id] + '" width="48px" height="48px"><path d="M0 0h24v24H0z" fill="none"/><path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/></svg>')
