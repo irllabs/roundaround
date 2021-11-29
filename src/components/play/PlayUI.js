@@ -1417,9 +1417,9 @@ class PlayUI extends Component {
         const newLayer = await getDefaultLayerData(this.props.user.id);
         newLayer.name = 'Layer ' + (this.props.round.layers.length + 1)
         this.props.dispatch({ type: ADD_LAYER, payload: { layer: newLayer, user: this.props.user.id } })
-        this.context.createLayer(this.round.id, newLayer)
         this.highlightNewLayer = newLayer.id
         this.selectedLayerId = newLayer.id
+        this.context.createLayer(this.round.id, newLayer)
         /* const newLayer = _.cloneDeep(this.props.round.layers[this.props.round.layers.length - 1])
          newLayer.id = Math.round(Math.random() * 99999)
          newLayer.order++;
