@@ -188,7 +188,10 @@ const styles = theme => ({
         fontWeight: 'bold',
         padding: '6px 15px',
         borderRadius: 24,
-        backgroundColor: 'rgba(255,255,255, 0.1)'
+        backgroundColor: 'rgba(255,255,255, 0.1)',
+        '&:hover': {
+            backgroundColor: 'rgba(255, 255, 255, 0.2)'
+        },
     },
     stepCount: {
         display: 'flex',
@@ -199,7 +202,10 @@ const styles = theme => ({
         height: 32,
         padding: '5px 15px',
         borderRadius: 24,
-        backgroundColor: 'rgba(255,255,255, 0.1)'
+        backgroundColor: 'rgba(255,255,255, 0.1)',
+        '&:hover': {
+            backgroundColor: 'rgba(255, 255, 255, 0.2)'
+        },
     },
     stepLength: {
         display: 'flex',
@@ -220,6 +226,9 @@ const styles = theme => ({
         width: 32,
         margin: '10px 0',
         backgroundColor: 'rgba(255,255,255, 0.1)',
+        '&:hover': {
+            backgroundColor: 'rgba(255, 255, 255, 0.2)'
+        },
     },
     msg: {
         flex: 1,
