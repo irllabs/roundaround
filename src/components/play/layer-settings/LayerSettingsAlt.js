@@ -1,8 +1,7 @@
 import React, { Component } from 'react'
 import { connect } from "react-redux";
-import { Divider, Typography } from '@material-ui/core';
+import { Typography } from '@material-ui/core';
 import IconButton from '@material-ui/core/IconButton';
-import Button from '@material-ui/core/Button';
 import _ from 'lodash'
 import {
     SET_LAYER_MUTE,
@@ -28,16 +27,11 @@ import Muted from './resources/svg/muted.svg'
 import Erasor from './resources/svg/erasor.svg'
 import Trash from './resources/svg/trash.svg'
 
-import VolumeSlider from './VolumeSlider'
-import LayerInstrument from './LayerInstrument'
 //import LayerNumberOfSteps from './LayerNumberOfSteps'
 import { FirebaseContext } from '../../../firebase';
-import LayerAutomation from './LayerAutomation';
-import Track from '../../../audio-engine/Track'
 import LayerInstrumentAlt from './LayerInstrumentAlt'
 import LayerPopup from './LayerPopup'
 import VolumePopup from './VolumePopup'
-import LayerCustomSounds from './LayerCustomSounds'
 import { getDefaultLayerData } from '../../../utils/defaultData';
 import LayerListPopup from './LayerListPopup';
 
@@ -516,36 +510,6 @@ class LayerSettings extends Component {
         const selectedLayer = this.props.selectedLayer
         const userColors = this.getUserColors()
 
-        let layerTypeFormItems;
-        if (!_.isNil(selectedLayer)) {
-            //layerVolumePercent = convertDBToPercent(selectedLayer.instrument.gain)
-            if (selectedLayer.type === Track.TRACK_TYPE_AUTOMATION) {
-                layerTypeFormItems = (
-                    <>
-                        <LayerAutomation selectedLayer={selectedLayer} roundId={this.props.round.id} userId={this.props.user.id} />
-                        <Box className={classes.buttonContainer} display="flex" justifyContent="space-evenly">
-                            <Button className={classes.containedButton} onClick={this.onClearStepsClick.bind(this)} variant="contained" color="secondary" disableElevation>Clear</Button>
-                            <Button className={classes.containedButton} onClick={this.onDeleteLayerClick.bind(this)} variant="contained" color="secondary" disableElevation>Delete</Button>
-                        </Box>
-                    </>
-                )
-            } else {
-                layerTypeFormItems = (
-                    <>
-                        <VolumeSlider selectedLayer={selectedLayer} roundId={this.props.round.id} user={this.props.user} />
-                        <Box className={classes.buttonContainer} display="flex" justifyContent="space-evenly">
-                            <Button className={classes.containedButton} onClick={this.onMuteClick.bind(this)} variant="contained" color={selectedLayer.isMuted ? 'primary' : 'secondary'} disableElevation>Mute</Button>
-                            <Button className={classes.containedButton} onClick={this.onClearStepsClick.bind(this)} variant="contained" color="secondary" disableElevation>Clear</Button>
-                            <Button className={classes.containedButton} onClick={this.onDeleteLayerClick.bind(this)} variant="contained" color="secondary" disableElevation>Delete</Button>
-                        </Box>
-                        <Divider className={classes.divider} />
-                        <LayerInstrument selectedLayer={selectedLayer} roundId={this.props.round.id} user={this.props.user} />
-                        <LayerCustomSounds selectedLayer={selectedLayer} roundId={this.props.round.id} user={this.props.user} />
-                    </>
-                )
-            }
-        }
-
         const instrumentIcon = (name) => {
             let Icon = <svg></svg>;
             if (name === 'HiHats')
@@ -689,11 +653,6 @@ class LayerSettings extends Component {
                                 </IconButton>
                             </Box>
                         </Box>}
-                    {/* <LayerNumberOfSteps selectedLayer={selectedLayer} roundId={this.props.round.id} user={this.props.user} />
-                    <LayerPercentOffset selectedLayer={selectedLayer} roundId={this.props.round.id} user={this.props.user} playUIRef={this.props.playUIRef} />
-                    {/* <LayerTimeOffset selectedLayer={selectedLayer} roundId={this.props.round.id} user={this.props.user} playUIRef={this.props.playUIRef} /> */}
-                    {/** Temp disable */}
-                    {false && layerTypeFormItems}
                 </Box>
             </Box>
         )

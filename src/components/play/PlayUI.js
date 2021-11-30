@@ -47,11 +47,12 @@ class PlayUI extends Component {
     async componentDidMount() {
         // register this component with parent so we can do some instant updates bypassing redux for speed
         this.props.childRef(this)
-
         await this.createRound()
-        window.addEventListener('resize', this.onWindowResizeThrottled)
-        window.addEventListener('keypress', this.onKeypress)
-        window.addEventListener('dblclick', () => this.onMuteToggle(this.props))
+        if (window) {
+            window.addEventListener('resize', this.onWindowResizeThrottled)
+            window.addEventListener('keypress', this.onKeypress)
+            window.addEventListener('dblclick', () => this.onMuteToggle(this.props))
+        }
         this.addBackgroundEventListeners()
         this.checkOrientation()
     }
