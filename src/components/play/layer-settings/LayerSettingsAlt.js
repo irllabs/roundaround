@@ -316,6 +316,8 @@ class LayerSettings extends Component {
         this.addLayerButton = React.createRef()
         this.mixerPopupButton = React.createRef()
         this.instrumentPopupButton = React.createRef()
+        this.instrumentsListButton = React.createRef()
+        this.articulationsListButton = React.createRef()
         this.layerPopupButton = React.createRef()
         this.volumePopupButton = React.createRef()
         this.instrumentsButton = React.createRef()
@@ -381,10 +383,14 @@ class LayerSettings extends Component {
     }
 
     onClick = (e) => {
+        e.preventDefault()
+        e.stopPropagation()
         const target = e.target;
         if ((
             (!this.instrumentPopupButton.current || (this.instrumentPopupButton.current && !this.instrumentPopupButton.current.contains(target)))
             //&& (!this.addLayerButton.current || (this.addLayerButton.current && !this.addLayerButton.current.contains(target)))
+            && (!this.articulationsListButton.current || (this.articulationsListButton.current && !this.articulationsListButton.current.contains(target)))
+            && (!this.instrumentsListButton.current || (this.instrumentsListButton.current && !this.instrumentsListButton.current.contains(target)))
             && (!this.instrumentsButton.current || (this.instrumentsButton.current && !this.instrumentsButton.current.contains(target)))
             && (!this.soundsButton.current || (this.soundsButton.current && !this.soundsButton.current.contains(target)))
             && (!this.addStepsButton.current || (this.addStepsButton.current && !this.addStepsButton.current.contains(target)))
@@ -588,6 +594,8 @@ class LayerSettings extends Component {
                             <Box className={classes.actionButtonContainer}>
                                 <LayerInstrumentAlt
                                     showInstrumentsPopup={showInstrumentsPopup}
+                                    instrumentsListRef={this.instrumentsListButton}
+                                    articulationsListRef={this.articulationsListButton}
                                     showInstrumentsList={showInstrumentsList}
                                     selectedInstrumentLabel={selectedInstrument}
                                     toggleShowInstrumentList={this.toggleShowInstrumentList}

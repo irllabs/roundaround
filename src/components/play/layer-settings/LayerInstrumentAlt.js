@@ -25,6 +25,8 @@ const LayerInstrument = ({
     classes,
     selectedLayer,
     roundId,
+    instrumentsListRef,
+    articulationsListRef,
     instrumentsButtonRef,
     soundsButtonRef,
     user
@@ -78,7 +80,9 @@ const LayerInstrument = ({
                         </Box>
                         {!showInstrumentsList &&
                             <>
-                                <Typography style={{ flex: 3, textAlign: 'left', textTransform: 'Capitalize' }}>{selectedInstrumentLabel}</Typography>
+                                <Typography style={{ flex: 3, textAlign: 'left', textTransform: 'Capitalize' }}>
+                                    {selectedInstrumentLabel}
+                                </Typography>
                                 <Box style={{ display: 'flex', justifyContent: 'flex-end', flex: 1 }}>
                                     <img alt='right arrow' src={RightArrow} />
                                 </Box>
@@ -88,7 +92,15 @@ const LayerInstrument = ({
                     {showInstrumentsList &&
                         <Box style={{ display: 'flex', flexDirection: 'column' }}>
                             {instrumentOptions.map((instrument, i) =>
-                                <IconButton key={i} onClick={() => onInstrumentSelect(instrument)} style={{ justifyContent: 'space-between' }} className={classes.rectButton}>
+                                <IconButton
+                                    ref={instrumentsListRef}
+                                    id={`instrument-${i}`}
+                                    key={`instrument-${i}`}
+                                    onClick={(e) => {
+                                        e.stopPropagation()
+                                        onInstrumentSelect(instrument)
+                                    }
+                                    } style={{ justifyContent: 'space-between' }} className={classes.rectButton}>
                                     <Typography style={{ textAlign: 'left' }}>{instrument.label}</Typography>
                                     {selectedInstrument === instrument.name && <img alt='checked' src={Check} />}
                                 </IconButton>
@@ -123,7 +135,15 @@ const LayerInstrument = ({
                     {showArticulationOptions &&
                         <Box style={{ display: 'flex', flexDirection: 'column', maxHeight: 300, overflow: 'scroll' }}>
                             {articulationOptions.map((articulation, i) =>
-                                <IconButton key={i} onClick={() => onArticulationSelect(articulation)} style={{ justifyContent: 'space-between' }} className={classes.rectButton}>
+                                <IconButton
+                                    ref={articulationsListRef}
+                                    id={`articulation-${i}`}
+                                    key={`articulation-${i}`}
+                                    onClick={(e) => {
+                                        e.stopPropagation()
+                                        onArticulationSelect(articulation)
+                                    }
+                                    } style={{ justifyContent: 'space-between' }} className={classes.rectButton}>
                                     <Typography style={{ textAlign: 'left' }}>{articulation.name}</Typography>
                                     {selectedArticulation === articulation.value && <img alt='checked' src={Check} />}
                                 </IconButton>
