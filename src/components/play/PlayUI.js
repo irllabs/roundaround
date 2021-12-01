@@ -1521,8 +1521,6 @@ class PlayUI extends Component {
     }
 
     onKeypress(e) {
-        e.preventDefault();
-        // Prevent default and do nothing
     }
 
     showOrientationDialog() {
