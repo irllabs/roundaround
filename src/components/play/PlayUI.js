@@ -87,7 +87,6 @@ class PlayUI extends Component {
         await this.createRound()
         window.addEventListener('resize', this.onWindowResizeThrottled)
         window.addEventListener('keypress', this.onKeypress)
-        window.addEventListener('dblclick', () => this.onMuteToggle(this.props))
         this.addBackgroundEventListeners()
         this.checkOrientation()
         // load sequence if enabled
@@ -268,10 +267,12 @@ class PlayUI extends Component {
     }
 
     onMuteToggle(props) {
-        const isMuted = !props.selectedLayer.isMuted
-        AudioEngine.tracksById[props.selectedLayer.id].setMute(isMuted)
-        props.dispatch({ type: SET_LAYER_MUTE, payload: { id: props.selectedLayer.id, value: isMuted, user: props.user.id } })
-        this.context.updateLayer(props.round.id, props.selectedLayer.id, { isMuted })
+        const isMuted = props.selectedLayer?.isMuted
+        if (props.selectedLayer) {
+            AudioEngine.tracksById[props.selectedLayer.id].setMute(!isMuted)
+            props.dispatch({ type: SET_LAYER_MUTE, payload: { id: props.selectedLayer.id, value: !isMuted, user: props.user.id } })
+            this.context.updateLayer(props.round.id, props.selectedLayer.id, { isMuted: !isMuted })
+        }
     }
 
     getStep(id) {
