@@ -404,17 +404,19 @@ class LayerSettings extends Component {
             && (!this.mixerPopupButton.current || (this.mixerPopupButton.current && !this.mixerPopupButton.current.contains(target)))
             && (!this.volumePopupButton.current || (this.volumePopupButton && !this.volumePopupButton.current.contains(target)))
         )) {
-            this.setState({
-                showMixerPopup: false,
-                showInstrumentsPopup: false,
-                showInstrumentsList: false,
-                showSoundsList: false,
-                showArticulationOptions: false,
-                showLayerPopup: false,
-                showVolumePopup: false,
-            });
+            this.hideAllLayerInspectorModals()
         }
     }
+
+    hideAllLayerInspectorModals = () => this.setState({
+        showMixerPopup: false,
+        showInstrumentsPopup: false,
+        showInstrumentsList: false,
+        showSoundsList: false,
+        showArticulationOptions: false,
+        showLayerPopup: false,
+        showVolumePopup: false,
+    })
 
     onCloseClick() {
         this.props.dispatch({ type: SET_IS_SHOWING_LAYER_SETTINGS, payload: { value: false } })
@@ -467,31 +469,49 @@ class LayerSettings extends Component {
     toggleInstrumentPopup = (e) => {
         e.preventDefault()
         e.stopPropagation()
-        this.setState(prevState => ({ showInstrumentsPopup: !prevState.showInstrumentsPopup }))
+        const showInstrumentsPopup = !this.state.showInstrumentsPopup
+        this.hideAllLayerInspectorModals()
+        this.setState({ showInstrumentsPopup })
     }
 
     toggleShowInstrumentList = (e) => {
         e.preventDefault()
         e.stopPropagation()
-        this.setState(prevState => ({ showInstrumentsList: !prevState.showInstrumentsList }))
+        const showInstrumentsList = !this.state.showInstrumentsList
+        this.hideAllLayerInspectorModals()
+        this.setState({ showInstrumentsList })
     }
 
     toggleArticulationOptions = (e) => {
         e.preventDefault()
         e.stopPropagation()
-        this.setState(prevState => ({ showArticulationOptions: !prevState.showArticulationOptions }))
+        const showArticulationOptions = !this.state.showArticulationOptions
+        this.hideAllLayerInspectorModals()
+        this.setState({ showArticulationOptions })
     }
 
     toggleLayerPopup = (e) => {
         e.preventDefault()
         e.stopPropagation()
-        this.setState(prevState => ({ showLayerPopup: !prevState.showLayerPopup }))
+        const showLayerPopup = !this.state.showLayerPopup
+        this.hideAllLayerInspectorModals()
+        this.setState({ showLayerPopup })
     }
 
     toggleVolumePopup = (e) => {
         e.preventDefault()
         e.stopPropagation()
-        this.setState(prevState => ({ showVolumePopup: !prevState.showVolumePopup }))
+        const showVolumePopup = !this.state.showVolumePopup
+        this.hideAllLayerInspectorModals()
+        this.setState({ showVolumePopup })
+    }
+
+    toggleShowMixerPopup = (e) => {
+        e.preventDefault()
+        e.stopPropagation()
+        const showMixerPopup = !this.state.showMixerPopup
+        this.hideAllLayerInspectorModals()
+        this.setState({ showMixerPopup })
     }
 
     render() {
@@ -537,7 +557,7 @@ class LayerSettings extends Component {
                     onLayerSelect={this.onLayerClicked}
                     onMuteClick={this.onMuteClick.bind(this)}
                     userColors={userColors}
-                    toggleShowMixerPopup={() => this.setState(prevState => ({ showMixerPopup: !prevState.showMixerPopup }))}
+                    toggleShowMixerPopup={this.toggleShowMixerPopup}
                     showMixerPopup={showMixerPopup}
                     Close={Close}
                 />
@@ -551,7 +571,7 @@ class LayerSettings extends Component {
                         style={showMixerPopup ? { backgroundColor: 'rgba(255, 255, 255, 0.2)' } : {}}
                         ref={this.mixerPopupButton}
                         className={classes.iconButtons}
-                        onClick={() => this.setState(prevState => ({ showMixerPopup: !prevState.showMixerPopup }))}
+                        onClick={this.toggleShowMixerPopup}
                     >
                         <svg width="18" height="20" viewBox="0 0 18 20" fill="none" xmlns="http://www.w3.org/2000/svg">
                             <path fillRule="evenodd" clipRule="evenodd" d="M4.2006 3.24925C5.25982 3.71232 6 4.7694 6 5.99936C6 7.22932 5.25982 8.2864 4.2006 8.74947L4.2006 18.3994C4.2006 19.0716 3.67279 19.5994 3.0006 19.5994C2.32841 19.5994 1.8006 19.0716 1.8006 18.3994L1.8006 8.74999C0.740735 8.2872 1.47506e-07 7.22978 1.62178e-07 5.99936C1.76851e-07 4.76894 0.740736 3.71152 1.8006 3.24872L1.8006 1.59937C1.8006 0.927176 2.32841 0.399366 3.0006 0.399366C3.67279 0.399366 4.2006 0.927176 4.2006 1.59937L4.2006 3.24925ZM3 4.99936C3.55228 4.99936 4 5.44707 4 5.99936C4 6.55164 3.55228 6.99936 3 6.99936C2.44772 6.99936 2 6.55164 2 5.99936C2 5.44707 2.44772 4.99936 3 4.99936Z" fill={user && user.id && userColors[user.id]} />

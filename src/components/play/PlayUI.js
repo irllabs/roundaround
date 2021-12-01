@@ -1,5 +1,5 @@
 import React, { Component } from 'react';
-import * as _ from 'lodash';
+import _ from 'lodash';
 import { SVG } from '@svgdotjs/svg.js'
 import '@svgdotjs/svg.panzoom.js'
 import { HTML_UI_Params } from '../../utils/constants'
