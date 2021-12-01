@@ -435,6 +435,7 @@ class LayerSettings extends Component {
 
     onSoloClick = () => {
         //TODO: play single layer on solo click
+
     }
 
     onMuteClick(selectedLayer) {
@@ -479,7 +480,7 @@ class LayerSettings extends Component {
         e.stopPropagation()
         const showInstrumentsList = !this.state.showInstrumentsList
         this.hideAllLayerInspectorModals()
-        this.setState({ showInstrumentsList })
+        this.setState({ showInstrumentsList, showInstrumentsPopup: true })
     }
 
     toggleArticulationOptions = (e) => {
@@ -487,7 +488,7 @@ class LayerSettings extends Component {
         e.stopPropagation()
         const showArticulationOptions = !this.state.showArticulationOptions
         this.hideAllLayerInspectorModals()
-        this.setState({ showArticulationOptions })
+        this.setState({ showArticulationOptions, showInstrumentsPopup: true })
     }
 
     toggleLayerPopup = (e) => {
