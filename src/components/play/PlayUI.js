@@ -49,6 +49,7 @@ class PlayUI extends Component {
         this.props.childRef(this)
         await this.createRound()
         if (window) {
+            window.addEventListener('click', this.interfaceClicked)
             window.addEventListener('resize', this.onWindowResizeThrottled)
             window.addEventListener('keypress', this.onKeypress)
             window.addEventListener('dblclick', () => this.onMuteToggle(this.props))
@@ -58,12 +59,20 @@ class PlayUI extends Component {
     }
 
     async componentWillUnmount() {
+        window.removeEventListener('click', this.interfaceClicked)
         window.removeEventListener('resize', this.onWindowResizeThrottled)
         window.removeEventListener('keypress', this.onKeypress)
         window.removeEventListener('dblclick', this.onMuteToggle)
         this.removeBackgroundEventListeners()
         this.clear()
         this.disposeToneEvents()
+    }
+
+    interfaceClicked = (e) => {
+        if (!this.selectedLayerId && this.props.selectedLayer) {
+            this.props.dispatch({ type: SET_SELECTED_LAYER_ID, payload: { layerId: null } })
+            this.props.dispatch({ type: SET_IS_SHOWING_LAYER_SETTINGS, payload: { value: false } })
+        }
     }
 
     async createRound() {
