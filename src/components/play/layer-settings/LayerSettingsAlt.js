@@ -433,9 +433,20 @@ class LayerSettings extends Component {
         // TODO: only audible to this user (mute for all others)
     }
 
-    onSoloClick = () => {
-        //TODO: play single layer on solo click
-
+    onSoloClick = async () => {
+        const selectedLayer = this.props.selectedLayer;
+        const layers = this.props.round.layers;
+        if (selectedLayer) {
+            await layers.forEach(layer => {
+                const id = layer.id;
+                const isMuted = !layer.isMuted;
+                if (selectedLayer.id !== id) {
+                    AudioEngine.tracksById[id].setMute(isMuted)
+                    this.props.dispatch({ type: SET_LAYER_MUTE, payload: { id, value: isMuted, user: this.props.user.id } })
+                    this.context.updateLayer(this.props.round.id, id, { isMuted })
+                }
+            });
+        }
     }
 
     onMuteClick(selectedLayer) {
@@ -650,6 +661,7 @@ class LayerSettings extends Component {
                             <Box className={classes.actionButtonContainer}>
                                 <VolumePopup
                                     onMute={this.onMuteClick.bind(this, selectedLayer)}
+                                    onSolo={this.onSoloClick}
                                     showVolumePopup={showVolumePopup}
                                     selectedLayer={selectedLayer}
                                     round={this.props.round} user={user}
