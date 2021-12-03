@@ -313,8 +313,10 @@ class LayerSettings extends Component {
             showArticulationOptions: false,
             showLayerPopup: false,
             showVolumePopup: false,
+            showHamburgerPopup: false,
             instrumentOptions: Instruments.getInstrumentOptions(false),
-            selectedInstrument: ''
+            selectedInstrument: '',
+            windowWidth: 340
         }
         this.addLayerButton = React.createRef()
         this.mixerPopupButton = React.createRef()
@@ -335,6 +337,8 @@ class LayerSettings extends Component {
 
     componentDidMount() {
         window.addEventListener('click', this.onClick)
+        window.addEventListener('resize', this.updateWindowWidth)
+        this.updateWindowWidth()
         if (this.props.round && this.props.selectedLayerId) {
             const selectedLayer = _.find(this.props.round.layers, { id: this.props.selectedLayerId })
             this.setSelectedInstrument(selectedLayer)
@@ -364,7 +368,10 @@ class LayerSettings extends Component {
 
     componentWillUnmount() {
         window.removeEventListener('click', this.onClick)
+        window.removeEventListener('resize', this.updateWindowWidth)
     }
+
+    updateWindowWidth = () => this.setState({ windowWidth: window.innerWidth })
 
     setSelectedInstrument = async (selectedLayer) => {
         const instrumentOptions = await Instruments.getInstrumentOptions(false)
@@ -535,7 +542,8 @@ class LayerSettings extends Component {
             showArticulationOptions,
             showLayerPopup,
             selectedInstrument,
-            showVolumePopup
+            showVolumePopup,
+            windowWidth
         } = this.state;
 
         const { classes, user } = this.props
@@ -557,8 +565,6 @@ class LayerSettings extends Component {
             </Box>
         }
 
-        //selectedLayer ? userColors[user.id] : '#E6D64C'
-
         const form = (
             <Box className={classes.root}>
                 <LayerListPopup
@@ -574,23 +580,33 @@ class LayerSettings extends Component {
                     Close={Close}
                 />
                 <Box className={classes.addLayerContainer}>
-                    <IconButton ref={this.addLayerButton} onClick={this.onAddLayerClick} className={classes.iconButtons}>
-                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                            <path d="M12 0C11.2353 0 10.6154 0.619913 10.6154 1.38461V10.6154H1.38462C0.619913 10.6154 0 11.2353 0 12C0 12.7647 0.619913 13.3846 1.38461 13.3846H10.6154L10.6154 22.6154C10.6154 23.3801 11.2353 24 12 24C12.7647 24 13.3846 23.3801 13.3846 22.6154L13.3846 13.3846L22.6154 13.3846C23.3801 13.3846 24 12.7647 24 12C24 11.2353 23.3801 10.6154 22.6154 10.6154L13.3846 10.6154V1.38462C13.3846 0.619914 12.7647 0 12 0Z" fill={user && user.id && userColors[user.id]} />
-                        </svg>
-                    </IconButton>
-                    <IconButton
-                        style={showMixerPopup ? { backgroundColor: 'rgba(255, 255, 255, 0.2)' } : {}}
-                        ref={this.mixerPopupButton}
-                        className={classes.iconButtons}
-                        onClick={this.toggleShowMixerPopup}
-                    >
-                        <svg width="18" height="20" viewBox="0 0 18 20" fill="none" xmlns="http://www.w3.org/2000/svg">
-                            <path fillRule="evenodd" clipRule="evenodd" d="M4.2006 3.24925C5.25982 3.71232 6 4.7694 6 5.99936C6 7.22932 5.25982 8.2864 4.2006 8.74947L4.2006 18.3994C4.2006 19.0716 3.67279 19.5994 3.0006 19.5994C2.32841 19.5994 1.8006 19.0716 1.8006 18.3994L1.8006 8.74999C0.740735 8.2872 1.47506e-07 7.22978 1.62178e-07 5.99936C1.76851e-07 4.76894 0.740736 3.71152 1.8006 3.24872L1.8006 1.59937C1.8006 0.927176 2.32841 0.399366 3.0006 0.399366C3.67279 0.399366 4.2006 0.927176 4.2006 1.59937L4.2006 3.24925ZM3 4.99936C3.55228 4.99936 4 5.44707 4 5.99936C4 6.55164 3.55228 6.99936 3 6.99936C2.44772 6.99936 2 6.55164 2 5.99936C2 5.44707 2.44772 4.99936 3 4.99936Z" fill={user && user.id && userColors[user.id]} />
-                            <path fillRule="evenodd" clipRule="evenodd" d="M10.2006 11.2492L10.2006 1.59937C10.2006 0.927176 9.67279 0.399366 9.0006 0.399366C8.32841 0.399366 7.8006 0.927176 7.8006 1.59937L7.8006 11.2487C6.74074 11.7115 6 12.7689 6 13.9994C6 15.2298 6.74074 16.2872 7.8006 16.75L7.8006 18.3994C7.8006 19.0716 8.32841 19.5994 9.0006 19.5994C9.67279 19.5994 10.2006 19.0716 10.2006 18.3994L10.2006 16.7495C11.2598 16.2864 12 15.2293 12 13.9994C12 12.7694 11.2598 11.7123 10.2006 11.2492ZM9 12.9994C9.55228 12.9994 10 13.4471 10 13.9994C10 14.5516 9.55228 14.9994 9 14.9994C8.44772 14.9994 8 14.5516 8 13.9994C8 13.4471 8.44772 12.9994 9 12.9994Z" fill={user && user.id && userColors[user.id]} />
-                            <path fillRule="evenodd" clipRule="evenodd" d="M13.8006 1.59937L13.8006 3.24872C12.7407 3.71152 12 4.76894 12 5.99936C12 7.22978 12.7407 8.2872 13.8006 8.74999L13.8006 18.3994C13.8006 19.0716 14.3284 19.5994 15.0006 19.5994C15.6728 19.5994 16.2006 19.0716 16.2006 18.3994L16.2006 8.74947C17.2598 8.2864 18 7.22932 18 5.99936C18 4.7694 17.2598 3.71232 16.2006 3.24925L16.2006 1.59937C16.2006 0.927176 15.6728 0.399367 15.0006 0.399367C14.3284 0.399367 13.8006 0.927176 13.8006 1.59937ZM15 4.99936C15.5523 4.99936 16 5.44708 16 5.99936C16 6.55164 15.5523 6.99936 15 6.99936C14.4477 6.99936 14 6.55164 14 5.99936C14 5.44708 14.4477 4.99936 15 4.99936Z" fill={user && user.id && userColors[user.id]} />
-                        </svg>
-                    </IconButton>
+                    {windowWidth > 480 ?
+                        <>
+                            <IconButton ref={this.addLayerButton} onClick={this.onAddLayerClick} className={classes.iconButtons}>
+                                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                    <path d="M12 0C11.2353 0 10.6154 0.619913 10.6154 1.38461V10.6154H1.38462C0.619913 10.6154 0 11.2353 0 12C0 12.7647 0.619913 13.3846 1.38461 13.3846H10.6154L10.6154 22.6154C10.6154 23.3801 11.2353 24 12 24C12.7647 24 13.3846 23.3801 13.3846 22.6154L13.3846 13.3846L22.6154 13.3846C23.3801 13.3846 24 12.7647 24 12C24 11.2353 23.3801 10.6154 22.6154 10.6154L13.3846 10.6154V1.38462C13.3846 0.619914 12.7647 0 12 0Z" fill={user && user.id && userColors[user.id]} />
+                                </svg>
+                            </IconButton>
+                            <IconButton
+                                style={showMixerPopup ? { backgroundColor: 'rgba(255, 255, 255, 0.2)' } : {}}
+                                ref={this.mixerPopupButton}
+                                className={classes.iconButtons}
+                                onClick={this.toggleShowMixerPopup}
+                            >
+                                <svg width="18" height="20" viewBox="0 0 18 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                    <path fillRule="evenodd" clipRule="evenodd" d="M4.2006 3.24925C5.25982 3.71232 6 4.7694 6 5.99936C6 7.22932 5.25982 8.2864 4.2006 8.74947L4.2006 18.3994C4.2006 19.0716 3.67279 19.5994 3.0006 19.5994C2.32841 19.5994 1.8006 19.0716 1.8006 18.3994L1.8006 8.74999C0.740735 8.2872 1.47506e-07 7.22978 1.62178e-07 5.99936C1.76851e-07 4.76894 0.740736 3.71152 1.8006 3.24872L1.8006 1.59937C1.8006 0.927176 2.32841 0.399366 3.0006 0.399366C3.67279 0.399366 4.2006 0.927176 4.2006 1.59937L4.2006 3.24925ZM3 4.99936C3.55228 4.99936 4 5.44707 4 5.99936C4 6.55164 3.55228 6.99936 3 6.99936C2.44772 6.99936 2 6.55164 2 5.99936C2 5.44707 2.44772 4.99936 3 4.99936Z" fill={user && user.id && userColors[user.id]} />
+                                    <path fillRule="evenodd" clipRule="evenodd" d="M10.2006 11.2492L10.2006 1.59937C10.2006 0.927176 9.67279 0.399366 9.0006 0.399366C8.32841 0.399366 7.8006 0.927176 7.8006 1.59937L7.8006 11.2487C6.74074 11.7115 6 12.7689 6 13.9994C6 15.2298 6.74074 16.2872 7.8006 16.75L7.8006 18.3994C7.8006 19.0716 8.32841 19.5994 9.0006 19.5994C9.67279 19.5994 10.2006 19.0716 10.2006 18.3994L10.2006 16.7495C11.2598 16.2864 12 15.2293 12 13.9994C12 12.7694 11.2598 11.7123 10.2006 11.2492ZM9 12.9994C9.55228 12.9994 10 13.4471 10 13.9994C10 14.5516 9.55228 14.9994 9 14.9994C8.44772 14.9994 8 14.5516 8 13.9994C8 13.4471 8.44772 12.9994 9 12.9994Z" fill={user && user.id && userColors[user.id]} />
+                                    <path fillRule="evenodd" clipRule="evenodd" d="M13.8006 1.59937L13.8006 3.24872C12.7407 3.71152 12 4.76894 12 5.99936C12 7.22978 12.7407 8.2872 13.8006 8.74999L13.8006 18.3994C13.8006 19.0716 14.3284 19.5994 15.0006 19.5994C15.6728 19.5994 16.2006 19.0716 16.2006 18.3994L16.2006 8.74947C17.2598 8.2864 18 7.22932 18 5.99936C18 4.7694 17.2598 3.71232 16.2006 3.24925L16.2006 1.59937C16.2006 0.927176 15.6728 0.399367 15.0006 0.399367C14.3284 0.399367 13.8006 0.927176 13.8006 1.59937ZM15 4.99936C15.5523 4.99936 16 5.44708 16 5.99936C16 6.55164 15.5523 6.99936 15 6.99936C14.4477 6.99936 14 6.55164 14 5.99936C14 5.44708 14.4477 4.99936 15 4.99936Z" fill={user && user.id && userColors[user.id]} />
+                                </svg>
+                            </IconButton>
+                        </> :
+                        <IconButton>
+                            <svg width="20" height="16" viewBox="0 0 20 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                <path fillRule="evenodd" clipRule="evenodd" d="M18.3999 9.19999L1.5999 9.19999C0.92771 9.19999 0.399902 8.67218 0.399902 7.99999C0.399902 7.3278 0.92771 6.79999 1.5999 6.79999L18.3999 6.79999C19.0721 6.79999 19.5999 7.3278 19.5999 7.99999C19.5999 8.67218 19.0721 9.19999 18.3999 9.19999ZM18.3999 3.19999L1.5999 3.19999C0.92771 3.19999 0.399902 2.67218 0.399902 1.99999C0.399902 1.3278 0.92771 0.799988 1.5999 0.799988L18.3999 0.799988C19.0721 0.799988 19.5999 1.3278 19.5999 1.99999C19.5999 2.67218 19.0721 3.19999 18.3999 3.19999ZM1.5999 12.8L18.3999 12.8C19.0721 12.8 19.5999 13.3278 19.5999 14C19.5999 14.6722 19.0721 15.2 18.3999 15.2L1.5999 15.2C0.92771 15.2 0.399902 14.6722 0.399902 14C0.399902 13.3278 0.92771 12.8 1.5999 12.8Z" fill={user && user.id && userColors[user.id]} />
+                            </svg>
+                        </IconButton>
+                    }
+
                 </Box>
                 <Box className={classes.layerOptions}>
                     {!selectedLayer && <Typography className={classes.msg}>Long Press a round to edit</Typography>}
