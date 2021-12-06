@@ -12,17 +12,15 @@ const styles = theme => ({
         borderRadius: 8,
         width: 236,
         height: 64,
-        right: -100,
+        right: '-100',
         top: -60,
         justifyContent: "flex-start",
         alignItems: "center",
+        padding: 10,
         backgroundColor: '#333333',
         transition: 'opacity 0.2s ease-in',
         boxShadow: '0px 0px 2px rgba(0, 0, 0, 0.15), 0px 4px 6px rgba(0, 0, 0, 0.15)',
         zIndex: 100,
-        [theme.breakpoints.down('xs')]: {
-            right: -55,
-        },
     },
     offsetSlider: {
         width: '100%',
@@ -57,10 +55,10 @@ const styles = theme => ({
         alignItems: 'center',
         justifyContent: 'center',
         backgroundColor: 'rgba(255, 255, 255, 0.1)',
-        marginLeft: 8,
-        marginRight: 8,
         height: 30,
         width: 30,
+        marginLeft: 5,
+        marginRight: 5,
         [theme.breakpoints.down('sm')]: {
             width: 32,
             height: 32,
@@ -69,14 +67,13 @@ const styles = theme => ({
     containerSoloMute: {
         flex: 1,
         display: 'flex',
-        marginLeft: 8,
+        paddingLeft: 20,
         flexDirection: 'row',
         alignItems: 'center',
         justifyContent: 'space-between'
     },
     volumeSliderContainer: {
         flex: 2,
-        marginLeft: 8,
         flexDirection: 'row',
         alignItems: 'center'
     },
@@ -87,9 +84,6 @@ const VolumePopup = ({
     round,
     user,
     showVolumePopup,
-    volumeSliderRef,
-    muteRef,
-    soloRef,
     selectedLayer,
     onMute,
     onSolo
@@ -97,19 +91,13 @@ const VolumePopup = ({
     return (
         <Box className={showVolumePopup ? classes.root : classes.hidden}>
             <Box className={classes.volumeSliderContainer}>
-                <VolumeSlider
-                    sliderRef={volumeSliderRef}
-                    hideText={true}
-                    selectedLayer={selectedLayer}
-                    roundId={round.id}
-                    user={user}
-                />
+                <VolumeSlider hideText={true} selectedLayer={selectedLayer} roundId={round.id} user={user} />
             </Box>
             <Box className={classes.containerSoloMute}>
-                <IconButton ref={soloRef} onClick={() => onSolo(selectedLayer)} className={classes.mixerButton}>
+                <IconButton onClick={onSolo} className={classes.mixerButton}>
                     <Typography style={{ fontWeight: 'bold' }}>S</Typography>
                 </IconButton>
-                <IconButton ref={muteRef} onClick={() => onMute(selectedLayer)} className={classes.mixerButton}>
+                <IconButton onClick={onMute} className={classes.mixerButton}>
                     <Typography style={{ fontWeight: 'bold' }}>M</Typography>
                 </IconButton>
             </Box>
