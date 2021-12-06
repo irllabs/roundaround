@@ -48,12 +48,10 @@ class PlayUI extends Component {
         // register this component with parent so we can do some instant updates bypassing redux for speed
         this.props.childRef(this)
         await this.createRound()
-        if (window) {
-            window.addEventListener('click', this.interfaceClicked)
-            window.addEventListener('resize', this.onWindowResizeThrottled)
-            window.addEventListener('keypress', this.onKeypress)
-            window.addEventListener('dblclick', () => this.onMuteToggle(this.props))
-        }
+        window.addEventListener('click', this.interfaceClicked)
+        window.addEventListener('resize', this.onWindowResizeThrottled)
+        window.addEventListener('keypress', this.onKeypress)
+        window.addEventListener('dblclick', () => this.onMuteToggle(this.props))
         this.addBackgroundEventListeners()
         this.checkOrientation()
     }
@@ -99,15 +97,12 @@ class PlayUI extends Component {
     }
 
     async componentDidUpdate(prevProps) {
-        console.log('componentDidUpdate()', this.round, this.props.round)
-        console.time('componentDidUpdate')
 
         if (this.props.round && this.props.selectedLayerId) {
             if (prevProps.selectedLayerId !== this.props.selectedLayerId) {
                 this.onLayerClicked(this.props.selectedLayerId)
             }
         }
-
         // whole round has changed
         if (this.round.id !== this.props.round.id) {
             this.round = _.cloneDeep(this.props.round)
@@ -117,7 +112,6 @@ class PlayUI extends Component {
         }
 
         let diff = detailedDiff(this.round, this.props.round)
-        // console.log('diff', diff);
 
         let redraw = false
         let shouldRecalculateParts = false

@@ -6,7 +6,6 @@ import { useDispatch } from "react-redux";
 
 import Instruments from '../../../audio-engine/Instruments'
 import { UPDATE_LAYER_INSTRUMENT } from '../../../redux/actionTypes'
-// import CustomSamples from '../../../audio-engine/CustomSamples'
 
 /** SVGs */
 import RightArrow from './resources/svg/rightArrow.svg'
@@ -33,7 +32,6 @@ const LayerInstrument = ({
 }) => {
     const [selectedInstrument, setSelectedInstrument] = React.useState(selectedLayer.instrument.sampler)
     const [selectedArticulation, setSelectedArticulation] = React.useState(selectedLayer.instrument.sample)
-    //const [customSampleName, setCustomSampleName] = React.useState(null)
     const dispatch = useDispatch();
     const instrumentOptions = Instruments.getInstrumentOptions(false)
     const articulationOptions = Instruments.getInstrumentArticulationOptions(selectedInstrument, user.id)
@@ -58,13 +56,8 @@ const LayerInstrument = ({
 
     const onArticulationSelect = async (articulation) => {
         setSelectedArticulation(articulation.value);
-        // console.log('UPDATE_LAYER_INSTRUMENT', selectedInstrument, event.target.value);
         dispatch({ type: UPDATE_LAYER_INSTRUMENT, payload: { id: selectedLayer.id, instrument: { sampler: selectedInstrument, sample: articulation.value }, user: user.id } })
         firebase.updateLayer(roundId, selectedLayer.id, { instrument: { sample: articulation.value } })
-        // if (selectedInstrument === 'custom') {
-        //     let sample = await CustomSamples.get(articulation.value)
-        //     setCustomSampleName(sample.name)
-        // }
     };
 
     return (
