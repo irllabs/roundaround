@@ -26,7 +26,7 @@ const useStyles = makeStyles((theme) => ({
     },
 }));
 
-export default function LayerTimeOffset ({ selectedLayer, user, roundId, playUIRef }) {
+export default function LayerTimeOffset({ selectedLayer, user, roundId, playUIRef }) {
     const dispatch = useDispatch();
     const classes = useStyles();
     const firebase = useContext(FirebaseContext);
@@ -57,7 +57,7 @@ export default function LayerTimeOffset ({ selectedLayer, user, roundId, playUIR
             <FormControl className={classes.formControl}>
                 <Typography id="continuous-slider" variant="caption" gutterBottom>
                     Time Offset (ms)
-                    </Typography>
+                </Typography>
                 <Slider value={sliderValue} min={-50} max={50} valueLabelDisplay="auto" onChange={onSliderChange} aria-labelledby="continuous-slider" />
             </FormControl>
         </Box>
