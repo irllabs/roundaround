@@ -443,10 +443,12 @@ class PlayUI extends Component {
     }
 
     onMuteToggle(props) {
-        const isMuted = !props.selectedLayer.isMuted
-        AudioEngine.tracksById[props.selectedLayer.id].setMute(isMuted)
-        props.dispatch({ type: SET_LAYER_MUTE, payload: { id: props.selectedLayer.id, value: isMuted, user: props.user.id } })
-        this.context.updateLayer(props.round.id, props.selectedLayer.id, { isMuted })
+        const isMuted = props.selectedLayer?.isMuted
+        if (props.selectedLayer) {
+            AudioEngine.tracksById[props.selectedLayer.id].setMute(!isMuted)
+            props.dispatch({ type: SET_LAYER_MUTE, payload: { id: props.selectedLayer.id, value: !isMuted, user: props.user.id } })
+            this.context.updateLayer(props.round.id, props.selectedLayer.id, { isMuted: !isMuted })
+        }
     }
 
     getStep(id) {
@@ -1093,6 +1095,10 @@ class PlayUI extends Component {
             layerGraphic.on('touchend', (e) => {
                 _this.onLayerTouchEnd(layerGraphic, e)
             })
+            layerGraphic.on('dblclick', e => {
+                // should be a layer to mute toggle
+                this.onMuteToggle(this.props)
+            })
         }
     }
     onLayerTouchStart(layerGraphic, e) {
@@ -1537,8 +1543,6 @@ class PlayUI extends Component {
     }
 
     onKeypress(e) {
-        e.preventDefault();
-        // Prevent default and do nothing
     }
 
     showOrientationDialog() {
