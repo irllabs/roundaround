@@ -15,7 +15,7 @@ import Instruments from '../../audio-engine/Instruments'
 import FX from '../../audio-engine/FX'
 import ShareDialog from '../dialogs/ShareDialog'
 import { getDefaultUserBus, getDefaultUserPatterns } from '../../utils/defaultData'
-import LayerSettingsAlt from './layer-settings/LayerSettingsAlt';
+import LayerSettings from './layer-settings/LayerSettings';
 import OrientationDialog from '../dialogs/OrientationDialog';
 import CustomSamples from '../../audio-engine/CustomSamples';
 
@@ -369,7 +369,7 @@ class PlayRoute extends Component {
                 <PatternsSidebar />
                 <EffectsSidebar />
                 <ShareDialog />
-                <LayerSettingsAlt playUIRef={this.playUIRef} />
+                <LayerSettings playUIRef={this.playUIRef} />
                 <OrientationDialog />
             </Box>
         )

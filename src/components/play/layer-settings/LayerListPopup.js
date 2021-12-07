@@ -2,6 +2,7 @@ import React from 'react'
 import { Box, Typography, IconButton } from '@material-ui/core'
 
 import VolumeSlider from './VolumeSlider'
+import { CloseIcon } from './resources'
 
 
 const MixerPopup = ({
@@ -15,13 +16,12 @@ const MixerPopup = ({
     ref,
     userColors,
     user,
-    round,
-    Close
+    round
 }) => (
     <Box className={showMixerPopup ? classes.mixerPopup : classes.hidden}>
         <Box className={classes.mixerPopupHeader}>
             <IconButton className={classes.plainButton} style={{ width: 16, height: 16 }} onClick={toggleShowMixerPopup}>
-                <img alt='close popup' src={Close} />
+                <CloseIcon />
             </IconButton>
             <Typography className={classes.mixerPopupHeaderText}>Mixer</Typography>
         </Box>
@@ -47,9 +47,10 @@ const MixerPopup = ({
                                 </Box>
                                 <Box style={{ display: 'flex', flexDirection: 'row', alignItems: 'center', width: 36, height: 20 }}>
                                     <Box style={{ display: 'flex', flexDirection: 'row', alignItems: 'center', justifyContent: 'center', marginRight: 5 }}>
-                                        {userColors && layer && layer.createdBy && <svg width="12" height="12" viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                            <circle cx="6" cy="6" r="5" stroke={userColors[layer.createdBy]} strokeWidth="2" />
-                                        </svg>}
+                                        {userColors && layer && layer.createdBy &&
+                                            <svg width="12" height="12" viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                                <circle cx="6" cy="6" r="5" stroke={userColors[layer.createdBy]} strokeWidth="2" />
+                                            </svg>}
                                     </Box>
                                     <Typography className={classes.stepLength}>{layer.steps.length}</Typography>
                                 </Box>
