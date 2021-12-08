@@ -20,7 +20,7 @@ const MixerPopup = ({
 }) => (
     <Box className={showMixerPopup ? classes.mixerPopup : classes.hidden}>
         <Box className={classes.mixerPopupHeader}>
-            <IconButton className={classes.plainButton} style={{ width: 16, height: 16 }} onClick={toggleShowMixerPopup}>
+            <IconButton className={classes.plainButton} onClick={toggleShowMixerPopup}>
                 <CloseIcon />
             </IconButton>
             <Typography className={classes.mixerPopupHeaderText}>Mixer</Typography>

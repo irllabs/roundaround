@@ -32,7 +32,8 @@ import {
     MuteIcon,
     MutedIcon,
     ErasorIcon,
-    TrashIcon
+    TrashIcon,
+    HamburgerMenuIcon
 } from './resources'
 
 const styles = theme => ({
@@ -72,6 +73,10 @@ const styles = theme => ({
         backgroundColor: '#333333',
         [theme.breakpoints.down('md')]: {
             height: 48,
+            marginBottom: 10,
+        },
+        [theme.breakpoints.down('sm')]: {
+            marginBottom: 5,
         },
     },
     mixerPopup: {
@@ -313,6 +318,7 @@ class LayerSettings extends Component {
             showArticulationOptions: false,
             showLayerPopup: false,
             showVolumePopup: false,
+            windowWidth: 340,
             instrumentOptions: Instruments.getInstrumentOptions(false),
             selectedInstrument: ''
         }
@@ -335,6 +341,8 @@ class LayerSettings extends Component {
 
     componentDidMount() {
         window.addEventListener('click', this.onClick)
+        window.addEventListener('resize', this.updateWindowWidth)
+        this.updateWindowWidth();
         if (this.props.round && this.props.selectedLayerId) {
             const selectedLayer = _.find(this.props.round.layers, { id: this.props.selectedLayerId })
             this.setSelectedInstrument(selectedLayer)
@@ -364,7 +372,10 @@ class LayerSettings extends Component {
 
     componentWillUnmount() {
         window.removeEventListener('click', this.onClick)
+        window.removeEventListener('resize', this.updateWindowWidth)
     }
+
+    updateWindowWidth = () => this.setState({ windowWidth: window.innerWidth })
 
     setSelectedInstrument = async (selectedLayer) => {
         const instrumentOptions = await Instruments.getInstrumentOptions(false)

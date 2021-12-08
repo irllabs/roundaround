@@ -1,6 +1,7 @@
 export { default as PlusIcon } from './Plus'
 export { default as EqualiserIcon } from './Equaliser'
 export { default as HiHatsIcon } from './HiHats'
+export { default as HamburgerMenuIcon } from './Hamburger'
 export { default as KickIcon } from './Kick'
 export { default as SnareIcon } from './Snare'
 export { default as PercIcon } from './Perc'
