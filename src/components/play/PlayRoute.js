@@ -369,7 +369,9 @@ class PlayRoute extends Component {
                 <PatternsSidebar />
                 <EffectsSidebar />
                 <ShareDialog />
-                <LayerSettings playUIRef={this.playUIRef} />
+                <Box style={{ position: 'relative', display: 'flex', justifyContent: 'center', width: '100%' }}>
+                    <LayerSettings playUIRef={this.playUIRef} />
+                </Box>
                 <OrientationDialog />
             </Box>
         )
