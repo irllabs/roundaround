@@ -20,43 +20,25 @@ export default function HamburgerPopup({
 }) {
     return (
         <Box className={showHamburgerPopup ? classes.hamburgerPopup : classes.hidden}>
-            <Box
+            <IconButton
+                ref={addLayerButtonRef}
+                onClick={onAddLayerClick}
+                className={classes.buttonWithText}
+            >
+                <Typography className={classes.buttonText}>Add round</Typography>
+                <PlusIcon width={16} height={16} user={user} userColors={userColors} />
+            </IconButton>
+            <IconButton
+                ref={mixerPopupButtonRef}
+                onClick={toggleShowMixerPopup}
+                className={classes.buttonWithText}
                 style={{
-                    display: 'flex',
-                    flexDirection: 'row',
-                    width: '100%',
-                    alignItems: 'center',
-                    justifyContent: 'space-between',
+                    backgroundColor: showMixerPopup ? 'rgba(255, 255, 255, 0.2)' : ''
                 }}
             >
-                <Typography style={{ lineHeight: 1, padding: '0 16px', fontSize: 16 }}>Add round</Typography>
-                <IconButton
-                    ref={addLayerButtonRef}
-                    onClick={onAddLayerClick}
-                    className={classes.iconButtons}
-                >
-                    <PlusIcon width={16} height={16} user={user} userColors={userColors} />
-                </IconButton>
-            </Box>
-            <Box
-                style={{
-                    display: 'flex',
-                    flexDirection: 'row',
-                    width: '100%',
-                    alignItems: 'center',
-                    justifyContent: 'space-between',
-                }}
-            >
-                <Typography style={{ lineHeight: 1, padding: '0 16px', fontSize: 16 }}>Mixer</Typography>
-                <IconButton
-                    style={showMixerPopup ? { backgroundColor: 'rgba(255, 255, 255, 0.2)' } : {}}
-                    ref={mixerPopupButtonRef}
-                    className={classes.iconButtons}
-                    onClick={toggleShowMixerPopup}
-                >
-                    <EqualiserIcon width={12} height={16} user={user} userColors={userColors} />
-                </IconButton>
-            </Box>
+                <Typography className={classes.buttonText}>Mixer</Typography>
+                <EqualiserIcon width={12} height={16} user={user} userColors={userColors} />
+            </IconButton>
         </Box>
     )
 }

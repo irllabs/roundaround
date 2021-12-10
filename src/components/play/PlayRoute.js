@@ -1,10 +1,10 @@
 import React, { Component } from 'react'
 import PlayUI from './PlayUI'
-import PatternsSidebar from './PatternsSidebar'
+//import PatternsSidebar from './PatternsSidebar'
 import PropTypes from 'prop-types';
 import { withStyles } from '@material-ui/styles';
 import Box from '@material-ui/core/Box';
-import EffectsSidebar from './EffectsSidebar';
+//import EffectsSidebar from './EffectsSidebar';
 import _ from 'lodash';
 import Loader from 'react-loader-spinner';
 import { connect } from "react-redux";
@@ -16,7 +16,7 @@ import FX from '../../audio-engine/FX'
 import ShareDialog from '../dialogs/ShareDialog'
 import { getDefaultUserBus, getDefaultUserPatterns } from '../../utils/defaultData'
 import LayerSettings from './layer-settings/LayerSettings';
-import OrientationDialog from '../dialogs/OrientationDialog';
+//import OrientationDialog from '../dialogs/OrientationDialog';
 import CustomSamples from '../../audio-engine/CustomSamples';
 
 const styles = theme => ({
@@ -366,13 +366,13 @@ class PlayRoute extends Component {
                         visible={true}
                     />
                 }
-                <PatternsSidebar />
-                <EffectsSidebar />
+                {/* <PatternsSidebar />
+                <EffectsSidebar /> */}
                 <ShareDialog />
                 <Box style={{ position: 'relative', display: 'flex', justifyContent: 'center', width: '100%' }}>
                     <LayerSettings playUIRef={this.playUIRef} />
                 </Box>
-                <OrientationDialog />
+                {/* <OrientationDialog /> */}
             </Box>
         )
     }

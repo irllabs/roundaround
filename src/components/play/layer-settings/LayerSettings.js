@@ -23,6 +23,7 @@ import VolumePopup from './VolumePopup'
 import { getDefaultLayerData } from '../../../utils/defaultData';
 import LayerListPopup from './LayerListPopup';
 import HamburgerPopup from './HamburgerPopup';
+import DeleteClearPopup from './DeleteClearPopup';
 import {
     PlusIcon,
     EqualiserIcon,
@@ -118,6 +119,7 @@ const styles = theme => ({
         marginLeft: 13,
         fontSize: 18
     },
+    buttonText: { lineHeight: 1, fontSize: 16 },
     instrumentPopup: {
         position: 'absolute',
         bottom: 47,
@@ -130,6 +132,9 @@ const styles = theme => ({
         boxShadow: '0px 0px 2px rgba(0, 0, 0, 0.15), 0px 4px 6px rgba(0, 0, 0, 0.15)',
         overflow: 'hidden',
         transition: 'opacity 0.2s ease-in',
+        [theme.breakpoints.down('sm')]: {
+            width: 216,
+        },
     },
     addLayerContainer: {
         display: 'flex',
@@ -228,6 +233,7 @@ const styles = theme => ({
         position: 'absolute',
         display: 'flex',
         flexDirection: 'column',
+        justifyContent: 'center',
         opacity: 1,
         top: -108,
         height: 104,
@@ -241,6 +247,26 @@ const styles = theme => ({
         transition: 'opacity 0.2s ease-in',
         [theme.breakpoints.down('sm')]: {
             left: 0,
+        },
+    },
+    deleteClearPopup: {
+        position: 'absolute',
+        display: 'flex',
+        flexDirection: 'column',
+        justifyContent: 'center',
+        opacity: 1,
+        top: -100,
+        height: 104,
+        width: 155,
+        right: 0,
+        borderRadius: 8,
+        zIndex: 100,
+        boxShadow: '0px 0px 2px rgba(0, 0, 0, 0.15), 0px 4px 6px rgba(0, 0, 0, 0.15)',
+        backgroundColor: '#333333',
+        overflow: 'hidden',
+        transition: 'opacity 0.2s ease-in',
+        [theme.breakpoints.down('sm')]: {
+            right: 0,
         },
     },
     actionButton: {
@@ -305,6 +331,15 @@ const styles = theme => ({
             backgroundColor: 'transparent'
         }
     },
+    buttonWithText: {
+        display: 'flex',
+        flexDirection: 'row',
+        width: '100%',
+        height: 44,
+        alignItems: 'center',
+        borderRadius: 0,
+        justifyContent: 'space-between',
+    },
     buttonContainer: {
         width: '100%',
         marginBottom: theme.spacing(2),
@@ -348,6 +383,7 @@ class LayerSettings extends Component {
             showLayerPopup: false,
             showVolumePopup: false,
             showHamburgerPopup: false,
+            showDeleteClearPopup: false,
             windowWidth: 340,
             instrumentOptions: Instruments.getInstrumentOptions(false),
             selectedInstrument: ''
@@ -357,6 +393,7 @@ class LayerSettings extends Component {
         this.instrumentPopupButton = React.createRef()
         this.instrumentsListButton = React.createRef()
         this.articulationsListButton = React.createRef()
+        this.showDeleteClearPopupButton = React.createRef()
         this.layerPopupButton = React.createRef()
         this.volumePopupButton = React.createRef()
         this.instrumentsButton = React.createRef()
@@ -436,6 +473,7 @@ class LayerSettings extends Component {
             //&& (!this.addLayerButton.current || (this.addLayerButton.current && !this.addLayerButton.current.contains(target)))
             && (!this.articulationsListButton.current || (this.articulationsListButton.current && !this.articulationsListButton.current.contains(target)))
             && (!this.hamburgerButton.current || (this.hamburgerButton.current && !this.hamburgerButton.current.contains(target)))
+            && (!this.showDeleteClearPopupButton.current || (this.showDeleteClearPopupButton.current && !this.showDeleteClearPopupButton.current.contains(target)))
             && (!this.instrumentsListButton.current || (this.instrumentsListButton.current && !this.instrumentsListButton.current.contains(target)))
             && (!this.instrumentsButton.current || (this.instrumentsButton.current && !this.instrumentsButton.current.contains(target)))
             && (!this.soundsButton.current || (this.soundsButton.current && !this.soundsButton.current.contains(target)))
@@ -459,6 +497,7 @@ class LayerSettings extends Component {
         showArticulationOptions: false,
         showLayerPopup: false,
         showVolumePopup: false,
+        showDeleteClearPopup: false,
         showHamburgerPopup: false
     })
 
@@ -578,6 +617,14 @@ class LayerSettings extends Component {
         this.setState({ showHamburgerPopup })
     }
 
+    toggleShowDeleteClearPopup = (e) => {
+        e.preventDefault()
+        e.stopPropagation()
+        const showDeleteClearPopup = !this.state.showDeleteClearPopup
+        this.hideAllLayerInspectorModals()
+        this.setState({ showDeleteClearPopup })
+    }
+
     render() {
         // console.log('Layer settings render()', this.props.user);
         const {
@@ -589,6 +636,7 @@ class LayerSettings extends Component {
             showHamburgerPopup,
             selectedInstrument,
             showVolumePopup,
+            showDeleteClearPopup,
             windowWidth
         } = this.state;
 
@@ -596,6 +644,7 @@ class LayerSettings extends Component {
         const selectedLayer = this.props.selectedLayer
         const userColors = this.getUserColors()
         const isMobile = windowWidth <= 480
+        const sample = selectedLayer?.instrument?.sample
 
         const instrumentIcon = (name) => {
             let Icon = <svg></svg>;
@@ -694,8 +743,8 @@ class LayerSettings extends Component {
                                     ref={this.instrumentPopupButton}
                                     id='instrument-summary'
                                     style={showInstrumentsPopup ?
-                                        { backgroundColor: 'rgba(255, 255, 255, 0.2)', display: 'flex', flexDirection: 'row', width: isMobile ? 115 : 216, justifyContent: isMobile ? 'center' : 'flex-starts' } :
-                                        { display: 'flex', flexDirection: 'row', justifyContent: isMobile ? 'center' : 'flex-starts', width: isMobile ? 115 : 216, }
+                                        { backgroundColor: 'rgba(255, 255, 255, 0.2)', display: 'flex', flexDirection: 'row', width: isMobile ? 115 : 216 } :
+                                        { display: 'flex', flexDirection: 'row', width: isMobile ? 115 : 216, }
                                     }
                                     className={classes.instrumentSummary}
                                     onClick={this.toggleInstrumentPopup}
@@ -711,8 +760,9 @@ class LayerSettings extends Component {
                                             <Box style={{ fontSize: 30, marginLeft: 5, marginRight: 5, lineHeight: .3 }}>&#183;</Box>
                                         </>
                                     }
-                                    <Typography style={{ fontWeight: 'bolder', lineHeight: 1, textTransform: 'capitalize' }}>
-                                        {selectedLayer?.instrument?.sample}
+                                    <Typography style={{ flex: isMobile ? 1 : 0, fontWeight: 'bolder', lineHeight: 1, textAlign: 'center', textTransform: 'capitalize' }}>
+                                        {`${selectedLayer?.instrument?.sample.substring(0, isMobile ? 6 : sample.length)}${isMobile &&
+                                            selectedLayer?.instrument?.sample.length > 6 ? '...' : ''}`}
                                     </Typography>
                                 </IconButton>
                             </Box>
@@ -760,12 +810,21 @@ class LayerSettings extends Component {
                                 </IconButton>
                             </Box>
                             {isMobile ?
-                                <IconButton
-                                    className={classes.actionButton}
-                                //style={showMixerPopup ? { backgroundColor: 'rgba(255, 255, 255, 0.2)' } : {}}
-                                >
-                                    <ElipsisIcon user={user} userColors={userColors} />
-                                </IconButton> :
+                                <Box className={classes.actionButtonContainer}>
+                                    <DeleteClearPopup
+                                        showDeleteClearPopup={showDeleteClearPopup}
+                                        classes={classes}
+                                        onClearStepsClick={this.onClearStepsClick.bind(this)}
+                                        onDeleteLayerClick={this.onDeleteLayerClick.bind(this)}
+                                    />
+                                    <IconButton
+                                        className={classes.actionButton}
+                                        onClick={this.toggleShowDeleteClearPopup}
+                                        ref={this.showDeleteClearPopupButton}
+                                    >
+                                        <ElipsisIcon />
+                                    </IconButton>
+                                </Box> :
                                 <>
                                     <Box className={classes.actionButtonContainer}>
                                         <IconButton onClick={this.onClearStepsClick.bind(this)} className={classes.actionButton}>
@@ -779,7 +838,6 @@ class LayerSettings extends Component {
                                     </Box>
                                 </>
                             }
-
                         </Box>}
                 </Box>
             </Box>
