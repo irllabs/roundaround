@@ -1189,17 +1189,21 @@ class PlayUI extends Component {
                 _this.touchStartStepGraphic = stepGraphic
                 _this.isCurrentlyOverStepGraphic = stepGraphic
                 stepGraphic.on('touchmove', (e) => {
+                    e.stopPropagation()
+                    e.preventDefault()
                     //  console.log('touchmove');
                     if (_.isNil(_this.stepMoveTimer) && !_this.swipeToggleActive) {
                         _this.onStepDragMove(stepGraphic, e.touches[0].pageX, e.touches[0].pageY)
                     } else {
                         // console.log('touchmove', e, stepGraphic.id);
-                        //_this.swipeToggleActive = stepGraphic
+                        // _this.swipeToggleActive = stepGraphic
                         _this.touchStartStepGraphic = stepGraphic
                         _this.isOverStep(stepGraphic, e.touches[0].pageX, e.touches[0].pageY)
                     }
                 })
                 stepGraphic.on('touchend', (e) => {
+                    e.stopPropagation()
+                    e.preventDefault()
                     //   console.log('touchend');
                     _this.hideStepModal()
                     if (!_.isNil(_this.stepMoveTimer)) {
@@ -1549,8 +1553,8 @@ class PlayUI extends Component {
                     //console.log('is over step graphic');
                     isOver = true
                     if (_this.isCurrentlyOverStepGraphic !== stepGraphic) {
-                        _this.onStepClick(stepGraphic)
                         _this.isCurrentlyOverStepGraphic = stepGraphic
+                        _this.onStepClick(stepGraphic)
                     }
                 }
             }
