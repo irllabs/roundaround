@@ -36,6 +36,7 @@ class PlayUI extends Component {
         this.editAllLayers = false
         this.swipeToggleActive = false
         this.userColors = {};
+        this.isScrolling = false;
         this.onWindowResizeThrottled = _.throttle(this.onWindowResize.bind(this), 1000)
         this.selectedLayerId = null;
         this.onKeypress = this.onKeypress.bind(this)
@@ -1195,6 +1196,7 @@ class PlayUI extends Component {
                 //  console.log('touchstart');
                 e.stopPropagation()
                 e.preventDefault()
+                const isIPad = /Macintosh/.test(navigator.userAgent) && 'ontouchend' in document;
                 _this.swipeToggleActive = false
                 _this.startStepMoveTimer(stepGraphic, e.touches[0].pageX, e.touches[0].pageY)
                 _this.touchStartStepGraphic = stepGraphic
@@ -1202,14 +1204,17 @@ class PlayUI extends Component {
                 stepGraphic.on('touchmove', (e) => {
                     e.stopPropagation()
                     e.preventDefault()
+                    const X = isIPad ? e.touches[0].pageX + 1 : e.touches[0].pageX
+                    const Y = isIPad ? e.touches[0].pageY + 1 : e.touches[0].pageY
+                    this.isScrolling = true;
                     //  console.log('touchmove');
                     if (_.isNil(_this.stepMoveTimer) && !_this.swipeToggleActive) {
-                        _this.onStepDragMove(stepGraphic, e.touches[0].pageX, e.touches[0].pageY)
+                        _this.onStepDragMove(stepGraphic, X, Y)
                     } else {
                         // console.log('touchmove', e, stepGraphic.id);
                         // _this.swipeToggleActive = stepGraphic
                         _this.touchStartStepGraphic = stepGraphic
-                        _this.isOverStep(stepGraphic, e.touches[0].pageX, e.touches[0].pageY)
+                        _this.isOverStep(stepGraphic, X, Y)
                     }
                 })
                 stepGraphic.on('touchend', (e) => {
@@ -1233,6 +1238,8 @@ class PlayUI extends Component {
                     }
                     stepGraphic.off('touchmove')
                     stepGraphic.off('touchend')
+                    _this.touchStartStepGraphic = null
+                    _this.isScrolling = false
                 })
             })
             // console.log('adding touchmove event for stepgraphic', stepGraphic.id);
@@ -1563,7 +1570,7 @@ class PlayUI extends Component {
                 if (x >= rect.x && x <= rect.x + rect.width && y >= rect.y && y <= rect.y + rect.height) {
                     //console.log('is over step graphic');
                     isOver = true
-                    if (_this.isCurrentlyOverStepGraphic !== stepGraphic) {
+                    if (!_.isEqual(_this.isCurrentlyOverStepGraphic, stepGraphic)) {
                         _this.isCurrentlyOverStepGraphic = stepGraphic
                         _this.onStepClick(stepGraphic)
                     }
