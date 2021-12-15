@@ -37,6 +37,7 @@ class PlayUI extends Component {
         this.swipeToggleActive = false
         this.userColors = {};
         this.isScrolling = false;
+        this.stepOnTimer = 0;
         this.onWindowResizeThrottled = _.throttle(this.onWindowResize.bind(this), 1000)
         this.selectedLayerId = null;
         this.onKeypress = this.onKeypress.bind(this)
@@ -1196,7 +1197,6 @@ class PlayUI extends Component {
                 //  console.log('touchstart');
                 e.stopPropagation()
                 e.preventDefault()
-                const isIPad = /Macintosh/.test(navigator.userAgent) && 'ontouchend' in document;
                 _this.swipeToggleActive = false
                 _this.startStepMoveTimer(stepGraphic, e.touches[0].pageX, e.touches[0].pageY)
                 _this.touchStartStepGraphic = stepGraphic
@@ -1204,17 +1204,15 @@ class PlayUI extends Component {
                 stepGraphic.on('touchmove', (e) => {
                     e.stopPropagation()
                     e.preventDefault()
-                    const X = isIPad ? e.touches[0].pageX + 1 : e.touches[0].pageX
-                    const Y = isIPad ? e.touches[0].pageY + 1 : e.touches[0].pageY
                     this.isScrolling = true;
                     //  console.log('touchmove');
                     if (_.isNil(_this.stepMoveTimer) && !_this.swipeToggleActive) {
-                        _this.onStepDragMove(stepGraphic, X, Y)
+                        _this.onStepDragMove(stepGraphic, e.touches[0].pageX, e.touches[0].pageY)
                     } else {
                         // console.log('touchmove', e, stepGraphic.id);
                         // _this.swipeToggleActive = stepGraphic
                         _this.touchStartStepGraphic = stepGraphic
-                        _this.isOverStep(stepGraphic, X, Y)
+                        _this.isOverStep(stepGraphic, e.touches[0].pageX, e.touches[0].pageY)
                     }
                 })
                 stepGraphic.on('touchend', (e) => {
@@ -1240,6 +1238,7 @@ class PlayUI extends Component {
                     stepGraphic.off('touchend')
                     _this.touchStartStepGraphic = null
                     _this.isScrolling = false
+                    clearInterval()
                 })
             })
             // console.log('adding touchmove event for stepgraphic', stepGraphic.id);
@@ -1437,11 +1436,10 @@ class PlayUI extends Component {
         step.isOn = !step.isOn
         this.updateStep(step, false)
         AudioEngine.recalculateParts(this.round)
-        this.props.dispatch({ type: TOGGLE_STEP, payload: { layerId: stepGraphic.layerId, stepId: stepGraphic.id, isOn: step.isOn, user: null } })
+        this.props.dispatch({ type: TOGGLE_STEP, payload: { layerId: stepGraphic.layerId, stepId: stepGraphic.id, lastUpdated: new Date().getTime(), isOn: step.isOn, user: null } })
         // console.log('this.context', this.context);
         this.saveLayer(stepGraphic.layerId)
         //this.context.updateStep(this.round.id, stepGraphic.layerId, stepGraphic.id, step)
-
     }
 
     async onAddLayerClick() {
@@ -1565,12 +1563,18 @@ class PlayUI extends Component {
         let isOver = false
         for (const stepGraphic of this.stepGraphics) {
             if (stepGraphic.layerId === _this.touchStartStepGraphic.layerId) {
+                const step = this.getStep(stepGraphic.id);
                 //console.log(stepGraphic, stepGraphic.x(), stepGraphic.y(), stepGraphic.node.getBoundingClientRect());
                 const rect = stepGraphic.node.getBoundingClientRect()
                 if (x >= rect.x && x <= rect.x + rect.width && y >= rect.y && y <= rect.y + rect.height) {
                     //console.log('is over step graphic');
                     isOver = true
-                    if (!_.isEqual(_this.isCurrentlyOverStepGraphic, stepGraphic)) {
+                    const now = new Date().getTime()
+                    const difference = step.lastUpdated ? (now - step.lastUpdated) : 0
+                    const secondsDifference = difference / 1000
+                    console.log('difference ', secondsDifference)
+                    if (!_.isEqual(_this.isCurrentlyOverStepGraphic, stepGraphic) &&
+                        (secondsDifference === 0 || secondsDifference > 0.5)) {
                         _this.isCurrentlyOverStepGraphic = stepGraphic
                         _this.onStepClick(stepGraphic)
                     }
