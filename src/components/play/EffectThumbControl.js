@@ -1,7 +1,8 @@
 import React, { Component } from 'react'
 import { SVG } from '@svgdotjs/svg.js'
-import { LockOpen } from '@material-ui/icons';
+import { LockOpen, Lock } from '@material-ui/icons';
 import FX from '../../audio-engine/FX'
+import { Box } from '@material-ui/core';
 import PropTypes from 'prop-types';
 import { withStyles } from '@material-ui/styles';
 
@@ -12,14 +13,40 @@ const styles = theme => ({
             opacity: 0.8
         }
     },
+    container: {
+        display: 'flex',
+        flexDirection: 'column',
+        width: '96px',
+        height: '48px',
+        borderRadius: '24px',
+        position: 'relative',
+        margin: '0.2rem',
+        border: '1px solid rgba(255,255,255,0.1)',
+        alignItems: 'center',
+        justifyContent: 'center',
+    },
+    open: {
+        color: '#474747',
+        position: 'absolute',
+        left: '10px',
+        top: '12px',
+        zIndex: 1
+    },
+    locked: {
+        color: '#474747',
+        position: 'absolute',
+        right: '10px',
+        top: '12px',
+        zIndex: 1
+    },
     iconDark: {
         color: '#222222'
     }
 })
 
-const thumbWidth = 48;
-const thumbHeight = 48;
-const containerWidth = thumbWidth + 40
+const thumbWidth = 32;
+const thumbHeight = 32;
+const containerWidth = thumbWidth + 45
 
 class EffectThumbControl extends Component {
     constructor(props) {
@@ -34,8 +61,8 @@ class EffectThumbControl extends Component {
         const element = this.thumbControlRef.current;
         this.container = SVG()
             .addTo(element)
-            .size(thumbWidth + 40, thumbHeight)
-        this.background = this.container.rect(thumbWidth + 40, thumbHeight).fill('none').radius(24)
+            .size(thumbWidth + 45, thumbHeight)
+        this.background = this.container.rect(thumbWidth + 45, thumbHeight).fill('none').radius(24)
         this.thumb = this.container.nested()
         this.thumb.x(containerWidth - thumbWidth)
         this.thumb.addClass(this.props.classes.button)
@@ -138,18 +165,19 @@ class EffectThumbControl extends Component {
         this.props.switchOn(this.props.fxId)
     }
     switchOff() {
-        this.isOn = false
         this.props.switchOff(this.props.fxId)
     }
     render() {
+        const { classes } = this.props;
+        /** TODO: replace icons with custom ones */
         return (
-            <div style={{ width: '88px', height: '48px', backgroundColor: 'rgba(0,0,0,0.5)', borderRadius: '24px', position: 'relative', marginBottom: '0.5rem' }}>
-                <LockOpen fontSize="small" style={{ color: '#474747', position: 'absolute', left: '10px', top: '12px', zIndex: 1 }} />
-                <div style={{ zIndex: 2, position: 'absolute' }}>
-                    <div ref={this.thumbControlRef} style={{ display: 'flex', zIndex: 2 }}></div>
-                </div>
-            </div >
-
+            <Box className={classes.container}>
+                <LockOpen fontSize="small" className={classes.open} />
+                <Box style={{ zIndex: 2, position: 'absolute' }}>
+                    <Box ref={this.thumbControlRef} style={{ display: 'flex', zIndex: 2 }}></Box>
+                </Box>
+                <Lock fontSize="small" className={classes.locked} />
+            </Box >
         )
     }
 }
