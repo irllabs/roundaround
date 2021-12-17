@@ -32,6 +32,7 @@ const styles = theme => ({
     },
     effectContainer: {
         display: 'flex',
+        position: 'relative',
         flexDirection: 'column',
         height: 352,
         width: 120,
@@ -50,7 +51,7 @@ const styles = theme => ({
         height: '32px',
         position: 'absolute',
         left: '-40px',
-        bottom: '16px',
+        top: '12px',
         borderRadius: '16px',
         display: 'flex',
         alignItems: 'center',
@@ -183,11 +184,11 @@ class EffectsSidebar extends Component {
         return (
             <Box className={classes.root + ' ' + isMinimizedClass}>
                 <Box className={classes.effectContainer}>
+                    <Box className={classes.minimizeButton + ' ' + buttonIsMinimizedClass} onClick={this.onMinimizeClick}><ChevronRightIcon size="small" /></Box>
                     {items.map((fx, index) => (
                         <EffectThumbControl key={fx.id} isOn={fx.isOn} isOverride={fx.isOverride} className={classes.thumbControl} label={toTitleCase(fx.label)} fxId={fx.id} userId={fx.userId} switchOn={this.onSwitchOn} switchOff={this.onSwitchOff} name={fx.name} />
                     ))}
                 </Box>
-                <Box className={classes.minimizeButton + ' ' + buttonIsMinimizedClass} onClick={this.onMinimizeClick}><ChevronRightIcon size="small" /></Box>
             </Box>
         )
     }

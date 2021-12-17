@@ -1,8 +1,10 @@
 import React, { Component } from 'react'
 import { SVG } from '@svgdotjs/svg.js'
-import { LockOpen, Lock } from '@material-ui/icons';
+//import { LockOpen, Lock } from '@material-ui/icons';
 import FX from '../../audio-engine/FX'
 import { Box } from '@material-ui/core';
+import OpenLock from './layer-settings/resources/svg/openLock.svg';
+import Lock from './layer-settings/resources/svg/lock.svg';
 import PropTypes from 'prop-types';
 import { withStyles } from '@material-ui/styles';
 
@@ -40,7 +42,7 @@ const styles = theme => ({
         zIndex: 1
     },
     iconDark: {
-        color: '#222222'
+        color: '#474747'
     }
 })
 
@@ -103,7 +105,7 @@ class EffectThumbControl extends Component {
             if (x > threshold) {
                 x = containerWidth - thumbWidth
                 this.isOn = false
-                this.thumbBackground.fill('#474747')
+                this.thumbBackground.fill('#575757')
                 this.label.removeClass(this.props.classes.iconDark)
                 this.switchOff()
             } else {
@@ -118,7 +120,7 @@ class EffectThumbControl extends Component {
             e.preventDefault()
             this.switchOn()
             this.dragStart = e.pageX
-            this.thumbBackground.fill('#EAEAEA')
+            this.thumbBackground.fill('#575757')
             this.label.addClass(this.props.classes.iconDark)
             document.addEventListener('mousemove', this.onMouseMove)
             document.addEventListener('mouseup', this.onMouseUp)
@@ -169,14 +171,13 @@ class EffectThumbControl extends Component {
     }
     render() {
         const { classes } = this.props;
-        /** TODO: replace icons with custom ones */
         return (
             <Box className={classes.container}>
-                <LockOpen fontSize="small" className={classes.open} />
+                <img alt='open lock' src={OpenLock} className={classes.open} />
                 <Box style={{ zIndex: 2, position: 'absolute' }}>
                     <Box ref={this.thumbControlRef} style={{ display: 'flex', zIndex: 2 }}></Box>
                 </Box>
-                <Lock fontSize="small" className={classes.locked} />
+                <img alt='locked' src={Lock} className={classes.locked} />
             </Box >
         )
     }
