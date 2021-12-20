@@ -11,9 +11,6 @@ import { withStyles } from '@material-ui/styles';
 const styles = theme => ({
     button: {
         cursor: 'pointer',
-        '&:hover': {
-            opacity: 0.8
-        }
     },
     container: {
         display: 'flex',
@@ -68,7 +65,7 @@ class EffectThumbControl extends Component {
         this.thumb = this.container.nested()
         this.thumb.x(containerWidth - thumbWidth)
         this.thumb.addClass(this.props.classes.button)
-        this.thumbBackground = this.thumb.rect(thumbWidth, thumbHeight).fill('#474747').radius(24)
+        this.thumbBackground = this.thumb.rect(thumbWidth, thumbHeight).fill('#575757').radius(24)
         this.labelContainer = this.thumb.nested()
         this.label = this.labelContainer.svg(FX.getIcon(this.props.name))
         this.label.x((thumbWidth / 2) - (this.label.node.getBBox().width / 2))
@@ -111,7 +108,7 @@ class EffectThumbControl extends Component {
             } else {
                 x = 0
                 this.isOn = true
-                //this.thumbBackground.fill('#474747')
+                this.thumbBackground.fill('#474747')
                 this.label.addClass(this.props.classes.iconDark)
             }
             this.thumb.x(x)
@@ -141,6 +138,7 @@ class EffectThumbControl extends Component {
     }
     setSwitchIsOn = () => {
         this.thumb.x(0);
+        this.thumbBackground.fill('#474747')
         this.switchOn();
     }
     onMouseUp(e) {
@@ -171,6 +169,7 @@ class EffectThumbControl extends Component {
     }
     render() {
         const { classes } = this.props;
+        console.log('this is on', this.isOn)
         return (
             <Box className={classes.container}>
                 <img alt='open lock' src={OpenLock} className={classes.open} />
