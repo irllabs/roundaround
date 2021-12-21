@@ -45,7 +45,7 @@ const styles = theme => ({
 
 const thumbWidth = 32;
 const thumbHeight = 32;
-const containerWidth = thumbWidth + 56
+const containerWidth = thumbWidth + 46
 
 class EffectThumbControl extends Component {
     constructor(props) {
@@ -61,12 +61,12 @@ class EffectThumbControl extends Component {
         const isOn = this.props.isOn && this.props.isOverride;
         this.container = SVG()
             .addTo(element)
-            .size(thumbWidth + 56, thumbHeight)
-        this.background = this.container.rect(thumbWidth + 56, thumbHeight).fill('none').radius(24)
+            .size(thumbWidth + 46, thumbHeight)
+        this.background = this.container.rect(thumbWidth + 46, thumbHeight).fill('none').radius(24)
         this.thumb = this.container.nested()
         this.thumb.x(containerWidth - thumbWidth)
         this.thumb.addClass(this.props.classes.button)
-        this.thumbBackground = this.thumb.rect(thumbWidth, thumbHeight).fill('#575757').radius(24)
+        this.thumbBackground = this.thumb.rect(thumbWidth, thumbHeight).fill('#686868').radius(24)
         this.labelContainer = this.thumb.nested()
         this.label = this.labelContainer.svg(FX.getIcon(this.props.name))
         this.label.x((thumbWidth / 2) - (this.label.node.getBBox().width / 2))
@@ -77,12 +77,7 @@ class EffectThumbControl extends Component {
             this.setSwitchIsOn()
         else this.setSwitchIsOff()
     }
-    componentDidUpdate() {
-        const isOn = this.props.isOn && this.props.isOverride;
-        if (isOn)
-            this.setSwitchIsOn()
-        else this.setSwitchIsOff()
-    }
+
     addEventListeners() {
         this.thumb.on('touchstart', (e) => {
             e.preventDefault()
@@ -142,14 +137,14 @@ class EffectThumbControl extends Component {
         this.thumb.x(x)
     }
     setSwitchIsOn = () => {
-        this.thumb.x(0);
-        this.thumbBackground.fill('rgba(255, 255, 255, 0.2)')
-        this.switchOn();
+        this.thumb.x(0)
+        this.thumbBackground.fill('#686868')
+        this.switchOn()
     }
     setSwitchIsOff = () => {
         const x = containerWidth - thumbWidth
         this.thumb.x(x)
-        this.thumbBackground.fill('rgba(255, 255, 255, 0.1)')
+        this.thumbBackground.fill('#555555')
         this.switchOff();
     }
     onMouseUp(e) {
@@ -178,15 +173,15 @@ class EffectThumbControl extends Component {
     }
     render() {
         const { classes } = this.props;
-        const isOn = this.props.isOn && this.props.isOverride;
+        console.log('this.display on', this.displayOn)
         return (
             <Box className={classes.container}>
-                {!isOn && <img alt='open lock' src={OpenLock} className={classes.open} />}
+                <img alt='open lock' src={OpenLock} className={classes.open} />
                 <Box style={{ zIndex: 2, position: 'absolute' }}>
                     <Box ref={this.thumbControlRef} style={{ display: 'flex', zIndex: 2 }}></Box>
                 </Box>
-                {isOn && <img alt='locked' src={Lock} className={classes.locked} />}
-            </Box >
+                <img alt='locked' src={Lock} className={classes.locked} />
+            </Box>
         )
     }
 }
