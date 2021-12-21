@@ -24,18 +24,22 @@ const styles = theme => ({
         alignItems: 'center',
         justifyContent: 'center',
     },
-    open: {
-        color: '#474747',
+    lockContainer: {
+        display: 'flex',
+        flexDirection: 'row',
         position: 'absolute',
-        left: '10px',
-        top: '12px',
+        height: '100%',
+        justifyContent: 'center',
+        alignItems: 'center'
+    },
+    open: {
+        display: 'flex',
+        color: '#474747',
         zIndex: 1
     },
     locked: {
+        display: 'flex',
         color: '#474747',
-        position: 'absolute',
-        right: '10px',
-        top: '12px',
         zIndex: 1
     },
     iconDark: {
@@ -126,15 +130,18 @@ class EffectThumbControl extends Component {
     onMouseMove(e) {
         e.preventDefault()
         let x = e.pageX - this.dragStart
-        if (!this.isOn) {
-            x = (containerWidth - thumbWidth) + e.pageX - this.dragStart
+        // stop minute difference from being used as moves
+        if (x > 3 || x < -3) {
+            if (!this.isOn) {
+                x = (containerWidth - thumbWidth) + e.pageX - this.dragStart
+            }
+            if (x > containerWidth - thumbWidth) {
+                x = containerWidth - thumbWidth
+            } else if (x < 0) {
+                x = 0
+            }
+            this.thumb.x(x)
         }
-        if (x > containerWidth - thumbWidth) {
-            x = containerWidth - thumbWidth
-        } else if (x < 0) {
-            x = 0
-        }
-        this.thumb.x(x)
     }
     setSwitchIsOn = () => {
         this.thumb.x(0)
@@ -173,14 +180,17 @@ class EffectThumbControl extends Component {
     }
     render() {
         const { classes } = this.props;
-        console.log('this.display on', this.displayOn)
         return (
             <Box className={classes.container}>
-                <img alt='open lock' src={OpenLock} className={classes.open} />
+                <Box className={classes.lockContainer} style={{ left: 16 }}>
+                    <img alt='open lock' src={OpenLock} className={classes.open} />
+                </Box>
                 <Box style={{ zIndex: 2, position: 'absolute' }}>
                     <Box ref={this.thumbControlRef} style={{ display: 'flex', zIndex: 2 }}></Box>
                 </Box>
-                <img alt='locked' src={Lock} className={classes.locked} />
+                <Box className={classes.lockContainer} style={{ right: 16 }}>
+                    <img alt='locked' src={Lock} className={classes.locked} />
+                </Box>
             </Box>
         )
     }
