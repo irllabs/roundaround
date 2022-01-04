@@ -134,11 +134,7 @@ const styles = theme => ({
         height: 48,
         '&:hover': {
             backgroundColor: 'rgba(255, 255, 255, 0.2)'
-        },
-        [theme.breakpoints.down('sm')]: {
-            width: 32,
-            height: 32,
-        },
+        }
     },
     rectButton: {
         display: 'flex',
@@ -556,8 +552,6 @@ class LayerSettings extends Component {
                 <img alt={name} className={classes.instrumentIcon} src={Icon} />
             </Box>
         }
-
-        //selectedLayer ? userColors[user.id] : '#E6D64C'
 
         const form = (
             <Box className={classes.root}>
