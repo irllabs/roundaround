@@ -179,7 +179,7 @@ const styles = theme => ({
         height: 48,
         '&:hover': {
             backgroundColor: 'rgba(255, 255, 255, 0.2)'
-        },
+        }
     },
     rectButton: {
         display: 'flex',
