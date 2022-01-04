@@ -125,6 +125,7 @@ const styles = theme => ({
         justifyContent: 'center',
         alignItems: 'center',
         padding: 0,
+        margin: 0,
         backgroundColor: '#4D4D4D',
         height: '100%',
         borderRadius: 30
@@ -173,7 +174,7 @@ const styles = theme => ({
         alignItems: 'center',
         justifyContent: 'flex-start',
         margin: '10px 0',
-        width: 216,
+        maxWidth: 216,
         height: 32,
         fontWeight: 'bold',
         padding: '6px 15px',
@@ -207,6 +208,8 @@ const styles = theme => ({
         display: 'flex',
         justifyContent: 'center',
         alignItems: 'center',
+        marginLeft: 8,
+        marginRight: 8,
     },
     actionButton: {
         display: 'flex',
@@ -589,7 +592,7 @@ class LayerSettings extends Component {
                 <Box className={classes.layerOptions}>
                     {!selectedLayer && <Typography className={classes.msg}>Long Press a round to edit</Typography>}
                     {selectedLayer &&
-                        <Box style={{ display: 'flex', flex: 1, flexDirection: 'row', justifyContent: 'space-between', marginLeft: 10, marginRight: 10 }}>
+                        <Box style={{ display: 'flex', flex: 1, flexDirection: 'row', justifyContent: 'space-between', marginLeft: 8 }}>
                             <Box className={classes.actionButtonContainer}>
                                 <LayerInstrumentAlt
                                     showInstrumentsPopup={showInstrumentsPopup}
