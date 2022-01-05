@@ -75,6 +75,8 @@ const styles = (theme) => ({
         },
     },
     mixerPopup: {
+        display: 'flex',
+        flexDirection: 'column',
         position: 'absolute',
         opacity: 1,
         top: -247,
@@ -86,7 +88,6 @@ const styles = (theme) => ({
         boxShadow: '0px 0px 2px rgba(0, 0, 0, 0.15), 0px 4px 6px rgba(0, 0, 0, 0.15)',
         backgroundColor: '#333333',
         overflow: 'hidden',
-        overflowY: 'scroll',
         transition: 'opacity 0.2s ease-in',
         [theme.breakpoints.down('sm')]: {
             top: -183,
@@ -237,6 +238,7 @@ const styles = (theme) => ({
     },
     layerContainer: {
         display: 'flex',
+        overflowY: 'scroll',
         flexDirection: 'column',
     },
     layerSubContainer: {

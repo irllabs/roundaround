@@ -20,13 +20,13 @@ const LayerListPopup = ({
     Close
 }) => (
     <Box className={showMixerPopup ? classes.mixerPopup : classes.hidden} style={height < 400 ? { height: height - 142, top: -(height - 138) } : {}}>
-        <Box className={classes.mixerPopupHeader}>
+        <Box className={classes.mixerPopupHeader} style={{ flex: 1 }}>
             <IconButton className={classes.plainButton} style={{ width: 16, height: 16 }} onClick={toggleShowMixerPopup}>
                 <img alt='close popup' src={Close} />
             </IconButton>
             <Typography className={classes.mixerPopupHeaderText}>Mixer</Typography>
         </Box>
-        <Box className={classes.layerContainer}>
+        <Box className={classes.layerContainer} style={{ flex: 10 }}>
             {
                 round && round?.layers.map((layer, i) =>
                     <Box
