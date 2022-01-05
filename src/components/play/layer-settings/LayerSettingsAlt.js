@@ -174,7 +174,7 @@ const styles = theme => ({
         alignItems: 'center',
         justifyContent: 'flex-start',
         margin: '10px 0',
-        maxWidth: 216,
+        width: 216,
         height: 32,
         fontWeight: 'bold',
         padding: '6px 15px',
@@ -592,7 +592,7 @@ class LayerSettings extends Component {
                 <Box className={classes.layerOptions}>
                     {!selectedLayer && <Typography className={classes.msg}>Long Press a round to edit</Typography>}
                     {selectedLayer &&
-                        <Box style={{ display: 'flex', flex: 1, flexDirection: 'row', justifyContent: 'space-between', marginLeft: 8 }}>
+                        <Box style={{ display: 'flex', flex: 1, flexDirection: 'row', justifyContent: 'space-between' }}>
                             <Box className={classes.actionButtonContainer}>
                                 <LayerInstrumentAlt
                                     showInstrumentsPopup={showInstrumentsPopup}
@@ -620,11 +620,11 @@ class LayerSettings extends Component {
                                     <Box style={{ display: 'flex', flexDirection: 'row', alignItems: 'center', justifyContent: 'center', paddingRight: 5 }}>
                                         {instrumentIcon(selectedLayer?.instrument?.sampler)}
                                     </Box>
-                                    <Typography style={{ fontWeight: 'bolder', lineHeight: 1, textTransform: 'capitalize' }}>
+                                    <Typography style={{ fontWeight: 'bolder', lineHeight: 1, textTransform: 'capitalize', fontSize: 16 }}>
                                         {selectedInstrument}
                                     </Typography>
                                     <Box style={{ fontSize: 30, marginLeft: 5, marginRight: 5, lineHeight: .3 }}>&#183;</Box>
-                                    <Typography style={{ fontWeight: 'bolder', lineHeight: 1, textTransform: 'capitalize' }}>
+                                    <Typography style={{ fontWeight: 'bolder', lineHeight: 1, textTransform: 'capitalize', fontSize: 16 }}>
                                         {selectedLayer?.instrument?.sample}
                                     </Typography>
                                 </IconButton>
