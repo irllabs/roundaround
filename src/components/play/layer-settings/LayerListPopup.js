@@ -4,9 +4,10 @@ import { Box, Typography, IconButton } from '@material-ui/core'
 import VolumeSlider from './VolumeSlider'
 
 
-const MixerPopup = ({
+const LayerListPopup = ({
     classes,
     showMixerPopup,
+    height,
     selectedInstrument,
     instrumentIcon,
     onMuteClick,
@@ -18,7 +19,7 @@ const MixerPopup = ({
     round,
     Close
 }) => (
-    <Box className={showMixerPopup ? classes.mixerPopup : classes.hidden}>
+    <Box className={showMixerPopup ? classes.mixerPopup : classes.hidden} style={height < 400 ? { height: height - 142, top: -(height - 138) } : {}}>
         <Box className={classes.mixerPopupHeader}>
             <IconButton className={classes.plainButton} style={{ width: 16, height: 16 }} onClick={toggleShowMixerPopup}>
                 <img alt='close popup' src={Close} />
@@ -38,9 +39,11 @@ const MixerPopup = ({
                         className={classes.layerSubContainer}
                     >
                         <Box className={classes.layer} style={(round.layers.length - 1) === i ? { borderBottom: 'none' } : {}}>
-                            <Box style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', flex: 4 }}>
+                            <Box style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', justifyContent: 'center', flex: 4 }}>
                                 <Box style={{ display: 'flex', flexDirection: 'row', justifyContent: 'flex-start', alignItems: 'center', paddingBottom: 5 }}>
-                                    <Box style={{ marginRight: 5 }}>{instrumentIcon(layer?.instrument?.sampler)}</Box>
+                                    <Box style={{ marginRight: 5 }}>
+                                        {instrumentIcon(layer?.instrument?.sampler)}
+                                    </Box>
                                     <Typography style={{ textTransform: 'capitalize', display: 'flex', alignItems: 'flex-start', lineHeight: 1 }}>
                                         {layer.instrument?.sample}
                                     </Typography>
@@ -72,4 +75,4 @@ const MixerPopup = ({
     </Box>
 )
 
-export default MixerPopup 
+export default LayerListPopup 
