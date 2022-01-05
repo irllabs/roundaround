@@ -19,7 +19,7 @@ const LayerListPopup = ({
     user,
     round
 }) => (
-    <Box className={showMixerPopup ? classes.mixerPopup : classes.hidden}>
+    <Box className={showMixerPopup ? classes.mixerPopup : classes.hidden} style={height < 400 ? { height: height - 142, top: -(height - 138) } : {}}>
         <Box className={classes.mixerPopupHeader}>
             <IconButton className={classes.plainButton} onClick={toggleShowMixerPopup}>
                 <CloseIcon />

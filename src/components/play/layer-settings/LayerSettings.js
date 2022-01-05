@@ -40,7 +40,7 @@ import {
     ElipsisIcon
 } from './resources'
 
-const styles = theme => ({
+const styles = (theme) => ({
     container: {
         position: 'absolute',
         display: 'flex',
@@ -120,9 +120,8 @@ const styles = theme => ({
         overflowY: 'scroll',
         transition: 'opacity 0.2s ease-in',
         [theme.breakpoints.down('sm')]: {
-            top: -247,
-        },
-        [theme.breakpoints.down('sm')]: {
+            top: -183,
+            height: 180,
             left: 0,
         },
     },
@@ -454,14 +453,19 @@ class LayerSettings extends Component {
         this.subtractStepsButton = React.createRef()
         this.percentageButton = React.createRef()
         this.msButton = React.createRef()
+        this.height = window.innerHeight;
     }
 
     static contextType = FirebaseContext;
 
+    resizeHeight = () => {
+        this.height = window.innerHeight;
+    }
     componentDidMount() {
         window.addEventListener('click', this.onClick)
         window.addEventListener('resize', this.updateWindowWidth)
         this.updateWindowWidth();
+        window.addEventListener('resize', this.resizeHeight);
         if (this.props.round && this.props.selectedLayerId) {
             const selectedLayer = _.find(this.props.round.layers, { id: this.props.selectedLayerId })
             this.setSelectedInstrument(selectedLayer)
@@ -492,6 +496,7 @@ class LayerSettings extends Component {
     componentWillUnmount() {
         window.removeEventListener('click', this.onClick)
         window.removeEventListener('resize', this.updateWindowWidth)
+        window.removeEventListener('resize', this.resizeHeight)
     }
 
     updateWindowWidth = () => this.setState({ windowWidth: window.innerWidth })
@@ -716,6 +721,7 @@ class LayerSettings extends Component {
             <Box className={classes.root}>
                 <LayerListPopup
                     instrumentIcon={instrumentIcon}
+                    height={this.height}
                     classes={classes}
                     round={this.props.round}
                     user={user}
