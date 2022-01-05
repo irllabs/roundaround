@@ -219,7 +219,7 @@ const styles = theme => ({
         alignItems: 'center',
         justifyContent: 'flex-start',
         margin: '10px 0',
-        maxWidth: 216,
+        width: 216,
         height: 32,
         marginRight: 3,
         fontWeight: 'bold',
@@ -770,7 +770,7 @@ class LayerSettings extends Component {
                             Long Press a round to edit
                         </Typography>}
                     {selectedLayer &&
-                        <Box style={{ display: 'flex', flex: 1, flexDirection: 'row', justifyContent: 'space-between', marginLeft: 8 }}>
+                        <Box style={{ display: 'flex', flex: 1, flexDirection: 'row', justifyContent: 'space-between' }}>
                             <Box className={classes.actionButtonContainer}>
                                 <LayerInstrument
                                     showInstrumentsPopup={showInstrumentsPopup}
