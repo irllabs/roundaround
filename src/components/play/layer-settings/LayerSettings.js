@@ -59,6 +59,24 @@ const styles = theme => ({
             left: '5%'
         },
     },
+    addLayerMobile: {
+        display: 'none',
+        [theme.breakpoints.down('xs')]: {
+            display: 'flex'
+        },
+    },
+    addLayerDesktop: {
+        display: 'flex',
+        [theme.breakpoints.down('xs')]: {
+            display: 'none'
+        },
+    },
+    selectedInstrumentInfo: {
+        display: 'flex',
+        [theme.breakpoints.down('xs')]: {
+            display: 'none'
+        }
+    },
     drawer: {
         backgroundColor: '#2E2E2E',
         '& .MuiPaper-root': {
@@ -136,6 +154,16 @@ const styles = theme => ({
             width: 216,
         },
     },
+    instrumentSample: {
+        display: 'flex',
+        fontWeight: 'bolder',
+        lineHeight: 1,
+        textAlign: 'center',
+        textTransform: 'capitalize',
+        [theme.breakpoints.down('xs')]: {
+            flex: 1
+        }
+    },
     addLayerContainer: {
         display: 'flex',
         flexDirection: 'row',
@@ -199,6 +227,9 @@ const styles = theme => ({
         backgroundColor: 'rgba(255,255,255, 0.1)',
         '&:hover': {
             backgroundColor: 'rgba(255, 255, 255, 0.2)'
+        },
+        [theme.breakpoints.down('xs')]: {
+            width: 115
         }
     },
     stepCount: {
@@ -269,6 +300,18 @@ const styles = theme => ({
             right: 0,
         },
     },
+    desktopDeleteClear: {
+        display: 'flex',
+        [theme.breakpoints.down('xs')]: {
+            display: 'none'
+        }
+    },
+    mobileDeleteClear: {
+        display: 'none',
+        [theme.breakpoints.down('xs')]: {
+            display: 'flex'
+        }
+    },
     actionButton: {
         display: 'flex',
         flexDirection: 'row',
@@ -286,7 +329,12 @@ const styles = theme => ({
     },
     msg: {
         flex: 1,
-        textAlign: 'center'
+        textAlign: 'center',
+        padding: '0 15px',
+        [theme.breakpoints.down('xs')]: {
+            fontSize: 14,
+            padding: '0 15px'
+        }
     },
     containerSoloMute: {
         flex: 1,
@@ -640,10 +688,10 @@ class LayerSettings extends Component {
             windowWidth
         } = this.state;
 
-        const { classes, user } = this.props
+        const { classes, theme, user } = this.props
         const selectedLayer = this.props.selectedLayer
         const userColors = this.getUserColors()
-        const isMobile = windowWidth <= 480
+        const isMobile = windowWidth < theme.breakpoints.values.sm
         const sample = selectedLayer?.instrument?.sample
 
         const instrumentIcon = (name) => {
@@ -686,20 +734,20 @@ class LayerSettings extends Component {
                     showHamburgerPopup={showHamburgerPopup}
                 />
                 <Box className={classes.addLayerContainer}>
-                    {!isMobile ?
-                        <>
-                            <IconButton ref={this.addLayerButton} onClick={this.onAddLayerClick} className={classes.iconButtons}>
-                                <PlusIcon user={user} userColors={userColors} />
-                            </IconButton>
-                            <IconButton
-                                style={showMixerPopup ? { backgroundColor: 'rgba(255, 255, 255, 0.2)' } : {}}
-                                ref={this.mixerPopupButton}
-                                className={classes.iconButtons}
-                                onClick={this.toggleShowMixerPopup}
-                            >
-                                <EqualiserIcon user={user} userColors={userColors} />
-                            </IconButton>
-                        </> :
+                    <Box className={classes.addLayerDesktop}>
+                        <IconButton ref={this.addLayerButton} onClick={this.onAddLayerClick} className={classes.iconButtons}>
+                            <PlusIcon user={user} userColors={userColors} />
+                        </IconButton>
+                        <IconButton
+                            style={showMixerPopup ? { backgroundColor: 'rgba(255, 255, 255, 0.2)' } : {}}
+                            ref={this.mixerPopupButton}
+                            className={classes.iconButtons}
+                            onClick={this.toggleShowMixerPopup}
+                        >
+                            <EqualiserIcon user={user} userColors={userColors} />
+                        </IconButton>
+                    </Box>
+                    <Box className={classes.addLayerMobile}>
                         <IconButton
                             ref={this.hamburgerButton}
                             className={classes.iconButtons}
@@ -709,14 +757,12 @@ class LayerSettings extends Component {
                                 <CloseIcon fill={user && userColors[user.id]} /> :
                                 <HamburgerMenuIcon user={user} userColors={userColors} />}
                         </IconButton>
-                    }
-
+                    </Box>
                 </Box>
                 <Box className={classes.layerOptions}>
                     {!selectedLayer &&
                         <Typography
                             className={classes.msg}
-                            style={isMobile ? { fontSize: 14, padding: '0 15px' } : { padding: '0 15px' }}
                         >
                             Long Press a round to edit
                         </Typography>}
@@ -742,9 +788,10 @@ class LayerSettings extends Component {
                                 <IconButton
                                     ref={this.instrumentPopupButton}
                                     id='instrument-summary'
-                                    style={showInstrumentsPopup ?
-                                        { backgroundColor: 'rgba(255, 255, 255, 0.2)', display: 'flex', flexDirection: 'row', width: isMobile ? 115 : 216 } :
-                                        { display: 'flex', flexDirection: 'row', width: isMobile ? 115 : 216, }
+                                    style={
+                                        showInstrumentsPopup ?
+                                            { backgroundColor: 'rgba(255, 255, 255, 0.2)', display: 'flex', flexDirection: 'row' } :
+                                            { display: 'flex', flexDirection: 'row' }
                                     }
                                     className={classes.instrumentSummary}
                                     onClick={this.toggleInstrumentPopup}
@@ -752,15 +799,13 @@ class LayerSettings extends Component {
                                     <Box style={{ display: 'flex', flexDirection: 'row', alignItems: 'center', justifyContent: 'center', paddingRight: 5 }}>
                                         {instrumentIcon(selectedLayer?.instrument?.sampler)}
                                     </Box>
-                                    {!isMobile &&
-                                        <>
-                                            <Typography style={{ fontWeight: 'bolder', lineHeight: 1, textTransform: 'capitalize' }}>
-                                                {selectedInstrument}
-                                            </Typography>
-                                            <Box style={{ fontSize: 30, marginLeft: 5, marginRight: 5, lineHeight: .3 }}>&#183;</Box>
-                                        </>
-                                    }
-                                    <Typography style={{ flex: isMobile ? 1 : 0, fontWeight: 'bolder', lineHeight: 1, textAlign: 'center', textTransform: 'capitalize' }}>
+                                    <Box className={classes.selectedInstrumentInfo}>
+                                        <Typography style={{ fontWeight: 'bolder', lineHeight: 1, textTransform: 'capitalize' }}>
+                                            {selectedInstrument}
+                                        </Typography>
+                                        <Typography style={{ fontSize: 30, marginLeft: 5, marginRight: 5, lineHeight: .5 }}>&#183;</Typography>
+                                    </Box>
+                                    <Typography className={classes.instrumentSample}>
                                         {`${selectedLayer?.instrument?.sample.substring(0, isMobile ? 6 : sample.length)}${isMobile &&
                                             selectedLayer?.instrument?.sample.length > 6 ? '...' : ''}`}
                                     </Typography>
@@ -809,7 +854,7 @@ class LayerSettings extends Component {
                                     {selectedLayer.isMuted ? <MutedIcon /> : <MuteIcon />}
                                 </IconButton>
                             </Box>
-                            {isMobile ?
+                            <Box className={classes.mobileDeleteClear}>
                                 <Box className={classes.actionButtonContainer}>
                                     <DeleteClearPopup
                                         showDeleteClearPopup={showDeleteClearPopup}
@@ -824,20 +869,20 @@ class LayerSettings extends Component {
                                     >
                                         <ElipsisIcon />
                                     </IconButton>
-                                </Box> :
-                                <>
-                                    <Box className={classes.actionButtonContainer}>
-                                        <IconButton onClick={this.onClearStepsClick.bind(this)} className={classes.actionButton}>
-                                            <ErasorIcon />
-                                        </IconButton>
-                                    </Box>
-                                    <Box className={classes.actionButtonContainer}>
-                                        <IconButton onClick={this.onDeleteLayerClick.bind(this)} className={classes.actionButton}>
-                                            <TrashIcon />
-                                        </IconButton>
-                                    </Box>
-                                </>
-                            }
+                                </Box>
+                            </Box>
+                            <Box className={classes.desktopDeleteClear}>
+                                <Box className={classes.actionButtonContainer}>
+                                    <IconButton onClick={this.onClearStepsClick.bind(this)} className={classes.actionButton}>
+                                        <ErasorIcon />
+                                    </IconButton>
+                                </Box>
+                                <Box className={classes.actionButtonContainer}>
+                                    <IconButton onClick={this.onDeleteLayerClick.bind(this)} className={classes.actionButton}>
+                                        <TrashIcon />
+                                    </IconButton>
+                                </Box>
+                            </Box>
                         </Box>}
                 </Box>
             </Box>
@@ -870,4 +915,4 @@ const mapStateToProps = state => {
 
 export default connect(
     mapStateToProps
-)(withStyles(styles)(LayerSettings))
+)(withStyles(styles, { withTheme: true })(LayerSettings))
