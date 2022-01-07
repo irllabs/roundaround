@@ -121,10 +121,14 @@ const styles = (theme) => ({
         overflow: 'hidden',
         transition: 'opacity 0.2s ease-in',
         [theme.breakpoints.down('sm')]: {
-            top: -183,
-            height: 180,
+            top: -163,
+            height: 160,
             left: 0,
         },
+        [theme.breakpoints.down('xs')]: {
+            height: 243,
+            top: -247
+        }
     },
     mixerPopupHeader: {
         display: 'flex',
@@ -205,9 +209,11 @@ const styles = (theme) => ({
         },
     },
     volumeSliderContainer: {
+        display: 'flex',
         flex: 2,
         flexDirection: 'row',
-        alignItems: 'center'
+        alignItems: 'center',
+        justifyContent: 'center',
     },
     instrumentIcon: {
         width: 13.5,
