@@ -314,7 +314,6 @@ const styles = theme => ({
         },
         marginLeft: 8,
         marginRight: 8,
-        }
     },
     actionButton: {
         display: 'flex',
