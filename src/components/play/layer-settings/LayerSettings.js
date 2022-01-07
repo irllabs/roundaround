@@ -170,6 +170,7 @@ const styles = theme => ({
         justifyContent: 'center',
         alignItems: 'center',
         padding: 0,
+        margin: 0,
         backgroundColor: '#4D4D4D',
         height: '100%',
         borderRadius: 30
@@ -179,7 +180,7 @@ const styles = theme => ({
         height: 48,
         '&:hover': {
             backgroundColor: 'rgba(255, 255, 255, 0.2)'
-        },
+        }
     },
     rectButton: {
         display: 'flex',
@@ -310,7 +311,9 @@ const styles = theme => ({
         display: 'none',
         [theme.breakpoints.down('xs')]: {
             display: 'flex'
-        }
+        },
+        marginLeft: 8,
+        marginRight: 8,
     },
     actionButton: {
         display: 'flex',
@@ -767,7 +770,7 @@ class LayerSettings extends Component {
                             Long Press a round to edit
                         </Typography>}
                     {selectedLayer &&
-                        <Box style={{ display: 'flex', flex: 1, flexDirection: 'row', justifyContent: 'space-between', marginLeft: 10, marginRight: 10 }}>
+                        <Box style={{ display: 'flex', flex: 1, flexDirection: 'row', justifyContent: 'space-between' }}>
                             <Box className={classes.actionButtonContainer}>
                                 <LayerInstrument
                                     showInstrumentsPopup={showInstrumentsPopup}
