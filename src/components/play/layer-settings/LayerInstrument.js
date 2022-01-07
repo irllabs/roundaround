@@ -1,4 +1,4 @@
-import React, { useContext, useEffect } from 'react'
+import React, { useContext } from 'react'
 import { Box, Typography } from '@material-ui/core'
 import IconButton from '@material-ui/core/IconButton'
 import _ from 'lodash'
@@ -13,17 +13,33 @@ import Check from './resources/svg/check.svg'
 import LeftArrow from './resources/svg/leftArrow.svg'
 import { FirebaseContext } from '../../../firebase'
 
-export default function LayerInstrument({ selectedLayer, user, roundId }) {
+
+const LayerInstrument = ({
+    showInstrumentsPopup,
+    toggleShowInstrumentList,
+    toggleArticulationOptions,
+    selectedInstrumentLabel,
+    showArticulationOptions,
+    showInstrumentsList,
+    classes,
+    selectedLayer,
+    roundId,
+    instrumentsListRef,
+    articulationsListRef,
+    instrumentsButtonRef,
+    soundsButtonRef,
+    user
+}) => {
+    const [selectedInstrument, setSelectedInstrument] = React.useState(selectedLayer.instrument.sampler)
+    const [selectedArticulation, setSelectedArticulation] = React.useState(selectedLayer.instrument.sample)
     const dispatch = useDispatch();
     const instrumentOptions = Instruments.getInstrumentOptions(false)
     const articulationOptions = Instruments.getInstrumentArticulationOptions(selectedInstrument, user.id)
     const firebase = useContext(FirebaseContext);
 
-    const onInstrumentSelect = async (event) => {
-        setSelectedInstrument(event.target.value);
-        console.log('onInstrumentSelect', event.target.value);
-        let defaultArticulation = await Instruments.getRandomArticulation(event.target.value)
-        console.log('defaultArticulation', defaultArticulation);
+    const onInstrumentSelect = async (instrument) => {
+        setSelectedInstrument(instrument.name)
+        let defaultArticulation = await Instruments.getRandomArticulation(instrument.name)
         if (!_.isNil(defaultArticulation)) {
             setSelectedArticulation(defaultArticulation)
             dispatch({
@@ -38,53 +54,12 @@ export default function LayerInstrument({ selectedLayer, user, roundId }) {
         };
     }
 
-    useEffect(() => {
-        async function refreshCustomSampleName(sampleId) {
-            let sample = await CustomSamples.get(sampleId)
-            setCustomSampleName(sample.name)
-        }
-        setSelectedInstrument(selectedLayer.instrument.sampler)
-        setSelectedArticulation(selectedLayer.instrument.sample)
-    }, [selectedLayer])
-
     const onArticulationSelect = async (articulation) => {
         setSelectedArticulation(articulation.value);
         dispatch({ type: UPDATE_LAYER_INSTRUMENT, payload: { id: selectedLayer.id, instrument: { sampler: selectedInstrument, sample: articulation.value }, user: user.id } })
         firebase.updateLayer(roundId, selectedLayer.id, { instrument: { sample: articulation.value } })
     };
-    const onRenameSampleClick = () => {
-        setSampleAnchorElement(null);
-        setIsShowingRenameSampleDialog(true)
-        dispatch({ type: SET_DISABLE_KEY_LISTENER, payload: { value: true } })
-    }
-    const onDeleteSampleClick = () => {
-        setSampleAnchorElement(null);
-        setIsShowingDeleteSampleDialog(true)
-    }
-    const [isShowingDeleteSampleDialog, setIsShowingDeleteSampleDialog] = useState(false)
-    const onCloseDeleteSampleDialog = () => {
-        setIsShowingDeleteSampleDialog(false)
-    }
-    const deleteSample = async () => {
-        await CustomSamples.delete(selectedArticulation, user.id)
-        setIsShowingDeleteSampleDialog(false)
-        const defaultLayer = await getDefaultLayerData()
-        dispatch({ type: UPDATE_LAYER_INSTRUMENT, payload: { id: selectedLayer.id, instrument: { sampler: defaultLayer.instrument.sampler, sample: defaultLayer.instrument.sample }, user: user.id } })
-        firebase.updateLayer(roundId, selectedLayer.id, { instrument: { sampler: defaultLayer.instrument.sampler, sample: defaultLayer.instrument.sample } })
-    }
-    const renameSampleTextField = useRef(null)
-    const [isShowingRenameSampleDialog, setIsShowingRenameSampleDialog] = useState(false)
-    const onCloseRenameSampleDialog = () => {
-        setIsShowingRenameSampleDialog(false)
-        dispatch({ type: SET_DISABLE_KEY_LISTENER, payload: { value: false } })
-    }
-    const renameSample = async () => {
-        const newName = renameSampleTextField.current.querySelectorAll("input")[0].value
-        // console.log('on rename click', newName);
-        CustomSamples.rename(selectedArticulation, newName)
-        onCloseRenameSampleDialog()
-    }
-    const [customSampleName, setCustomSampleName] = useState(null)
+
     return (
         <Box className={showInstrumentsPopup ? classes.instrumentPopup : classes.hidden}>
             {!showArticulationOptions &&
@@ -169,46 +144,7 @@ export default function LayerInstrument({ selectedLayer, user, roundId }) {
                         </Box>
                     }
                 </Box>
-            </FormControl>
-            <Dialog
-                open={isShowingDeleteSampleDialog}
-                onClose={onCloseDeleteSampleDialog}
-            >
-                <DialogContent>
-                    <DialogContentText id="alert-dialog-description">
-                        Are you sure you want to delete this sample?
-                    </DialogContentText>
-                </DialogContent>
-                <DialogActions>
-                    <Button onClick={onCloseDeleteSampleDialog} color="primary">
-                        Cancel
-                    </Button>
-                    <Button onClick={deleteSample} color="primary" variant="contained" disableElevation autoFocus>
-                        Delete
-                    </Button>
-                </DialogActions>
-            </Dialog>
-            <Dialog open={isShowingRenameSampleDialog} onClose={onCloseRenameSampleDialog} aria-labelledby="form-dialog-title">
-                <DialogTitle id="form-dialog-title">Rename</DialogTitle>
-                <DialogContent>
-                    <TextField
-                        ref={renameSampleTextField}
-                        defaultValue={customSampleName ? customSampleName : ''}
-                        autoFocus
-                        margin="dense"
-                        id="renameSample"
-                        fullWidth
-                    />
-                </DialogContent>
-                <DialogActions>
-                    <Button onClick={onCloseRenameSampleDialog}>
-                        Cancel
-                    </Button>
-                    <Button color="primary" variant="contained" disableElevation autoFocus onClick={renameSample}>
-                        Rename
-                    </Button>
-                </DialogActions>
-            </Dialog>
+            }
         </Box>
     )
 }

@@ -17,12 +17,66 @@ import AudioEngine from '../../../audio-engine/AudioEngine'
 import Instruments from '../../../audio-engine/Instruments'
 
 import { FirebaseContext } from '../../../firebase';
-import LayerAutomation from './LayerAutomation';
-import Track from '../../../audio-engine/Track'
-import LayerPercentOffset from './LayerPercentOffset'
-import LayerCustomSounds from './LayerCustomSounds'
+import LayerInstrument from './LayerInstrument'
+import LayerPopup from './LayerPopup'
+import VolumePopup from './VolumePopup'
+import { getDefaultLayerData } from '../../../utils/defaultData';
+import LayerListPopup from './LayerListPopup';
+import HamburgerPopup from './HamburgerPopup';
+import DeleteClearPopup from './DeleteClearPopup';
+import {
+    PlusIcon,
+    EqualiserIcon,
+    HiHatsIcon,
+    KickIcon,
+    PercIcon,
+    SnareIcon,
+    MuteIcon,
+    MutedIcon,
+    ErasorIcon,
+    TrashIcon,
+    HamburgerMenuIcon,
+    CloseIcon,
+    ElipsisIcon
+} from './resources'
 
 const styles = theme => ({
+    container: {
+        position: 'absolute',
+        display: 'flex',
+        justifyContent: 'center',
+        alignItems: 'flex-start',
+        backgroundColor: 'transparent',
+        bottom: 0,
+        right: '30%',
+        left: '30%',
+        [theme.breakpoints.down('md')]: {
+            right: '20%',
+            left: '20%'
+        },
+        [theme.breakpoints.down('sm')]: {
+            right: '5%',
+            left: '5%'
+        },
+    },
+    addLayerMobile: {
+        display: 'none',
+        [theme.breakpoints.down('xs')]: {
+            display: 'flex'
+        },
+    },
+    addLayerDesktop: {
+        display: 'flex',
+        [theme.breakpoints.down('xs')]: {
+            display: 'none'
+        },
+    },
+    selectedInstrumentInfo: {
+        display: 'flex',
+        [theme.breakpoints.down('xs')]: {
+            display: 'none'
+        }
+    },
     drawer: {
         backgroundColor: '#2E2E2E',
         '& .MuiPaper-root': {
@@ -30,7 +84,6 @@ const styles = theme => ({
         }
     },
     root: {
-        boxSizing: 'border-box',
         position: 'relative',
         display: "flex",
         flexDirection: "row",
@@ -51,18 +104,12 @@ const styles = theme => ({
         [theme.breakpoints.down('sm')]: {
             marginBottom: 5,
         },
-        [theme.breakpoints.down('xs')]: {
-            width: 341
-        },
     },
     mixerPopup: {
-        display: 'flex',
-        flexDirection: 'column',
         position: 'absolute',
         opacity: 1,
         top: -247,
         height: 243,
-        width: 499,
         right: 0,
         left: 48,
         borderRadius: 8,
@@ -70,19 +117,17 @@ const styles = theme => ({
         boxShadow: '0px 0px 2px rgba(0, 0, 0, 0.15), 0px 4px 6px rgba(0, 0, 0, 0.15)',
         backgroundColor: '#333333',
         overflow: 'hidden',
+        overflowY: 'scroll',
         transition: 'opacity 0.2s ease-in',
         [theme.breakpoints.down('sm')]: {
-            top: -163,
-            height: 160,
+            top: -247,
+        },
+        [theme.breakpoints.down('sm')]: {
             left: 0,
         },
-        [theme.breakpoints.down('xs')]: {
-            width: 341
-        }
     },
     mixerPopupHeader: {
         display: 'flex',
-        flex: 1,
         justifyContent: 'flex-start',
         alignItems: 'center',
         padding: '10px 15px',
@@ -125,7 +170,6 @@ const styles = theme => ({
         justifyContent: 'center',
         alignItems: 'center',
         padding: 0,
-        margin: 0,
         backgroundColor: '#4D4D4D',
         height: '100%',
         borderRadius: 30
@@ -135,7 +179,7 @@ const styles = theme => ({
         height: 48,
         '&:hover': {
             backgroundColor: 'rgba(255, 255, 255, 0.2)'
-        }
+        },
     },
     rectButton: {
         display: 'flex',
@@ -160,11 +204,9 @@ const styles = theme => ({
         },
     },
     volumeSliderContainer: {
-        display: 'flex',
         flex: 2,
         flexDirection: 'row',
-        alignItems: 'center',
-        justifyContent: 'center',
+        alignItems: 'center'
     },
     instrumentIcon: {
         width: 13.5,
@@ -178,6 +220,7 @@ const styles = theme => ({
         margin: '10px 0',
         width: 216,
         height: 32,
+        marginRight: 3,
         fontWeight: 'bold',
         padding: '6px 15px',
         borderRadius: 24,
@@ -186,7 +229,7 @@ const styles = theme => ({
             backgroundColor: 'rgba(255, 255, 255, 0.2)'
         },
         [theme.breakpoints.down('xs')]: {
-            width: 106
+            width: 115
         }
     },
     stepCount: {
@@ -196,7 +239,7 @@ const styles = theme => ({
         margin: '10px 0',
         width: 59,
         height: 32,
-        padding: '6px 12px',
+        padding: '5px 15px',
         borderRadius: 24,
         backgroundColor: 'rgba(255,255,255, 0.1)',
         '&:hover': {
@@ -213,8 +256,6 @@ const styles = theme => ({
         display: 'flex',
         justifyContent: 'center',
         alignItems: 'center',
-        marginLeft: 8,
-        marginRight: 8
         // [theme.breakpoints.down('sm')]: {
         //     width: 106,
         // },
@@ -269,13 +310,15 @@ const styles = theme => ({
         display: 'none',
         [theme.breakpoints.down('xs')]: {
             display: 'flex'
-        },
+        }
     },
     actionButton: {
         display: 'flex',
         flexDirection: 'row',
         alignItems: 'center',
         padding: 5,
+        marginLeft: 3,
+        marginRight: 3,
         height: 32,
         width: 32,
         margin: '10px 0',
@@ -303,10 +346,6 @@ const styles = theme => ({
     },
     layerContainer: {
         display: 'flex',
-        flex: 6,
-        overflowY: 'scroll',
-        height: '100%',
-        zIndex: 100,
         flexDirection: 'column',
     },
     layerSubContainer: {
@@ -405,12 +444,6 @@ class LayerSettings extends Component {
         this.showDeleteClearPopupButton = React.createRef()
         this.layerPopupButton = React.createRef()
         this.volumePopupButton = React.createRef()
-
-        this.muteToggle = React.createRef()
-        this.soloButton = React.createRef()
-        this.offsetSlider = React.createRef()
-        this.volumeSlider = React.createRef()
-
         this.instrumentsButton = React.createRef()
         this.soundsButton = React.createRef()
         this.hamburgerButton = React.createRef()
@@ -418,30 +451,153 @@ class LayerSettings extends Component {
         this.subtractStepsButton = React.createRef()
         this.percentageButton = React.createRef()
         this.msButton = React.createRef()
-        this.height = window.innerHeight;
     }
 
     static contextType = FirebaseContext;
+
+    componentDidMount() {
+        window.addEventListener('click', this.onClick)
+        window.addEventListener('resize', this.updateWindowWidth)
+        this.updateWindowWidth();
+        if (this.props.round && this.props.selectedLayerId) {
+            const selectedLayer = _.find(this.props.round.layers, { id: this.props.selectedLayerId })
+            this.setSelectedInstrument(selectedLayer)
+        }
+    }
+
+    componentDidUpdate(prevProps) {
+        if (this.props.round && this.props.selectedLayerId) {
+            const selectedLayer = _.find(this.props.round.layers, { id: this.props.selectedLayerId })
+            //console.log('instrument in sampler', !selectedLayer.instrument.sampler.indexOf(this.state.selectedInstrument) > -1)
+            if (selectedLayer &&
+                (
+                    (prevProps.selectedLayerId !== this.props.selectedLayerId) ||
+                    (!this.state.selectedInstrument && selectedLayer)
+                    //|| (this.state.selectedInstrument && (selectedLayer.instrument.sampler.indexOf(this.state.selectedInstrument) === -1))
+                )
+            ) {
+                this.setSelectedInstrument(selectedLayer)
+            }
+            if (this.state.selectedInstrument) {
+                const selectedInstArray = this.state?.selectedInstrument.split('');
+                const firstTwo = selectedInstArray[0] + selectedInstArray[1];
+                selectedLayer?.instrument?.sampler.indexOf(firstTwo) === -1 && this.setSelectedInstrument(selectedLayer)
+            }
+        }
+    }
+
+    componentWillUnmount() {
+        window.removeEventListener('click', this.onClick)
+        window.removeEventListener('resize', this.updateWindowWidth)
+    }
+
+    updateWindowWidth = () => this.setState({ windowWidth: window.innerWidth })
+
+    setSelectedInstrument = async (selectedLayer) => {
+        const instrumentOptions = await Instruments.getInstrumentOptions(false)
+        if (instrumentOptions && this.props.round) {
+            const localLayer = _.find(this.props.round.layers, { id: this.props.selectedLayerId })
+            const sampler = selectedLayer?.instrument?.sampler || localLayer?.instrument?.sampler;
+            const instrument = _.find(instrumentOptions, { name: sampler })
+            if (instrument)
+                this.setState({ selectedInstrument: instrument.label })
+        }
+    }
+
+    getUserColors() {
+        let userColors = {};
+        for (const user of this.props.users) {
+            userColors[user.id] = user.color
+        }
+        return userColors
+    }
+
+    onClick = (e) => {
+        e.preventDefault()
+        e.stopPropagation()
+        const target = e.target;
+        if ((
+            (!this.instrumentPopupButton.current || (this.instrumentPopupButton.current && !this.instrumentPopupButton.current.contains(target)))
+            //&& (!this.addLayerButton.current || (this.addLayerButton.current && !this.addLayerButton.current.contains(target)))
+            && (!this.articulationsListButton.current || (this.articulationsListButton.current && !this.articulationsListButton.current.contains(target)))
+            && (!this.hamburgerButton.current || (this.hamburgerButton.current && !this.hamburgerButton.current.contains(target)))
+            && (!this.showDeleteClearPopupButton.current || (this.showDeleteClearPopupButton.current && !this.showDeleteClearPopupButton.current.contains(target)))
+            && (!this.instrumentsListButton.current || (this.instrumentsListButton.current && !this.instrumentsListButton.current.contains(target)))
+            && (!this.instrumentsButton.current || (this.instrumentsButton.current && !this.instrumentsButton.current.contains(target)))
+            && (!this.soundsButton.current || (this.soundsButton.current && !this.soundsButton.current.contains(target)))
+            && (!this.addStepsButton.current || (this.addStepsButton.current && !this.addStepsButton.current.contains(target)))
+            && (!this.subtractStepsButton.current || (this.subtractStepsButton.current && !this.subtractStepsButton.current.contains(target)))
+            && (!this.percentageButton.current || (this.percentageButton.current && !this.percentageButton.current.contains(target)))
+            && (!this.msButton.current || (this.msButton.current && !this.msButton.current.contains(target)))
+            && (!this.layerPopupButton.current || (this.layerPopupButton.current && !this.layerPopupButton.current.contains(target)))
+            && (!this.mixerPopupButton.current || (this.mixerPopupButton.current && !this.mixerPopupButton.current.contains(target)))
+            && (!this.volumePopupButton.current || (this.volumePopupButton && !this.volumePopupButton.current.contains(target)))
+        )) {
+            this.hideAllLayerInspectorModals()
+        }
+    }
+
+    hideAllLayerInspectorModals = () => this.setState({
+        showMixerPopup: false,
+        showInstrumentsPopup: false,
+        showInstrumentsList: false,
+        showSoundsList: false,
+        showArticulationOptions: false,
+        showLayerPopup: false,
+        showVolumePopup: false,
+        showDeleteClearPopup: false,
+        showHamburgerPopup: false
+    })
 
     onCloseClick() {
         this.props.dispatch({ type: SET_IS_SHOWING_LAYER_SETTINGS, payload: { value: false } })
     }
 
-    onPreviewClick() {
-        // todo: only audible to this user (mute for all others)
+    onLayerClicked = (layerId) => {
+        //this.selectedLayerId = layerId
+        this.props.dispatch({ type: SET_SELECTED_LAYER_ID, payload: { layerId } })
+        //this.props.dispatch({ type: SET_IS_SHOWING_LAYER_SETTINGS, payload: { value: true } })
+        //this.highlightLayer(_.find(this.layerGraphics, { id: layerId }))
     }
 
-    onMuteClick() {
-        const isMuted = !this.props.selectedLayer.isMuted
-        AudioEngine.tracksById[this.props.selectedLayer.id].setMute(isMuted)
-        this.props.dispatch({ type: SET_LAYER_MUTE, payload: { id: this.props.selectedLayer.id, value: isMuted, user: this.props.user.id } })
-        this.context.updateLayer(this.props.round.id, this.props.selectedLayer.id, { isMuted })
+    onPreviewClick() {
+        // TODO: only audible to this user (mute for all others)
+    }
+
+    onSoloClick = async () => {
+        const selectedLayer = this.props.selectedLayer;
+        const layers = this.props.round.layers;
+        if (selectedLayer) {
+            await layers.forEach(layer => {
+                const id = layer.id;
+                const isMuted = !layer.isMuted;
+                if (selectedLayer.id !== id) {
+                    AudioEngine.tracksById[id].setMute(isMuted)
+                    this.props.dispatch({ type: SET_LAYER_MUTE, payload: { id, value: isMuted, user: this.props.user.id } })
+                    this.context.updateLayer(this.props.round.id, id, { isMuted })
+                }
+            });
+        }
+    }
+
+    onMuteClick(selectedLayer) {
+        const isMuted = !selectedLayer.isMuted
+        AudioEngine.tracksById[selectedLayer.id].setMute(isMuted)
+        this.props.dispatch({ type: SET_LAYER_MUTE, payload: { id: selectedLayer.id, value: isMuted, user: this.props.user.id } })
+        this.context.updateLayer(this.props.round.id, selectedLayer.id, { isMuted })
     }
 
     onDeleteLayerClick() {
         this.props.dispatch({ type: REMOVE_LAYER, payload: { id: this.props.selectedLayer.id, user: this.props.user.id } })
         this.context.deleteLayer(this.props.round.id, this.props.selectedLayer.id)
         this.onCloseClick()
+    }
+
+    onAddLayerClick = async () => {
+        const newLayer = await getDefaultLayerData(this.props.user.id);
+        newLayer.name = 'Layer ' + (this.props.round.layers.length + 1)
+        this.props.dispatch({ type: ADD_LAYER, payload: { layer: newLayer, user: this.props.user.id } })
+        this.context.createLayer(this.props.round.id, newLayer)
     }
 
     onClearStepsClick() {
@@ -509,6 +665,14 @@ class LayerSettings extends Component {
         this.setState({ showHamburgerPopup })
     }
 
+    toggleShowDeleteClearPopup = (e) => {
+        e.preventDefault()
+        e.stopPropagation()
+        const showDeleteClearPopup = !this.state.showDeleteClearPopup
+        this.hideAllLayerInspectorModals()
+        this.setState({ showDeleteClearPopup })
+    }
+
     render() {
         // console.log('Layer settings render()', this.props.user);
         const {
@@ -526,50 +690,9 @@ class LayerSettings extends Component {
 
         const { classes, theme, user } = this.props
         const selectedLayer = this.props.selectedLayer
-        let form = '';
-        if (!_.isNil(selectedLayer)) {
-            //layerVolumePercent = convertDBToPercent(selectedLayer.instrument.gain)
-            let layerTypeFormItems;
-            if (selectedLayer.type === Track.TRACK_TYPE_AUTOMATION) {
-                layerTypeFormItems = (
-                    <>
-                        <LayerAutomation selectedLayer={selectedLayer} roundId={this.props.round.id} userId={this.props.user.id} />
-                        <Box className={classes.buttonContainer} display="flex" justifyContent="space-evenly">
-                            <Button className={classes.containedButton} onClick={this.onClearStepsClick.bind(this)} variant="contained" color="secondary" disableElevation>Clear</Button>
-                            <Button className={classes.containedButton} onClick={this.onDeleteLayerClick.bind(this)} variant="contained" color="secondary" disableElevation>Delete</Button>
-                        </Box>
-                    </>
-                )
-            } else {
-                layerTypeFormItems = (
-                    <>
-                        <VolumeSlider selectedLayer={selectedLayer} roundId={this.props.round.id} user={this.props.user} />
-                        <Box className={classes.buttonContainer} display="flex" justifyContent="space-evenly">
-                            <Button className={classes.containedButton} onClick={this.onMuteClick.bind(this)} variant="contained" color={selectedLayer.isMuted ? 'primary' : 'secondary'} disableElevation>Mute</Button>
-                            <Button className={classes.containedButton} onClick={this.onClearStepsClick.bind(this)} variant="contained" color="secondary" disableElevation>Clear</Button>
-                            <Button className={classes.containedButton} onClick={this.onDeleteLayerClick.bind(this)} variant="contained" color="secondary" disableElevation>Delete</Button>
-                        </Box>
-                        <Divider className={classes.divider} />
-                        <LayerInstrument selectedLayer={selectedLayer} roundId={this.props.round.id} user={this.props.user} />
-                        <LayerCustomSounds selectedLayer={selectedLayer} roundId={this.props.round.id} user={this.props.user} />
-                    </>
-                )
-            }
-            form = (
-                <Box className={classes.root}>
-                    <LayerNumberOfSteps selectedLayer={selectedLayer} roundId={this.props.round.id} user={this.props.user} />
-                    <LayerPercentOffset selectedLayer={selectedLayer} roundId={this.props.round.id} user={this.props.user} playUIRef={this.props.playUIRef} />
-                    {/* <LayerTimeOffset selectedLayer={selectedLayer} roundId={this.props.round.id} user={this.props.user} playUIRef={this.props.playUIRef} /> */}
-                    {layerTypeFormItems}
-                </Box>
-            )
-        }
-        return (
-            <div>
-                <Drawer
-                    className={classes.drawer}
-                    open={this.props.isOpen}
-                    variant={"persistent"}
+        const userColors = this.getUserColors()
+        const isMobile = windowWidth < theme.breakpoints.values.sm
+        const sample = selectedLayer?.instrument?.sample
 
         const instrumentIcon = (name) => {
             let Icon = <svg></svg>;
@@ -590,13 +713,11 @@ class LayerSettings extends Component {
             <Box className={classes.root}>
                 <LayerListPopup
                     instrumentIcon={instrumentIcon}
-                    height={this.height}
                     classes={classes}
                     round={this.props.round}
                     user={user}
                     onLayerSelect={this.onLayerClicked}
-                    onMuteClick={this.onMuteClick}
-                    onSoloClick={this.onSoloClick}
+                    onMuteClick={this.onMuteClick.bind(this)}
                     userColors={userColors}
                     toggleShowMixerPopup={this.toggleShowMixerPopup}
                     showMixerPopup={showMixerPopup}
@@ -646,7 +767,7 @@ class LayerSettings extends Component {
                             Long Press a round to edit
                         </Typography>}
                     {selectedLayer &&
-                        <Box style={{ display: 'flex', flex: 1, flexDirection: 'row' }}>
+                        <Box style={{ display: 'flex', flex: 1, flexDirection: 'row', justifyContent: 'space-between', marginLeft: 10, marginRight: 10 }}>
                             <Box className={classes.actionButtonContainer}>
                                 <LayerInstrument
                                     showInstrumentsPopup={showInstrumentsPopup}
@@ -699,7 +820,6 @@ class LayerSettings extends Component {
                                     showLayerPopup={showLayerPopup}
                                     selectedLayer={selectedLayer}
                                     round={this.props.round}
-                                    offsetSliderRef={this.offsetSlider}
                                     user={user}
                                     playUIRef={this.props.playUIRef}
                                 />
@@ -709,7 +829,7 @@ class LayerSettings extends Component {
                                     style={showLayerPopup ? { backgroundColor: 'rgba(255, 255, 255, 0.2)' } : {}}
                                     className={classes.stepCount}
                                 >
-                                    <Box style={{ display: 'flex', flexDirection: 'row', alignItems: 'center' }}>
+                                    <Box style={{ display: 'flex', flexDirection: 'row', alignItems: 'center', marginRight: 5 }}>
                                         <svg width="12" height="12" viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg">
                                             <circle cx="6" cy="6" r="5" stroke={user && user.id && userColors[user.id]} strokeWidth="2" />
                                         </svg>
@@ -719,15 +839,11 @@ class LayerSettings extends Component {
                             </Box>
                             <Box className={classes.actionButtonContainer}>
                                 <VolumePopup
-                                    onMute={this.onMuteClick}
+                                    onMute={this.onMuteClick.bind(this, selectedLayer)}
                                     onSolo={this.onSoloClick}
-                                    muteRef={this.muteToggle}
-                                    soloRef={this.soloButton}
-                                    volumeSliderRef={this.volumeSlider}
                                     showVolumePopup={showVolumePopup}
                                     selectedLayer={selectedLayer}
-                                    round={this.props.round}
-                                    user={user}
+                                    round={this.props.round} user={user}
                                 />
                                 <IconButton
                                     ref={this.volumePopupButton}
