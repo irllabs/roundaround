@@ -1,5 +1,5 @@
 import React, { Component } from 'react';
-import * as _ from 'lodash';
+import _ from 'lodash';
 import { SVG } from '@svgdotjs/svg.js'
 import '@svgdotjs/svg.panzoom.js'
 import { HTML_UI_Params } from '../../utils/constants'
@@ -47,8 +47,8 @@ class PlayUI extends Component {
     async componentDidMount() {
         // register this component with parent so we can do some instant updates bypassing redux for speed
         this.props.childRef(this)
-
         await this.createRound()
+        window.addEventListener('click', this.interfaceClicked)
         window.addEventListener('resize', this.onWindowResizeThrottled)
         window.addEventListener('keypress', this.onKeypress)
         window.addEventListener('dblclick', () => this.onMuteToggle(this.props))
@@ -57,6 +57,7 @@ class PlayUI extends Component {
     }
 
     async componentWillUnmount() {
+        window.removeEventListener('click', this.interfaceClicked)
         window.removeEventListener('resize', this.onWindowResizeThrottled)
         window.removeEventListener('keypress', this.onKeypress)
         window.removeEventListener('dblclick', this.onMuteToggle)
@@ -65,8 +66,14 @@ class PlayUI extends Component {
         this.disposeToneEvents()
     }
 
+    interfaceClicked = (e) => {
+        if (!this.selectedLayerId && this.props.selectedLayer) {
+            this.props.dispatch({ type: SET_SELECTED_LAYER_ID, payload: { layerId: null } })
+            this.props.dispatch({ type: SET_IS_SHOWING_LAYER_SETTINGS, payload: { value: false } })
+        }
+    }
+
     async createRound() {
-        //  console.log('createRound()');
         this.round = _.cloneDeep(this.props.round)
         this.userColors = this.getUserColors()
         // Create SVG container
@@ -89,10 +96,13 @@ class PlayUI extends Component {
         this.draw()
     }
 
-    async componentDidUpdate() {
-        console.log('componentDidUpdate()', this.round, this.props.round)
-        console.time('componentDidUpdate')
+    async componentDidUpdate(prevProps) {
 
+        if (this.props.round && this.props.selectedLayerId) {
+            if (prevProps.selectedLayerId !== this.props.selectedLayerId) {
+                this.onLayerClicked(this.props.selectedLayerId)
+            }
+        }
         // whole round has changed
         if (this.round.id !== this.props.round.id) {
             this.round = _.cloneDeep(this.props.round)
@@ -102,7 +112,6 @@ class PlayUI extends Component {
         }
 
         let diff = detailedDiff(this.round, this.props.round)
-        console.log('diff', diff);
 
         let redraw = false
         let shouldRecalculateParts = false
@@ -428,10 +437,12 @@ class PlayUI extends Component {
     }
 
     onMuteToggle(props) {
-        const isMuted = !props.selectedLayer.isMuted
-        AudioEngine.tracksById[props.selectedLayer.id].setMute(isMuted)
-        props.dispatch({ type: SET_LAYER_MUTE, payload: { id: props.selectedLayer.id, value: isMuted, user: props.user.id } })
-        this.context.updateLayer(props.round.id, props.selectedLayer.id, { isMuted })
+        const isMuted = props.selectedLayer?.isMuted
+        if (props.selectedLayer) {
+            AudioEngine.tracksById[props.selectedLayer.id].setMute(!isMuted)
+            props.dispatch({ type: SET_LAYER_MUTE, payload: { id: props.selectedLayer.id, value: !isMuted, user: props.user.id } })
+            this.context.updateLayer(props.round.id, props.selectedLayer.id, { isMuted: !isMuted })
+        }
     }
 
     getStep(id) {
@@ -1078,6 +1089,10 @@ class PlayUI extends Component {
             layerGraphic.on('touchend', (e) => {
                 _this.onLayerTouchEnd(layerGraphic, e)
             })
+            layerGraphic.on('dblclick', e => {
+                // should be a layer to mute toggle
+                this.onMuteToggle(this.props)
+            })
         }
     }
     onLayerTouchStart(layerGraphic, e) {
@@ -1522,8 +1537,6 @@ class PlayUI extends Component {
     }
 
     onKeypress(e) {
-        e.preventDefault();
-        // Prevent default and do nothing
     }
 
     showOrientationDialog() {
@@ -1588,6 +1601,7 @@ const mapStateToProps = state => {
         user: state.user,
         users: state.users,
         selectedLayer,
+        selectedLayerId: state.display.selectedLayerId,
         disableKeyListener: state.display.disableKeyListener
     };
 };
