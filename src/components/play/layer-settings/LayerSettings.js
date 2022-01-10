@@ -136,6 +136,7 @@ const styles = (theme) => ({
     },
     mixerPopupHeader: {
         display: 'flex',
+        flex: 1,
         justifyContent: 'flex-start',
         alignItems: 'center',
         padding: '10px 15px',
@@ -356,6 +357,7 @@ const styles = (theme) => ({
     },
     layerContainer: {
         display: 'flex',
+        flex: 6,
         overflowY: 'scroll',
         height: '100%',
         zIndex: 100,
