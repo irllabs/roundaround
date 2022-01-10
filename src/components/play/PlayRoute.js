@@ -4,7 +4,6 @@ import PlayUI from './PlayUI'
 import PropTypes from 'prop-types';
 import { withStyles } from '@material-ui/styles';
 import Box from '@material-ui/core/Box';
-import EffectsSidebar from './EffectsSidebar.js';
 import _ from 'lodash';
 import Loader from 'react-loader-spinner';
 import { connect } from "react-redux";
