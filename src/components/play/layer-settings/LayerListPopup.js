@@ -19,13 +19,13 @@ const MixerPopup = ({
     round
 }) => (
     <Box className={showMixerPopup ? classes.mixerPopup : classes.hidden}>
-        <Box className={classes.mixerPopupHeader}>
+        <Box className={classes.mixerPopupHeader} style={{ flex: 1 }}>
             <IconButton className={classes.plainButton} onClick={toggleShowMixerPopup}>
                 <CloseIcon />
             </IconButton>
             <Typography className={classes.mixerPopupHeaderText}>Mixer</Typography>
         </Box>
-        <Box className={classes.layerContainer}>
+        <Box className={classes.layerContainer} style={{ flex: 6 }}>
             {
                 round && round?.layers.map((layer, i) =>
                     <Box
