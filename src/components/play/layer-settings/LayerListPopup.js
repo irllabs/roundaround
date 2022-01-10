@@ -26,7 +26,7 @@ const LayerListPopup = ({
             </IconButton>
             <Typography className={classes.mixerPopupHeaderText}>Mixer</Typography>
         </Box>
-        <Box className={classes.layerContainer} style={{ flex: 10 }}>
+        <Box className={classes.layerContainer}>
             {
                 round && round?.layers.map((layer, i) =>
                     <Box
