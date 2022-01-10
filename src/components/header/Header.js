@@ -51,6 +51,10 @@ const styles = theme => ({
 		marginRight: '1rem',
 		alignItems: 'center'
 	},
+	shareButton: {
+		backgroundColor: theme.palette.secondary.main,
+		marginRight: '1rem'
+	},
 	avatar: {
 		position: 'relative',
 
@@ -170,12 +174,12 @@ class Header extends Component {
 									))
 								}
 							</Box>
-							<JitsiComponent />
+							{users.length > 1 && <JitsiComponent />}
 							<div>
-								<Button className={classes.rightSideChild} onClick={this.onShareClick} variant="contained" color="secondary" disableElevation startIcon={<ShareIcon />}>Share</Button>
+								<IconButton className={classes.shareButton} onClick={this.onShareClick}><ShareIcon /></IconButton>
 							</div>
 							<div>
-								<PlayButton className={classes.rightSideChild} />
+								<PlayButton />
 							</div>
 							<div>
 								<HeaderMenu />
