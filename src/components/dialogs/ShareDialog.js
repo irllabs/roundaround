@@ -54,7 +54,6 @@ const ShareDialog = ({ round, isShowingShareDialog, setIsShowingShareDialog, set
         //if (window.location.hostname === 'localhost') return null
         if (window.location.hostname === 'localhost') {
             fullUrl = 'http://192.168.136.154:3000/play/' + round.id;
-
         }
 
         if (_.isEmpty(round.shortLink)) {
