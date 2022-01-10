@@ -36,6 +36,8 @@ class PlayUI extends Component {
         this.editAllLayers = false
         this.swipeToggleActive = false
         this.userColors = {};
+        this.isScrolling = false;
+        this.stepOnTimer = 0;
         this.onWindowResizeThrottled = _.throttle(this.onWindowResize.bind(this), 1000)
         this.selectedLayerId = null;
         this.onKeypress = this.onKeypress.bind(this)
@@ -1146,26 +1148,28 @@ class PlayUI extends Component {
         this.removeStepEventListeners(stepGraphic)
         const _this = this
         if (stepGraphic.isAllowedInteraction) {
+
+            stepGraphic.on('mouseout', (e) => {
+                //console.log('mouseout');
+                if (!_.isNil(_this.stepMoveTimer)) {
+                    // we've swiped / dragged out of the step, toggle this step and listen for mouseovers on all other steps
+                    // add listener to layergraphic to cancel swiping
+                    _this.addStepSwipeListeners(stepGraphic)
+                    _this.swipeToggleActive = true
+                    _this.touchStartStepGraphic = stepGraphic
+                    _this.onStepClick(stepGraphic)
+
+                    // _this.addStepSwipeCancelListener(stepGraphic)
+                }
+
+            })
+
             stepGraphic.on('mousedown', (e) => {
                 // console.log('mousedown');
                 e.stopPropagation()
                 e.preventDefault()
                 _this.swipeToggleActive = false
                 _this.startStepMoveTimer(stepGraphic, e.pageX, e.pageY)
-                stepGraphic.on('mouseout', (e) => {
-                    //console.log('mouseout');
-                    if (!_.isNil(_this.stepMoveTimer)) {
-                        // we've swiped / dragged out of the step, toggle this step and listen for mouseovers on all other steps
-                        // add listener to layergraphic to cancel swiping
-                        _this.swipeToggleActive = true
-                        _this.touchStartStepGraphic = stepGraphic
-                        _this.onStepClick(stepGraphic)
-                        _this.addStepSwipeListeners(stepGraphic)
-
-                        // _this.addStepSwipeCancelListener(stepGraphic)
-                    }
-
-                })
 
                 _this.container.on('mouseup', (e) => {
                     //console.log('_this.container.on(mouseup)');
@@ -1188,6 +1192,7 @@ class PlayUI extends Component {
                     this.swipeToggleActive = false
                 })
             })
+
             stepGraphic.on('touchstart', (e) => {
                 //  console.log('touchstart');
                 e.stopPropagation()
@@ -1197,17 +1202,22 @@ class PlayUI extends Component {
                 _this.touchStartStepGraphic = stepGraphic
                 _this.isCurrentlyOverStepGraphic = stepGraphic
                 stepGraphic.on('touchmove', (e) => {
+                    e.stopPropagation()
+                    e.preventDefault()
+                    this.isScrolling = true;
                     //  console.log('touchmove');
                     if (_.isNil(_this.stepMoveTimer) && !_this.swipeToggleActive) {
                         _this.onStepDragMove(stepGraphic, e.touches[0].pageX, e.touches[0].pageY)
                     } else {
                         // console.log('touchmove', e, stepGraphic.id);
-                        //_this.swipeToggleActive = stepGraphic
+                        // _this.swipeToggleActive = stepGraphic
                         _this.touchStartStepGraphic = stepGraphic
                         _this.isOverStep(stepGraphic, e.touches[0].pageX, e.touches[0].pageY)
                     }
                 })
                 stepGraphic.on('touchend', (e) => {
+                    e.stopPropagation()
+                    e.preventDefault()
                     //   console.log('touchend');
                     _this.hideStepModal()
                     if (!_.isNil(_this.stepMoveTimer)) {
@@ -1226,11 +1236,12 @@ class PlayUI extends Component {
                     }
                     stepGraphic.off('touchmove')
                     stepGraphic.off('touchend')
+                    _this.touchStartStepGraphic = null
+                    _this.isScrolling = false
+                    clearInterval()
                 })
             })
             // console.log('adding touchmove event for stepgraphic', stepGraphic.id);
-
-
         }
     }
     removeStepEventListeners(stepGraphic) {
@@ -1425,11 +1436,10 @@ class PlayUI extends Component {
         step.isOn = !step.isOn
         this.updateStep(step, false)
         AudioEngine.recalculateParts(this.round)
-        this.props.dispatch({ type: TOGGLE_STEP, payload: { layerId: stepGraphic.layerId, stepId: stepGraphic.id, isOn: step.isOn, user: null } })
+        this.props.dispatch({ type: TOGGLE_STEP, payload: { layerId: stepGraphic.layerId, stepId: stepGraphic.id, lastUpdated: new Date().getTime(), isOn: step.isOn, user: null } })
         // console.log('this.context', this.context);
         this.saveLayer(stepGraphic.layerId)
         //this.context.updateStep(this.round.id, stepGraphic.layerId, stepGraphic.id, step)
-
     }
 
     async onAddLayerClick() {
@@ -1553,14 +1563,20 @@ class PlayUI extends Component {
         let isOver = false
         for (const stepGraphic of this.stepGraphics) {
             if (stepGraphic.layerId === _this.touchStartStepGraphic.layerId) {
+                const step = this.getStep(stepGraphic.id);
                 //console.log(stepGraphic, stepGraphic.x(), stepGraphic.y(), stepGraphic.node.getBoundingClientRect());
                 const rect = stepGraphic.node.getBoundingClientRect()
                 if (x >= rect.x && x <= rect.x + rect.width && y >= rect.y && y <= rect.y + rect.height) {
                     //console.log('is over step graphic');
                     isOver = true
-                    if (_this.isCurrentlyOverStepGraphic !== stepGraphic) {
-                        _this.onStepClick(stepGraphic)
+                    const now = new Date().getTime()
+                    const difference = step.lastUpdated ? (now - step.lastUpdated) : 0
+                    const secondsDifference = difference / 1000
+                    console.log('difference ', secondsDifference)
+                    if (!_.isEqual(_this.isCurrentlyOverStepGraphic, stepGraphic) &&
+                        (secondsDifference === 0 || secondsDifference > 0.5)) {
                         _this.isCurrentlyOverStepGraphic = stepGraphic
+                        _this.onStepClick(stepGraphic)
                     }
                 }
             }
