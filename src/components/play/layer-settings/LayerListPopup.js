@@ -5,9 +5,10 @@ import VolumeSlider from './VolumeSlider'
 import { CloseIcon } from './resources'
 
 
-const MixerPopup = ({
+const LayerListPopup = ({
     classes,
     showMixerPopup,
+    height,
     selectedInstrument,
     instrumentIcon,
     onMuteClick,
@@ -38,9 +39,11 @@ const MixerPopup = ({
                         className={classes.layerSubContainer}
                     >
                         <Box className={classes.layer} style={(round.layers.length - 1) === i ? { borderBottom: 'none' } : {}}>
-                            <Box style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', flex: 4 }}>
+                            <Box style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', justifyContent: 'center', flex: 4 }}>
                                 <Box style={{ display: 'flex', flexDirection: 'row', justifyContent: 'flex-start', alignItems: 'center', paddingBottom: 5 }}>
-                                    <Box style={{ marginRight: 5 }}>{instrumentIcon(layer?.instrument?.sampler)}</Box>
+                                    <Box style={{ marginRight: 5 }}>
+                                        {instrumentIcon(layer?.instrument?.sampler)}
+                                    </Box>
                                     <Typography style={{ textTransform: 'capitalize', display: 'flex', alignItems: 'flex-start', lineHeight: 1 }}>
                                         {layer.instrument?.sample}
                                     </Typography>
@@ -73,4 +76,4 @@ const MixerPopup = ({
     </Box>
 )
 
-export default MixerPopup 
+export default LayerListPopup 
