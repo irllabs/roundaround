@@ -48,8 +48,8 @@ const styles = (theme) => ({
         alignItems: 'flex-start',
         backgroundColor: 'transparent',
         bottom: 0,
-        right: '30%',
-        left: '30%',
+        right: '25%',
+        left: '25%',
         [theme.breakpoints.down('md')]: {
             right: '20%',
             left: '20%'
@@ -84,6 +84,7 @@ const styles = (theme) => ({
         }
     },
     root: {
+        boxSizing: 'border-box',
         position: 'relative',
         display: "flex",
         flexDirection: "row",
@@ -104,6 +105,9 @@ const styles = (theme) => ({
         [theme.breakpoints.down('sm')]: {
             marginBottom: 5,
         },
+        [theme.breakpoints.down('xs')]: {
+            width: 341
+        },
     },
     mixerPopup: {
         display: 'flex',
@@ -112,6 +116,7 @@ const styles = (theme) => ({
         opacity: 1,
         top: -247,
         height: 243,
+        width: 499,
         right: 0,
         left: 48,
         borderRadius: 8,
@@ -126,12 +131,12 @@ const styles = (theme) => ({
             left: 0,
         },
         [theme.breakpoints.down('xs')]: {
-            height: 243,
-            top: -247
+            width: 341
         }
     },
     mixerPopupHeader: {
         display: 'flex',
+        flex: 1,
         justifyContent: 'flex-start',
         alignItems: 'center',
         padding: '10px 15px',
@@ -227,7 +232,6 @@ const styles = (theme) => ({
         margin: '10px 0',
         width: 216,
         height: 32,
-        marginRight: 3,
         fontWeight: 'bold',
         padding: '6px 15px',
         borderRadius: 24,
@@ -236,7 +240,7 @@ const styles = (theme) => ({
             backgroundColor: 'rgba(255, 255, 255, 0.2)'
         },
         [theme.breakpoints.down('xs')]: {
-            width: 115
+            width: 106
         }
     },
     stepCount: {
@@ -246,7 +250,7 @@ const styles = (theme) => ({
         margin: '10px 0',
         width: 59,
         height: 32,
-        padding: '5px 15px',
+        padding: '6px 12px',
         borderRadius: 24,
         backgroundColor: 'rgba(255,255,255, 0.1)',
         '&:hover': {
@@ -263,6 +267,8 @@ const styles = (theme) => ({
         display: 'flex',
         justifyContent: 'center',
         alignItems: 'center',
+        marginLeft: 8,
+        marginRight: 8
         // [theme.breakpoints.down('sm')]: {
         //     width: 106,
         // },
@@ -318,16 +324,12 @@ const styles = (theme) => ({
         [theme.breakpoints.down('xs')]: {
             display: 'flex'
         },
-        marginLeft: 8,
-        marginRight: 8,
     },
     actionButton: {
         display: 'flex',
         flexDirection: 'row',
         alignItems: 'center',
         padding: 5,
-        marginLeft: 3,
-        marginRight: 3,
         height: 32,
         width: 32,
         margin: '10px 0',
@@ -355,7 +357,10 @@ const styles = (theme) => ({
     },
     layerContainer: {
         display: 'flex',
+        flex: 6,
         overflowY: 'scroll',
+        height: '100%',
+        zIndex: 100,
         flexDirection: 'column',
     },
     layerSubContainer: {
@@ -784,7 +789,7 @@ class LayerSettings extends Component {
                             Long Press a round to edit
                         </Typography>}
                     {selectedLayer &&
-                        <Box style={{ display: 'flex', flex: 1, flexDirection: 'row', justifyContent: 'space-between' }}>
+                        <Box style={{ display: 'flex', flex: 1, flexDirection: 'row' }}>
                             <Box className={classes.actionButtonContainer}>
                                 <LayerInstrument
                                     showInstrumentsPopup={showInstrumentsPopup}
@@ -846,7 +851,7 @@ class LayerSettings extends Component {
                                     style={showLayerPopup ? { backgroundColor: 'rgba(255, 255, 255, 0.2)' } : {}}
                                     className={classes.stepCount}
                                 >
-                                    <Box style={{ display: 'flex', flexDirection: 'row', alignItems: 'center', marginRight: 5 }}>
+                                    <Box style={{ display: 'flex', flexDirection: 'row', alignItems: 'center' }}>
                                         <svg width="12" height="12" viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg">
                                             <circle cx="6" cy="6" r="5" stroke={user && user.id && userColors[user.id]} strokeWidth="2" />
                                         </svg>
