@@ -114,8 +114,6 @@ export default function HeaderMenu({ name }) {
                                             <Divider />
                                         </MenuList>
                                         <TempoSlider />
-
-
                                     </Box>
                                 </ClickAwayListener>
                             </Paper>
