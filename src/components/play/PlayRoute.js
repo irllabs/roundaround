@@ -58,8 +58,7 @@ class PlayRoute extends Component {
         }
     }
 
-    componentDidUpdate() {
-        //  console.log('PlayRoute::componentDidUpdate()', this.props.user);
+    async componentDidUpdate() {
         if (!this.isLoadingRound && !this.hasLoadedRound && _.isNil(this.props.round) && !_.isNil(this.props.user)) {
             await this.loadRound()
         }
@@ -194,6 +193,7 @@ class PlayRoute extends Component {
 
         // UserPatterns
         this.userPatternsChangeListenerUnsubscribe = this.context.db.collection('rounds').doc(this.props.round.id).collection('userPatterns').onSnapshot((userPatternsCollectionSnapshot) => {
+            //  console.log('### layer change listener fired');
             userPatternsCollectionSnapshot.docChanges().forEach(async change => {
                 const data = change.doc.data();
                 const userId = change.doc.id;
@@ -216,6 +216,10 @@ class PlayRoute extends Component {
                         _this.props.setRoundCurrentUsers(newRound.currentUsers)
                         _this.props.setRound(newRound)
                     }
+                }
+                if (change.type === 'removed') {
+                    //    console.log('Removed layer: ', change.doc.data());
+                    // _this.reloadCollaborationLayersThrottled()
                 }
             });
         })
