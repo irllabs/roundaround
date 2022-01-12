@@ -33,7 +33,9 @@ import { uuid } from '../../utils/index'
 const styles = theme => ({
     root: {
         paddingTop: '64px'
-
+    },
+    paper: {
+        borderRadius: 8
     },
     header: {
         display: 'flex',
@@ -139,10 +141,12 @@ class RoundsListRoute extends Component {
                 <Container className={classes.root}>
 
                     <Box className={classes.header}>
-                        <div><h1>My rounds</h1></div>
-                        <div>
+                        <Box>
+                            <h1>My rounds</h1>
+                        </Box>
+                        <Box>
                             <Button data-test="button-new-round" className={classes.getStartedButton} variant="contained" color="secondary" disableElevation onClick={this.onNewRoundClick} startIcon={<AddIcon />}>New round</Button>
-                        </div>
+                        </Box>
                     </Box>
                     <Box>
                         <List>
@@ -174,14 +178,13 @@ class RoundsListRoute extends Component {
                                 {...TransitionProps}
                                 style={{ transformOrigin: placement === 'bottom' ? 'center top' : 'center bottom' }}
                             >
-                                <Paper size="md">
+                                <Paper className={classes.paper} size="md">
                                     <ClickAwayListener onClickAway={this.onMenuClose}>
                                         <Box>
                                             <MenuList autoFocusItem={this.state.menuIsOpen} id="menu-list-grow">
                                                 <MenuItem onClick={this.onRenameClick} className={classes.menuListItem}>Rename</MenuItem>
                                                 <MenuItem onClick={this.onDuplicateClick} className={classes.menuListItem}>Duplicate</MenuItem>
                                                 <MenuItem onClick={this.onDeleteClick} className={classes.menuListItem}>Delete</MenuItem>
-
                                             </MenuList>
                                         </Box>
                                     </ClickAwayListener>

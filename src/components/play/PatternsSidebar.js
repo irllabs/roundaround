@@ -46,7 +46,7 @@ const styles = theme => ({
         position: 'absolute',
         right: '-40px',
         bottom: '16px',
-        borderRadius: '16px',
+        borderRadius: 8,
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',

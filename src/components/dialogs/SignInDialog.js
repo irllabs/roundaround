@@ -16,6 +16,9 @@ import { getRandomColor } from '../../utils/index'
 import _ from 'lodash'
 
 const styles = makeStyles({
+    paper: {
+        borderRadius: 8
+    },
     title: {
         textAlign: 'center'
     },
@@ -33,7 +36,14 @@ const styles = makeStyles({
     },
     emailFormItem: {
         marginBottom: '1rem',
-        minWidth: '300px'
+        minWidth: '300px',
+        [`& fieldset`]: {
+            borderRadius: 8,
+            backgroundColor: 'transparent',
+        },
+    },
+    input: {
+        borderRadius: 8,
     },
     signUpButton: {
         fontWeight: 600
@@ -125,7 +135,6 @@ const SignInDialog = ({ isShowingSignInDialog, setIsShowingSignInDialog, setSign
             try {
                 const authResult = await firebaseContext.auth.createUserWithEmailAndPassword(email, password)
                 const authUser = authResult.user
-                console.log('authResult', authResult);
                 let user = {
                     displayName,
                     email: email,
@@ -195,144 +204,157 @@ const SignInDialog = ({ isShowingSignInDialog, setIsShowingSignInDialog, setSign
     const classes = styles();
 
     return (
-        <>
-            <Dialog onClose={onClose} aria-labelledby="simple-dialog-title" open={isShowingSignInDialog}>
-                {
-                    !isShowingEmailForm && !isShowingEmailSignupForm && !isShowingUseAsGuestForm &&
-                    <>
-                        <DialogTitle className={classes.title} id="simple-dialog-title">
+        <Dialog classes={{ paper: classes.paper }} onClose={onClose} aria-labelledby="simple-dialog-title" open={isShowingSignInDialog}>
+            {
+                !isShowingEmailForm && !isShowingEmailSignupForm && !isShowingUseAsGuestForm &&
+                <>
+                    <DialogTitle className={classes.title} id="simple-dialog-title">
 
-                            Sign in
-                        </DialogTitle>
-                        <Box className={classes.body}>
-                            <Button className={classes.button} fullWidth color="secondary" variant="contained" disableElevation onClick={onGoogleSigninClick}>Continue with Google</Button>
+                        Sign in
+                    </DialogTitle>
+                    <Box className={classes.body}>
+                        <Button className={classes.button} fullWidth color="secondary" variant="contained" disableElevation onClick={onGoogleSigninClick}>Continue with Google</Button>
+                        <Button
+                            className={classes.button}
+                            fullWidth
+                            color="secondary"
+                            variant="contained"
+                            disableElevation
+                            onClick={onShowEmailSigninClick}
+                            data-test="button-email"
+                        >Sign in with email</Button>
+                        <Button
+                            className={classes.button}
+                            fullWidth
+                            color="secondary"
+                            variant="contained"
+                            disableElevation
+                            onClick={onUseAsGuestClick}
+                            data-test="button-guest"
+                        >
+                            Use as guest
+                        </Button>
+                        <p style={{ textAlign: 'center' }}>Don't have an account yet?</p>
+                        <Button className={classes.signUpButton} fullWidth disableElevation onClick={onShowEmailSignupClick}>Sign up</Button>
+                    </Box>
+                </>
+            }
+            {
+                isShowingEmailForm &&
+                <>
+                    <DialogTitle className={classes.title} id="simple-dialog-title"><IconButton aria-label="close" className={classes.backButton} onClick={onBackClick}>
+                        <ArrowBackIcon />
+                    </IconButton>Sign in with email</DialogTitle>
+                    <Box className={classes.body}>
+                        <form className={classes.emailForm} noValidate autoComplete="off">
+                            <TextField
+                                type="email"
+                                ref={emailAddressInput}
+                                className={classes.emailFormItem}
+                                label="Email address"
+                                variant="outlined"
+                                data-test="input-email"
+                                InputProps={{
+                                    className: classes.input
+                                }}
+                            />
+                            <TextField
+                                ref={passwordInput}
+                                className={classes.emailFormItem}
+                                label="Password"
+                                variant="outlined"
+                                type="password"
+                                data-test="input-password"
+                                InputProps={{
+                                    className: classes.input
+                                }}
+                            />
+                            {
+                                errorMessage &&
+                                <p className={classes.error}>{errorMessage}</p>
+                            }
                             <Button
                                 className={classes.button}
-                                fullWidth
-                                color="secondary"
+                                fullWidth color="primary"
                                 variant="contained"
                                 disableElevation
-                                onClick={onShowEmailSigninClick}
-                                data-test="button-email"
-                            >Sign in with email</Button>
-                            <Button
-                                className={classes.button}
-                                fullWidth
-                                color="secondary"
-                                variant="contained"
-                                disableElevation
-                                onClick={onUseAsGuestClick}
-                                data-test="button-guest"
+                                onClick={onEmailSigninClick}
+                                data-test="button-sign-in"
                             >
-                                Use as guest
+
+                                <strong>Sign in</strong>
                             </Button>
-                            <p style={{ textAlign: 'center' }}>Don't have an account yet?</p>
-                            <Button className={classes.signUpButton} fullWidth disableElevation onClick={onShowEmailSignupClick}>Sign up</Button>
-                        </Box>
-                    </>
-                }
-                {
-                    isShowingEmailForm &&
-                    <>
-                        <DialogTitle className={classes.title} id="simple-dialog-title"><IconButton aria-label="close" className={classes.backButton} onClick={onBackClick}>
-                            <ArrowBackIcon />
-                        </IconButton>Sign in with email</DialogTitle>
-                        <Box className={classes.body}>
-                            <form className={classes.emailForm} noValidate autoComplete="off">
-                                <TextField
-                                    type="email"
-                                    ref={emailAddressInput}
-                                    className={classes.emailFormItem}
-                                    label="Email address"
-                                    variant="outlined"
-                                    data-test="input-email"
-                                />
-                                <TextField
-                                    ref={passwordInput}
-                                    className={classes.emailFormItem}
-                                    label="Password"
-                                    variant="outlined"
-                                    type="password"
-                                    data-test="input-password"
-                                />
-                                {
-                                    errorMessage &&
-                                    <p className={classes.error}>{errorMessage}</p>
-                                }
-                                <Button
-                                    className={classes.button}
-                                    fullWidth color="primary"
-                                    variant="contained"
-                                    disableElevation
-                                    onClick={onEmailSigninClick}
-                                    data-test="button-sign-in"
-                                >
+                        </form>
 
-                                    <strong>Sign in</strong>
-                                </Button>
-                            </form>
+                    </Box>
+                </>
+            }
+            {
+                isShowingUseAsGuestForm &&
+                <>
+                    <DialogTitle className={classes.title} id="simple-dialog-title"><IconButton aria-label="close" className={classes.backButton} onClick={onBackClick}>
+                        <ArrowBackIcon />
+                    </IconButton>Continue as guest</DialogTitle>
+                    <Box className={classes.body}>
+                        <form className={classes.emailForm} noValidate autoComplete="off">
+                            <TextField
+                                ref={displayNameGuestInput}
+                                className={classes.emailFormItem}
+                                label="Name"
+                                variant="outlined"
+                                data-test="input-name"
+                                InputProps={{
+                                    className: classes.input
+                                }}
+                            />
+                            {
+                                errorMessage &&
+                                <p className={classes.error}>{errorMessage}</p>
+                            }
+                            <Button
+                                className={classes.button}
+                                fullWidth color="primary"
+                                variant="contained"
+                                disableElevation
+                                onClick={onContinueAsGuestClick}
+                                data-test="button-name"
+                            >
+                                <strong>Continue as guest</strong>
+                            </Button>
+                        </form>
 
-                        </Box>
-                    </>
-                }
-                {
-                    isShowingUseAsGuestForm &&
-                    <>
-                        <DialogTitle className={classes.title} id="simple-dialog-title"><IconButton aria-label="close" className={classes.backButton} onClick={onBackClick}>
-                            <ArrowBackIcon />
-                        </IconButton>Continue as guest</DialogTitle>
-                        <Box className={classes.body}>
-                            <form className={classes.emailForm} noValidate autoComplete="off">
-                                <TextField
-                                    ref={displayNameGuestInput}
-                                    className={classes.emailFormItem}
-                                    label="Name"
-                                    variant="outlined"
-                                    data-test="input-name"
-                                />
-                                {
-                                    errorMessage &&
-                                    <p className={classes.error}>{errorMessage}</p>
-                                }
-                                <Button
-                                    className={classes.button}
-                                    fullWidth color="primary"
-                                    variant="contained"
-                                    disableElevation
-                                    onClick={onContinueAsGuestClick}
-                                    data-test="button-name"
-                                >
-                                    <strong>Continue as guest</strong>
-                                </Button>
-                            </form>
+                    </Box>
+                </>
+            }
+            {
+                isShowingEmailSignupForm &&
+                <>
+                    <DialogTitle className={classes.title} id="simple-dialog-title"><IconButton aria-label="close" className={classes.backButton} onClick={onBackClick}>
+                        <ArrowBackIcon />
+                    </IconButton>Sign up with email</DialogTitle>
+                    <Box className={classes.body}>
+                        <form className={classes.emailForm} noValidate autoComplete="off">
+                            <TextField ref={displayNameSignupInput} className={classes.emailFormItem} label="Name" variant="outlined" InputProps={{
+                                className: classes.input
+                            }} />
+                            <TextField type="email" ref={emailAddressSignupInput} className={classes.emailFormItem} label="Email address" variant="outlined" InputProps={{
+                                className: classes.input
+                            }} />
+                            <TextField ref={passwordSignupInput} className={classes.emailFormItem} label="Password" variant="outlined" type="password" InputProps={{
+                                className: classes.input
+                            }} />
+                            {
+                                errorMessage &&
+                                <p className={classes.error}>{errorMessage}</p>
+                            }
+                            <Button className={classes.button} fullWidth color="primary" variant="contained" disableElevation onClick={onEmailSignupClick} ><strong>Sign up</strong></Button>
+                        </form>
 
-                        </Box>
-                    </>
-                }
-                {
-                    isShowingEmailSignupForm &&
-                    <>
-                        <DialogTitle className={classes.title} id="simple-dialog-title"><IconButton aria-label="close" className={classes.backButton} onClick={onBackClick}>
-                            <ArrowBackIcon />
-                        </IconButton>Sign up with email</DialogTitle>
-                        <Box className={classes.body}>
-                            <form className={classes.emailForm} noValidate autoComplete="off">
-                                <TextField ref={displayNameSignupInput} className={classes.emailFormItem} label="Name" variant="outlined" />
-                                <TextField type="email" ref={emailAddressSignupInput} className={classes.emailFormItem} label="Email address" variant="outlined" />
-                                <TextField ref={passwordSignupInput} className={classes.emailFormItem} label="Password" variant="outlined" type="password" />
-                                {
-                                    errorMessage &&
-                                    <p className={classes.error}>{errorMessage}</p>
-                                }
-                                <Button className={classes.button} fullWidth color="primary" variant="contained" disableElevation onClick={onEmailSignupClick} ><strong>Sign up</strong></Button>
-                            </form>
+                    </Box>
+                </>
+            }
 
-                        </Box>
-                    </>
-                }
-
-            </Dialog>
-        </>
+        </Dialog>
     );
 }
 
