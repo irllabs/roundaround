@@ -146,7 +146,7 @@ class PlayUI extends Component {
 
         // step updates
         if (!_.isNil(diff.updated.layers)) {
-            shouldRecalculateParts = true
+            shouldRecalculateParts = true;
             redraw = true
         }
 
@@ -166,10 +166,11 @@ class PlayUI extends Component {
 
         // add layer
         if (!_.isNil(diff.added.layers)) {
+            await AudioEngine.load(this.props.round)
             for (let [, layer] of Object.entries(diff.added.layers)) {
                 await AudioEngine.createTrack(layer)
-                redraw = true
             }
+            shouldRecalculateParts = true
         }
 
         // Check for layer type or instrument changes
@@ -224,9 +225,6 @@ class PlayUI extends Component {
         }
 
 
-
-
-
         if (shouldRecalculateParts) {
             AudioEngine.recalculateParts(this.props.round)
         }
@@ -238,7 +236,6 @@ class PlayUI extends Component {
             this.round = _.cloneDeep(this.props.round)
         }
 
-        console.timeEnd('componentDidUpdate')
         /*
     
             if (this.round.id !== this.props.round.id) {
@@ -1446,9 +1443,9 @@ class PlayUI extends Component {
         const newLayer = await getDefaultLayerData(this.props.user.id);
         newLayer.name = 'Layer ' + (this.props.round.layers.length + 1)
         this.props.dispatch({ type: ADD_LAYER, payload: { layer: newLayer, user: this.props.user.id } })
-        this.context.createLayer(this.round.id, newLayer)
         this.highlightNewLayer = newLayer.id
         this.selectedLayerId = newLayer.id
+        this.context.createLayer(this.round.id, newLayer)
         /* const newLayer = _.cloneDeep(this.props.round.layers[this.props.round.layers.length - 1])
          newLayer.id = Math.round(Math.random() * 99999)
          newLayer.order++;
