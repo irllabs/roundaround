@@ -267,7 +267,6 @@ const SignInDialog = ({ isShowingSignInDialog, setIsShowingSignInDialog, setSign
                                     onClick={onEmailSigninClick}
                                     data-test="button-sign-in"
                                 >
-
                                     <strong>Sign in</strong>
                                 </Button>
                             </form>
