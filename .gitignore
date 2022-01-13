@@ -22,6 +22,9 @@ functions/node_modules
 # Ignore IntelliJ generated files
 .idea
 
+# env 
+.env
+
 # Cypress test results
 cypress/screenshots
 cypress/videos

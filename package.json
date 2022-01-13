@@ -3,6 +3,7 @@
 	"version": "0.1.0",
 	"private": true,
 	"dependencies": {
+		"@alch/alchemy-web3": "^1.1.9",
 		"@material-ui/core": "^4.11.3",
 		"@material-ui/icons": "^4.11.2",
 		"@svgdotjs/svg.js": "^3.0.16",
@@ -14,6 +15,7 @@
 		"array-move": "^3.0.1",
 		"copy-webpack-plugin": "^7.0.0",
 		"deep-object-diff": "^1.1.0",
+		"dotenv": "^11.0.0",
 		"firebase": "^8.2.5",
 		"immutability-helper": "^3.1.1",
 		"lodash": "^4.17.20",
