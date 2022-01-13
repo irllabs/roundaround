@@ -28,7 +28,8 @@ const LayerInstrument = ({
     articulationsListRef,
     instrumentsButtonRef,
     soundsButtonRef,
-    user
+    user,
+    hideAllLayerInspectorModals
 }) => {
     const [selectedInstrument, setSelectedInstrument] = React.useState(selectedLayer.instrument.sampler)
     const [selectedArticulation, setSelectedArticulation] = React.useState(selectedLayer.instrument.sample)
@@ -57,7 +58,8 @@ const LayerInstrument = ({
     useEffect(() => {
         setSelectedInstrument(selectedLayer.instrument.sampler)
         setSelectedArticulation(selectedLayer.instrument.sample)
-    }, [selectedLayer])
+        hideAllLayerInspectorModals();
+    }, [selectedLayer, hideAllLayerInspectorModals])
 
     const onArticulationSelect = async (articulation) => {
         setSelectedArticulation(articulation.value);

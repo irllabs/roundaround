@@ -799,6 +799,7 @@ class LayerSettings extends Component {
                                     selectedInstrumentLabel={selectedInstrument}
                                     toggleShowInstrumentList={this.toggleShowInstrumentList}
                                     toggleArticulationOptions={this.toggleArticulationOptions}
+                                    hideAllLayerInspectorModals={this.hideAllLayerInspectorModals}
                                     classes={classes}
                                     showArticulationOptions={showArticulationOptions}
                                     selectedLayer={selectedLayer}
