@@ -11,7 +11,15 @@ import { withStyles } from '@material-ui/core/styles';
 import ShareIcon from '@material-ui/icons/Share';
 import ArrowBackIosIcon from '@material-ui/icons/ArrowBackIos';
 import PlayButton from './PlayButton';
-import { setUser, setIsShowingSignInDialog, setRedirectAfterSignIn, setRounds, setUserDisplayName, setSignUpDisplayName, setIsShowingShareDialog } from '../../redux/actions'
+import {
+	setUser,
+	setIsShowingSignInDialog,
+	setRedirectAfterSignIn,
+	setRounds,
+	setUserDisplayName,
+	setSignUpDisplayName,
+	setIsShowingShareDialog
+} from '../../redux/actions'
 import _ from 'lodash'
 import HeaderAvatar from './HeaderAvatar'
 import JitsiComponent from '../play/JitsiComponent';
@@ -135,6 +143,10 @@ class Header extends Component {
 		this.props.setIsShowingSignInDialog(true)
 	}
 
+	onMintNFTClick = () => {
+
+	}
+
 	onShareClick = () => {
 		this.props.setIsShowingShareDialog(true)
 	}
@@ -172,6 +184,7 @@ class Header extends Component {
 							</Box>
 							<JitsiComponent />
 							<div>
+								<Button className={classes.rightSideChild} onClick={this.onShareClick} variant="contained" color="secondary" disableElevation >Mint NFT</Button>
 								<Button className={classes.rightSideChild} onClick={this.onShareClick} variant="contained" color="secondary" disableElevation startIcon={<ShareIcon />}>Share</Button>
 							</div>
 							<div>
