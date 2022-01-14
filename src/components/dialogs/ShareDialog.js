@@ -20,7 +20,10 @@ const styles = makeStyles({
         borderTop: 'solid 1px rgba(255,255,255,0.1)'
     },
     linkContainer: {
-        display: 'flex'
+        display: 'flex',
+    },
+    paper: {
+        borderRadius: 8,
     },
     QRCodeContainer: {
         display: 'flex',
@@ -29,7 +32,10 @@ const styles = makeStyles({
         padding: '1rem'
     },
     textField: {
-        marginRight: '1rem'
+        marginRight: '1rem',
+        [`& fieldset`]: {
+            borderRadius: 8,
+        },
     },
     copyButton: {
         marginRight: '1rem',
@@ -119,28 +125,25 @@ const ShareDialog = ({ round, isShowingShareDialog, setIsShowingShareDialog, set
     const classes = styles();
 
     return (
-        <>
-            <Dialog onClose={handleClose} aria-labelledby="simple-dialog-title" open={isShowingShareDialog}>
-                <DialogTitle className={classes.title} id="simple-dialog-title">Share project</DialogTitle>
-                <Box className={classes.body}>
-                    <p>Use the QR code or link to join the collaboration.</p>
-                    <Box className={classes.QRCodeContainer}>
-
-                        <canvas id="QRCanvas" className={classes.QRCode}></canvas>
-                    </Box>
-                    <Box className={classes.linkContainer}>
-                        <TextField
-                            ref={textField}
-                            value={shortLink}
-                            variant="outlined"
-                            fullWidth
-                            className={classes.textField}
-                        />
-                        <Button className={classes.copyButton} color="secondary" variant="contained" disableElevation onClick={onCopyClick}>Copy</Button>
-                    </Box></Box>
-
-            </Dialog>
-        </>
+        <Dialog classes={{ paper: classes.paper }} onClose={handleClose} aria-labelledby="simple-dialog-title" open={isShowingShareDialog}>
+            <DialogTitle className={classes.title} id="simple-dialog-title">Share project</DialogTitle>
+            <Box className={classes.body}>
+                <p>Use the QR code or link to join the collaboration.</p>
+                <Box className={classes.QRCodeContainer}>
+                    <canvas id="QRCanvas" className={classes.QRCode}></canvas>
+                </Box>
+                <Box className={classes.linkContainer}>
+                    <TextField
+                        ref={textField}
+                        value={shortLink}
+                        variant="outlined"
+                        fullWidth
+                        className={classes.textField}
+                    />
+                    <Button className={classes.copyButton} color="secondary" variant="contained" disableElevation onClick={onCopyClick}>Copy</Button>
+                </Box>
+            </Box>
+        </Dialog>
     );
 }
 const mapStateToProps = state => {
