@@ -10,6 +10,7 @@ import {
 import { withStyles } from '@material-ui/core/styles';
 import ShareIcon from '@material-ui/icons/Share';
 import { BackButton } from '../play/layer-settings/resources';
+import PlayButton from './PlayButton';
 import { setUser, setIsShowingSignInDialog, setRedirectAfterSignIn, setRounds, setUserDisplayName, setSignUpDisplayName, setIsShowingShareDialog } from '../../redux/actions'
 import _ from 'lodash'
 import HeaderAvatar from './HeaderAvatar'
@@ -150,22 +151,24 @@ class Header extends Component {
 			<Box className={classes.root} bgcolor={"background.default"}>
 				{isPlayMode &&
 					<>
-						<div>
+						<Box style={{ display: 'flex', flexDirection: 'row', alignItems: 'center' }}>
 							<IconButton data-test="button-back-to-rounds" to="/rounds" component={Link}>
-								<ArrowBackIosIcon />
+								<BackButton />
 							</IconButton>
-						</div>
-						<div>
-							{
-								round &&
-								<div><ProjectName name={round.name} /></div>
-							}
-							{
-								_.isNil(round) &&
-								<div>Loading...</div>
+							<Box style={{ marginLeft: 8 }}>
+								{
+									round &&
+									<Box>
+										<ProjectName name={round.name} />
+									</Box>
+								}
+								{
+									_.isNil(round) &&
+									<Typography>Loading...</Typography>
 
-							}
-						</div>
+								}
+							</Box>
+						</Box>
 						<Box className={classes.rightSide} >
 							<Box className={classes.avatars}>
 								{
@@ -175,22 +178,23 @@ class Header extends Component {
 								}
 							</Box>
 							{users.length > 1 && <JitsiComponent />}
-							<div>
+							<Box>
 								<IconButton className={classes.shareButton} onClick={this.onShareClick}><ShareIcon /></IconButton>
-							</div>
-							<div>
+							</Box>
+							<Box>
 								<PlayButton />
-							</div>
-							<div>
+							</Box>
+							<Box>
 								<HeaderMenu />
-							</div>
+							</Box>
 						</Box>
 					</>
 				}
 				{!isPlayMode &&
 					<>
-						<div></div>
-						<div><Button className={classes.roundAroundLogoButton} component={Link} to="/">RoundAround</Button></div>
+						<Box>
+							<Button className={classes.roundAroundLogoButton} component={Link} to="/">RoundAround</Button>
+						</Box>
 						{
 							user &&
 							<HeaderAvatar user={user} users={users} shouldShowMenu={true} />
@@ -209,8 +213,6 @@ class Header extends Component {
 
 					</>
 				}
-
-
 			</Box >
 		)
 	}
