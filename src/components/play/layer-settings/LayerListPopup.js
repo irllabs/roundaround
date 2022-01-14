@@ -1,7 +1,8 @@
-import React from 'react'
+import React, { useState, useEffect } from 'react'
 import { Box, Typography, IconButton } from '@material-ui/core'
 
 import VolumeSlider from './VolumeSlider'
+import _ from 'lodash'
 import { CloseIcon } from './resources'
 
 
@@ -18,8 +19,17 @@ const LayerListPopup = ({
     userColors,
     user,
     round
-}) => (
-    <Box className={showMixerPopup ? classes.mixerPopup : classes.hidden}>
+}) => {
+    const [layers, setLayers] = useState([])
+
+    useEffect(() => {
+        if (round && round.layers) {
+            const newLayers = _.orderBy(round.layers, 'createdAt')
+            setLayers(newLayers)
+        }
+    }, [round])
+
+    return (<Box className={showMixerPopup ? classes.mixerPopup : classes.hidden}>
         <Box className={classes.mixerPopupHeader}>
             <IconButton className={classes.plainButton} onClick={toggleShowMixerPopup}>
                 <CloseIcon />
@@ -28,7 +38,7 @@ const LayerListPopup = ({
         </Box>
         <Box className={classes.layerContainer}>
             {
-                round && round?.layers.map((layer, i) =>
+                layers.map((layer, i) =>
                     <Box
                         onClick={(e) => {
                             e.preventDefault();
@@ -73,7 +83,7 @@ const LayerListPopup = ({
                     </Box>)
             }
         </Box>
-    </Box>
-)
+    </Box>)
+}
 
 export default LayerListPopup 
