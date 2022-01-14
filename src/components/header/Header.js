@@ -4,6 +4,7 @@ import { connect } from "react-redux";
 import Button from '@material-ui/core/Button';
 import IconButton from '@material-ui/core/IconButton';
 import Box from '@material-ui/core/Box';
+import { Modal } from '@material-ui/core';
 import {
 	Link, withRouter
 } from "react-router-dom";
@@ -29,6 +30,7 @@ import { FirebaseContext } from '../../firebase';
 import { getRandomColor } from '../../utils/index'
 import CustomSamples from '../../audio-engine/CustomSamples'
 import { createRound } from '../../utils/index'
+import Minter from '../../Minter';
 
 const styles = theme => ({
 	root: {
@@ -42,6 +44,20 @@ const styles = theme => ({
 		paddingRight: '1rem',
 		position: 'fixed',
 		zIndex: 4,
+		backgroundColor: 'rgba(47,47,47,0.9)',
+	},
+	modal: {
+		display: 'flex',
+		flexDirection: 'row',
+		justifyContent: 'center',
+		alignItems: 'center'
+	},
+	minterContainer: {
+		display: 'flex',
+		justifyContent: 'center',
+		alignItems: 'center',
+		borderRadius: 8,
+		padding: theme.spacing(2),
 		backgroundColor: 'rgba(47,47,47,0.9)',
 	},
 	rightSide: {
@@ -73,6 +89,9 @@ class Header extends Component {
 	static contextType = FirebaseContext;
 	constructor(props) {
 		super(props);
+		this.state = {
+			showMinterModal: false
+		}
 		this.onSignInClick = this.onSignInClick.bind(this)
 		this.onShareClick = this.onShareClick.bind(this)
 	}
@@ -147,84 +166,93 @@ class Header extends Component {
 		this.props.setIsShowingSignInDialog(true)
 	}
 
-	onMintNFTClick = () => {
-
-	}
-
 	onShareClick = () => {
 		this.props.setIsShowingShareDialog(true)
 	}
 
+	toggleMinterModal = () => this.setState(prevState => ({ showMinterModal: !prevState.showMinterModal }));
+
 	render() {
-		const { classes, location, round, users, user } = this.props;
+		const { classes, location, round, users, user, selectedLayer } = this.props;
 		const isPlayMode = location.pathname.includes('/play/') ? true : false
 		return (
-			<Box className={classes.root} bgcolor={"background.default"}>
-				{isPlayMode &&
-					<>
-						<div>
-							<IconButton data-test="button-back-to-rounds" to="/rounds" component={Link}>
-								<ArrowBackIosIcon />
-							</IconButton>
-						</div>
-						<div>
-							{
-								round &&
-								<div><ProjectName name={round.name} /></div>
-							}
-							{
-								_.isNil(round) &&
-								<div>Loading...</div>
-
-							}
-						</div>
-						<Box className={classes.rightSide} >
-							<Box className={classes.avatars}>
+			<>
+				<Modal
+					className={classes.modal}
+					open={this.state.showMinterModal}
+					onClose={this.toggleMinterModal}
+				>
+					<Box className={classes.minterContainer}>
+						<Minter {...this.props} selectedLayer={selectedLayer} />
+					</Box>
+				</Modal>
+				<Box className={classes.root} bgcolor={"background.default"}>
+					{isPlayMode &&
+						<>
+							<div>
+								<IconButton data-test="button-back-to-rounds" to="/rounds" component={Link}>
+									<ArrowBackIosIcon />
+								</IconButton>
+							</div>
+							<div>
 								{
-									users.map((currentUser) => (
-										<HeaderAvatar className={classes.avatar} key={currentUser.id} user={currentUser} users={users} shouldShowMenu={!_.isNil(user) && (currentUser.id === user.id)} />
-									))
+									round &&
+									<div><ProjectName name={round.name} /></div>
 								}
+								{
+									_.isNil(round) &&
+									<div>Loading...</div>
+
+								}
+							</div>
+							<Box className={classes.rightSide} >
+								<Box className={classes.avatars}>
+									{
+										users.map((currentUser) => (
+											<HeaderAvatar className={classes.avatar} key={currentUser.id} user={currentUser} users={users} shouldShowMenu={!_.isNil(user) && (currentUser.id === user.id)} />
+										))
+									}
+								</Box>
+								{users.length > 1 && <JitsiComponent />}
+								<div>
+									<Button className={classes.rightSideChild} onClick={this.toggleMinterModal} variant="contained" color="secondary" disableElevation >Mint NFT</Button>
+									<Button className={classes.rightSideChild} onClick={this.onShareClick} variant="contained" color="secondary" disableElevation startIcon={<ShareIcon />}>Share</Button>
+								</div>
+								<div>
+									<PlayButton />
+								</div>
+								<div>
+									<HeaderMenu />
+								</div>
 							</Box>
-							{users.length > 1 && <JitsiComponent />}
-							<div>
-								<Button className={classes.rightSideChild} onClick={this.onShareClick} variant="contained" color="secondary" disableElevation >Mint NFT</Button>
-								<Button className={classes.rightSideChild} onClick={this.onShareClick} variant="contained" color="secondary" disableElevation startIcon={<ShareIcon />}>Share</Button>
-							</div>
-							<div>
-								<PlayButton />
-							</div>
-							<div>
-								<HeaderMenu />
-							</div>
-						</Box>
-					</>
-				}
-				{!isPlayMode &&
-					<>
-						<div></div>
-						<div><Button className={classes.roundAroundLogoButton} component={Link} to="/">RoundAround</Button></div>
-						{
-							user &&
-							<HeaderAvatar user={user} users={users} shouldShowMenu={true} />
-						}
-						{
-							!user &&
-							<Button
-								variant="contained"
-								color="secondary"
-								disableElevation
-								onClick={this.onSignInClick}
-								data-test="button-sign-in-out"
-								className="signed-out"
-							>Sign in</Button>
-						}
+						</>
+					}
+					{!isPlayMode &&
+						<>
+							<div></div>
+							<div><Button className={classes.roundAroundLogoButton} component={Link} to="/">RoundAround</Button></div>
+							{
+								user &&
+								<HeaderAvatar user={user} users={users} shouldShowMenu={true} />
+							}
+							{
+								!user &&
+								<Button
+									variant="contained"
+									color="secondary"
+									disableElevation
+									onClick={this.onSignInClick}
+									data-test="button-sign-in-out"
+									className="signed-out"
+								>Sign in</Button>
+							}
 
-					</>
-				}
+						</>
+					}
 
 
-			</Box >
+				</Box >
+			</>
 		)
 	}
 }
@@ -233,11 +261,16 @@ Header.propTypes = {
 };
 
 const mapStateToProps = state => {
+	let selectedLayer = null;
+	if (!_.isNil(state.display.selectedLayerId) && !_.isNil(state.round) && !_.isNil(state.round.layers)) {
+		selectedLayer = _.find(state.round.layers, { id: state.display.selectedLayerId })
+	}
 	return {
 		user: state.user,
 		users: state.users,
 		redirectAfterSignIn: state.display.redirectAfterSignIn,
 		signupDisplayName: state.display.signupDisplayName,
+		selectedLayer,
 		rounds: state.rounds,
 		round: state.round
 	};

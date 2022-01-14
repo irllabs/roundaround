@@ -13,6 +13,7 @@
 		"@testing-library/user-event": "^12.1.10",
 		"@tonaljs/tonal": "^4.6.0",
 		"array-move": "^3.0.1",
+		"axios": "^0.24.0",
 		"copy-webpack-plugin": "^7.0.0",
 		"deep-object-diff": "^1.1.0",
 		"dotenv": "^11.0.0",
