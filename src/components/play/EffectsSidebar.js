@@ -50,7 +50,7 @@ const styles = theme => ({
         position: 'absolute',
         left: '-40px',
         top: '12px',
-        borderRadius: '16px',
+        borderRadius: 8,
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',

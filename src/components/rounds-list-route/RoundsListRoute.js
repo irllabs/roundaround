@@ -139,10 +139,12 @@ class RoundsListRoute extends Component {
                 <Container className={classes.root}>
 
                     <Box className={classes.header}>
-                        <div><h1>My rounds</h1></div>
-                        <div>
+                        <Box>
+                            <h1>My rounds</h1>
+                        </Box>
+                        <Box>
                             <Button data-test="button-new-round" className={classes.getStartedButton} variant="contained" color="secondary" disableElevation onClick={this.onNewRoundClick} startIcon={<AddIcon />}>New round</Button>
-                        </div>
+                        </Box>
                     </Box>
                     <Box>
                         <List>
