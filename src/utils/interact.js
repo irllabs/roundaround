@@ -1,4 +1,5 @@
 import { pinJSONToIPFS } from './pinata.js'
+import { Box } from '@material-ui/core'
 require('dotenv').config()
 const { createAlchemyWeb3 } = require("@alch/alchemy-web3")
 const contractABI = require('../contract-abi.json')
@@ -7,7 +8,7 @@ const alchemyKey = process.env.REACT_APP_ALCHEMY_KEY
 const contractAddress = process.env.REACT_APP_CONTRACT_ADDRESS
 const web3 = createAlchemyWeb3(alchemyKey)
 
-export const mintNFT = async (url, name, description) => {
+export const mintNFT = async (url, name, description, round) => {
     //error handling
     if (url.trim() === "" || (name.trim() === "" || description.trim() === "")) {
         return {
@@ -20,6 +21,7 @@ export const mintNFT = async (url, name, description) => {
     const metadata = {}
     metadata.name = name
     metadata.image = url
+    metadata.round = round
     metadata.description = description
 
     //make pinata call
@@ -80,7 +82,7 @@ export const connectWallet = async () => {
         return {
             address: "",
             status: (
-                <span>
+                <Box>
                     <p>
                         {" "}
                         🦊{" "}
@@ -89,7 +91,7 @@ export const connectWallet = async () => {
                             browser.
                         </a>
                     </p>
-                </span>
+                </Box>
             ),
         }
     }
@@ -122,7 +124,7 @@ export const getCurrentWalletConnected = async () => {
         return {
             address: "",
             status: (
-                <span>
+                <Box>
                     <p>
                         {" "}
                         🦊{" "}
@@ -131,7 +133,7 @@ export const getCurrentWalletConnected = async () => {
                             browser.
                         </a>
                     </p>
-                </span>
+                </Box>
             ),
         }
     }

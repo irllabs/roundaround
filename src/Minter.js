@@ -1,14 +1,14 @@
 import { useEffect, useState } from "react"
 import { connectWallet, getCurrentWalletConnected, mintNFT } from "./utils/interact"
+import { Box, Typography } from "@material-ui/core";
 
-const Minter = (props) => {
+const Minter = ({ round, classes }) => {
 
     //State variables
     const [walletAddress, setWallet] = useState("")
     const [status, setStatus] = useState("")
-    const [name, setName] = useState("")
     const [description, setDescription] = useState("")
-    const [url, setURL] = useState("")
+    const [url, setURL] = useState("") //TODO: upload rounds screenshot and return url
 
     function addWalletListener() {
         if (window.ethereum) {
@@ -51,46 +51,39 @@ const Minter = (props) => {
     }
 
     const onMintPressed = async () => {
-        const { status } = await mintNFT(url, name, description);
+        const { status } = await mintNFT(url, round.name, description);
         setStatus(status)
     }
 
     return (
-        <div className="Minter">
-            <button id="walletButton" onClick={connectWalletPressed}>
+        <Box className={classes.nftMinter}>
+            <button className={classes.nftButton} id="walletButton" onClick={connectWalletPressed}>
                 {walletAddress.length > 0 ? (
                     "Connected: " +
                     String(walletAddress).substring(0, 6) +
                     "..." +
                     String(walletAddress).substring(38)
                 ) : (
-                    <span>Connect Wallet</span>
+                    <Typography>Connect Wallet</Typography>
                 )}
             </button>
-
-            <br></br>
-            <h1 id="title">Mint NFT</h1>
-            <form>
-                <h2>Name: {props.round && props.round.name}</h2>
+            <Typography className={classes.nftTitle} id="title">Mint NFT</Typography>
+            <Box className={classes.inputsContainer}>
+                <Typography className={classes.nftLabel}>Name: {round && round.name}</Typography>
                 <input
                     type="text"
-                    placeholder="e.g. My first NFT!"
-                    onChange={(event) => setName(event.target.value)}
-                />
-                <h2>Description: </h2>
-                <input
-                    type="text"
-                    placeholder="e.g. Even cooler than cryptokitties ;)"
+                    placeholder="Description e.g. Even cooler than cryptokitties ;)"
+                    className={classes.nftInput}
                     onChange={(event) => setDescription(event.target.value)}
                 />
-            </form>
-            <button id="mintButton" onClick={onMintPressed}>
-                Mint NFT
+            </Box>
+            <button className={classes.nftButton} style={{ marginTop: 5 }} id="mintButton" onClick={onMintPressed}>
+                Start Minting
             </button>
             <p id="status">
                 {status}
             </p>
-        </div>
+        </Box>
     )
 };
 

@@ -60,6 +60,35 @@ const styles = theme => ({
 		padding: theme.spacing(2),
 		backgroundColor: 'rgba(47,47,47,0.9)',
 	},
+	nftMinter: {
+		padding: theme.spacing(1),
+	},
+	nftButton: {
+		padding: theme.spacing(1),
+		cursor: 'pointer',
+		borderRadius: 8,
+	},
+	nftLabel: {
+		padding: theme.spacing(1),
+		borderRadius: 8,
+		border: 'thin solid rgba(255,255,255,0.2)',
+		marginBottom: 5,
+		cursor: 'pointer'
+	},
+	nftTitle: {
+		fontSize: 18,
+		fontWeight: 'bold'
+	},
+	nftInput: {
+		dsiplay: 'flex',
+		flex: 1,
+		borderRadius: 8,
+		padding: theme.spacing(1),
+	},
+	inputsContainer: {
+		display: 'flex',
+		flexDirection: 'column'
+	},
 	rightSide: {
 		display: 'flex',
 		alignItems: 'center'
@@ -183,7 +212,7 @@ class Header extends Component {
 					onClose={this.toggleMinterModal}
 				>
 					<Box className={classes.minterContainer}>
-						<Minter {...this.props} selectedLayer={selectedLayer} />
+						<Minter {...this.props} />
 					</Box>
 				</Modal>
 				<Box className={classes.root} bgcolor={"background.default"}>
