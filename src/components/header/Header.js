@@ -119,7 +119,7 @@ class Header extends Component {
 	constructor(props) {
 		super(props);
 		this.state = {
-			showMinterModal: false
+			showMinterModal: false,
 		}
 		this.onSignInClick = this.onSignInClick.bind(this)
 		this.onShareClick = this.onShareClick.bind(this)
@@ -199,10 +199,10 @@ class Header extends Component {
 		this.props.setIsShowingShareDialog(true)
 	}
 
-	toggleMinterModal = () => this.setState(prevState => ({ showMinterModal: !prevState.showMinterModal }));
+	toggleMinterModal = () => this.setState(prevState => ({ showMinterModal: !prevState.showMinterModal }))
 
 	render() {
-		const { classes, location, round, users, user, selectedLayer } = this.props;
+		const { classes, location, round, users, user } = this.props;
 		const isPlayMode = location.pathname.includes('/play/') ? true : false
 		return (
 			<>
@@ -212,7 +212,7 @@ class Header extends Component {
 					onClose={this.toggleMinterModal}
 				>
 					<Box className={classes.minterContainer}>
-						<Minter {...this.props} />
+						<Minter {...this.props} captureScreen={this.onCaptureScreen} />
 					</Box>
 				</Modal>
 				<Box className={classes.root} bgcolor={"background.default"}>

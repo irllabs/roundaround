@@ -2,13 +2,13 @@ import { useEffect, useState } from "react"
 import { connectWallet, getCurrentWalletConnected, mintNFT } from "./utils/interact"
 import { Box, Typography } from "@material-ui/core";
 
-const Minter = ({ round, classes }) => {
+const Minter = ({ round, classes, captureScreen }) => {
 
     //State variables
     const [walletAddress, setWallet] = useState("")
     const [status, setStatus] = useState("")
     const [description, setDescription] = useState("")
-    const [url, setURL] = useState("") //TODO: upload rounds screenshot and return url
+    const [url] = useState("https://via.placeholder.com/150") //TODO: upload rounds screenshot and return url
 
     function addWalletListener() {
         if (window.ethereum) {
@@ -51,8 +51,11 @@ const Minter = ({ round, classes }) => {
     }
 
     const onMintPressed = async () => {
-        const { status } = await mintNFT(url, round.name, description);
+        //captureScreen().then(async res => {
+        //console.log('screen ', res)
+        const { status } = await mintNFT(url, round.name, description, round);
         setStatus(status)
+        //})
     }
 
     return (
