@@ -25,7 +25,7 @@ const useStyles = makeStyles((theme) => ({
 	},
 	paper: {
 		marginRight: theme.spacing(2),
-		borderRadius: '16px'
+		borderRadius: 8
 	},
 	colorPicker: {
 		padding: '1rem'
@@ -60,7 +60,7 @@ const useStyles = makeStyles((theme) => ({
 
 }));
 
-function HeaderAvatar ({ user, users, setUser, setRounds, shouldShowMenu, setUsers, setRound, setUserColor }) {
+function HeaderAvatar({ user, users, setUser, setRounds, shouldShowMenu, setUsers, setRound, setUserColor }) {
 	const firebaseContext = useContext(FirebaseContext)
 	const [open, setOpen] = React.useState(false);
 	const anchorRef = React.useRef(null);
@@ -77,7 +77,7 @@ function HeaderAvatar ({ user, users, setUser, setRounds, shouldShowMenu, setUse
 		setOpen(false);
 	};
 
-	function handleListKeyDown (event) {
+	function handleListKeyDown(event) {
 		if (event.key === 'Tab') {
 			event.preventDefault();
 			setOpen(false);
@@ -130,94 +130,94 @@ function HeaderAvatar ({ user, users, setUser, setRounds, shouldShowMenu, setUse
 	const classes = useStyles({ userColor: user.color });
 
 	return (
-			<div className={classes.root}>
-				<div data-test="header">
-					{
-						shouldShowMenu &&
-						<>
-							<IconButton
-								className="signed-in"
-								ref={anchorRef}
-								aria-controls={open ? 'menu-list-grow' : undefined}
-								aria-haspopup="true"
-								data-test="button-sign-in-out"
-								onClick={handleToggle}
-							>
-								{
-									!_.isNil(user.avatar) &&
-									<Avatar className={classes.avatar} alt={user.displayName} src={user.avatar} />
-								}
-								{
-									_.isNil(user.avatar) &&
-									<Avatar className={classes.avatarInitialsOnly} alt={user.displayName} >{getInitials(user.displayName)}</Avatar>
-								}
-							</IconButton>
-
-							<Popper open={open} anchorEl={anchorRef.current} role={undefined} transition disablePortal>
-								{({ TransitionProps, placement }) => (
-										<Grow
-												{...TransitionProps}
-												style={{ transformOrigin: placement === 'bottom' ? 'center top' : 'center bottom' }}
-										>
-											<Paper size="md">
-												<ClickAwayListener onClickAway={handleClose}>
-													<Box >
-
-														<h2 className={classes.userDisplayName}>{user.displayName}</h2>
-														<h3 className={classes.userEmail}>{user.email}</h3>
-														<CirclePicker className={classes.colorPicker} onChangeComplete={onColorChosen} colors={Colors} />
-														<Divider />
-														<MenuList
-																autoFocusItem={open}
-																id="menu-list-grow"
-																onKeyDown={handleListKeyDown}
-														>
-															<MenuItem
-																	onClick={onSignOutClick}
-																	className={classes.menuListItem}
-																	data-test="button-sign-out"
-															>
-																Sign out
-															</MenuItem>
-														</MenuList>
-													</Box>
-												</ClickAwayListener>
-											</Paper>
-										</Grow>
-								)}
-							</Popper>
-
-						</>
-					}
-					{
-						!shouldShowMenu &&
-						<>
+		<Box className={classes.root}>
+			<Box data-test="header">
+				{
+					shouldShowMenu &&
+					<>
+						<IconButton
+							className="signed-in"
+							ref={anchorRef}
+							aria-controls={open ? 'menu-list-grow' : undefined}
+							aria-haspopup="true"
+							data-test="button-sign-in-out"
+							onClick={handleToggle}
+						>
 							{
 								!_.isNil(user.avatar) &&
-								<IconButton disabled={true}>
-									<Avatar className={classes.avatar} alt={user.displayName} src={user.avatar} />
-								</IconButton>
+								<Avatar className={classes.avatar} alt={user.displayName} src={user.avatar} />
 							}
 							{
 								_.isNil(user.avatar) &&
-								<IconButton disabled={true}>
-									<Avatar className={classes.avatarInitialsOnly} alt={user.displayName} >{getInitials(user.displayName)}</Avatar>
-								</IconButton>
+								<Avatar className={classes.avatarInitialsOnly} alt={user.displayName} >{getInitials(user.displayName)}</Avatar>
 							}
-						</>
-					}
+						</IconButton>
 
-				</div>
-			</div >
+						<Popper open={open} anchorEl={anchorRef.current} role={undefined} transition disablePortal>
+							{({ TransitionProps, placement }) => (
+								<Grow
+									{...TransitionProps}
+									style={{ transformOrigin: placement === 'bottom' ? 'center top' : 'center bottom' }}
+								>
+									<Paper className={classes.paper} size="md">
+										<ClickAwayListener onClickAway={handleClose}>
+											<Box >
+
+												<h2 className={classes.userDisplayName}>{user.displayName}</h2>
+												<h3 className={classes.userEmail}>{user.email}</h3>
+												<CirclePicker className={classes.colorPicker} onChangeComplete={onColorChosen} colors={Colors} />
+												<Divider />
+												<MenuList
+													autoFocusItem={open}
+													id="menu-list-grow"
+													onKeyDown={handleListKeyDown}
+												>
+													<MenuItem
+														onClick={onSignOutClick}
+														className={classes.menuListItem}
+														data-test="button-sign-out"
+													>
+														Sign out
+													</MenuItem>
+												</MenuList>
+											</Box>
+										</ClickAwayListener>
+									</Paper>
+								</Grow>
+							)}
+						</Popper>
+
+					</>
+				}
+				{
+					!shouldShowMenu &&
+					<>
+						{
+							!_.isNil(user.avatar) &&
+							<IconButton disabled={true}>
+								<Avatar className={classes.avatar} alt={user.displayName} src={user.avatar} />
+							</IconButton>
+						}
+						{
+							_.isNil(user.avatar) &&
+							<IconButton disabled={true}>
+								<Avatar className={classes.avatarInitialsOnly} alt={user.displayName} >{getInitials(user.displayName)}</Avatar>
+							</IconButton>
+						}
+					</>
+				}
+
+			</Box>
+		</Box>
 	);
 }
 export default connect(
-		null,
-		{
-			setUser,
-			setUsers,
-			setRound,
-			setRounds,
-			setUserColor
-		}
+	null,
+	{
+		setUser,
+		setUsers,
+		setRound,
+		setRounds,
+		setUserColor
+	}
 )(HeaderAvatar);

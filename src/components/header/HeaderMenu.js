@@ -22,7 +22,7 @@ const useStyles = makeStyles((theme) => ({
     },
     paper: {
         marginRight: theme.spacing(2),
-        borderRadius: '16px'
+        borderRadius: 8
     },
     menuList: {
     },
@@ -89,9 +89,8 @@ export default function HeaderMenu({ name }) {
     }, [open]);
 
     return (
-        <div className={classes.root}>
-
-            <div>
+        <Box className={classes.root}>
+            <Box>
                 <IconButton
                     ref={anchorRef}
                     aria-controls={open ? 'menu-list-grow' : undefined}
@@ -99,14 +98,13 @@ export default function HeaderMenu({ name }) {
                     onClick={handleToggle}>
                     <MoreHorizIcon />
                 </IconButton>
-
                 <Popper open={open} anchorEl={anchorRef.current} role={undefined} transition disablePortal>
                     {({ TransitionProps, placement }) => (
                         <Grow
                             {...TransitionProps}
                             style={{ transformOrigin: placement === 'bottom' ? 'center top' : 'center bottom' }}
                         >
-                            <Paper size="md">
+                            <Paper className={classes.paper} size="md">
                                 <ClickAwayListener onClickAway={handleClose}>
                                     <Box>
                                         <MenuList autoFocusItem={open} id="menu-list-grow" onKeyDown={handleListKeyDown}>
@@ -122,7 +120,7 @@ export default function HeaderMenu({ name }) {
                         </Grow>
                     )}
                 </Popper>
-            </div>
-        </div>
+            </Box>
+        </Box>
     );
 }

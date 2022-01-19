@@ -8,8 +8,8 @@ import {
 } from "react-router-dom";
 import { makeStyles } from '@material-ui/core/styles';
 import ShareIcon from '@material-ui/icons/Share';
-import ArrowBackIosIcon from '@material-ui/icons/ArrowBackIos';
 import PlayButton from './PlayButton';
+import { BackButton } from '../play/layer-settings/resources';
 import { useLocation } from 'react-router-dom'
 import { setUser, setIsShowingSignInDialog, setRedirectAfterSignIn, setRounds, setUserDisplayName, setSignUpDisplayName, setIsShowingShareDialog } from '../../redux/actions'
 import _ from 'lodash'
@@ -44,6 +44,12 @@ const headerStyles = makeStyles((theme) => ({
     },
     roundAroundLogoButton: {
         fontWeight: 600
+    },
+    iconButton: {
+        display: 'flex',
+        flexDirection: 'row',
+        justifyContent: 'center',
+        alignItems: 'center'
     },
     avatars: {
         display: 'flex',
@@ -115,8 +121,6 @@ function Header({ user, users, round, setUser, setIsShowingSignInDialog, redirec
             }
         })
         // eslint-disable-next-line react-hooks/exhaustive-deps
-
-
     }, [])
 
     return (
@@ -124,22 +128,24 @@ function Header({ user, users, round, setUser, setIsShowingSignInDialog, redirec
         <Box className={classes.root} bgcolor={"background.default"}>
             {isPlayMode &&
                 <>
-                    <div>
-                        <IconButton to="/rounds" component={Link}>
-                            <ArrowBackIosIcon />
+                    <Box>
+                        <IconButton className={classes.iconButton} to="/rounds" component={Link}>
+                            <BackButton />
                         </IconButton>
-                    </div>
-                    <div>
+                    </Box>
+                    <Box>
                         {
                             round &&
-                            <div><ProjectName name={round.name} /></div>
+                            <Box>
+                                <ProjectName name={round.name} />
+                            </Box>
                         }
                         {
                             _.isNil(round) &&
-                            <div>Loading...</div>
+                            <Box>Loading...</Box>
 
                         }
-                    </div>
+                    </Box>
                     <Box className={classes.rightSide} >
                         <Box className={classes.avatars}>
                             {
@@ -149,22 +155,23 @@ function Header({ user, users, round, setUser, setIsShowingSignInDialog, redirec
                             }
                         </Box>
                         <JitsiComponent />
-                        <div>
+                        <Box>
                             <Button className={classes.rightSideChild} onClick={onShareClick} variant="contained" color="secondary" disableElevation startIcon={<ShareIcon />}>Share</Button>
-                        </div>
-                        <div>
+                        </Box>
+                        <Box>
                             <PlayButton className={classes.rightSideChild} />
-                        </div>
-                        <div>
+                        </Box>
+                        <Box>
                             <HeaderMenu />
-                        </div>
+                        </Box>
                     </Box>
                 </>
             }
             {!isPlayMode &&
                 <>
-                    <div></div>
-                    <div><Button className={classes.roundAroundLogoButton} component={Link} to="/">RoundAround</Button></div>
+                    <Box>
+                        <Button className={classes.roundAroundLogoButton} component={Link} to="/">RoundAround</Button>
+                    </Box>
                     {
                         user &&
                         <HeaderAvatar user={user} users={users} shouldShowMenu={true} />
@@ -173,7 +180,6 @@ function Header({ user, users, round, setUser, setIsShowingSignInDialog, redirec
                         !user &&
                         <Button variant="contained" color="secondary" disableElevation onClick={onSignInClick}>Sign in</Button>
                     }
-
                 </>
             }
         </Box >
