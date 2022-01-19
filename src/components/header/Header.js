@@ -61,7 +61,13 @@ const styles = theme => ({
 		backgroundColor: 'rgba(47,47,47,0.9)',
 	},
 	nftMinter: {
+		display: 'flex',
+		flexDirection: 'column',
+		width: 350,
 		padding: theme.spacing(1),
+	},
+	status: {
+		margin: theme.spacing(1),
 	},
 	nftButton: {
 		padding: theme.spacing(1),

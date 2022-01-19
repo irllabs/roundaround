@@ -83,9 +83,9 @@ const Minter = ({ round, classes, captureScreen }) => {
             <button className={classes.nftButton} style={{ marginTop: 5 }} id="mintButton" onClick={onMintPressed}>
                 Start Minting
             </button>
-            <p id="status">
-                {status}
-            </p>
+            <Box id='status' className={classes.status}>
+                <Typography style={{ textAlign: 'center' }}>{status}</Typography>
+            </Box>
         </Box>
     )
 };
