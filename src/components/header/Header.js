@@ -68,6 +68,9 @@ const styles = theme => ({
 	},
 	status: {
 		margin: theme.spacing(1),
+		backgroundColor: 'white',
+		color: 'black',
+		overflow: 'scroll'
 	},
 	nftButton: {
 		padding: theme.spacing(1),

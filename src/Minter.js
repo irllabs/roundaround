@@ -15,22 +15,22 @@ const Minter = ({ round, classes, captureScreen }) => {
             window.ethereum.on("accountsChanged", (accounts) => {
                 if (accounts.length > 0) {
                     setWallet(accounts[0])
-                    setStatus("👆🏽 Write a message in the text-field above.");
+                    setStatus("Write a message in the text-field above.");
                 } else {
                     setWallet("")
-                    setStatus("🦊 Connect to Metamask using the top right button.")
+                    setStatus("Connect to Metamask using the top right button.")
                 }
             })
         } else {
             setStatus(
-                <p>
+                <Typography>
                     {" "}
                     🦊{" "}
                     <a target="_blank" rel="noreferrer" href={`https://metamask.io/download.html`}>
                         You must install Metamask, a virtual Ethereum wallet, in your
                         browser.
                     </a>
-                </p>
+                </Typography>
             )
         }
     }

@@ -1,5 +1,5 @@
 import { pinJSONToIPFS } from './pinata.js'
-import { Box } from '@material-ui/core'
+import { Box, Typography } from '@material-ui/core'
 require('dotenv').config()
 const { createAlchemyWeb3 } = require("@alch/alchemy-web3")
 const contractABI = require('../contract-abi.json')
@@ -50,12 +50,12 @@ export const mintNFT = async (url, name, description, round) => {
             })
         return {
             success: true,
-            status: "✅ Check out your transaction on Etherscan: https://ropsten.etherscan.io/tx/" + txHash
+            status: "Check out your transaction on Etherscan: https://ropsten.etherscan.io/tx/" + txHash
         }
     } catch (error) {
         return {
             success: false,
-            status: "😥 Something went wrong: " + error.message
+            status: "Something went wrong: " + error.message
         }
 
     }
@@ -75,7 +75,7 @@ export const connectWallet = async () => {
         } catch (err) {
             return {
                 address: "",
-                status: "😥 " + err.message,
+                status: err.message,
             }
         }
     } else {
@@ -106,18 +106,18 @@ export const getCurrentWalletConnected = async () => {
             if (addressArray.length > 0) {
                 return {
                     address: addressArray[0],
-                    status: "👆🏽 Write a message in the text-field above.",
+                    status: "Write a message in the text-field above.",
                 };
             } else {
                 return {
                     address: "",
-                    status: "🦊 Connect to Metamask using the top right button.",
+                    status: "Connect to Metamask using the top right button.",
                 };
             }
         } catch (err) {
             return {
                 address: "",
-                status: "😥 " + err.message,
+                status: err.message,
             };
         }
     } else {
@@ -125,14 +125,14 @@ export const getCurrentWalletConnected = async () => {
             address: "",
             status: (
                 <Box>
-                    <p>
+                    <Typography>
                         {" "}
                         🦊{" "}
                         <a target="_blank" rel="noreferrer" href={`https://metamask.io/download.html`}>
                             You must install Metamask, a virtual Ethereum wallet, in your
                             browser.
                         </a>
-                    </p>
+                    </Typography>
                 </Box>
             ),
         }
