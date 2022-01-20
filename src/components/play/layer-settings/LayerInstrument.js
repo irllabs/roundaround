@@ -1,4 +1,4 @@
-import React, { useContext } from 'react'
+import React, { useContext, useEffect } from 'react'
 import { Box, Typography } from '@material-ui/core'
 import IconButton from '@material-ui/core/IconButton'
 import _ from 'lodash'
@@ -28,7 +28,8 @@ const LayerInstrument = ({
     articulationsListRef,
     instrumentsButtonRef,
     soundsButtonRef,
-    user
+    user,
+    hideAllLayerInspectorModals
 }) => {
     const [selectedInstrument, setSelectedInstrument] = React.useState(selectedLayer.instrument.sampler)
     const [selectedArticulation, setSelectedArticulation] = React.useState(selectedLayer.instrument.sample)
@@ -53,6 +54,12 @@ const LayerInstrument = ({
             firebase.updateLayer(roundId, selectedLayer.id, { instrument: { sampler: instrument.name, sample: defaultArticulation } })
         };
     }
+
+    useEffect(() => {
+        setSelectedInstrument(selectedLayer.instrument.sampler)
+        setSelectedArticulation(selectedLayer.instrument.sample)
+        hideAllLayerInspectorModals();
+    }, [selectedLayer, hideAllLayerInspectorModals])
 
     const onArticulationSelect = async (articulation) => {
         setSelectedArticulation(articulation.value);
