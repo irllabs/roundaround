@@ -59,9 +59,7 @@ class RoundsListRoute extends Component {
     }
 
     async onNewRoundClick() {
-        console.log('create new round');
         let newRound = await createRound(this.props.user.id)
-        console.log('newRound', newRound);
         let newRounds = [newRound, ...this.props.rounds]
         await this.context.createRound(newRound)
         this.props.setRounds(newRounds)
@@ -88,7 +86,6 @@ class RoundsListRoute extends Component {
 
     onMenuClick(roundId, e) {
         let element = e.currentTarget
-        console.log('onMenuClick', roundId, element);
         this.props.setSelectedRoundId(roundId)
         this.setState({
             anchorElement: element,
@@ -110,7 +107,6 @@ class RoundsListRoute extends Component {
         this.props.setIsShowingRenameDialog(true)
     }
     onDuplicateClick = async () => {
-        console.log('onDuplicateClick');
         let selectedRound = await this.context.getRound(this.props.selectedRoundId)
         let clonedRound = _.cloneDeep(selectedRound)
         clonedRound.id = uuid()
@@ -132,8 +128,6 @@ class RoundsListRoute extends Component {
     }
 
     render() {
-        console.log('rendering rounds', this.props.rounds);
-
         const { classes } = this.props;
         const rounds = [...this.props.rounds];
         return (

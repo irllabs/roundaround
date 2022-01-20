@@ -122,7 +122,6 @@ const SignInDialog = ({ isShowingSignInDialog, setIsShowingSignInDialog, setSign
             await firebaseContext.auth.signInWithEmailAndPassword(email, password)
             onClose()
         } catch (e) {
-            console.log('email error', e);
             setErrorMessage(e.message)
         }
     }
@@ -142,13 +141,11 @@ const SignInDialog = ({ isShowingSignInDialog, setIsShowingSignInDialog, setSign
                     color: getRandomColor(),
                     isGuest: false,
                 }
-                console.log('creating user', user);
                 await firebaseContext.createUser(user)
                 setUser(user)
                 onClose()
 
             } catch (e) {
-                console.log('email error', e);
                 setErrorMessage(e.message)
             }
         } else {
@@ -171,22 +168,17 @@ const SignInDialog = ({ isShowingSignInDialog, setIsShowingSignInDialog, setSign
         if (!_.isEmpty(displayName)) {
             try {
                 const authResult = await firebaseContext.auth.signInAnonymously()
-                console.log('authResult', authResult);
                 const authUser = authResult.user
-                console.log('authUser', authUser);
                 let user = {
                     isGuest: true,
                     displayName,
                     id: authUser.uid,
                     color: getRandomColor()
                 }
-                console.log('creating user', user);
                 await firebaseContext.createUser(user)
                 setUser(user)
                 onClose()
-
             } catch (e) {
-                console.log('email error', e);
                 setErrorMessage(e.message)
             }
         } else {
