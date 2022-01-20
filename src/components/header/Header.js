@@ -127,7 +127,8 @@ class Header extends Component {
 			this.props.setRedirectAfterSignIn(null)
 		} else if (this.props.redirectAfterSignIn === '/rounds') {
 			// guest user, create a new round and redirect to there instead of /rounds
-			let newRound = createRound(this.props.user.id)
+			let newRound = await createRound(this.props.user.id)
+			if (!newRound) return;
 			let newRounds = [newRound, ...this.props.rounds]
 			await this.context.createRound(newRound)
 			this.props.setRounds(newRounds)
