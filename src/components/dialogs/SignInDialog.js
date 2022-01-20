@@ -313,8 +313,9 @@ const SignInDialog = ({ isShowingSignInDialog, setIsShowingSignInDialog, setSign
                             >
                                 <strong>Continue as guest</strong>
                             </Button>
+                            <p style={{ textAlign: 'center' }}>Don't have an account yet?</p>
+                            <Button className={classes.signUpButton} fullWidth disableElevation onClick={onShowEmailSignupClick}>Sign up</Button>
                         </form>
-
                     </Box>
                 </>
             }
