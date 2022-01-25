@@ -1,12 +1,13 @@
 import React, { Component } from 'react'
 import _ from 'lodash'
-import { connect } from "react-redux";
-import PropTypes from 'prop-types';
-import { withStyles } from '@material-ui/styles';
-import Box from '@material-ui/core/Box';
+import { connect } from "react-redux"
+import PropTypes from 'prop-types'
+import { withStyles } from '@material-ui/styles'
+import Box from '@material-ui/core/Box'
+import { PRESET_LETTERS } from '../../utils/constants'
 
 import PatternThumbControl from './PatternThumbControl'
-import { FirebaseContext } from '../../firebase';
+import { FirebaseContext } from '../../firebase'
 import {
     saveUserPattern,
     setLayerSteps,
@@ -212,7 +213,7 @@ class PatternsSidebar extends Component {
             for (const pattern of this.props.round.userPatterns[this.props.user.id].patterns) {
                 let item = {
                     id: pattern.id,
-                    label: 'P' + (pattern.order + 1),
+                    label: PRESET_LETTERS[pattern.order],
                     userId: this.props.user.id,
                     isFilled: !_.isEmpty(pattern.state)
                 }

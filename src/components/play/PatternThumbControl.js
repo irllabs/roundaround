@@ -1,6 +1,5 @@
 import React, { Component } from 'react'
 import { SVG } from '@svgdotjs/svg.js'
-import { Save } from '@material-ui/icons';
 import PropTypes from 'prop-types';
 import { withStyles } from '@material-ui/styles';
 
@@ -18,14 +17,14 @@ const styles = theme => ({
 })
 
 class PatternThumbControl extends Component {
-    constructor (props) {
+    constructor(props) {
         super(props);
         this.thumbControlRef = React.createRef();
         this.onMouseMove = this.onMouseMove.bind(this)
         this.onMouseUp = this.onMouseUp.bind(this)
         this.isOver = false
     }
-    componentDidMount () {
+    componentDidMount() {
         const element = this.thumbControlRef.current;
         this.container = SVG()
             .addTo(element)
@@ -38,8 +37,8 @@ class PatternThumbControl extends Component {
         this.label = this.thumb.plain(this.props.label)
         this.label.font({
             family: 'Arial',
-            size: 14,
-            weight: 600
+            size: 25,
+            weight: 900
         })
         this.label.fill('#FFFFFF')
         this.label.x((thumbWidth / 2) - (this.label.node.getBBox().width / 2))
@@ -57,10 +56,10 @@ class PatternThumbControl extends Component {
         this.isAnimating = false
         this.addEventListeners()
     }
-    componentDidUpdate () {
+    componentDidUpdate() {
         this.updateThumbFill()
     }
-    updateThumbFill () {
+    updateThumbFill() {
         if (!this.isAnimating) {
             if (this.props.isFilled) {
                 this.thumbBackground.stroke('none')
@@ -71,11 +70,11 @@ class PatternThumbControl extends Component {
                 }
             } else {
                 this.thumbBackground.fill('#171717')
-                this.thumbBackground.stroke({ width: 1, color: '#999999', dasharray: '5,5' })
+                //this.thumbBackground.stroke({ width: 1, color: '#999999' })
             }
         }
     }
-    addEventListeners () {
+    addEventListeners() {
         this.thumb.on('touchstart', (e) => {
             e.preventDefault()
             this.dragStart = e.touches[0].pageX
@@ -134,29 +133,29 @@ class PatternThumbControl extends Component {
             }
         })
     }
-    onMouseMove (e) {
-        e.preventDefault()
-        let x = e.pageX - this.dragStart
-        if (x > containerWidth - thumbWidth) {
-            x = containerWidth - thumbWidth
-        } else if (x < 0) {
-            x = 0
-        }
-        if (x > (containerWidth - thumbWidth) / 2) {
-            this.saveContainer.show()
-            this.label.hide()
-            this.arrowContainer.hide()
-        } else {
-            this.saveContainer.hide()
-            if (!this.props.isFilled) {
-                this.arrowContainer.show()
-            } else {
-                this.label.show()
-            }
-        }
-        this.thumb.x(x)
+    onMouseMove(e) {
+        // e.preventDefault()
+        // let x = e.pageX - this.dragStart
+        // if (x > containerWidth - thumbWidth) {
+        //     x = containerWidth - thumbWidth
+        // } else if (x < 0) {
+        //     x = 0
+        // }
+        // if (x > (containerWidth - thumbWidth) / 2) {
+        //     this.saveContainer.show()
+        //     this.label.hide()
+        //     this.arrowContainer.hide()
+        // } else {
+        //     this.saveContainer.hide()
+        //     if (!this.props.isFilled) {
+        //         this.arrowContainer.show()
+        //     } else {
+        //         this.label.show()
+        //     }
+        // }
+        // this.thumb.x(x)
     }
-    onMouseUp (e) {
+    onMouseUp(e) {
         e.preventDefault()
         document.removeEventListener('mouseup', this.onMouseUp)
         document.removeEventListener('mousemove', this.onMouseMove)
@@ -173,7 +172,7 @@ class PatternThumbControl extends Component {
         }
         this.thumb.x(x)
     }
-    save () {
+    save() {
         this.isAnimating = true
         this.thumb.animate().x(0)
         const _this = this
@@ -194,21 +193,21 @@ class PatternThumbControl extends Component {
             _this.updateThumbFill()
         })
     }
-    load () {
+    load() {
         this.props.loadPattern(this.props.id)
     }
-    render () {
+    render() {
         let saveStyles = { color: '#555555', position: 'absolute', right: '10px', top: '12px', zIndex: 1 }
         if (this.props.needsSaving && this.props.isSelected) {
             saveStyles.color = '#ffffff'
         }
         return (
-            <div style={{ width: '88px', height: '48px', backgroundColor: 'rgba(0,0,0,0.5)', borderRadius: '24px', position: 'relative', marginBottom: '0.5rem' }}>
-                <Save fontSize="small" style={saveStyles} />
+            <div style={{ width: '48px', height: '48px', backgroundColor: 'rgba(0,0,0,0.5)', borderRadius: '24px', position: 'relative', marginBottom: '0.5rem' }}>
+                {/* <Save fontSize="small" style={saveStyles} /> */}
                 <div style={{ zIndex: 2, position: 'absolute' }}>
                     <div ref={this.thumbControlRef} style={{ display: 'flex', zIndex: 2 }}></div>
                 </div>
-            </div >
+            </div>
 
         )
     }

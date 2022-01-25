@@ -1,6 +1,6 @@
 import React, { Component } from 'react'
 import PlayUI from './PlayUI'
-//import PatternsSidebar from './PatternsSidebar'
+import PatternsSidebar from './PatternsSidebar'
 import PropTypes from 'prop-types';
 import { withStyles } from '@material-ui/styles';
 import EffectsSidebar from './EffectsSidebar';
@@ -377,7 +377,7 @@ class PlayRoute extends Component {
                         visible={true}
                     />
                 }
-                {/* <PatternsSidebar /> */}
+                <PatternsSidebar />
                 <EffectsSidebar />
                 <ShareDialog />
                 <Box style={{ position: 'relative', display: 'flex', justifyContent: 'center', width: '100%' }}>
