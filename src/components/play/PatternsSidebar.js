@@ -72,15 +72,13 @@ class PatternsSidebar extends Component {
         this.onSavePattern = this.onSavePattern.bind(this)
         this.onMinimizeClick = this.onMinimizeClick.bind(this)
     }
+
     async onLoadPattern(id) {
-        console.log('onLoadPattern', id);
         if (!this.props.display.isRecordingSequence) {
             const pattern = _.find(this.props.round.userPatterns[this.props.user.id].patterns, { id })
             if (!_.isEmpty(pattern.state)) {
-                console.log('loading state', pattern);
-                console.time('loadPattern')
-
                 this.setState({ selectedPattern: pattern.id, selectedPatternNeedsSaving: false })
+
 
                 // check if we have layers in the round not referenced in the pattern then set all steps in that layer to off
                 for (const existingLayer of this.props.round.layers) {
@@ -92,7 +90,6 @@ class PatternsSidebar extends Component {
                         pattern.state.layers.push(existingLayerClone)
                     }
                 }
-
 
                 // save to store first so UI updates straight away
                 /*for (const layer of pattern.state.layers) {
@@ -113,29 +110,19 @@ class PatternsSidebar extends Component {
                     }
                 }
 
-                //console.log('pattern.state.layers', pattern.state.layers)
-
                 _.remove(pattern.state.layers, function (n) {
                     return layersToDelete.indexOf(n) > -1
                 })
 
-                //console.log('pattern.state.layers after remove', pattern.state.layers)
-
                 // make sure layers are ordered the same
-
                 let orderedLayers = []
+
                 // this.props.updateLayers(pattern.state.layers)
                 for (const layer of pattern.state.layers) {
                     let index = _.findIndex(this.props.round.layers, { id: layer.id })
-                    console.log('index', index);
                     orderedLayers[index] = layer
                 }
-
-                //console.timeEnd('loadPattern')
-
-                console.log('orderedLayers', orderedLayers);
                 this.props.updateLayers(orderedLayers)
-                // console.log('after round update', this.props.round);
 
                 // now save to firebase
                 for (const layer of pattern.state.layers) {
@@ -165,11 +152,9 @@ class PatternsSidebar extends Component {
         }
     }
     onSavePattern(id) {
-        //console.log('onSavePattern', id);
         // save all steps for this user
         this.setState({ selectedPattern: id, selectedPatternNeedsSaving: false })
         const state = this.getCurrentState(this.props.user.id)
-        //  console.log('saving state', state);
         this.props.saveUserPattern(this.props.user.id, id, state)
         this.context.saveUserPatterns(this.props.round.id, this.props.user.id, this.props.round.userPatterns[this.props.user.id])
     }
@@ -194,8 +179,9 @@ class PatternsSidebar extends Component {
         }
         return state
     }
+
     render() {
-        const { classes } = this.props;
+        const { classes, user } = this.props;
         let selectedPatternNeedsSaving = false;
         if (!_.isNil(this.state.selectedPattern) && !_.isNil(this.props.round)) {
             const pattern = _.find(this.props.round.userPatterns[this.props.user.id].patterns, { id: this.state.selectedPattern })
@@ -214,6 +200,7 @@ class PatternsSidebar extends Component {
                 let item = {
                     id: pattern.id,
                     label: PRESET_LETTERS[pattern.order],
+                    color: user.color,
                     userId: this.props.user.id,
                     isFilled: !_.isEmpty(pattern.state)
                 }
@@ -226,7 +213,7 @@ class PatternsSidebar extends Component {
             <Box className={classes.root + ' ' + isMinimizedClass}>
                 <div className={classes.patternsContainer}>
                     {items.map((item, index) => (
-                        <PatternThumbControl key={`item-${item.id}`} id={item.id} label={item.label} isFilled={item.isFilled} isSelected={item.id === this.state.selectedPattern} needsSaving={selectedPatternNeedsSaving} loadPattern={this.onLoadPattern} savePattern={this.onSavePattern} />
+                        <PatternThumbControl key={`item-${item.id}`} id={item.id} color={item.color} label={item.label} isFilled={item.isFilled} isSelected={item.id === this.state.selectedPattern} needsSaving={selectedPatternNeedsSaving} loadPattern={this.onLoadPattern} savePattern={this.onSavePattern} />
                     ))}
                     <PatternSequencer />
                 </div>
@@ -240,7 +227,6 @@ PatternsSidebar.propTypes = {
 };
 
 const mapStateToProps = state => {
-    //console.log('mapStateToProps', state);
     return {
         round: state.round,
         user: state.user,

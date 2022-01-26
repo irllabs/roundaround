@@ -25,6 +25,7 @@ class PatternThumbControl extends Component {
         this.isOver = false
     }
     componentDidMount() {
+        const { color } = this.props;
         const element = this.thumbControlRef.current;
         this.container = SVG()
             .addTo(element)
@@ -40,7 +41,7 @@ class PatternThumbControl extends Component {
             size: 25,
             weight: 900
         })
-        this.label.fill('#FFFFFF')
+        this.label.fill(color)
         this.label.x((thumbWidth / 2) - (this.label.node.getBBox().width / 2))
         this.label.y((thumbHeight / 2) - (this.label.node.getBBox().height / 2))
         this.arrowContainer = this.thumb.nested()

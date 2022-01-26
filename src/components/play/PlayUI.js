@@ -2,7 +2,7 @@ import React, { Component } from 'react';
 import _ from 'lodash';
 import { SVG } from '@svgdotjs/svg.js'
 import '@svgdotjs/svg.panzoom.js'
-import { HTML_UI_Params } from '../../utils/constants'
+import { HTML_UI_Params, PRESET_LETTERS } from '../../utils/constants'
 import { connect } from "react-redux";
 import AudioEngine from '../../audio-engine/AudioEngine'
 import { getDefaultLayerData } from '../../utils/defaultData';
@@ -547,6 +547,7 @@ class PlayUI extends Component {
         }
 
         this.scheduleToneEvents()
+        this.renderPatterns()
     }
 
     scheduleToneEvents() {
@@ -881,8 +882,7 @@ class PlayUI extends Component {
     }
 
     getLayerDiameter(order) {
-        console.log('this.props.round.layers', this.props.round.layers);
-        let diameter = HTML_UI_Params.addNewLayerButtonDiameter + HTML_UI_Params.initialLayerPadding
+        let diameter = HTML_UI_Params.addNewLayerButtonDiameter + (HTML_UI_Params.initialLayerPadding * 1.5)
         for (let i = 0; i < order; i++) {
             let layer = this.round.layers[i]
             if (layer.createdBy === this.props.user.id) {
@@ -893,7 +893,6 @@ class PlayUI extends Component {
                 //diameter += ((HTML_UI_Params.stepDiameter + HTML_UI_Params.stepDiameter) / 2)
             }
         }
-        console.log('getLayerDiameter(' + order + ')', diameter);
         return diameter
         //HTML_UI_Params.addNewLayerButtonDiameter + HTML_UI_Params.initialLayerPadding + ((HTML_UI_Params.stepDiameter + HTML_UI_Params.layerPadding + HTML_UI_Params.layerPadding + HTML_UI_Params.stepDiameter) * (order + 1))
     }
@@ -1588,7 +1587,6 @@ class PlayUI extends Component {
                     const now = new Date().getTime()
                     const difference = step.lastUpdated ? (now - step.lastUpdated) : 0
                     const secondsDifference = difference / 1000
-                    console.log('difference ', secondsDifference)
                     if (!_.isEqual(_this.isCurrentlyOverStepGraphic, stepGraphic) &&
                         (secondsDifference === 0 || secondsDifference > 0.5)) {
                         _this.isCurrentlyOverStepGraphic = stepGraphic
@@ -1608,6 +1606,75 @@ class PlayUI extends Component {
             this.clearShowStepModalTimer()
             this.isCurrentlyOverStepGraphic = null
             _this.swipeToggleActive = true
+        }
+    }
+
+    renderPatterns = () => {
+        const { user, round } = this.props;
+        const layerDiameter = this.getLayerDiameter(1)
+        const patternsContainerDiameter = layerDiameter - 320;
+        const sequenceContainerDiameter = layerDiameter - 500;
+
+        const xOffset = (this.containerWidth / 2) - (layerDiameter / 3.45)
+        const yOffset = (this.containerHeight / 2) - (layerDiameter / 3.4)
+        if (!_.isNil(round) && !_.isNil(round.userPatterns) && !_.isNil(round.userPatterns[user.id])) {
+            const patterns = round.userPatterns[user.id].patterns
+            const sequence = this.props.round.userPatterns[this.props.user.id].sequence
+            let angle = Math.PI / -1.335
+            let sAngle = Math.PI / -1.335
+            for (const pattern of patterns) {
+                const patternSize = (2 * Math.PI) / patterns.length
+                let patternDiameter = HTML_UI_Params.stepDiameter
+                angle += patternSize
+                const letter = PRESET_LETTERS[pattern.order]
+                const radius = patternsContainerDiameter / 2;
+
+                const x = (Math.round(patternsContainerDiameter / 2 + radius * Math.cos(angle) - patternDiameter / 2) + xOffset)
+                const y = (Math.round(patternsContainerDiameter / 2 + radius * Math.sin(angle) - patternDiameter / 2) + yOffset)
+
+                const currentPattern = SVG().circle(patternDiameter)
+                const label = SVG().plain(letter).attr({ cursor: 'pointer' })
+                label.font({
+                    family: 'Arial',
+                    size: 25,
+                    weight: 900,
+                    opacity: 1
+                })
+                const labelX = x + 15
+                const labelY = y + 10
+                label.fill({ color: user.color })
+                label.x(labelX)
+                label.y(labelY)
+
+                currentPattern.attr({ fill: 'rgba(0,0,0,0.1)', opacity: 0.2, cursor: 'pointer' })
+                currentPattern.stroke({ color: user.color, width: 12 })
+                currentPattern.x(x)
+                currentPattern.y(y)
+                this.container.add(currentPattern)
+                this.container.add(label)
+            }
+
+            let i = 0
+            for (const id of sequence) {
+                const isFilled = id !== false
+                const isHighlighted = i === this.props.display.currentSequencePattern
+                const sequenceSize = (2 * Math.PI) / sequence.length
+                let sequenceDiameter = HTML_UI_Params.stepDiameter - 10
+                sAngle += sequenceSize
+                const radius = sequenceContainerDiameter / 2;
+
+                const sX = (Math.round(sequenceContainerDiameter / 2 + radius * Math.cos(sAngle) - sequenceDiameter / 2) + xOffset) + 90
+                const sY = (Math.round(sequenceContainerDiameter / 2 + radius * Math.sin(sAngle) - sequenceDiameter / 2) + yOffset) + 90
+
+                const sequencePattern = SVG().circle(sequenceDiameter)
+
+                sequencePattern.attr({ fill: isFilled ? user.color : 'rgba(0,0,0,0.1)', opacity: isHighlighted ? 1 : 0.5, cursor: 'pointer' })
+                sequencePattern.stroke({ color: user.color, width: 1 })
+                sequencePattern.x(sX)
+                sequencePattern.y(sY)
+                this.container.add(sequencePattern)
+                i++
+            }
         }
     }
 
@@ -1631,6 +1698,7 @@ const mapStateToProps = state => {
         round: state.round,
         user: state.user,
         users: state.users,
+        display: state.display,
         selectedLayer,
         isPlaying: !_.isNil(state.round) && state.round.isPlaying ? true : false,
         selectedLayerId: state.display.selectedLayerId,
