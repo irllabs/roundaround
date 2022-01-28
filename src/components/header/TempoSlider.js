@@ -26,7 +26,7 @@ const StyledSlider = withStyles({
 
     },
 })(Slider);
-function TempoSlider ({ round, setRoundBpm }) {
+function TempoSlider({ round, setRoundBpm }) {
     const firebase = useContext(FirebaseContext);
     const [value, setValue] = React.useState(round.bpm);
     const updateTempoState = (bpm) => {
@@ -44,7 +44,7 @@ function TempoSlider ({ round, setRoundBpm }) {
         updateTempoStateThrottled(bpm)
     };
 
-    function valuetext (value) {
+    function valuetext(value) {
         return `${value}`;
     }
     return (

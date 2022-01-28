@@ -1,5 +1,8 @@
 export const HTML_UI_Params = {
     stepDiameter: 48,
+    sequenceButtonDiameter: 16,
+    sequenceButtonDots: 12,
+    dotDiameter: 3,
     addNewLayerButtonDiameter: 64,
     layerPadding: 16,
     initialLayerPadding: 384,
@@ -14,7 +17,8 @@ export const HTML_UI_Params = {
     layerStrokeOpacity: 0.3,
     stepModalDimensions: 200,
     stepModalThumbDiameter: 32,
-    otherUserLayerSizeDivisor: 3
+    otherUserLayerSizeDivisor: 3,
+    initialLayerDiameter: 768
 }
 
 export const Colors = ['#f44336', '#e91e63', '#9c27b0', '#673ab7', '#3f51b5', '#2196f3', '#00bcd4', '#009688', '#4caf50', '#8bc34a', '#cddc39', '#ffeb3b', '#ffc107', '#ff9800', '#ff5722']

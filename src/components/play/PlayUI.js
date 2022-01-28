@@ -1611,9 +1611,10 @@ class PlayUI extends Component {
 
     renderPatterns = () => {
         const { user, round } = this.props;
-        const layerDiameter = this.getLayerDiameter(1)
-        const patternsContainerDiameter = layerDiameter - 320;
-        const sequenceContainerDiameter = layerDiameter - 500;
+        const userHasLayer = round.layers.find(layer => layer.createdBy === user.id)
+        const layerDiameter = !userHasLayer ? HTML_UI_Params.initialLayerDiameter : this.getLayerDiameter(1)
+        const patternsContainerDiameter = layerDiameter - 320
+        const sequenceContainerDiameter = layerDiameter - 550
 
         const xOffset = (this.containerWidth / 2) - (layerDiameter / 3.45)
         const yOffset = (this.containerHeight / 2) - (layerDiameter / 3.4)
@@ -1622,6 +1623,8 @@ class PlayUI extends Component {
             const sequence = this.props.round.userPatterns[this.props.user.id].sequence
             let angle = Math.PI / -1.335
             let sAngle = Math.PI / -1.335
+            let dotAngle = Math.PI / -1.335
+
             for (const pattern of patterns) {
                 const patternSize = (2 * Math.PI) / patterns.length
                 let patternDiameter = HTML_UI_Params.stepDiameter
@@ -1659,12 +1662,12 @@ class PlayUI extends Component {
                 const isFilled = id !== false
                 const isHighlighted = i === this.props.display.currentSequencePattern
                 const sequenceSize = (2 * Math.PI) / sequence.length
-                let sequenceDiameter = HTML_UI_Params.stepDiameter - 10
+                let sequenceDiameter = HTML_UI_Params.stepDiameter - 15
                 sAngle += sequenceSize
                 const radius = sequenceContainerDiameter / 2;
 
-                const sX = (Math.round(sequenceContainerDiameter / 2 + radius * Math.cos(sAngle) - sequenceDiameter / 2) + xOffset) + 90
-                const sY = (Math.round(sequenceContainerDiameter / 2 + radius * Math.sin(sAngle) - sequenceDiameter / 2) + yOffset) + 90
+                const sX = (Math.round(sequenceContainerDiameter / 2 + radius * Math.cos(sAngle) - sequenceDiameter / 2) + xOffset) + 114
+                const sY = (Math.round(sequenceContainerDiameter / 2 + radius * Math.sin(sAngle) - sequenceDiameter / 2) + yOffset) + 116
 
                 const sequencePattern = SVG().circle(sequenceDiameter)
 
@@ -1675,6 +1678,142 @@ class PlayUI extends Component {
                 this.container.add(sequencePattern)
                 i++
             }
+            const sequenceButton = SVG().rect(95, 36).radius(18)
+            const tempoButton = SVG().rect(60, 33).radius(16)
+            const tempoIcon = this.container.nested()
+
+            tempoIcon.svg(`<svg width="14" height="13" viewBox="0 0 14 13" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path fill-rule="evenodd" clip-rule="evenodd" d="M9.53014 4.05693L8.2715 1.8769C7.62095 0.750117 5.99458 0.750118 5.34403 1.8769L0.692891 9.93291C0.0423411 11.0597 0.855527 12.4682 2.15663 12.4682H11.4589C12.76 12.4682 13.5732 11.0597 12.9226 9.93291L12.171 8.63102V8.47966H12.0836L10.1534 5.13645L12.5612 0.966028L11.6263 0.42627L9.53014 4.05693ZM9.48765 6.28956L8.2232 8.47966H10.7521L9.48765 6.28956ZM8.86439 5.21004L6.97668 8.47966H2.86342L6.34265 2.45346C6.54937 2.09542 7.06616 2.09542 7.27288 2.45346L8.86439 5.21004ZM11.4179 9.63277H2.19767L1.69152 10.5095C1.4848 10.8675 1.74319 11.3151 2.15663 11.3151H11.4589C11.8723 11.3151 12.1307 10.8675 11.924 10.5095L11.4179 9.63277Z" fill="white" fill-opacity="0.9"/>
+                </svg>`)
+
+            const sButtonX = xOffset + 183
+            const sButtonY = yOffset + 53
+
+            const tempoButtonX = sButtonX + 10
+            const tempoButtonY = sButtonY + 219
+
+            const tempoIconX = tempoButtonX + 11
+            const tempoIconY = tempoButtonY + 9
+
+            tempoIcon.x(tempoIconX)
+            tempoIcon.y(tempoIconY)
+
+            tempoButton.x(tempoButtonX)
+            tempoButton.y(tempoButtonY)
+
+            tempoButton.fill('#fff').attr({ opacity: 0.1 })
+            const tempoButtonText = this.container.nested().plain(round.bpm)
+
+            tempoButtonText.x(tempoButtonX + 30)
+            tempoButtonText.y(tempoButtonY + 7)
+
+            tempoButtonText.font({
+                family: 'Arial',
+                size: 11,
+                weight: 900,
+                opacity: 1,
+            })
+            tempoButtonText.fill('#fff')
+
+            const sequenceText = SVG().plain('Sequence').font({
+                family: 'Arial',
+                size: 11,
+                weight: 900,
+                opacity: 1
+            })
+            sequenceText.fill(user.color)
+            const sTextX = sButtonX + 30
+            const sTextY = sButtonY + 8.5
+            sequenceText.x(sTextX)
+            sequenceText.y(sTextY)
+
+            const sequenceSwitch = SVG().rect(70, 38).radius(19)
+            const switchLetterContainer = this.container.nested().circle(28)
+            const switchLetterSubContainer = this.container.nested().circle(15)
+            const switchLetter = this.container.nested().plain('A')
+
+            switchLetter.font({
+                family: 'Arial',
+                size: 11,
+                weight: 900,
+                opacity: 1
+            })
+            switchLetter.fill(user.color)
+
+            const sSwitchX = xOffset + 190
+            const sSwitchY = yOffset + 145
+
+            sequenceSwitch.stroke({ width: 0.3, color: user.color })
+            sequenceSwitch.fill({
+                color: '#000',
+                opacity: 0.001
+            })
+            sequenceSwitch.attr({
+                cursor: 'pointer'
+            })
+            sequenceSwitch.x(sSwitchX)
+            sequenceSwitch.y(sSwitchY)
+
+            const switchLetterContainerX = sSwitchX + 5
+            const switchLetterContainerY = sSwitchY + 5
+
+            switchLetterContainer.x(switchLetterContainerX)
+            switchLetterContainer.y(switchLetterContainerY)
+            switchLetterSubContainer.x(switchLetterContainerX + 6.5)
+            switchLetterSubContainer.y(switchLetterContainerY + 6.5)
+            switchLetter.x(switchLetterContainerX + 10)
+            switchLetter.y(switchLetterContainerY + 8)
+
+            switchLetterSubContainer.fill('none')
+            switchLetterSubContainer.stroke({ color: user.color, width: 0.5 })
+            switchLetterContainer.fill(user.color)
+            switchLetterContainer.attr({
+                opacity: 0.2
+            })
+
+
+            for (i = 0; i < HTML_UI_Params.sequenceButtonDots; i++) {
+                const dotSize = (2 * Math.PI) / sequence.length
+                let dotDiameter = HTML_UI_Params.dotDiameter
+                dotAngle += dotSize
+                const radius = HTML_UI_Params.sequenceButtonDiameter / 2;
+
+                const bSX = (Math.round(HTML_UI_Params.sequenceButtonDiameter / 2 + radius * Math.cos(dotAngle) - dotDiameter / 2) + sButtonX) + 8
+                const bSY = (Math.round(HTML_UI_Params.sequenceButtonDiameter / 2 + radius * Math.sin(dotAngle) - dotDiameter / 2) + sButtonY) + 7
+
+                const sequenceButtonDots = SVG().circle(dotDiameter)
+                sequenceButtonDots.attr({ fill: 'rgba(0,0,0,0.1)', opacity: 1 })
+                sequenceButtonDots.stroke({ color: user.color, width: 1 })
+                sequenceButtonDots.x(bSX)
+                sequenceButtonDots.y(bSY)
+                this.container.add(sequenceButtonDots)
+            }
+
+            for (i = 0; i < HTML_UI_Params.sequenceButtonDots; i++) {
+                const dotSize = (2 * Math.PI) / sequence.length
+                let dotDiameter = HTML_UI_Params.dotDiameter - 1
+                dotAngle += dotSize
+                const switchDotsDiameter = HTML_UI_Params.sequenceButtonDiameter - 4
+                const radius = switchDotsDiameter / 2;
+
+                const bSX = (Math.round(switchDotsDiameter / 2 + radius * Math.cos(dotAngle) - dotDiameter / 2) + sSwitchX) + 46
+                const bSY = (Math.round(switchDotsDiameter / 2 + radius * Math.sin(dotAngle) - dotDiameter / 2) + sSwitchY) + 13
+
+                const sequenceSwitchDot = SVG().circle(dotDiameter)
+                sequenceSwitchDot.attr({ fill: 'rgba(0,0,0,0.1)', opacity: 1 })
+                sequenceSwitchDot.stroke({ color: user.color, width: 1 })
+                sequenceSwitchDot.x(bSX)
+                sequenceSwitchDot.y(bSY)
+                this.container.add(sequenceSwitchDot)
+            }
+
+            sequenceButton.attr({ fill: user.color, opacity: 0.2, cursor: 'pointer' })
+            sequenceButton.x(xOffset + 180)
+            sequenceButton.y(yOffset + 50)
+            this.container.add(sequenceSwitch)
+            this.container.add(sequenceButton)
+            this.container.add(tempoButton)
+            this.container.add(sequenceText)
         }
     }
 
