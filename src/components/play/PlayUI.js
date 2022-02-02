@@ -19,6 +19,16 @@ const styles = theme => ({
     button: {
         cursor: 'pointer'
     },
+    fadeIn: {
+        transition: "all 0.5s ease-in"
+    },
+    fadeOut: {
+        transition: "all 0.5s ease-out"
+    },
+    smallCross: {
+        width: 5,
+        height: 5
+    },
     buttonIcon: {
         pointerEvents: 'none'
     }
@@ -30,9 +40,16 @@ class PlayUI extends Component {
         super(props)
         this.isZooming = false
         this.isPanning = false
+        this.isRecordingSequence = false
         this.stepGraphics = []
+        this.microStepGraphics = []
         this.layerGraphics = []
-        this.round = null; // local copy of round, prevent mutating store.
+        this.microLayerGraphics = []
+        this.microPatternGraphics = []
+        this.sequenceGraphics = []
+        this.activePattern = undefined
+        this.activeSequence = undefined
+        this.round = null // local copy of round, prevent mutating store.
         this.isOn = false
         this.editAllLayers = false
         this.swipeToggleActive = false
@@ -461,8 +478,6 @@ class PlayUI extends Component {
 
         this.orderLayers()
         this.cacheStepLayers()
-
-
 
         // position line
         /*  this.isOn = this.props.isOn
@@ -1472,11 +1487,11 @@ class PlayUI extends Component {
     }
     addBackgroundEventListeners() {
         const element = document.getElementById('round')
-        element.addEventListener('click', this.onOutsideClick)
+        element && element.addEventListener('click', this.onOutsideClick)
     }
     removeBackgroundEventListeners() {
         const element = document.getElementById('round')
-        element.removeEventListener('click', this.onOutsideClick)
+        element && element.removeEventListener('click', this.onOutsideClick)
     }
     onOutsideClick() {
         this.unhighlightAllLayers()
@@ -1615,6 +1630,8 @@ class PlayUI extends Component {
         const layerDiameter = !userHasLayer ? HTML_UI_Params.initialLayerDiameter : this.getLayerDiameter(1)
         const patternsContainerDiameter = layerDiameter - 320
         const sequenceContainerDiameter = layerDiameter - 550
+        this.sequenceGraphics = []
+        this.microPatternGraphics = []
 
         const xOffset = (this.containerWidth / 2) - (layerDiameter / 3.45)
         const yOffset = (this.containerHeight / 2) - (layerDiameter / 3.4)
@@ -1624,7 +1641,7 @@ class PlayUI extends Component {
             let angle = Math.PI / -1.335
             let sAngle = Math.PI / -1.335
             let dotAngle = Math.PI / -1.335
-
+            let e = 0
             for (const pattern of patterns) {
                 const patternSize = (2 * Math.PI) / patterns.length
                 let patternDiameter = HTML_UI_Params.stepDiameter
@@ -1635,8 +1652,8 @@ class PlayUI extends Component {
                 const x = (Math.round(patternsContainerDiameter / 2 + radius * Math.cos(angle) - patternDiameter / 2) + xOffset)
                 const y = (Math.round(patternsContainerDiameter / 2 + radius * Math.sin(angle) - patternDiameter / 2) + yOffset)
 
-                const currentPattern = SVG().circle(patternDiameter)
-                const label = SVG().plain(letter).attr({ cursor: 'pointer' })
+                const currentPattern = this.container.nested().circle(patternDiameter)
+                const label = this.container.nested().plain(letter).attr({ cursor: 'pointer' })
                 label.font({
                     family: 'Arial',
                     size: 25,
@@ -1649,12 +1666,13 @@ class PlayUI extends Component {
                 label.x(labelX)
                 label.y(labelY)
 
-                currentPattern.attr({ fill: 'rgba(0,0,0,0.1)', opacity: 0.2, cursor: 'pointer' })
-                currentPattern.stroke({ color: user.color, width: 12 })
+                currentPattern.attr({ id: `${e}_pattern`, fill: 'rgba(0,0,0,0.1)', opacity: 0.2, cursor: 'pointer' })
+                currentPattern.stroke({ color: user.color, width: 14 })
                 currentPattern.x(x)
                 currentPattern.y(y)
-                this.container.add(currentPattern)
-                this.container.add(label)
+                currentPattern.on('click', () => this.onSelectPattern({ x, y, pattern: currentPattern }))
+                this.microPatternGraphics.push(currentPattern)
+                e++
             }
 
             let i = 0
@@ -1669,17 +1687,16 @@ class PlayUI extends Component {
                 const sX = (Math.round(sequenceContainerDiameter / 2 + radius * Math.cos(sAngle) - sequenceDiameter / 2) + xOffset) + 114
                 const sY = (Math.round(sequenceContainerDiameter / 2 + radius * Math.sin(sAngle) - sequenceDiameter / 2) + yOffset) + 116
 
-                const sequencePattern = SVG().circle(sequenceDiameter)
+                const sequencePattern = this.container.nested().circle(sequenceDiameter)
 
-                sequencePattern.attr({ fill: isFilled ? user.color : 'rgba(0,0,0,0.1)', opacity: isHighlighted ? 1 : 0.5, cursor: 'pointer' })
+                sequencePattern.attr({ id: `${i}_sequence_pattern`, fill: isFilled ? user.color : 'rgba(0,0,0,0.1)', opacity: isHighlighted ? 1 : 0.5, cursor: 'pointer' })
                 sequencePattern.stroke({ color: user.color, width: 1 })
                 sequencePattern.x(sX)
                 sequencePattern.y(sY)
-                this.container.add(sequencePattern)
+                this.sequenceGraphics.push(sequencePattern)
                 i++
             }
-            const sequenceButton = SVG().rect(95, 36).radius(18)
-            const tempoButton = SVG().rect(60, 33).radius(16)
+            const tempoButton = this.container.nested().rect(60, 33).radius(16)
             const tempoIcon = this.container.nested()
 
             tempoIcon.svg(`<svg width="14" height="13" viewBox="0 0 14 13" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -1693,7 +1710,7 @@ class PlayUI extends Component {
             const tempoButtonY = sButtonY + 219
 
             const tempoIconX = tempoButtonX + 11
-            const tempoIconY = tempoButtonY + 9
+            const tempoIconY = tempoButtonY + 10
 
             tempoIcon.x(tempoIconX)
             tempoIcon.y(tempoIconY)
@@ -1705,7 +1722,7 @@ class PlayUI extends Component {
             const tempoButtonText = this.container.nested().plain(round.bpm)
 
             tempoButtonText.x(tempoButtonX + 30)
-            tempoButtonText.y(tempoButtonY + 7)
+            tempoButtonText.y(tempoButtonY + 8)
 
             tempoButtonText.font({
                 family: 'Arial',
@@ -1715,19 +1732,7 @@ class PlayUI extends Component {
             })
             tempoButtonText.fill('#fff')
 
-            const sequenceText = SVG().plain('Sequence').font({
-                family: 'Arial',
-                size: 11,
-                weight: 900,
-                opacity: 1
-            })
-            sequenceText.fill(user.color)
-            const sTextX = sButtonX + 30
-            const sTextY = sButtonY + 8.5
-            sequenceText.x(sTextX)
-            sequenceText.y(sTextY)
-
-            const sequenceSwitch = SVG().rect(70, 38).radius(19)
+            const sequenceSwitch = this.container.nested().rect(70, 38).radius(19)
             const switchLetterContainer = this.container.nested().circle(28)
             const switchLetterSubContainer = this.container.nested().circle(15)
             const switchLetter = this.container.nested().plain('A')
@@ -1771,25 +1776,7 @@ class PlayUI extends Component {
                 opacity: 0.2
             })
 
-
-            for (i = 0; i < HTML_UI_Params.sequenceButtonDots; i++) {
-                const dotSize = (2 * Math.PI) / sequence.length
-                let dotDiameter = HTML_UI_Params.dotDiameter
-                dotAngle += dotSize
-                const radius = HTML_UI_Params.sequenceButtonDiameter / 2;
-
-                const bSX = (Math.round(HTML_UI_Params.sequenceButtonDiameter / 2 + radius * Math.cos(dotAngle) - dotDiameter / 2) + sButtonX) + 8
-                const bSY = (Math.round(HTML_UI_Params.sequenceButtonDiameter / 2 + radius * Math.sin(dotAngle) - dotDiameter / 2) + sButtonY) + 7
-
-                const sequenceButtonDots = SVG().circle(dotDiameter)
-                sequenceButtonDots.attr({ fill: 'rgba(0,0,0,0.1)', opacity: 1 })
-                sequenceButtonDots.stroke({ color: user.color, width: 1 })
-                sequenceButtonDots.x(bSX)
-                sequenceButtonDots.y(bSY)
-                this.container.add(sequenceButtonDots)
-            }
-
-            for (i = 0; i < HTML_UI_Params.sequenceButtonDots; i++) {
+            for (let i = 0; i < HTML_UI_Params.sequenceButtonDots; i++) {
                 const dotSize = (2 * Math.PI) / sequence.length
                 let dotDiameter = HTML_UI_Params.dotDiameter - 1
                 dotAngle += dotSize
@@ -1799,22 +1786,184 @@ class PlayUI extends Component {
                 const bSX = (Math.round(switchDotsDiameter / 2 + radius * Math.cos(dotAngle) - dotDiameter / 2) + sSwitchX) + 46
                 const bSY = (Math.round(switchDotsDiameter / 2 + radius * Math.sin(dotAngle) - dotDiameter / 2) + sSwitchY) + 13
 
-                const sequenceSwitchDot = SVG().circle(dotDiameter)
+                const sequenceSwitchDot = this.container.nested().circle(dotDiameter)
                 sequenceSwitchDot.attr({ fill: 'rgba(0,0,0,0.1)', opacity: 1 })
                 sequenceSwitchDot.stroke({ color: user.color, width: 1 })
                 sequenceSwitchDot.x(bSX)
                 sequenceSwitchDot.y(bSY)
-                this.container.add(sequenceSwitchDot)
             }
+            this.renderSequenceButton(xOffset, yOffset)
+        }
+    }
 
-            sequenceButton.attr({ fill: user.color, opacity: 0.2, cursor: 'pointer' })
+    renderSequenceButton = (xOffset, yOffset) => {
+        const { round, user } = this.props
+        const sequence = round.userPatterns[user.id].sequence
+        let dotAngle = Math.PI / -1.335
+
+        const sButtonX = xOffset + 183
+        const sButtonY = yOffset + 53
+
+        if (!this.isRecordingSequence) {
+            for (let i = 0; i < HTML_UI_Params.sequenceButtonDots; i++) {
+                const dotSize = (2 * Math.PI) / sequence.length
+                let dotDiameter = HTML_UI_Params.dotDiameter
+                dotAngle += dotSize
+                const radius = HTML_UI_Params.sequenceButtonDiameter / 2;
+
+                const bSX = (Math.round(HTML_UI_Params.sequenceButtonDiameter / 2 + radius * Math.cos(dotAngle) - dotDiameter / 2) + sButtonX) + 8
+                const bSY = (Math.round(HTML_UI_Params.sequenceButtonDiameter / 2 + radius * Math.sin(dotAngle) - dotDiameter / 2) + sButtonY) + 7
+
+                const sequenceButtonDots = this.container.nested().circle(dotDiameter)
+                sequenceButtonDots.attr({ id: `${i}-sbuttonDot`, fill: 'rgba(0,0,0,0.1)', opacity: 1 })
+                sequenceButtonDots.stroke({ color: user.color, width: 1 })
+                sequenceButtonDots.x(bSX)
+                sequenceButtonDots.y(bSY)
+            }
+            const sequenceText = this.container.nested().plain('Sequence').font({
+                family: 'Arial',
+                size: 11,
+                weight: 900,
+                opacity: 1
+            })
+            sequenceText.attr({ id: 'sequence-text', cursor: 'pointer' })
+            sequenceText.fill(user.color)
+            const sTextX = sButtonX + 30
+            const sTextY = sButtonY + 8.5
+            sequenceText.x(sTextX)
+            sequenceText.y(sTextY)
+            const sequenceButton = this.container.nested().rect(95, 36).radius(18)
+            sequenceButton.on('click', this.onClickSequenceButton)
+            sequenceButton.attr({ id: 'sequence-button', fill: user.color, opacity: 0.2, cursor: 'pointer' })
             sequenceButton.x(xOffset + 180)
             sequenceButton.y(yOffset + 50)
-            this.container.add(sequenceSwitch)
-            this.container.add(sequenceButton)
-            this.container.add(tempoButton)
-            this.container.add(sequenceText)
         }
+
+        if (this.isRecordingSequence) {
+            const sequenceStop = this.container.nested().svg(`<svg width="16" height="16" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" transform="scale(2)">
+                                                                <path d="M2.05155 0.35199C1.58223 -0.11733 0.82131 -0.11733 0.35199 0.35199C-0.11733 0.82131 -0.117329 1.58223 0.351991 2.05155L6.30044 8L0.35199 13.9485C-0.11733 14.4178 -0.11733 15.1787 0.35199 15.648C0.82131 16.1173 1.58223 16.1173 2.05155 15.648L8 9.69956L13.9485 15.648C14.4178 16.1173 15.1787 16.1173 15.648 15.648C16.1173 15.1787 16.1173 14.4178 15.648 13.9485L9.69956 8L15.648 2.05155C16.1173 1.58223 16.1173 0.82131 15.648 0.35199C15.1787 -0.11733 14.4178 -0.11733 13.9485 0.351991L8 6.30044L2.05155 0.35199Z" />
+                                                            </svg>`)
+            sequenceStop.attr({ id: 'sequence-stop', fill: user.color, opacity: 1 })
+            sequenceStop.stroke({ color: user.color, width: 1 })
+            sequenceStop.x(sButtonX + 22)
+            sequenceStop.y(sButtonY + 9)
+            const sequenceText = this.container.nested().plain('Stop').font({
+                family: 'Arial',
+                size: 11,
+                weight: 900,
+                opacity: 1
+            })
+            sequenceText.attr({ id: 'sequence-text', cursor: 'pointer' })
+            sequenceText.fill(user.color)
+            const sTextX = sButtonX + 39
+            const sTextY = sButtonY + 8.5
+            sequenceText.x(sTextX)
+            sequenceText.y(sTextY)
+            const sequenceButton = this.container.nested().rect(70, 36).radius(18)
+            sequenceButton.on('click', this.onClickSequenceButton)
+            sequenceButton.attr({ id: 'sequence-button', fill: user.color, opacity: 0.2, cursor: 'pointer' })
+            sequenceButton.x(xOffset + 190)
+            sequenceButton.y(yOffset + 50)
+        }
+    }
+
+    onClickSequenceButton = (e) => {
+        e.stopPropagation()
+        e.preventDefault()
+        const { round, user } = this.props
+
+        const sbtn = document.getElementById('sequence-button')
+        sbtn.parentNode.removeChild(sbtn)
+
+        const sText = document.getElementById('sequence-text')
+        sText.parentNode.removeChild(sText)
+        if (!this.isRecordingSequence) {
+            for (let i = 0; i < HTML_UI_Params.sequenceButtonDots; i++) {
+                const dot = document.getElementById(`${i}-sbuttonDot`)
+                dot.parentNode.removeChild(dot)
+            }
+        }
+        if (this.isRecordingSequence) {
+            const sStop = document.getElementById('sequence-stop')
+            sStop.parentNode.removeChild(sStop)
+        }
+        const userHasLayer = round.layers.find(layer => layer.createdBy === user.id)
+        const layerDiameter = !userHasLayer ? HTML_UI_Params.initialLayerDiameter : this.getLayerDiameter(1)
+
+        const xOffset = (this.containerWidth / 2) - (layerDiameter / 3.45)
+        const yOffset = (this.containerHeight / 2) - (layerDiameter / 3.4)
+
+        this.isRecordingSequence = !this.isRecordingSequence
+        this.renderSequenceButton(xOffset, yOffset)
+    }
+
+    getMicroLayerDiameter(order) {
+        let diameter = 5 + (HTML_UI_Params.initialMicroLayerPadding * 1.4)
+        for (let i = 0; i < order; i++) {
+            diameter += HTML_UI_Params.microStepDiameter + HTML_UI_Params.microLayerPadding
+        }
+        return diameter
+    }
+
+    async addMicroLayer(layer, order, { containerXOffset, containerYOffset }) {
+        const createdByThisUser = layer.createdBy === this.props.user.id;
+        const layerDiameter = this.getMicroLayerDiameter(order)
+        const xOffset = containerXOffset + 6 - (order * HTML_UI_Params.microLayerOffsetMultiplier)
+        const yOffset = containerYOffset + 6 - (order * HTML_UI_Params.microLayerOffsetMultiplier)
+        let layerStrokeSize = HTML_UI_Params.microLayerStrokeMax
+        const layerGraphic =
+            this.container.circle(layerDiameter, layerDiameter).attr({ fill: 'none' })
+                .stroke({ color: this.userColors[layer.createdBy], width: layerStrokeSize + 'px' })
+                .opacity(0.1)
+        layerGraphic.x(xOffset)
+        layerGraphic.y(yOffset)
+        layerGraphic.id = layer.id
+        layerGraphic.order = order
+        layerGraphic.isAllowedInteraction = false
+        this.microLayerGraphics.push(layerGraphic)
+
+        // draw steps
+        const stepSize = (2 * Math.PI) / layer.steps.length;
+        let stepDiameter = HTML_UI_Params.microStepDiameter / HTML_UI_Params.otherUserLayerSizeDivisor
+        let stepStrokeWidth = HTML_UI_Params.microStepStrokeWidth
+        const radius = layerDiameter / 2
+        let angle = Math.PI / -2
+        const anglePercentOffset = this.ticksToRadians(this.ticksPerStep(layer.steps.length) * (layer.percentOffset / 100))
+        const angleTimeOffset = this.ticksToRadians(this.msToTicks(layer.timeOffset))
+        angle += anglePercentOffset
+        angle += angleTimeOffset
+        layerGraphic.firstStep = null
+        await layer.steps.map((step, i) => {
+            const x = Math.round(layerDiameter / 2 + radius * Math.cos(angle) - stepDiameter / 2) + xOffset;
+            const y = Math.round(layerDiameter / 2 + radius * Math.sin(angle) - stepDiameter / 2) + yOffset;
+            const stepGraphic = this.container.circle(stepDiameter)
+            stepGraphic.stroke({ color: this.userColors[layer.createdBy], width: stepStrokeWidth + 'px' }).opacity(!createdByThisUser ? 0.5 : 1)
+            stepGraphic.stroke({ opacity: step.isOn ? 1 : 0 })
+            stepGraphic.fill({ color: step.isOn ? this.userColors[layer.createdBy] : 'rgba(0,0,0,0)' })
+            stepGraphic.x(x)
+            stepGraphic.y(y)
+            angle += stepSize
+            stepGraphic.layerId = layer.id
+            stepGraphic.id = step.id
+            stepGraphic.isAllowedInteraction = false
+            stepGraphic.userColor = this.userColors[layer.createdBy]
+            this.microStepGraphics.push(stepGraphic)
+            if (_.isNil(layerGraphic.firstStep)) {
+                layerGraphic.firstStep = stepGraphic
+            }
+            return null
+        })
+        layerGraphic.labelYOffset = 32 * (anglePercentOffset + angleTimeOffset)
+    }
+
+    onSelectPattern = ({ x, y, pattern }) => {
+        const { round } = this.props
+        if (this.activePattern === pattern) return
+        round.layers.map(async (layer, i) => {
+            await this.addMicroLayer(layer, i++, { containerXOffset: x, containerYOffset: y })
+            return null;
+        })
+        this.activePattern = pattern
     }
 
     render() {
