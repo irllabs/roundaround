@@ -19,6 +19,36 @@ export const getDefaultStepData = () => {
     }
 };
 
+export const getDefaultLayerDataOriginal = (userId, instrument) => {
+    const layer = {
+        "id": uuid(),
+        "createdBy": userId || null,
+        "name": "",
+        "type": 'TRACK_TYPE_LAYER',
+        "timeOffset": 0,
+        "percentOffset": 0,
+        "isActive": true,
+        "isMuted": false,
+        "isPreviewed": false,
+        "gain": 0,
+        "instrument": {
+            "noteLength": "64n",
+            "instrument": "Sampler",
+            "sampler": "HiHats",
+            "sample": "quick",
+            ...instrument
+        },
+        "steps": Array(Layer.DefaultStepsAmount).fill(null).map(() => { return getDefaultStepData() }),
+        "createdAt": Date.now()
+    }
+    // increase each layer createdAt time by 1 ms so they're not equal
+    let i = 0
+    for (let step of layer.steps) {
+        step.order = i++
+    }
+    return layer;
+};
+
 export const getDefaultLayerData = async (userId, instrument) => {
     const newInstruments = await Instruments.classes();
     const newInstrumentsKeyArray = Object.keys(newInstruments);

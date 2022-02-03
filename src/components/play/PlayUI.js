@@ -98,13 +98,7 @@ class PlayUI extends Component {
         this.draw()
     }
 
-    async componentDidUpdate(prevProps) {
-
-        if (this.props.round && this.props.selectedLayerId) {
-            if (prevProps.selectedLayerId !== this.props.selectedLayerId) {
-                this.onLayerClicked(this.props.selectedLayerId)
-            }
-        }
+    async componentDidUpdate() {
         // whole round has changed
         if (this.round.id !== this.props.round.id) {
             this.round = _.cloneDeep(this.props.round)
@@ -166,11 +160,11 @@ class PlayUI extends Component {
 
         // add layer
         if (!_.isNil(diff.added.layers)) {
-            await AudioEngine.load(this.props.round)
+            //await AudioEngine.load(this.props.round)
             for (let [, layer] of Object.entries(diff.added.layers)) {
                 await AudioEngine.createTrack(layer)
+                redraw = true
             }
-            shouldRecalculateParts = true
         }
 
         // Check for layer type or instrument changes
@@ -231,7 +225,7 @@ class PlayUI extends Component {
         if (redraw) {
             this.clear()
             this.round = _.cloneDeep(this.props.round)
-            _this.draw(false)
+            _this.draw(true)
         } else {
             this.round = _.cloneDeep(this.props.round)
         }
@@ -452,7 +446,7 @@ class PlayUI extends Component {
         return _.find(steps, { id })
     }
 
-    async draw(shouldAnimate) {
+    draw(shouldAnimate) {
         // console.log('draw()', this.containerWidth, this.containerheight);
         this.clear()
         const _this = this
@@ -492,8 +486,8 @@ class PlayUI extends Component {
         this.addLayerButton = this.container.circle(HTML_UI_Params.addNewLayerButtonDiameter).attr({ fill: '#1B1B1B' }).stroke({ width: 1, color: this.userColors[this.props.user.id], dasharray: '5,5' })
         this.addLayerButton.x((this.containerWidth / 2) - (HTML_UI_Params.addNewLayerButtonDiameter / 2))
         this.addLayerButton.y((this.containerHeight / 2) - (HTML_UI_Params.addNewLayerButtonDiameter / 2))
-        this.addLayerButton.click(async () => {
-            await _this.onAddLayerClick()
+        this.addLayerButton.click(() => {
+            _this.onAddLayerClick()
         })
         this.addLayerButton.addClass(this.props.classes.button)
         //this.addLayerButton.svg('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="white" width="18px" height="18px"><path d="M0 0h24v24H0z" fill="white"/><path fill="white" d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/></svg>')
@@ -872,7 +866,6 @@ class PlayUI extends Component {
     }
 
     getLayerDiameter(order) {
-        console.log('this.props.round.layers', this.props.round.layers);
         let diameter = HTML_UI_Params.addNewLayerButtonDiameter + HTML_UI_Params.initialLayerPadding
         for (let i = 0; i < order; i++) {
             let layer = this.round.layers[i]
@@ -884,7 +877,6 @@ class PlayUI extends Component {
                 //diameter += ((HTML_UI_Params.stepDiameter + HTML_UI_Params.stepDiameter) / 2)
             }
         }
-        console.log('getLayerDiameter(' + order + ')', diameter);
         return diameter
         //HTML_UI_Params.addNewLayerButtonDiameter + HTML_UI_Params.initialLayerPadding + ((HTML_UI_Params.stepDiameter + HTML_UI_Params.layerPadding + HTML_UI_Params.layerPadding + HTML_UI_Params.stepDiameter) * (order + 1))
     }
@@ -1443,9 +1435,9 @@ class PlayUI extends Component {
         const newLayer = await getDefaultLayerData(this.props.user.id);
         newLayer.name = 'Layer ' + (this.props.round.layers.length + 1)
         this.props.dispatch({ type: ADD_LAYER, payload: { layer: newLayer, user: this.props.user.id } })
+        this.context.createLayer(this.round.id, newLayer)
         this.highlightNewLayer = newLayer.id
         this.selectedLayerId = newLayer.id
-        this.context.createLayer(this.round.id, newLayer)
         /* const newLayer = _.cloneDeep(this.props.round.layers[this.props.round.layers.length - 1])
          newLayer.id = Math.round(Math.random() * 99999)
          newLayer.order++;
