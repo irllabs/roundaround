@@ -185,7 +185,7 @@ class EffectsSidebar extends Component {
             <Box className={classes.root + ' ' + isMinimizedClass}>
                 <Box className={classes.effectContainer}>
                     <Box className={classes.minimizeButton + ' ' + buttonIsMinimizedClass} onClick={this.onMinimizeClick}><ChevronRightIcon size="small" /></Box>
-                    {items.map((fx, index) => (
+                    {items && items.length > 0 && items.map((fx, index) => (
                         <EffectThumbControl key={fx.id} isOn={fx.isOn} isOverride={fx.isOverride} className={classes.thumbControl} label={toTitleCase(fx.label)} fxId={fx.id} userId={fx.userId} switchOn={this.onSwitchOn} switchOff={this.onSwitchOff} name={fx.name} />
                     ))}
                 </Box>
