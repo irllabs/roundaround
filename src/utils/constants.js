@@ -8,13 +8,14 @@ export const HTML_UI_Params = {
     microLayerPadding: 4,
     micro2LayerPadding: 2,
     initialLayerPadding: 384,
-    initialMicroLayerPadding: 22,
-    microStepDiameter: 5,
-    micro2StepDiameter: 2,
+    initialMicroLayerPadding: 20,
+    initialMicro2LayerPadding: 8,
+    microStepDiameter: 8,
+    micro2StepDiameter: 1.5,
     avatarDiameter: 128,
     avatarPadding: 128,
-    microLayerOffsetMultiplier: 4.5,
-    micro2LayerOffsetMultiplier: 4,
+    microLayerOffsetMultiplier: 6,
+    micro2LayerOffsetMultiplier: 2.6,
     avatarRoundPadding: 128,
     activityIndicatorDiameter: 48,
     activityAnimationTime: 700,
@@ -22,7 +23,8 @@ export const HTML_UI_Params = {
     stepStrokeWidth: 6,
     microStepStrokeWidth: 0.4,
     layerStrokeMax: 48,
-    microLayerStrokeMax: 4,
+    microLayerStrokeMax: 3,
+    micro2LayerStrokeMax: 2,
     layerStrokeOpacity: 0.3,
     stepModalDimensions: 200,
     stepModalThumbDiameter: 32,
@@ -60,6 +62,3 @@ export const Limits = {
         max: 32
     }
 }
-
-
-
