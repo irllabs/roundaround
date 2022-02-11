@@ -13,8 +13,16 @@ import { withStyles } from '@material-ui/styles';
 import PropTypes from 'prop-types';
 import { numberRange } from '../../utils/index'
 import Instruments from '../../audio-engine/Instruments'
+import { getDefaultUserPatternSequence } from '../../utils/defaultData'
 import { detailedDiff } from 'deep-object-diff';
-import { setIsPlaying } from '../../redux/actions';
+import {
+    setIsPlaying,
+    setIsRecordingSequence,
+    setUserPatternSequence,
+    setIsPlayingSequence,
+    setCurrentSequencePattern,
+    saveUserPattern
+} from "../../redux/actions";
 const styles = theme => ({
     button: {
         cursor: 'pointer'
@@ -38,9 +46,15 @@ class PlayUI extends Component {
     static contextType = FirebaseContext
     constructor(props) {
         super(props)
+        this.state = {
+            selectedPattern: null,
+            isMinimized: false
+        }
+        this.selectedPatternNeedsSaving = false
         this.isZooming = false
         this.isPanning = false
         this.isRecordingSequence = false
+        this.isPlayingSequence = props.round.userPatterns[props.user.id].isPlayingSequence
         this.stepGraphics = []
         this.microStepGraphics = []
         this.layerGraphics = []
@@ -1687,18 +1701,139 @@ class PlayUI extends Component {
             })
             tempoButtonText.fill('#fff')
 
-            this.renderSequencePatternSwitch({ x: xOffset, y: yOffset })
-            this.renderSequenceButton(xOffset, yOffset)
+            this.renderPlayingSequenceIndicator({ x: xOffset, y: yOffset })
+            this.renderRecordSequenceButton(xOffset, yOffset)
         }
     }
 
-    renderSequencePatternSwitch = ({ x, y }) => {
+    onLoadPattern = async (id) => {
+        if (!this.props.display.isRecordingSequence) {
+            const pattern = _.find(this.props.round.userPatterns[this.props.user.id].patterns, { id })
+            if (!_.isEmpty(pattern.state)) {
+                this.setState({ selectedPattern: pattern.id })
+                this.selectedPatternNeedsSaving = false
+
+                // check if we have layers in the round not referenced in the pattern then set all steps in that layer to off
+                for (const existingLayer of this.props.round.layers) {
+                    if (_.isNil(_.find(pattern.state.layers, { id: existingLayer.id })) && existingLayer.createdBy === this.props.user.id) {
+                        let existingLayerClone = _.cloneDeep(existingLayer)
+                        for (const step of existingLayerClone.steps) {
+                            step.isOn = false
+                        }
+                        pattern.state.layers.push(existingLayerClone)
+                    }
+                }
+
+                // save to store first so UI updates straight away
+                /*for (const layer of pattern.state.layers) {
+                    const layerExists = _.find(this.props.round.layers, { id: layer.id })
+                    if (!_.isNil(layerExists)) {
+                        //  console.log('changing layer state', layer.id, layer);
+                        //this.props.setLayerSteps(layer.id, layer.steps)
+                        this.props.updateLayer(layer.id, layer)
+                    }
+                }*/
+
+                // check we haven't deleted the layer that is referenced in the pattern
+                let layersToDelete = []
+                for (const layer of pattern.state.layers) {
+                    const layerExists = _.find(this.props.round.layers, { id: layer.id })
+                    if (_.isNil(layerExists)) {
+                        layersToDelete.push(layer)
+                    }
+                }
+
+                _.remove(pattern.state.layers, function (n) {
+                    return layersToDelete.indexOf(n) > -1
+                })
+
+                // make sure layers are ordered the same
+                let orderedLayers = []
+
+                // this.props.updateLayers(pattern.state.layers)
+                for (const layer of pattern.state.layers) {
+                    let index = _.findIndex(this.props.round.layers, { id: layer.id })
+                    orderedLayers[index] = layer
+                }
+                this.props.updateLayers(orderedLayers)
+
+                // now save to firebase
+                for (const layer of pattern.state.layers) {
+                    // todo handle edge cases - eg layer been deleted
+                    const layerExists = _.find(this.props.round.layers, { id: layer.id })
+                    if (!_.isNil(layerExists)) {
+                        this.context.updateLayer(this.props.round.id, layer.id, layer)
+                    }
+                }
+            }
+        } else {
+            let seq = _.cloneDeep(this.props.round.userPatterns[this.props.user.id].sequence)
+            let firstAvailbleSlot = _.findIndex(seq, function (n) {
+                return n === false
+            })
+            if (firstAvailbleSlot > -1) {
+                seq[firstAvailbleSlot] = id
+                this.props.setUserPatternSequence(this.props.user.id, seq)
+                this.context.saveUserPatterns(this.props.round.id, this.props.user.id, this.props.round.userPatterns[this.props.user.id])
+            } else {
+                this.props.setIsRecordingSequence(false)
+            }
+            if (firstAvailbleSlot === seq.length - 1) {
+                this.props.setIsRecordingSequence(false)
+                this.props.setIsPlayingSequence(this.props.user.id, true)
+            }
+        }
+    }
+
+    onRecordSequenceClick = () => {
+        if (!this.props.display.isRecordingSequence) {
+            // start write
+            this.props.setUserPatternSequence(this.props.user.id, getDefaultUserPatternSequence())
+            this.isPlayingSequence = false
+            this.props.setIsPlayingSequence(this.props.user.id, false)
+            this.props.setCurrentSequencePattern(0)
+        } else {
+            // finish write
+            this.isPlayingSequence = true
+            this.props.setIsPlayingSequence(this.props.user.id, true)
+        }
+        this.props.setIsRecordingSequence(!this.props.display.isRecordingSequence)
+    }
+
+    onSavePattern = (id) => {
+        // save all steps for this user
+        this.setState({ selectedPattern: id })
+        this.selectedPatternNeedsSaving = false
+        const state = this.getCurrentState(this.props.user.id)
+        this.props.saveUserPattern(this.props.user.id, id, state)
+        this.context.saveUserPatterns(this.props.round.id, this.props.user.id, this.props.round.userPatterns[this.props.user.id])
+    }
+
+    getCurrentState = (userId) => {
+        const userLayers = _.filter(this.props.round.layers, { createdBy: userId })
+        let state = {}
+        state.layers = []
+        for (const layer of userLayers) {
+            let stateLayer = {
+                id: layer.id,
+                steps: layer.steps,
+                gain: layer.gain,
+                isMuted: layer.isMuted,
+                timeOffset: layer.timeOffset,
+                percentOffset: layer.percentOffset
+            }
+            state.layers.push(stateLayer)
+        }
+        return state
+    }
+
+    renderPlayingSequenceIndicator = ({ x, y }) => {
         const { user } = this.props
         const sequenceSwitch = this.container.nested().rect(70, 38).radius(19)
         const switchLetterSubContainer = this.container.nested().circle(15)
         const switchLetter = this.container.nested().plain('A')
         const clickableSwitch = this.container.nested().rect(70, 38).radius(19)
-        const sequence = this.props.round.userPatterns[this.props.user.id].sequence
+        const sequence = this.props.round.userPatterns[user.id].sequence
         let dotAngle = Math.PI / -1.335
 
         switchLetter.font({
@@ -1741,7 +1876,7 @@ class PlayUI extends Component {
         })
         sequenceSwitch.x(sSwitchX)
         sequenceSwitch.y(sSwitchY)
-        this.setSequenceSwitchPosition({ x, y, isOn: this.isRecordingSequence })
+        this.setIsPlayingSequenceGraphic({ x, y })
         const letterX = sSwitchX + 5
         const letterY = sSwitchY + 5
         switchLetterSubContainer.attr({
@@ -1763,17 +1898,29 @@ class PlayUI extends Component {
             id: 'clickable-switch',
             cursor: 'pointer'
         })
+        clickableSwitch.on('click', this.toggleIsPlayingSequence)
         clickableSwitch.x(sSwitchX)
         clickableSwitch.y(sSwitchY)
     }
 
-    setSequenceSwitchPosition = ({ x, y, isOn }) => {
-        const { user } = this.props
+    toggleIsPlayingSequence = () => {
+        const { round, setIsPlayingSequence, setCurrentSequencePattern, user } = this.props
+        setCurrentSequencePattern(0)
+        const isPlayingSequence = round.userPatterns[user.id].isPlayingSequence
+        setIsPlayingSequence(user.id, !isPlayingSequence)
+        const newRound = { ...round }
+        newRound.userPatterns[user.id].isPlayingSequence = !isPlayingSequence
+        this.context.saveUserPatterns(round.id, user.id, newRound.userPatterns[user.id])
+    }
+
+    setIsPlayingSequenceGraphic = ({ x, y }) => {
+        const { user, round } = this.props
+        const isPlayingSequence = round.userPatterns[this.props.user.id].isPlayingSequence
         const switchLetterContainer = this.container.nested().circle(28)
         let switchLetterContainerX = x + 195
         let switchLetterContainerY = y + 150
 
-        if (isOn) {
+        if (isPlayingSequence) {
             switchLetterContainerX = x + 227
         }
 
@@ -1781,6 +1928,7 @@ class PlayUI extends Component {
         switchLetterContainer.y(switchLetterContainerY)
         switchLetterContainer.fill(user.color)
         switchLetterContainer.attr({
+            id: 'switch-letter-container',
             opacity: 0.2
         })
     }
@@ -1791,7 +1939,7 @@ class PlayUI extends Component {
         let angle = Math.PI / -1.335
         let e = 0
         for (const pattern of patterns) {
-            const { state: { layers } } = pattern
+            const { state: { layers }, id } = pattern
             const patternSize = (2 * Math.PI) / patterns.length
             let patternDiameter = HTML_UI_Params.stepDiameter
             angle += patternSize
@@ -1819,10 +1967,24 @@ class PlayUI extends Component {
             currentPattern.x(x)
             currentPattern.y(y)
             if (layers) {
-                this.renderMicroRound({ x: x + 1.5, y: y + 1.5, pattern: currentPattern, layers })
+                await this.renderMicroRound({ x: x + 1.5, y: y + 1.5, pattern: currentPattern, layers })
             }
-            currentPattern.on('click', () => this.renderMicroRound({ x: x + 1.5, y: y + 1.5, pattern: currentPattern, layers: round.layers }))
             this.microPatternGraphics.push(currentPattern)
+            const clickableButton = this.container.nested().circle(patternDiameter + 20)
+            clickableButton.fill({ color: '#000', opacity: 0.001 })
+            clickableButton.attr({ cursor: 'pointer' })
+            clickableButton.x(x - 10)
+            clickableButton.y(y - 10)
+            clickableButton.on('click', () => {
+                if ((!layers || layers.length === 0) && !this.isRecordingSequence) {
+                    this.renderMicroRound({ x: x + 1.5, y: y + 1.5, pattern: currentPattern, layers: round.layers })
+                    this.onSavePattern(id)
+                }
+                if (layers && layers.length > 0 && this.isRecordingSequence) {
+                    console.log('layers --', layers)
+                    this.onLoadPattern(id)
+                }
+            })
             e++
         }
     }
@@ -1882,8 +2044,9 @@ class PlayUI extends Component {
             sequencePattern.x(sX)
             sequencePattern.y(sY)
             const layers = pattern && pattern.state && [...pattern.state.layers]
+
             if (layers) {
-                this.renderMicroRound({ x: sX + 3.5, y: sY + 3.5, pattern: sequencePattern, layers, isFilled: isHighlighted, diameter: sequenceDiameter })
+                await this.renderMicroRound({ x: sX + 3.5, y: sY + 3.5, pattern: sequencePattern, layers, isFilled: isHighlighted, diameter: sequenceDiameter })
             }
 
             this.sequenceGraphics.push(sequencePattern)
@@ -1891,7 +2054,7 @@ class PlayUI extends Component {
         }
     }
 
-    renderSequenceButton = (xOffset, yOffset) => {
+    renderRecordSequenceButton = (xOffset, yOffset) => {
         const { round, user } = this.props
         const sequence = round.userPatterns[user.id].sequence
         let dotAngle = Math.PI / -1.335
@@ -1928,7 +2091,7 @@ class PlayUI extends Component {
             sequenceText.x(sTextX)
             sequenceText.y(sTextY)
             const sequenceButton = this.container.nested().rect(95, 36).radius(18)
-            sequenceButton.on('click', this.onClickSequenceButton)
+            sequenceButton.on('click', this.onToggleRecordSequence)
             sequenceButton.attr({ id: 'sequence-button', fill: user.color, opacity: 0.2, cursor: 'pointer' })
             sequenceButton.x(xOffset + 180)
             sequenceButton.y(yOffset + 50)
@@ -1955,23 +2118,46 @@ class PlayUI extends Component {
             sequenceText.x(sTextX)
             sequenceText.y(sTextY)
             const sequenceButton = this.container.nested().rect(70, 36).radius(18)
-            sequenceButton.on('click', this.onClickSequenceButton)
+            sequenceButton.on('click', this.onToggleRecordSequence)
             sequenceButton.attr({ id: 'sequence-button', fill: user.color, opacity: 0.2, cursor: 'pointer' })
             sequenceButton.x(xOffset + 190)
             sequenceButton.y(yOffset + 50)
         }
     }
 
-    onClickSequenceButton = (e) => {
-        e.stopPropagation()
-        e.preventDefault()
-        const { round, user } = this.props
-        //TODO: Remove sequence pattern swithc components before rerender
+    onToggleRecordSequence = () => {
+        const {
+            round,
+            user,
+            //setIsRecordingSequence
+        } = this.props
+
+        const switchLetter = document.getElementById('switch-letter')
+        switchLetter.parentNode.removeChild(switchLetter)
+
+        const switchLetterSubcontainer = document.getElementById('switch-letter-subcontainer')
+        switchLetterSubcontainer.parentNode.removeChild(switchLetterSubcontainer)
+
+        const sequenceSwitch = document.getElementById('sequence-switch')
+        sequenceSwitch.parentNode.removeChild(sequenceSwitch)
+
+        const clickableSwitch = document.getElementById('clickable-switch')
+        clickableSwitch.parentNode.removeChild(clickableSwitch)
+
+        const switchLetterContainer = document.getElementById('switch-letter-container')
+        switchLetterContainer.parentNode.removeChild(switchLetterContainer)
+
+        for (let i = 0; i < HTML_UI_Params.sequenceButtonDots; i++) {
+            const currentDot = document.getElementById(`${i}_sequence_dot`)
+            currentDot.parentNode.removeChild(currentDot)
+        }
+
         const sbtn = document.getElementById('sequence-button')
         sbtn.parentNode.removeChild(sbtn)
 
         const sText = document.getElementById('sequence-text')
         sText.parentNode.removeChild(sText)
+
         if (!this.isRecordingSequence) {
             for (let i = 0; i < HTML_UI_Params.sequenceButtonDots; i++) {
                 const dot = document.getElementById(`${i}-sbuttonDot`)
@@ -1989,8 +2175,10 @@ class PlayUI extends Component {
         const yOffset = (this.containerHeight / 2) - (layerDiameter / 3.4)
 
         this.isRecordingSequence = !this.isRecordingSequence
-        this.renderSequencePatternSwitch({ x: xOffset, y: yOffset })
-        this.renderSequenceButton(xOffset, yOffset)
+        // setIsRecordingSequence(!this.isRecordingSequence)
+        this.onRecordSequenceClick()
+        this.renderPlayingSequenceIndicator({ x: xOffset, y: yOffset })
+        this.renderRecordSequenceButton(xOffset, yOffset)
     }
 
     getMicroLayerDiameter(order, dm) {
@@ -2002,7 +2190,7 @@ class PlayUI extends Component {
         return diameter
     }
 
-    async addMicroLayer(layer, order, { containerXOffset, containerYOffset, diameter, isFilled }) {
+    addMicroLayer = async (layer, order, { containerXOffset, containerYOffset, diameter, isFilled }) => {
         const { user } = this.props
         const layerDiameter = this.getMicroLayerDiameter(order, diameter)
         const xOffset = containerXOffset + 6 - (order * (diameter ? HTML_UI_Params.micro2LayerOffsetMultiplier : HTML_UI_Params.microLayerOffsetMultiplier))
@@ -2089,6 +2277,11 @@ const mapStateToProps = state => {
 
 const mapDispatchToProps = dispatch => ({
     setIsPlaying: val => dispatch(setIsPlaying(val)),
+    setIsRecordingSequence: val => dispatch(setIsRecordingSequence(val)),
+    setUserPatternSequence: (userId, data) => dispatch(setUserPatternSequence(userId, data)),
+    setIsPlayingSequence: (userId, val) => dispatch(setIsPlayingSequence(userId, val)),
+    saveUserPattern: (userId, patternId, data) => dispatch(saveUserPattern(userId, patternId, data)),
+    setCurrentSequencePattern: val => dispatch(setCurrentSequencePattern(val)),
     dispatch
 })
 

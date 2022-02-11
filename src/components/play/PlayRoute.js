@@ -377,7 +377,7 @@ class PlayRoute extends Component {
                         visible={true}
                     />
                 }
-                <PatternsSidebar />
+                {/* <PatternsSidebar /> */}
                 <EffectsSidebar />
                 <ShareDialog />
                 <Box style={{ position: 'relative', display: 'flex', justifyContent: 'center', width: '100%' }}>
