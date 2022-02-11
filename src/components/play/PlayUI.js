@@ -132,6 +132,8 @@ class PlayUI extends Component {
 
     async componentDidUpdate(prevProps) {
 
+        console.log('component has update --')
+
         if (this.props.round && this.props.selectedLayerId) {
             if (prevProps.selectedLayerId !== this.props.selectedLayerId) {
                 this.onLayerClicked(this.props.selectedLayerId)
@@ -181,7 +183,7 @@ class PlayUI extends Component {
             shouldRecalculateParts = true;
             redraw = true
         }
-
+        //  tempo changed
         if (this.round.bpm !== this.props.round.bpm) {
             this.round.bpm = this.props.round.bpm
             AudioEngine.setTempo(this.round.bpm)
@@ -998,17 +1000,19 @@ class PlayUI extends Component {
     }
 
     adjustAllLayerOffsets() {
+        let order = 0
         for (const layer of this.round.layers) {
-            this.adjustLayerOffset(layer.id, layer.percentOffset, layer.timeOffset)
+            this.adjustLayerOffset(layer.id, layer.percentOffset, layer.timeOffset, order)
+            order++
         }
     }
 
-    adjustLayerOffset(id, percentOffset, timeOffset) {
+    adjustLayerOffset(id, percentOffset, timeOffset, order) {
         // console.log('adjustLayerTimeOffset', layer., percent, this.stepGraphics);
         const layer = _.find(this.round.layers, { id })
         let stepGraphics = _.filter(this.stepGraphics, { layerId: id })
         const layerGraphic = _.find(this.layerGraphics, { id })
-        const layerDiameter = HTML_UI_Params.addNewLayerButtonDiameter + HTML_UI_Params.initialLayerPadding + ((HTML_UI_Params.stepDiameter + HTML_UI_Params.layerPadding + HTML_UI_Params.layerPadding + HTML_UI_Params.stepDiameter) * (layerGraphic.order))
+        const layerDiameter = this.getLayerDiameter(order) //HTML_UI_Params.addNewLayerButtonDiameter + HTML_UI_Params.initialLayerPadding + ((HTML_UI_Params.stepDiameter + HTML_UI_Params.layerPadding + HTML_UI_Params.layerPadding + HTML_UI_Params.stepDiameter) * (layerGraphic.order))
         const xOffset = (this.containerWidth / 2) - (layerDiameter / 2)
         const yOffset = (this.containerHeight / 2) - (layerDiameter / 2)
         const stepSize = (2 * Math.PI) / layer.steps.length;
