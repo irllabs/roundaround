@@ -19,6 +19,7 @@ import {
     setIsPlaying,
     setIsRecordingSequence,
     setUserPatternSequence,
+    updateLayers,
     setIsPlayingSequence,
     setCurrentSequencePattern,
     saveUserPattern
@@ -54,7 +55,7 @@ class PlayUI extends Component {
         this.isZooming = false
         this.isPanning = false
         this.isRecordingSequence = false
-        this.isPlayingSequence = props.round.userPatterns[props.user.id].isPlayingSequence
+        this.isPlayingSequence = false
         this.stepGraphics = []
         this.microStepGraphics = []
         this.layerGraphics = []
@@ -79,22 +80,25 @@ class PlayUI extends Component {
     }
 
     async componentDidMount() {
+        const { round, user } = this.props
         // register this component with parent so we can do some instant updates bypassing redux for speed
         this.props.childRef(this)
-        await this.createRound()
+        this.isPlayingSequence = round.userPatterns[user.id].isPlayingSequence
         window.addEventListener('click', this.interfaceClicked)
         window.addEventListener('resize', this.onWindowResizeThrottled)
         window.addEventListener('keypress', this.onKeypress)
-        window.addEventListener('dblclick', () => this.onMuteToggle(this.props))
         this.addBackgroundEventListeners()
         this.checkOrientation()
+        // load sequence if enabled
+        const patterns = round.userPatterns
+        this.loadSequence(patterns)
+        await this.createRound()
     }
 
     async componentWillUnmount() {
         window.removeEventListener('click', this.interfaceClicked)
         window.removeEventListener('resize', this.onWindowResizeThrottled)
         window.removeEventListener('keypress', this.onKeypress)
-        window.removeEventListener('dblclick', this.onMuteToggle)
         this.removeBackgroundEventListeners()
         this.clear()
         this.disposeToneEvents()
@@ -121,7 +125,6 @@ class PlayUI extends Component {
             .size(this.containerWidth, this.containerHeight)
             .panZoom({ zoomMin: 0.2, zoomMax: 1.3, zoomFactor: 0.2 })
         this.container.on('panning', (e) => {
-            //  console.log('round panning');
             if (this.stepIsPanning) {
                 e.preventDefault()
             }
@@ -131,14 +134,17 @@ class PlayUI extends Component {
     }
 
     async componentDidUpdate(prevProps) {
+        const { round, user } = this.props
+        const oldRound = prevProps.round
+        let redraw = false
+        let shouldRecalculateParts = false
+        const _this = this
 
-        console.log('component has update --')
-
-        if (this.props.round && this.props.selectedLayerId) {
-            if (prevProps.selectedLayerId !== this.props.selectedLayerId) {
-                this.onLayerClicked(this.props.selectedLayerId)
-            }
+        let diff = detailedDiff(this.round, this.props.round)
+        if (!_.isEqual(round.userPatterns[user.id].isPlayingSequence, oldRound.userPatterns[user.id].isPlayingSequence)) {
+            redraw = true
         }
+
         // whole round has changed
         if (this.round.id !== this.props.round.id) {
             this.round = _.cloneDeep(this.props.round)
@@ -146,12 +152,6 @@ class PlayUI extends Component {
             this.draw()
             return
         }
-
-        let diff = detailedDiff(this.round, this.props.round)
-
-        let redraw = false
-        let shouldRecalculateParts = false
-        const _this = this
 
         // remove layer
         for (let layer of this.round.layers) {
@@ -164,18 +164,7 @@ class PlayUI extends Component {
 
         // sequence update
         if (!_.isNil(diff.updated.userPatterns)) {
-            for (let [userPatternsId, userPatterns] of Object.entries(diff.updated.userPatterns)) {
-                if (!_.isNil(userPatterns.isPlayingSequence)) {
-                    if (userPatterns.isPlayingSequence) {
-                        console.log('isPlayingSequence turned on', userPatterns, this.props.round.userPatterns[userPatternsId]);
-                        const newUserPatterns = this.props.round.userPatterns[userPatternsId]
-                        this.startSequence(newUserPatterns)
-                    } else {
-                        console.log('isPlayingSequence turned off');
-                        this.stopSequence(userPatternsId)
-                    }
-                }
-            }
+            this.loadSequence(diff.updated.userPatterns)
         }
 
         // step updates
@@ -183,6 +172,12 @@ class PlayUI extends Component {
             shouldRecalculateParts = true;
             redraw = true
         }
+
+        if (this.props.selectedLayerId && (prevProps.selectedLayerId !== this.props.selectedLayerId) && !redraw) {
+            // prevent reloads and recalculations when only layer is selected
+            return
+        }
+
         //  tempo changed
         if (this.round.bpm !== this.props.round.bpm) {
             this.round.bpm = this.props.round.bpm
@@ -200,11 +195,12 @@ class PlayUI extends Component {
 
         // add layer
         if (!_.isNil(diff.added.layers)) {
-            await AudioEngine.load(this.props.round)
+            AudioEngine.load(this.props.round)
             for (let [, layer] of Object.entries(diff.added.layers)) {
-                await AudioEngine.createTrack(layer)
+                AudioEngine.createTrack(layer)
             }
             shouldRecalculateParts = true
+            redraw = true
         }
 
         // Check for layer type or instrument changes
@@ -212,18 +208,15 @@ class PlayUI extends Component {
             let newLayer = _.find(this.props.round.layers, { id: layer.id })
             if (!_.isNil(newLayer) && !_.isEqual(layer.instrument, newLayer.instrument)) {
                 // instrument has changed
-                // console.log('instrument has changed', newLayer.instrument);
                 AudioEngine.tracksById[newLayer.id].setInstrument(newLayer.instrument)
                 this.updateLayerLabelText(layer.id, newLayer.instrument.sampler)
             }
             if (!_.isNil(newLayer) && !_.isEqual(layer.type, newLayer.type)) {
                 // type has changed
-                //console.log('layer type has changed');
                 AudioEngine.tracksById[newLayer.id].setType(newLayer.type, newLayer.automationFxId)
             }
             if (!_.isNil(newLayer) && !_.isEqual(layer.automationFxId, newLayer.automationFxId)) {
                 // automation has changed
-                //  console.log('layer automation fx id has changed');
                 AudioEngine.tracksById[newLayer.id].setAutomatedFx(newLayer.automationFxId)
             }
         }
@@ -231,7 +224,6 @@ class PlayUI extends Component {
         for (let layer of this.round.layers) {
             let newLayer = _.find(this.props.round.layers, { id: layer.id })
             if (!_.isNil(newLayer) && !_.isEqual(layer.gain, newLayer.gain)) {
-                //  console.log('gain has changed', newLayer.gain)
                 AudioEngine.tracksById[newLayer.id].setVolume(newLayer.gain)
             }
         }
@@ -240,7 +232,6 @@ class PlayUI extends Component {
         for (let layer of this.round.layers) {
             let newLayer = _.find(this.props.round.layers, { id: layer.id })
             if (!_.isNil(newLayer) && !_.isEqual(layer.isMuted, newLayer.isMuted)) {
-                //  console.log('mute has changed', newLayer.isMuted)
                 AudioEngine.tracksById[newLayer.id]?.setMute(newLayer.isMuted)
             }
         }
@@ -258,7 +249,6 @@ class PlayUI extends Component {
             }
         }
 
-
         if (shouldRecalculateParts) {
             AudioEngine.recalculateParts(this.props.round)
         }
@@ -266,9 +256,8 @@ class PlayUI extends Component {
             this.clear()
             this.round = _.cloneDeep(this.props.round)
             _this.draw(false)
-        } else {
-            this.round = _.cloneDeep(this.props.round)
         }
+        this.round = _.cloneDeep(this.props.round)
 
         /*
     
@@ -469,7 +458,21 @@ class PlayUI extends Component {
             */
     }
 
-    onMuteToggle(props) {
+    loadSequence = (patterns) => {
+        const { round } = this.props
+        for (let [userPatternsId, userPatterns] of Object.entries(patterns)) {
+            if (!_.isNil(userPatterns.isPlayingSequence)) {
+                if (userPatterns.isPlayingSequence) {
+                    const newUserPatterns = round.userPatterns[userPatternsId]
+                    this.startSequence(newUserPatterns)
+                } else {
+                    this.stopSequence(userPatternsId)
+                }
+            }
+        }
+    }
+
+    onMuteToggle = (props) => {
         const isMuted = props.selectedLayer?.isMuted
         if (props.selectedLayer) {
             AudioEngine.tracksById[props.selectedLayer.id]?.setMute(!isMuted)
@@ -487,7 +490,6 @@ class PlayUI extends Component {
     }
 
     async draw(shouldAnimate) {
-        // console.log('draw()', this.containerWidth, this.containerheight);
         const { isPlaying } = this.props
 
         this.clear()
@@ -578,7 +580,7 @@ class PlayUI extends Component {
         }
 
         this.scheduleToneEvents()
-        this.renderPatternPresetsSequencer()
+        await this.renderPatternPresetsSequencer();
     }
 
     scheduleToneEvents() {
@@ -636,7 +638,6 @@ class PlayUI extends Component {
     }
 
     startSequence(userPatterns) {
-        console.log('calculating seq', userPatterns);
         const PPQ = Tone.Transport.PPQ
         const ticksPerBar = PPQ * 4
         const notes = []
@@ -662,10 +663,7 @@ class PlayUI extends Component {
             }
             note.time += 'i'
         }
-        // console.log('loading seq part', notes);
-        // const shouldUpdateGraphics = userPatterns.id === this.props.user.id
         let part = new Tone.Part(function (time, note) {
-            //console.log('seq note', note);
             _this.loadPatternPriority(userPatterns.id, note.id, note.order)
             //  if (shouldUpdateGraphics) {
             Tone.Draw.schedule(function () {
@@ -686,8 +684,6 @@ class PlayUI extends Component {
     }
 
     loadPatternPriority(userId, id, order) {
-        // console.log('load pattern', id);
-        // console.time('loadPatternPriority')
         //this.props.dispatch({ type: SET_CURRENT_SEQUENCE_PATTERN, payload: { value: order } })
         const pattern = _.find(this.props.round.userPatterns[userId].patterns, { id })
         if (!_.isEmpty(pattern.state)) {
@@ -715,8 +711,6 @@ class PlayUI extends Component {
                 return layersToDelete.indexOf(n) > -1
             })
             //this.props.updateLayers(pattern.state.layers)
-
-            // console.log('loadPattern updating internal layers', this.round.layers, pattern.state.layers);
 
             for (let layer of this.round.layers) {
                 let patternLayer = _.find(pattern.state.layers, { id: layer.id })
@@ -822,7 +816,6 @@ class PlayUI extends Component {
     }
 
     addLayer(layer, order, shouldAnimate = true) {
-        // console.log('addLayer', layer);
         // let animateTime = shouldAnimate ? 600 : 0
         const createdByThisUser = layer.createdBy === this.props.user.id;
         //const layerDiameter = HTML_UI_Params.addNewLayerButtonDiameter + HTML_UI_Params.initialLayerPadding + ((HTML_UI_Params.stepDiameter + HTML_UI_Params.layerPadding + HTML_UI_Params.layerPadding + HTML_UI_Params.stepDiameter) * (order + 1))
@@ -888,7 +881,7 @@ class PlayUI extends Component {
             const y = Math.round(layerDiameter / 2 + radius * Math.sin(angle) - stepDiameter / 2) + yOffset;
             const stepGraphic = this.container.circle(stepDiameter)
             stepGraphic.stroke({ color: this.userColors[layer.createdBy], width: stepStrokeWidth + 'px' }).opacity(!createdByThisUser ? 0.5 : 1)
-            stepGraphic.stroke({ opacity: 1 })
+            // stepGraphic.stroke({ opacity: 1 })
             layer.isMuted && stepGraphic.stroke({ color: 'rgba(255,255,255,0.1)' })
             stepGraphic.x(x)
             stepGraphic.y(y)
@@ -943,11 +936,9 @@ class PlayUI extends Component {
     }
 
     updateStep(step, showActivityIndicator = false) {
-        //  console.log('updateStep', step);
         if (!_.isEmpty(this.stepGraphics) && !_.isNil(step)) {
             const layer = this.stepLayerDictionary[step.id]
             const stepGraphic = _.find(this.stepGraphics, { id: step.id })
-            //console.log('updating step', stepGraphic, step.isOn, this.props.user.color);
             const _this = this
             if (showActivityIndicator) {
                 // add delay so that graphic updates after activity indicator hits it
@@ -963,7 +954,6 @@ class PlayUI extends Component {
                 }, HTML_UI_Params.activityAnimationTime)
                 this.animateActivityIndicator(layer.createdBy, stepGraphic.x() + (HTML_UI_Params.stepDiameter / 2), stepGraphic.y() + (HTML_UI_Params.stepDiameter / 2))
             } else {
-                //console.log('updateStep()', step.isOn);
                 if (step.isOn) {
                     stepGraphic.attr({ fill: _this.userColors[layer.createdBy], 'fill-opacity': step.probability })
                     stepGraphic.transform({
@@ -1008,7 +998,6 @@ class PlayUI extends Component {
     }
 
     adjustLayerOffset(id, percentOffset, timeOffset, order) {
-        // console.log('adjustLayerTimeOffset', layer., percent, this.stepGraphics);
         const layer = _.find(this.round.layers, { id })
         let stepGraphics = _.filter(this.stepGraphics, { layerId: id })
         const layerGraphic = _.find(this.layerGraphics, { id })
@@ -1114,12 +1103,10 @@ class PlayUI extends Component {
                 _this.onLayerClicked(layerGraphic.id)
             })
             layerGraphic.on('mouseover', function (e) {
-                //console.log('layer mouseover');
                 e.stopPropagation()
                 _this.onLayerOver(layerGraphic)
             })
             layerGraphic.on('mouseout', function (e) {
-                //console.log('layer mouseout');
                 e.stopPropagation()
                 _this.onLayerOut(layerGraphic)
             })
@@ -1194,13 +1181,11 @@ class PlayUI extends Component {
     }
 
     addStepEventListeners(stepGraphic) {
-        // console.log('addStepEventListeners');
         this.removeStepEventListeners(stepGraphic)
         const _this = this
         if (stepGraphic.isAllowedInteraction) {
 
             stepGraphic.on('mouseout', (e) => {
-                //console.log('mouseout');
                 if (!_.isNil(_this.stepMoveTimer)) {
                     // we've swiped / dragged out of the step, toggle this step and listen for mouseovers on all other steps
                     // add listener to layergraphic to cancel swiping
@@ -1214,21 +1199,18 @@ class PlayUI extends Component {
             })
 
             stepGraphic.on('mousedown', (e) => {
-                // console.log('mousedown');
                 e.stopPropagation()
                 e.preventDefault()
                 _this.swipeToggleActive = false
                 _this.startStepMoveTimer(stepGraphic, e.pageX, e.pageY)
 
                 _this.container.on('mouseup', (e) => {
-                    //console.log('_this.container.on(mouseup)');
                     e.stopPropagation()
                     _this.removeStepSwipeListeners()
                     _this.container.off('mousemove')
                     _this.container.off('mouseup')
 
                     _this.hideStepModal()
-                    //  console.log('mouseup', '_this.stepMoveTimer', _this.stepMoveTimer, '_this.swipeToggleActive', _this.swipeToggleActive);
                     if (!_.isNil(_this.stepMoveTimer)) {
                         // timer has not expired, so interpret as a click
                         _this.clearShowStepModalTimer()
@@ -1243,7 +1225,6 @@ class PlayUI extends Component {
             })
 
             stepGraphic.on('touchstart', (e) => {
-                //  console.log('touchstart');
                 e.stopPropagation()
                 e.preventDefault()
                 _this.swipeToggleActive = false
@@ -1258,7 +1239,6 @@ class PlayUI extends Component {
                     if (_.isNil(_this.stepMoveTimer) && !_this.swipeToggleActive) {
                         _this.onStepDragMove(stepGraphic, e.touches[0].pageX, e.touches[0].pageY)
                     } else {
-                        // console.log('touchmove', e, stepGraphic.id);
                         // _this.swipeToggleActive = stepGraphic
                         _this.touchStartStepGraphic = stepGraphic
                         _this.isOverStep(stepGraphic, e.touches[0].pageX, e.touches[0].pageY)
@@ -1267,19 +1247,13 @@ class PlayUI extends Component {
                 stepGraphic.on('touchend', (e) => {
                     e.stopPropagation()
                     e.preventDefault()
-                    //   console.log('touchend');
                     _this.hideStepModal()
                     if (!_.isNil(_this.stepMoveTimer)) {
                         // timer has not expired, so interpret as a click
-                        //  console.log('touchend interpreted as click', _this.swipeToggleActive);
                         _this.clearShowStepModalTimer()
                         if (!_this.swipeToggleActive) {
-                            // console.log('acting on interpreted click');
                             _this.onStepClick(stepGraphic)
-                        } else {
-                            //  console.log('ignoring interpreted click');
                         }
-
                     } else {
                         _this.onStepDragEnd(stepGraphic)
                     }
@@ -1290,11 +1264,9 @@ class PlayUI extends Component {
                     clearInterval()
                 })
             })
-            // console.log('adding touchmove event for stepgraphic', stepGraphic.id);
         }
     }
     removeStepEventListeners(stepGraphic) {
-        //console.log('removeStepEventListeners()');
         stepGraphic.off('mousedown')
         stepGraphic.off('touchstart')
     }
@@ -1321,7 +1293,6 @@ class PlayUI extends Component {
         this.updateStepModal(stepGraphic)
         const _this = this
         this.container.on('mousemove', (e) => {
-            //  console.log('_this.container.on(mousemove)');
             e.preventDefault()
             _this.onStepDragMove(stepGraphic, e.pageX, e.pageY)
         })
@@ -1329,26 +1300,21 @@ class PlayUI extends Component {
     }
 
     hideStepModal() {
-        // console.log('hideStepModal()');
         this.stepModal.hide()
         this.container.off('mousemove')
     }
 
     clearShowStepModalTimer() {
-        // console.log('clearShowStepModalTimer', this.stepMoveTimer);
         clearTimeout(this.stepMoveTimer)
         this.stepMoveTimer = null
     }
 
     addStepSwipeListeners(originalStepGraphic) {
-        // console.log('addStepSwipeListeners', this);
         this.removeStepSwipeListeners()
         const _this = this
         for (const stepGraphic of this.stepGraphics) {
             if (stepGraphic.layerId === originalStepGraphic.layerId) {
-                // console.log('adding mouseover');
                 stepGraphic.on('mouseover', (e) => {
-                    //  console.log('on stepGraphic mouseover');
                     _this.onStepClick(stepGraphic)
                 })
             }
@@ -1366,7 +1332,6 @@ class PlayUI extends Component {
         const layerGraphic = _.find(this.layerGraphics, { id: stepGraphic.layerId })
         const _this = this
         layerGraphic.on('mouseout', (e) => {
-            //console.log('layerGraphic mouseout');
             _this.swipeToggleActive = false
             _this.removeStepSwipeListeners()
             layerGraphic.off('mouseout')
@@ -1376,7 +1341,6 @@ class PlayUI extends Component {
     onStepDragMove(stepGraphic, x, y) {
         let deltaX = x - stepGraphic.startX
         let deltaY = y - stepGraphic.startY
-        //console.log('onStepDragMove', this.isZooming, stepGraphic.isOn, deltaX, deltaY, stepGraphic.isPanningX);
         if (!this.isZooming && stepGraphic.isOn) {
             if (deltaX < -100) {
                 deltaX = -100
@@ -1469,7 +1433,6 @@ class PlayUI extends Component {
     }
 
     updateStepModal(stepGraphic) {
-        //  console.log('updateStepModal', stepGraphic.probability, stepGraphic.velocity);
         //this.stepModalText.text('Velocity: ' + _.round(stepGraphic.velocity, 1) + '\nProbability: ' + _.round(stepGraphic.probability, 1))
         this.stepModal.x(stepGraphic.x() - ((HTML_UI_Params.stepModalDimensions / 2) - HTML_UI_Params.stepDiameter / 2))
         this.stepModal.y(stepGraphic.y() - ((HTML_UI_Params.stepModalDimensions / 2) - HTML_UI_Params.stepDiameter / 2))
@@ -1479,14 +1442,11 @@ class PlayUI extends Component {
 
     onStepClick(stepGraphic) {
         let step = this.getStep(stepGraphic.id)
-        // console.log('onStepClick', step);
-
         // update internal round so that it doesn't trigger another update when we receive a change after the dispatch
         step.isOn = !step.isOn
         this.updateStep(step, false)
         AudioEngine.recalculateParts(this.round)
         this.props.dispatch({ type: TOGGLE_STEP, payload: { layerId: stepGraphic.layerId, stepId: stepGraphic.id, lastUpdated: new Date().getTime(), isOn: step.isOn, user: null } })
-        // console.log('this.context', this.context);
         this.saveLayer(stepGraphic.layerId)
         //this.context.updateStep(this.round.id, stepGraphic.layerId, stepGraphic.id, step)
     }
@@ -1553,12 +1513,9 @@ class PlayUI extends Component {
                 //_this.containerheight = Math.max(window.screen.height || 0, window.innerHeight || 0)
                 _this.containerWidth = width
                 _this.containerheight = height
-
-                // console.log('onWindowResize', orientation, '_this.containerWidth', _this.containerWidth, '_this.containerheight', _this.containerheight);
                 const roundElement = document.getElementById('round')
                 roundElement.style.width = width + 'px'
                 roundElement.style.height = height + 'px'
-                //console.log('set round height to ', height + 'px', 'actual height', roundElement.style.height);
 
                 let currentViewBox = _this.container.viewbox()
                 _this.container.size(width, height)
@@ -1580,7 +1537,6 @@ class PlayUI extends Component {
         } else {
             orientation = 'landscape'
         }
-        // console.log('getOrientation', orientation);
         return orientation
     }
 
@@ -1610,24 +1566,21 @@ class PlayUI extends Component {
         if (isPlaying) {
             AudioEngine.stop()
             setIsPlaying(false)
-
         } else {
             AudioEngine.play()
             setIsPlaying(true)
         }
+        this.draw()
     }
 
     isOverStep(initialStepGraphic, x, y) {
-        //  console.log('checking is over step', x, y);
         const _this = this
         let isOver = false
         for (const stepGraphic of this.stepGraphics) {
             if (stepGraphic.layerId === _this.touchStartStepGraphic.layerId) {
                 const step = this.getStep(stepGraphic.id);
-                //console.log(stepGraphic, stepGraphic.x(), stepGraphic.y(), stepGraphic.node.getBoundingClientRect());
                 const rect = stepGraphic.node.getBoundingClientRect()
                 if (x >= rect.x && x <= rect.x + rect.width && y >= rect.y && y <= rect.y + rect.height) {
-                    //console.log('is over step graphic');
                     isOver = true
                     const now = new Date().getTime()
                     const difference = step.lastUpdated ? (now - step.lastUpdated) : 0
@@ -1643,18 +1596,16 @@ class PlayUI extends Component {
         if (!isOver) {
             if (!_.isNil(this.isCurrentlyOverStepGraphic) && this.isCurrentlyOverStepGraphic === initialStepGraphic && !_.isNil(_this.stepMoveTimer)) {
                 // just swiped off initial step
-                //  console.log('clicking initial step');
                 _this.onStepClick(initialStepGraphic)
             }
             // we've swiped off the step so cancel the modal timer
-            //  console.log('not over canceling timer');
             this.clearShowStepModalTimer()
             this.isCurrentlyOverStepGraphic = null
             _this.swipeToggleActive = true
         }
     }
 
-    renderPatternPresetsSequencer = () => {
+    renderPatternPresetsSequencer = async () => {
         const { user, round } = this.props;
         const userHasLayer = round.layers.find(layer => layer.createdBy === user.id)
         const layerDiameter = !userHasLayer ? HTML_UI_Params.initialLayerDiameter : this.getLayerDiameter(1)
@@ -1667,7 +1618,6 @@ class PlayUI extends Component {
         if (!_.isNil(round) && !_.isNil(round.userPatterns) && !_.isNil(round.userPatterns[user.id])) {
 
             this.renderPatterns({ patternsContainerDiameter, xOffset, yOffset })
-
             this.renderSequences();
             const tempoButton = this.container.nested().rect(60, 33).radius(16)
             const tempoIcon = this.container.nested()
@@ -1985,8 +1935,8 @@ class PlayUI extends Component {
                     this.onSavePattern(id)
                 }
                 if (layers && layers.length > 0 && this.isRecordingSequence) {
-                    console.log('layers --', layers)
                     this.onLoadPattern(id)
+                    this.draw()
                 }
             })
             e++
@@ -2043,7 +1993,7 @@ class PlayUI extends Component {
                 sequenceBackground.y(sY + 6)
             }
             sequencePattern.attr({ id: `${i}_sequence_pattern`, cursor: 'pointer' })
-            sequencePattern.stroke({ color: user.color, width: 1, opacity: isHighlighted ? 1 : 0.5, })
+            sequencePattern.stroke({ color: user.color, width: 1, opacity: 0.5, })
             sequencePattern.fill({ color: 'rgba(0,0,0,0.01)' })
             sequencePattern.x(sX)
             sequencePattern.y(sY)
@@ -2253,7 +2203,11 @@ class PlayUI extends Component {
 
     render() {
         return (
-            <div className="round" id="round"></div>
+            <>
+                <div className="round" id="round"></div>
+                <div className="sequencer" id="sequencer"></div>
+            </>
+
         )
     }
 }
@@ -2262,7 +2216,6 @@ PlayUI.propTypes = {
 };
 
 const mapStateToProps = state => {
-    //console.log('mapStateToProps', state);
     let selectedLayer = null;
     if (!_.isNil(state.display.selectedLayerId) && !_.isNil(state.round) && !_.isNil(state.round.layers)) {
         selectedLayer = _.find(state.round.layers, { id: state.display.selectedLayerId })
@@ -2283,6 +2236,7 @@ const mapDispatchToProps = dispatch => ({
     setIsPlaying: val => dispatch(setIsPlaying(val)),
     setIsRecordingSequence: val => dispatch(setIsRecordingSequence(val)),
     setUserPatternSequence: (userId, data) => dispatch(setUserPatternSequence(userId, data)),
+    updateLayers: (layers) => dispatch(updateLayers(layers)),
     setIsPlayingSequence: (userId, val) => dispatch(setIsPlayingSequence(userId, val)),
     saveUserPattern: (userId, patternId, data) => dispatch(saveUserPattern(userId, patternId, data)),
     setCurrentSequencePattern: val => dispatch(setCurrentSequencePattern(val)),
