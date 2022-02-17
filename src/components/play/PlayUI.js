@@ -1896,7 +1896,7 @@ class PlayUI extends Component {
     }
 
     renderPresetPatterns = async ({ patternsContainerDiameter, xOffset, yOffset }) => {
-        const { round, user, isPlaying } = this.props
+        const { round, user } = this.props
         const patterns = round.userPatterns[user.id].patterns
         let angle = Math.PI / -1.335
         let e = 0
