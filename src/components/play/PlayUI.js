@@ -139,6 +139,7 @@ class PlayUI extends Component {
         let redraw = false
         let shouldRecalculateParts = false
         const _this = this
+        this.isPlayingSequence = round.userPatterns[user.id].isPlayingSequence
 
         let diff = detailedDiff(this.round, this.props.round)
         if (!_.isEqual(round.userPatterns[user.id].isPlayingSequence, oldRound.userPatterns[user.id].isPlayingSequence)) {
@@ -1235,7 +1236,6 @@ class PlayUI extends Component {
                     e.stopPropagation()
                     e.preventDefault()
                     this.isScrolling = true;
-                    //  console.log('touchmove');
                     if (_.isNil(_this.stepMoveTimer) && !_this.swipeToggleActive) {
                         _this.onStepDragMove(stepGraphic, e.touches[0].pageX, e.touches[0].pageY)
                     } else {
@@ -1448,6 +1448,7 @@ class PlayUI extends Component {
         AudioEngine.recalculateParts(this.round)
         this.props.dispatch({ type: TOGGLE_STEP, payload: { layerId: stepGraphic.layerId, stepId: stepGraphic.id, lastUpdated: new Date().getTime(), isOn: step.isOn, user: null } })
         this.saveLayer(stepGraphic.layerId)
+        this.renderPatternPresetsSequencer()
         //this.context.updateStep(this.round.id, stepGraphic.layerId, stepGraphic.id, step)
     }
 
@@ -1606,7 +1607,8 @@ class PlayUI extends Component {
     }
 
     renderPatternPresetsSequencer = async () => {
-        const { user, round } = this.props;
+        const { user, round } = this.props
+        this.clearPresetPatternsSequencer()
         const userHasLayer = round.layers.find(layer => layer.createdBy === user.id)
         const layerDiameter = !userHasLayer ? HTML_UI_Params.initialLayerDiameter : this.getLayerDiameter(1)
         const patternsContainerDiameter = layerDiameter - 320
@@ -1617,7 +1619,7 @@ class PlayUI extends Component {
         const yOffset = (this.containerHeight / 2) - (layerDiameter / 3.4)
         if (!_.isNil(round) && !_.isNil(round.userPatterns) && !_.isNil(round.userPatterns[user.id])) {
 
-            this.renderPatterns({ patternsContainerDiameter, xOffset, yOffset })
+            this.renderPresetPatterns({ patternsContainerDiameter, xOffset, yOffset })
             this.renderSequences();
             const tempoButton = this.container.nested().rect(60, 33).radius(16)
             const tempoIcon = this.container.nested()
@@ -1764,12 +1766,17 @@ class PlayUI extends Component {
     }
 
     getCurrentState = (userId) => {
+        /** Limit current state to current user layers **/
         const userLayers = _.filter(this.props.round.layers, { createdBy: userId })
+
+        //const layers = this.props.round.layers
         let state = {}
         state.layers = []
         for (const layer of userLayers) {
             let stateLayer = {
                 id: layer.id,
+                createdBy: layer.createdBy,
+                createdAt: layer.createdAt,
                 steps: layer.steps,
                 gain: layer.gain,
                 isMuted: layer.isMuted,
@@ -1860,11 +1867,12 @@ class PlayUI extends Component {
     toggleIsPlayingSequence = () => {
         const { round, setIsPlayingSequence, setCurrentSequencePattern, user } = this.props
         setCurrentSequencePattern(0)
-        const isPlayingSequence = round.userPatterns[user.id].isPlayingSequence
-        setIsPlayingSequence(user.id, !isPlayingSequence)
+        const isPlayingSequence = !this.isPlayingSequence
+        setIsPlayingSequence(user.id, isPlayingSequence)
         const newRound = { ...round }
-        newRound.userPatterns[user.id].isPlayingSequence = !isPlayingSequence
+        newRound.userPatterns[user.id].isPlayingSequence = isPlayingSequence
         this.context.saveUserPatterns(round.id, user.id, newRound.userPatterns[user.id])
+        this.isPlayingSequence = isPlayingSequence
     }
 
     setIsPlayingSequenceGraphic = ({ x, y }) => {
@@ -1887,8 +1895,8 @@ class PlayUI extends Component {
         })
     }
 
-    renderPatterns = async ({ patternsContainerDiameter, xOffset, yOffset }) => {
-        const { round, user } = this.props
+    renderPresetPatterns = async ({ patternsContainerDiameter, xOffset, yOffset }) => {
+        const { round, user, isPlaying } = this.props
         const patterns = round.userPatterns[user.id].patterns
         let angle = Math.PI / -1.335
         let e = 0
@@ -1903,7 +1911,7 @@ class PlayUI extends Component {
             const x = (Math.round(patternsContainerDiameter / 2 + radius * Math.cos(angle) - patternDiameter / 2) + xOffset)
             const y = (Math.round(patternsContainerDiameter / 2 + radius * Math.sin(angle) - patternDiameter / 2) + yOffset)
 
-            const currentPattern = this.container.nested().circle(patternDiameter)
+            const currentPatternGraphic = this.container.nested().circle(patternDiameter)
             const label = this.container.nested().plain(letter).attr({ cursor: 'pointer' })
             label.font({
                 family: 'Arial',
@@ -1914,25 +1922,35 @@ class PlayUI extends Component {
             const labelX = x + 15
             const labelY = y + 10
             label.fill({ color: user.color })
+            label.attr({ id: `${e}_pattern_label` })
             label.x(labelX)
             label.y(labelY)
-            currentPattern.attr({ id: `${e}_pattern`, fill: 'rgba(0,0,0,0.1)', opacity: 0.2, cursor: 'pointer' })
-            currentPattern.stroke({ color: user.color, width: 18 })
-            currentPattern.x(x)
-            currentPattern.y(y)
+            currentPatternGraphic.attr({ id: `${e}_pattern`, fill: 'rgba(0,0,0,0.1)', opacity: 0.2, cursor: 'pointer' })
+            currentPatternGraphic.stroke({ color: user.color, width: 18 })
+            currentPatternGraphic.x(x)
+            currentPatternGraphic.y(y)
+            this.microPatternGraphics.push(currentPatternGraphic)
             if (layers) {
-                await this.renderMicroRound({ x: x + 1.5, y: y + 1.5, pattern: currentPattern, layers })
+                await this.renderMicroRound({ x: x + 1.5, y: y + 1.5, pattern: currentPatternGraphic, layers })
             }
-            this.microPatternGraphics.push(currentPattern)
+            if (id === patterns[0].id &&
+                //(!patterns[0].state.layers || patterns[0].state.layers.length === 0) &&
+                (!layers || !_.isEqual(layers, round.layers)) &&
+                !this.isPlayingSequence) {
+                await this.renderMicroRound({ x: x + 1.5, y: y + 1.5, pattern: currentPatternGraphic, layers: round.layers })
+                this.onSavePattern(id)
+            }
             const clickableButton = this.container.nested().circle(patternDiameter + 20)
             clickableButton.fill({ color: '#000', opacity: 0.001 })
-            clickableButton.attr({ cursor: 'pointer' })
+            clickableButton.attr({ cursor: 'pointer', id: `${e}_pattern_clickable_button` })
             clickableButton.x(x - 10)
             clickableButton.y(y - 10)
-            clickableButton.on('click', () => {
-                if ((!layers || layers.length === 0) && !this.isRecordingSequence) {
-                    this.renderMicroRound({ x: x + 1.5, y: y + 1.5, pattern: currentPattern, layers: round.layers })
+            clickableButton.on('click', async () => {
+                if (this.isPlayingSequence) return
+                if (!this.isRecordingSequence) {
+                    await this.renderMicroRound({ x: x + 1.5, y: y + 1.5, pattern: currentPatternGraphic, layers: round.layers })
                     this.onSavePattern(id)
+                    this.draw()
                 }
                 if (layers && layers.length > 0 && this.isRecordingSequence) {
                     this.onLoadPattern(id)
@@ -1987,8 +2005,10 @@ class PlayUI extends Component {
             if (isFilled) {
                 const sequenceBackground = this.container.nested().circle(sequenceDiameter - 12)
                 sequenceBackground.attr({ id: `${i}_sequence_bg`, cursor: 'pointer' })
-                sequenceBackground.stroke({ color: user.color, width: 8, opacity: 0.35, })
-                sequenceBackground.fill({ color: 'rgba(0,0,0,0.01)' })
+                sequenceBackground.stroke({ color: user.color, width: 8, opacity: isHighlighted ? 0.55 : 0.35 })
+                sequenceBackground.fill({
+                    color: 'rgba(0,0,0,0.01)'
+                })
                 sequenceBackground.x(sX + 6)
                 sequenceBackground.y(sY + 6)
             }
@@ -2080,59 +2100,57 @@ class PlayUI extends Component {
     }
 
     onToggleRecordSequence = () => {
-        const {
-            round,
-            user,
-            //setIsRecordingSequence
-        } = this.props
+
+        this.isRecordingSequence = !this.isRecordingSequence
+        this.onRecordSequenceClick()
+        this.renderPatternPresetsSequencer()
+    }
+
+    clearPresetPatternsSequencer = () => {
+        const { round, user } = this.props
+        const patterns = round.userPatterns[user.id].patterns
 
         const switchLetter = document.getElementById('switch-letter')
-        switchLetter.parentNode.removeChild(switchLetter)
+        switchLetter && switchLetter.parentNode.removeChild(switchLetter)
 
         const switchLetterSubcontainer = document.getElementById('switch-letter-subcontainer')
-        switchLetterSubcontainer.parentNode.removeChild(switchLetterSubcontainer)
+        switchLetterSubcontainer && switchLetterSubcontainer.parentNode.removeChild(switchLetterSubcontainer)
 
         const sequenceSwitch = document.getElementById('sequence-switch')
-        sequenceSwitch.parentNode.removeChild(sequenceSwitch)
+        sequenceSwitch && sequenceSwitch.parentNode.removeChild(sequenceSwitch)
 
         const clickableSwitch = document.getElementById('clickable-switch')
-        clickableSwitch.parentNode.removeChild(clickableSwitch)
+        clickableSwitch && clickableSwitch.parentNode.removeChild(clickableSwitch)
 
         const switchLetterContainer = document.getElementById('switch-letter-container')
-        switchLetterContainer.parentNode.removeChild(switchLetterContainer)
+        switchLetterContainer && switchLetterContainer.parentNode.removeChild(switchLetterContainer)
 
         for (let i = 0; i < HTML_UI_Params.sequenceButtonDots; i++) {
             const currentDot = document.getElementById(`${i}_sequence_dot`)
-            currentDot.parentNode.removeChild(currentDot)
+            currentDot && currentDot.parentNode.removeChild(currentDot)
+        }
+
+        for (let i = 0; i < patterns.length; i++) {
+            const rnd = document.getElementById(`${i}_pattern`)
+            const lbl = document.getElementById(`${i}_pattern_label`)
+            const btn = document.getElementById(`${i}_pattern_clickable_button`)
+            rnd && rnd.parentNode.removeChild(rnd)
+            lbl && lbl.parentNode.removeChild(lbl)
+            btn && btn.parentNode.removeChild(btn)
         }
 
         const sbtn = document.getElementById('sequence-button')
-        sbtn.parentNode.removeChild(sbtn)
+        sbtn && sbtn.parentNode.removeChild(sbtn)
 
         const sText = document.getElementById('sequence-text')
-        sText.parentNode.removeChild(sText)
-
-        if (!this.isRecordingSequence) {
-            for (let i = 0; i < HTML_UI_Params.sequenceButtonDots; i++) {
-                const dot = document.getElementById(`${i}-sbuttonDot`)
-                dot.parentNode.removeChild(dot)
-            }
+        sText && sText.parentNode.removeChild(sText)
+        for (let i = 0; i < HTML_UI_Params.sequenceButtonDots; i++) {
+            const dot = document.getElementById(`${i}-sbuttonDot`)
+            dot && dot.parentNode.removeChild(dot)
         }
-        if (this.isRecordingSequence) {
-            const sStop = document.getElementById('sequence-stop')
-            sStop.parentNode.removeChild(sStop)
-        }
-        const userHasLayer = round.layers.find(layer => layer.createdBy === user.id)
-        const layerDiameter = !userHasLayer ? HTML_UI_Params.initialLayerDiameter : this.getLayerDiameter(1)
+        const sStop = document.getElementById('sequence-stop')
+        sStop && sStop.parentNode.removeChild(sStop)
 
-        const xOffset = (this.containerWidth / 2) - (layerDiameter / 3.45)
-        const yOffset = (this.containerHeight / 2) - (layerDiameter / 3.4)
-
-        this.isRecordingSequence = !this.isRecordingSequence
-        // setIsRecordingSequence(!this.isRecordingSequence)
-        this.onRecordSequenceClick()
-        this.renderPlayingSequenceIndicator({ x: xOffset, y: yOffset })
-        this.renderRecordSequenceButton(xOffset, yOffset)
     }
 
     getMicroLayerDiameter(order, dm) {
