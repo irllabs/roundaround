@@ -1925,16 +1925,17 @@ class PlayUI extends Component {
             label.attr({ id: `${e}_pattern_label` })
             label.x(labelX)
             label.y(labelY)
-            currentPatternGraphic.attr({ id: `${e}_pattern`, fill: 'rgba(0,0,0,0.1)', opacity: 0.2, cursor: 'pointer' })
+            const isFirst = patterns[0].id === id
+            currentPatternGraphic.attr({ id: `${e}_pattern`, fill: 'none', opacity: isFirst ? 0.3 : 0.1, cursor: 'pointer' })
             currentPatternGraphic.stroke({ color: user.color, width: 18 })
+            currentPatternGraphic.fill('none')
             currentPatternGraphic.x(x)
             currentPatternGraphic.y(y)
             this.microPatternGraphics.push(currentPatternGraphic)
-            if (layers) {
+            if (layers && layers.length > 0) {
                 await this.renderMicroRound({ x: x + 1.5, y: y + 1.5, pattern: currentPatternGraphic, layers })
             }
             if (id === patterns[0].id &&
-                //(!patterns[0].state.layers || patterns[0].state.layers.length === 0) &&
                 (!layers || !_.isEqual(layers, round.layers)) &&
                 !this.isPlayingSequence) {
                 await this.renderMicroRound({ x: x + 1.5, y: y + 1.5, pattern: currentPatternGraphic, layers: round.layers })
@@ -2100,15 +2101,12 @@ class PlayUI extends Component {
     }
 
     onToggleRecordSequence = () => {
-
         this.isRecordingSequence = !this.isRecordingSequence
         this.onRecordSequenceClick()
         this.renderPatternPresetsSequencer()
     }
 
     clearPresetPatternsSequencer = () => {
-        const { round, user } = this.props
-        const patterns = round.userPatterns[user.id].patterns
 
         const switchLetter = document.getElementById('switch-letter')
         switchLetter && switchLetter.parentNode.removeChild(switchLetter)
@@ -2129,15 +2127,7 @@ class PlayUI extends Component {
             const currentDot = document.getElementById(`${i}_sequence_dot`)
             currentDot && currentDot.parentNode.removeChild(currentDot)
         }
-
-        for (let i = 0; i < patterns.length; i++) {
-            const rnd = document.getElementById(`${i}_pattern`)
-            const lbl = document.getElementById(`${i}_pattern_label`)
-            const btn = document.getElementById(`${i}_pattern_clickable_button`)
-            rnd && rnd.parentNode.removeChild(rnd)
-            lbl && lbl.parentNode.removeChild(lbl)
-            btn && btn.parentNode.removeChild(btn)
-        }
+        this.clearPresetGraphics()
 
         const sbtn = document.getElementById('sequence-button')
         sbtn && sbtn.parentNode.removeChild(sbtn)
@@ -2150,7 +2140,19 @@ class PlayUI extends Component {
         }
         const sStop = document.getElementById('sequence-stop')
         sStop && sStop.parentNode.removeChild(sStop)
+    }
 
+    clearPresetGraphics = () => {
+        const { round, user } = this.props
+        const patterns = round.userPatterns[user.id].patterns
+        for (let i = 0; i < patterns.length; i++) {
+            const rnd = document.getElementById(`${i}_pattern`)
+            const lbl = document.getElementById(`${i}_pattern_label`)
+            const btn = document.getElementById(`${i}_pattern_clickable_button`)
+            rnd && rnd.parentNode.removeChild(rnd)
+            lbl && lbl.parentNode.removeChild(lbl)
+            btn && btn.parentNode.removeChild(btn)
+        }
     }
 
     getMicroLayerDiameter(order, dm) {
@@ -2169,7 +2171,7 @@ class PlayUI extends Component {
         const yOffset = containerYOffset + 6 - (order * (diameter ? HTML_UI_Params.micro2LayerOffsetMultiplier : HTML_UI_Params.microLayerOffsetMultiplier))
         const layerStrokeSize = diameter ? HTML_UI_Params.micro2LayerStrokeMax : HTML_UI_Params.microLayerStrokeMax
         const layerGraphic =
-            this.container.circle(layerDiameter).fill({ color: '#000', opacity: 0.001 })
+            this.container.circle(layerDiameter).fill('none')
                 .stroke({ color: user.color, width: layerStrokeSize, opacity: 0.1 })
         layerGraphic.x(xOffset)
         layerGraphic.y(yOffset)
@@ -2193,7 +2195,7 @@ class PlayUI extends Component {
             const y = Math.round(layerDiameter / 2 + radius * Math.sin(angle) - stepDiameter / 2) + yOffset;
             const stepGraphic = this.container.circle(stepDiameter)
             stepGraphic.stroke('none')
-            stepGraphic.fill({ color: step.isOn ? user.color : 'rgba(0,0,0,0)', opacity: 0.7 })
+            stepGraphic.fill({ color: step.isOn ? user.color : 'rgba(0,0,0,0)', opacity: 1 })
             stepGraphic.x(x)
             stepGraphic.y(y)
             angle += stepSize
