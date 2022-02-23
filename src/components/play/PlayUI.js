@@ -11,7 +11,7 @@ import { FirebaseContext } from '../../firebase/'
 import * as Tone from 'tone';
 import { withStyles } from '@material-ui/styles';
 import PropTypes from 'prop-types';
-import { numberRange } from '../../utils/index'
+import { numberRange, createRound } from '../../utils/index'
 import Instruments from '../../audio-engine/Instruments'
 import { getDefaultUserPatternSequence } from '../../utils/defaultData'
 import { detailedDiff } from 'deep-object-diff';
@@ -22,7 +22,9 @@ import {
     updateLayers,
     setIsPlayingSequence,
     setCurrentSequencePattern,
-    saveUserPattern
+    saveUserPattern,
+    setRounds,
+    setSelectedRoundId
 } from "../../redux/actions";
 const styles = theme => ({
     button: {
@@ -63,6 +65,7 @@ class PlayUI extends Component {
         this.microPatternGraphics = []
         this.sequenceGraphics = []
         this.activePattern = undefined
+        this.activePatternId = undefined
         this.activeSequence = undefined
         this.round = null // local copy of round, prevent mutating store.
         this.isOn = false
@@ -114,6 +117,7 @@ class PlayUI extends Component {
     async createRound() {
         this.round = _.cloneDeep(this.props.round)
         this.userColors = this.getUserColors()
+
         // Create SVG container
         this.containerWidth = Math.max(document.documentElement.clientWidth || 0, window.innerWidth || 0)
         this.containerHeight = Math.max(document.documentElement.clientHeight || 0, window.innerHeight || 0)
@@ -140,6 +144,12 @@ class PlayUI extends Component {
         let shouldRecalculateParts = false
         const _this = this
         this.isPlayingSequence = round.userPatterns[user.id].isPlayingSequence
+
+        if (!this.activePatternId && round) {
+            this.resetRound()
+            shouldRecalculateParts = true
+            redraw = true
+        }
 
         let diff = detailedDiff(this.round, this.props.round)
         if (!_.isEqual(round.userPatterns[user.id].isPlayingSequence, oldRound.userPatterns[user.id].isPlayingSequence)) {
@@ -1381,7 +1391,7 @@ class PlayUI extends Component {
         let step = this.getStep(stepGraphic.id)
         step.probability = _.round(stepGraphic.probability, 1)
         step.velocity = _.round(stepGraphic.velocity, 1)
-        this.saveLayer(stepGraphic.layerId)
+        !this.activePatternId && this.saveLayer(stepGraphic.layerId)
         AudioEngine.recalculateParts(this.props.round)
     }
 
@@ -1393,7 +1403,7 @@ class PlayUI extends Component {
             step.velocity = _.round(stepGraphic.velocity, 1)
             // this.props.dispatch({ type: SET_STEP_VELOCITY, payload: { velocity: step.velocity, layerId: stepGraphic.layerId, stepId: stepGraphic.id, user: this.props.user.id } })
             this.props.dispatch({ type: UPDATE_STEP, payload: { step: step, layerId: stepGraphic.layerId } })
-            this.saveLayer(stepGraphic.layerId)
+            !this.activePatternId && this.saveLayer(stepGraphic.layerId)
         }
         AudioEngine.recalculateParts(this.props.round)
     }
@@ -1447,7 +1457,8 @@ class PlayUI extends Component {
         this.updateStep(step, false)
         AudioEngine.recalculateParts(this.round)
         this.props.dispatch({ type: TOGGLE_STEP, payload: { layerId: stepGraphic.layerId, stepId: stepGraphic.id, lastUpdated: new Date().getTime(), isOn: step.isOn, user: null } })
-        this.saveLayer(stepGraphic.layerId)
+        !this.activePatternId && this.saveLayer(stepGraphic.layerId)
+        this.activePatternId && this.onSavePattern(this.activePatternId)
         this.renderPatternPresetsSequencer()
         //this.context.updateStep(this.round.id, stepGraphic.layerId, stepGraphic.id, step)
     }
@@ -1765,11 +1776,11 @@ class PlayUI extends Component {
         this.context.saveUserPatterns(this.props.round.id, this.props.user.id, this.props.round.userPatterns[this.props.user.id])
     }
 
-    getCurrentState = (userId) => {
+    getCurrentState = (userId, layers) => {
         /** Limit current state to current user layers **/
-        const userLayers = _.filter(this.props.round.layers, { createdBy: userId })
+        const currentLayers = layers || this.props.round.layers
+        const userLayers = _.filter(currentLayers, { createdBy: userId })
 
-        //const layers = this.props.round.layers
         let state = {}
         state.layers = []
         for (const layer of userLayers) {
@@ -1777,6 +1788,7 @@ class PlayUI extends Component {
                 id: layer.id,
                 createdBy: layer.createdBy,
                 createdAt: layer.createdAt,
+                instrument: layer.instrument,
                 steps: layer.steps,
                 gain: layer.gain,
                 isMuted: layer.isMuted,
@@ -1865,13 +1877,12 @@ class PlayUI extends Component {
     }
 
     toggleIsPlayingSequence = () => {
-        const { round, setIsPlayingSequence, setCurrentSequencePattern, user } = this.props
+        const { isPlaying, setIsPlayingSequence, setCurrentSequencePattern, user } = this.props
+        if (isPlaying) this.onPlaybackToggle()
         setCurrentSequencePattern(0)
         const isPlayingSequence = !this.isPlayingSequence
         setIsPlayingSequence(user.id, isPlayingSequence)
-        const newRound = { ...round }
-        newRound.userPatterns[user.id].isPlayingSequence = isPlayingSequence
-        this.context.saveUserPatterns(round.id, user.id, newRound.userPatterns[user.id])
+        !this.isRecordingSequence && this.resetRound()
         this.isPlayingSequence = isPlayingSequence
     }
 
@@ -1899,7 +1910,7 @@ class PlayUI extends Component {
         const { round, user } = this.props
         const patterns = round.userPatterns[user.id].patterns
         let angle = Math.PI / -1.335
-        let e = 0
+        this.clearPresetGraphics()
         for (const pattern of patterns) {
             const { state: { layers }, id } = pattern
             const patternSize = (2 * Math.PI) / patterns.length
@@ -1922,11 +1933,11 @@ class PlayUI extends Component {
             const labelX = x + 15
             const labelY = y + 10
             label.fill({ color: user.color })
-            label.attr({ id: `${e}_pattern_label` })
+            label.attr({ id: `${id}_pattern_label` })
             label.x(labelX)
             label.y(labelY)
             const isFirst = patterns[0].id === id
-            currentPatternGraphic.attr({ id: `${e}_pattern`, fill: 'none', opacity: isFirst ? 0.3 : 0.1, cursor: 'pointer' })
+            currentPatternGraphic.attr({ id: `${id}_pattern`, fill: 'none', opacity: isFirst ? 0.3 : 0.1, cursor: 'pointer' })
             currentPatternGraphic.stroke({ color: user.color, width: 18 })
             currentPatternGraphic.fill('none')
             currentPatternGraphic.x(x)
@@ -1935,30 +1946,55 @@ class PlayUI extends Component {
             if (layers && layers.length > 0) {
                 await this.renderMicroRound({ x: x + 1.5, y: y + 1.5, pattern: currentPatternGraphic, layers })
             }
-            if (id === patterns[0].id &&
+            if ((id === this.activePatternId || (!this.activePatternId && (id === patterns[0].id))) &&
                 (!layers || !_.isEqual(layers, round.layers)) &&
                 !this.isPlayingSequence) {
                 await this.renderMicroRound({ x: x + 1.5, y: y + 1.5, pattern: currentPatternGraphic, layers: round.layers })
-                this.onSavePattern(id)
             }
             const clickableButton = this.container.nested().circle(patternDiameter + 20)
             clickableButton.fill({ color: '#000', opacity: 0.001 })
-            clickableButton.attr({ cursor: 'pointer', id: `${e}_pattern_clickable_button` })
+            clickableButton.attr({ cursor: 'pointer', id: `${id}_pattern_clickable_button` })
             clickableButton.x(x - 10)
             clickableButton.y(y - 10)
-            clickableButton.on('click', async () => {
+            clickableButton.on('click', async (e) => {
                 if (this.isPlayingSequence) return
+                this.activePatternId = id
+                const sequences = this.props.round.userPatterns[user.id].sequence.filter(seq => seq)
                 if (!this.isRecordingSequence) {
-                    await this.renderMicroRound({ x: x + 1.5, y: y + 1.5, pattern: currentPatternGraphic, layers: round.layers })
-                    this.onSavePattern(id)
+                    let newRound = await createRound(user.id)
+                    let cloneRound = _.cloneDeep(this.props.round)
+                    cloneRound.layers = newRound.layers
+                    const order = sequences.length
+                    if (!layers) {
+                        this.round = cloneRound
+                        this.props.dispatch({ type: UPDATE_LAYERS, payload: { layers: newRound.layers } })
+                        this.props.dispatch({ type: SET_CURRENT_SEQUENCE_PATTERN, payload: { value: order } })
+                        await this.renderMicroRound({ x: x + 1.5, y: y + 1.5, pattern: currentPatternGraphic, layers: newRound.layers })
+                    }
+                    if (layers) {
+                        this.clear()
+                        this.props.dispatch({ type: UPDATE_LAYERS, payload: { layers } })
+                    }
                     this.draw()
                 }
                 if (layers && layers.length > 0 && this.isRecordingSequence) {
                     this.onLoadPattern(id)
-                    this.draw()
+                    await this.renderPatternPresetsSequencer()
                 }
             })
-            e++
+        }
+    }
+
+    resetRound = async (rnd) => {
+        const { round, user } = this.props
+        const newRound = rnd || round
+        const patterns = newRound.userPatterns[user.id].patterns
+        const defaultPattern = patterns[0]
+        const defaultLayers = defaultPattern?.state?.layers
+        if (!this.activePatternId) this.activePatternId = defaultPattern.id
+        if (defaultLayers) {
+            this.props.dispatch({ type: UPDATE_LAYERS, payload: { layers: defaultLayers } })
+            await this.context.updateRound(newRound.id, { layers: defaultLayers })
         }
     }
 
@@ -2127,7 +2163,6 @@ class PlayUI extends Component {
             const currentDot = document.getElementById(`${i}_sequence_dot`)
             currentDot && currentDot.parentNode.removeChild(currentDot)
         }
-        this.clearPresetGraphics()
 
         const sbtn = document.getElementById('sequence-button')
         sbtn && sbtn.parentNode.removeChild(sbtn)
@@ -2145,10 +2180,12 @@ class PlayUI extends Component {
     clearPresetGraphics = () => {
         const { round, user } = this.props
         const patterns = round.userPatterns[user.id].patterns
+        this.microPatternGraphics = []
         for (let i = 0; i < patterns.length; i++) {
-            const rnd = document.getElementById(`${i}_pattern`)
-            const lbl = document.getElementById(`${i}_pattern_label`)
-            const btn = document.getElementById(`${i}_pattern_clickable_button`)
+            const id = patterns[i].id
+            const rnd = document.getElementById(`${id}_pattern`)
+            const lbl = document.getElementById(`${id}_pattern_label`)
+            const btn = document.getElementById(`${id}_pattern_clickable_button`)
             rnd && rnd.parentNode.removeChild(rnd)
             lbl && lbl.parentNode.removeChild(lbl)
             btn && btn.parentNode.removeChild(btn)
@@ -2178,7 +2215,6 @@ class PlayUI extends Component {
         layerGraphic.id = layer.id
         layerGraphic.order = order
         layerGraphic.isAllowedInteraction = false
-        //this.microLayerGraphics.push(layerGraphic)
 
         // draw steps
         const stepSize = (2 * Math.PI) / layer.steps.length;
@@ -2242,6 +2278,7 @@ const mapStateToProps = state => {
     }
     return {
         round: state.round,
+        rounds: state.rounds,
         user: state.user,
         users: state.users,
         display: state.display,
@@ -2257,9 +2294,11 @@ const mapDispatchToProps = dispatch => ({
     setIsRecordingSequence: val => dispatch(setIsRecordingSequence(val)),
     setUserPatternSequence: (userId, data) => dispatch(setUserPatternSequence(userId, data)),
     updateLayers: (layers) => dispatch(updateLayers(layers)),
+    setRounds: (rounds) => dispatch(setRounds(rounds)),
     setIsPlayingSequence: (userId, val) => dispatch(setIsPlayingSequence(userId, val)),
     saveUserPattern: (userId, patternId, data) => dispatch(saveUserPattern(userId, patternId, data)),
     setCurrentSequencePattern: val => dispatch(setCurrentSequencePattern(val)),
+    setSelectedRoundId: id => dispatch(setSelectedRoundId(id)),
     dispatch
 })
 

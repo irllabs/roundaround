@@ -140,7 +140,7 @@ class PlayRoute extends Component {
                 return
             }
             if (!this.isDisposing) {
-                if (!_.isEqual(_this.props.round.currentUsers, updatedRound.currentUsers)) {
+                if (!_.isEqual(_this.props.round.currentUsers, updatedRound.currentUsers) && updatedRound.currentUsers) {
                     let users = []
                     for (const userId of updatedRound.currentUsers) {
                         let user = await _this.context.loadUser(userId)

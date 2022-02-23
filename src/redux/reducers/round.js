@@ -2,6 +2,7 @@
 import {
     SET_ROUND,
     UPDATE_LAYERS,
+    SET_LAYERS,
     TOGGLE_STEP,
     SET_STEP_VELOCITY,
     SET_STEP_PROBABILITY,
@@ -70,9 +71,7 @@ export default function (state = initialState, action) {
         case SET_ROUND: {
             return update(state, {
                 $set: action.payload.value
-            }
-            )
-
+            })
         }
 
         case UPDATE_LAYERS: {
@@ -85,6 +84,14 @@ export default function (state = initialState, action) {
             }
             return update(state, {
                 layers: layersUpdate
+            });
+        }
+        case SET_LAYERS: {
+            const { layers } = action.payload;
+            return update(state, {
+                layers: {
+                    $set: layers
+                }
             });
         }
         case UPDATE_STEP: {
