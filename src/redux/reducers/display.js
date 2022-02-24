@@ -101,7 +101,6 @@ export default function (state = initialState, action) {
             })
         }
         case SET_CURRENT_SEQUENCE_PATTERN: {
-            console.log('cirrent sequence pattern payload', action.payload)
             return update(state, {
                 currentSequencePattern: { $set: action.payload.value }
             })

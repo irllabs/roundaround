@@ -28,7 +28,6 @@ export const SET_ROUNDS = "SET_ROUNDS";
 // Round
 export const SET_ROUND = "SET_ROUND";
 export const UPDATE_LAYERS = "UPDATE_LAYERS";
-export const SET_LAYERS = "SET_LAYERS";
 export const TOGGLE_STEP = "TOGGLE_STEP";
 export const ADD_LAYER = "ADD_LAYER";
 export const SET_STEP_PROBABILITY = "SET_STEP_PROBABILITY";
