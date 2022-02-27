@@ -92,7 +92,9 @@ class PlayUI extends Component {
         // load sequence if enabled
         const patterns = round.userPatterns
         this.loadSequence(patterns)
+
         await this.createRound()
+        this.setDefaultPattern()
     }
 
     async componentWillUnmount() {
@@ -102,6 +104,13 @@ class PlayUI extends Component {
         this.removeBackgroundEventListeners()
         this.clear()
         this.disposeToneEvents()
+    }
+
+    setDefaultPattern = async () => {
+        const { user, round } = this.props
+        const defaultPattern = round.userPatterns[user.id].patterns[0]
+        this.activePatternId = defaultPattern.id
+        this.onLoadPattern(defaultPattern.id)
     }
 
     interfaceClicked = (e) => {
@@ -140,6 +149,9 @@ class PlayUI extends Component {
         let shouldRecalculateParts = false
         const _this = this
         this.isPlayingSequence = round.userPatterns[user.id].isPlayingSequence
+
+        !this.activePatternId &&
+            this.setDefaultPattern()
 
         let diff = detailedDiff(this.round, this.props.round)
         if (!_.isEqual(round.userPatterns[user.id].isPlayingSequence, oldRound.userPatterns[user.id].isPlayingSequence)) {
@@ -684,7 +696,7 @@ class PlayUI extends Component {
         }
     }
 
-    loadPatternPriority(userId, id, order) {
+    async loadPatternPriority(userId, id, order) {
         //this.props.dispatch({ type: SET_CURRENT_SEQUENCE_PATTERN, payload: { value: order } })
         const pattern = _.find(this.props.round.userPatterns[userId].patterns, { id })
         if (!_.isEmpty(pattern.state)) {
@@ -726,7 +738,6 @@ class PlayUI extends Component {
             // this.props.dispatch({ type: UPDATE_LAYERS, payload: { layers: pattern.state.layers } })
             // this.props.dispatch({ type: SET_CURRENT_SEQUENCE_PATTERN, payload: { value: order } })
         }
-
     }
 
     loadPattern(userId, id, order) {
@@ -1441,15 +1452,21 @@ class PlayUI extends Component {
     }
 
     onStepClick(stepGraphic) {
+        const { user } = this.props
         let step = this.getStep(stepGraphic.id)
         // update internal round so that it doesn't trigger another update when we receive a change after the dispatch
         step.isOn = !step.isOn
         this.updateStep(step, false)
         AudioEngine.recalculateParts(this.round)
         this.props.dispatch({ type: TOGGLE_STEP, payload: { layerId: stepGraphic.layerId, stepId: stepGraphic.id, lastUpdated: new Date().getTime(), isOn: step.isOn, user: null } })
-        this.saveLayer(stepGraphic.layerId)
+        const firstPattern = this.props.round.userPatterns[user.id].patterns[0]
+        if (!this.activePatternId || this.activePatternId === firstPattern.id) {
+            this.saveLayer(stepGraphic.layerId)
+        }
+        if (this.activePatternId) {
+            this.onSavePattern(this.activePatternId)
+        }
         this.renderPatternPresetsSequencer()
-        //this.context.updateStep(this.round.id, stepGraphic.layerId, stepGraphic.id, step)
     }
 
     async onAddLayerClick() {
@@ -1459,23 +1476,8 @@ class PlayUI extends Component {
         this.highlightNewLayer = newLayer.id
         this.selectedLayerId = newLayer.id
         this.context.createLayer(this.round.id, newLayer)
-        /* const newLayer = _.cloneDeep(this.props.round.layers[this.props.round.layers.length - 1])
-         newLayer.id = Math.round(Math.random() * 99999)
-         newLayer.order++;
-         for (const step of newLayer.steps) {
-             step.id = Math.round(Math.random() * 99999)
-             this.stepLayerDictionary[step.id] = newLayer
-         }
-         this.addLayer(newLayer, false)
-         AudioEngine.createTrack(newLayer)*/
-        // this.draw()
     }
 
-    addEventListeners() {
-        //const element = document.getElementById('round')
-        //const hammertime = new Hammer(element, {});
-        //hammertime.get('pinch').set({ enable: true });
-    }
     addBackgroundEventListeners() {
         const element = document.getElementById('round')
         element && element.addEventListener('click', this.onOutsideClick)
@@ -1680,16 +1682,6 @@ class PlayUI extends Component {
                     }
                 }
 
-                // save to store first so UI updates straight away
-                /*for (const layer of pattern.state.layers) {
-                    const layerExists = _.find(this.props.round.layers, { id: layer.id })
-                    if (!_.isNil(layerExists)) {
-                        //  console.log('changing layer state', layer.id, layer);
-                        //this.props.setLayerSteps(layer.id, layer.steps)
-                        this.props.updateLayer(layer.id, layer)
-                    }
-                }*/
-
                 // check we haven't deleted the layer that is referenced in the pattern
                 let layersToDelete = []
                 for (const layer of pattern.state.layers) {
@@ -1703,24 +1695,7 @@ class PlayUI extends Component {
                     return layersToDelete.indexOf(n) > -1
                 })
 
-                // make sure layers are ordered the same
-                let orderedLayers = []
-
-                // this.props.updateLayers(pattern.state.layers)
-                for (const layer of pattern.state.layers) {
-                    let index = _.findIndex(this.props.round.layers, { id: layer.id })
-                    orderedLayers[index] = layer
-                }
-                this.props.updateLayers(orderedLayers)
-
-                // now save to firebase
-                for (const layer of pattern.state.layers) {
-                    // todo handle edge cases - eg layer been deleted
-                    const layerExists = _.find(this.props.round.layers, { id: layer.id })
-                    if (!_.isNil(layerExists)) {
-                        this.context.updateLayer(this.props.round.id, layer.id, layer)
-                    }
-                }
+                await this.patternLayersToRound(pattern)
             }
         } else {
             let seq = _.cloneDeep(this.props.round.userPatterns[this.props.user.id].sequence)
@@ -1730,13 +1705,33 @@ class PlayUI extends Component {
             if (firstAvailbleSlot > -1) {
                 seq[firstAvailbleSlot] = id
                 this.props.setUserPatternSequence(this.props.user.id, seq)
-                this.context.saveUserPatterns(this.props.round.id, this.props.user.id, this.props.round.userPatterns[this.props.user.id])
+                !this.isRecordingSequence && !this.isPlayingSequence && this.context.saveUserPatterns(this.props.round.id, this.props.user.id, this.props.round.userPatterns[this.props.user.id])
             } else {
                 this.props.setIsRecordingSequence(false)
             }
             if (firstAvailbleSlot === seq.length - 1) {
                 this.props.setIsRecordingSequence(false)
                 this.props.setIsPlayingSequence(this.props.user.id, true)
+            }
+        }
+    }
+
+    patternLayersToRound = async (pattern) => {
+        // make sure layers are ordered the same
+        let orderedLayers = []
+
+        // this.props.updateLayers(pattern.state.layers)
+        for (const layer of pattern.state.layers) {
+            let index = _.findIndex(this.props.round.layers, { id: layer.id })
+            orderedLayers[index] = layer
+        }
+        await this.props.updateLayers(orderedLayers)
+        // now save to firebase
+        for (const layer of pattern.state.layers) {
+            // todo handle edge cases - eg layer been deleted
+            const layerExists = _.find(this.props.round.layers, { id: layer.id })
+            if (!_.isNil(layerExists)) {
+                this.context.updateLayer(this.props.round.id, layer.id, layer)
             }
         }
     }
@@ -1757,7 +1752,6 @@ class PlayUI extends Component {
     }
 
     onSavePattern = (id) => {
-        // save all steps for this user
         this.setState({ selectedPattern: id })
         this.selectedPatternNeedsSaving = false
         const state = this.getCurrentState(this.props.user.id)
@@ -1871,7 +1865,7 @@ class PlayUI extends Component {
         setIsPlayingSequence(user.id, isPlayingSequence)
         const newRound = { ...round }
         newRound.userPatterns[user.id].isPlayingSequence = isPlayingSequence
-        this.context.saveUserPatterns(round.id, user.id, newRound.userPatterns[user.id])
+        !this.isPlayingSequence && this.context.saveUserPatterns(round.id, user.id, newRound.userPatterns[user.id])
         this.isPlayingSequence = isPlayingSequence
     }
 
@@ -1935,22 +1929,37 @@ class PlayUI extends Component {
             if (layers && layers.length > 0) {
                 await this.renderMicroRound({ x: x + 1.5, y: y + 1.5, pattern: currentPatternGraphic, layers })
             }
-            if (id === patterns[0].id &&
-                (!layers || !_.isEqual(layers, round.layers)) &&
-                !this.isPlayingSequence) {
-                await this.renderMicroRound({ x: x + 1.5, y: y + 1.5, pattern: currentPatternGraphic, layers: round.layers })
-                this.onSavePattern(id)
-            }
             const clickableButton = this.container.nested().circle(patternDiameter + 20)
             clickableButton.fill({ color: '#000', opacity: 0.001 })
             clickableButton.attr({ cursor: 'pointer', id: `${e}_pattern_clickable_button` })
             clickableButton.x(x - 10)
             clickableButton.y(y - 10)
             clickableButton.on('click', async () => {
+                const { round, isPlaying } = this.props
+                this.activePatternId = id
+                const patterns = round.userPatterns[user.id].patterns
                 if (this.isPlayingSequence) return
                 if (!this.isRecordingSequence) {
-                    await this.renderMicroRound({ x: x + 1.5, y: y + 1.5, pattern: currentPatternGraphic, layers: round.layers })
-                    this.onSavePattern(id)
+                    const pattern = _.find(patterns, { id })
+                    const patternLayers = pattern.state.layers
+                    if (!patternLayers) {
+                        pattern.state.layers = []
+                        /** clear out steps from existing layers */
+                        for (const existingLayer of round.layers) {
+                            let existingLayerClone = _.cloneDeep(existingLayer)
+                            for (const step of existingLayerClone.steps) {
+                                step.isOn = false
+                            }
+                            pattern.state.layers.push(existingLayerClone)
+                        }
+                        this.props.dispatch({ type: UPDATE_LAYERS, payload: { layers: pattern.state.layers } })
+                        this.onSavePattern(id)
+                    }
+
+                    if (patternLayers) {
+                        if (isPlaying) this.onPlaybackToggle()
+                        this.onLoadPattern(id)
+                    }
                     this.draw()
                 }
                 if (layers && layers.length > 0 && this.isRecordingSequence) {
@@ -2101,6 +2110,9 @@ class PlayUI extends Component {
     }
 
     onToggleRecordSequence = () => {
+        const { isPlaying } = this.props
+        if (isPlaying)
+            this.onPlaybackToggle()
         this.isRecordingSequence = !this.isRecordingSequence
         this.onRecordSequenceClick()
         this.renderPatternPresetsSequencer()
