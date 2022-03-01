@@ -1453,7 +1453,6 @@ class PlayUI extends Component {
         // update internal round so that it doesn't trigger another update when we receive a change after the dispatch
         step.isOn = !step.isOn
         this.updateStep(step, false)
-        AudioEngine.recalculateParts(this.round)
         this.props.dispatch({ type: TOGGLE_STEP, payload: { layerId: stepGraphic.layerId, stepId: stepGraphic.id, lastUpdated: new Date().getTime(), isOn: step.isOn, user: null } })
         const firstPattern = this.props.round.userPatterns[user.id].patterns[0]
         if (!this.activePatternId || this.activePatternId === firstPattern.id) {
