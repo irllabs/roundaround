@@ -1455,6 +1455,7 @@ class PlayUI extends Component {
         this.updateStep(step, false)
         this.props.dispatch({ type: TOGGLE_STEP, payload: { layerId: stepGraphic.layerId, stepId: stepGraphic.id, lastUpdated: new Date().getTime(), isOn: step.isOn, user: null } })
         const firstPattern = this.props.round.userPatterns[user.id].patterns[0]
+        AudioEngine.recalculateParts(this.round)
         if (!this.activePatternId || this.activePatternId === firstPattern.id) {
             this.saveLayer(stepGraphic.layerId)
         }
