@@ -1933,7 +1933,7 @@ class PlayUI extends Component {
                 const { round, isPlaying } = this.props
                 this.activePatternId = id
                 const patterns = round.userPatterns[user.id].patterns
-                if (this.isPlayingSequence) return
+                if (this.isPlayingSequence && isPlaying) return
                 if (!this.isRecordingSequence) {
                     const pattern = _.find(patterns, { id })
                     const patternLayers = pattern.state.layers
@@ -1952,9 +1952,9 @@ class PlayUI extends Component {
                     }
 
                     if (patternLayers) {
-                        if (isPlaying) this.onPlaybackToggle()
                         this.onLoadPattern(id)
                     }
+                    AudioEngine.recalculateParts(this.props.round)
                     this.draw()
                 }
                 if (layers && layers.length > 0 && this.isRecordingSequence) {
