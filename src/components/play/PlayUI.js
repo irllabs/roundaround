@@ -180,11 +180,6 @@ class PlayUI extends Component {
             this.loadSequence(diff.updated.userPatterns)
         }
 
-        // step updates
-        if (!_.isNil(diff.updated.layers)) {
-            shouldRecalculateParts = true;
-            redraw = true
-        }
 
         if (this.props.selectedLayerId && (prevProps.selectedLayerId !== this.props.selectedLayerId) && !redraw) {
             // prevent reloads and recalculations when only layer is selected
@@ -208,7 +203,7 @@ class PlayUI extends Component {
 
         // add layer
         if (!_.isNil(diff.added.layers)) {
-            AudioEngine.load(this.props.round)
+            //AudioEngine.load(this.props.round)
             for (let [, layer] of Object.entries(diff.added.layers)) {
                 AudioEngine.createTrack(layer)
             }
@@ -1422,8 +1417,9 @@ class PlayUI extends Component {
         }
     }
 
-    saveLayer(id) {
-        this.context.updateLayer(this.round.id, id, _.find(this.round.layers, { id }))
+    saveLayer(id, round) {
+        const currentRound = round || this.props.round
+        this.context.updateLayer(this.round.id, id, _.find(currentRound.layers, { id }))
     }
 
     removeAllStepEventListeners() {
@@ -1466,7 +1462,7 @@ class PlayUI extends Component {
         if (this.activePatternId) {
             this.onSavePattern(this.activePatternId)
         }
-        this.renderPatternPresetsSequencer()
+        this.draw()
     }
 
     async onAddLayerClick() {
