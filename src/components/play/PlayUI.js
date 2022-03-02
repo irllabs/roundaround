@@ -241,6 +241,7 @@ class PlayUI extends Component {
             let newLayer = _.find(this.props.round.layers, { id: layer.id })
             if (!_.isNil(newLayer) && !_.isEqual(layer.isMuted, newLayer.isMuted)) {
                 AudioEngine.tracksById[newLayer.id]?.setMute(newLayer.isMuted)
+                redraw = true
             }
         }
 
