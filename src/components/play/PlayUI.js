@@ -178,6 +178,7 @@ class PlayUI extends Component {
         // sequence update
         if (!_.isNil(diff.updated.userPatterns)) {
             this.loadSequence(diff.updated.userPatterns)
+            redraw = true
         }
 
 
@@ -203,7 +204,7 @@ class PlayUI extends Component {
 
         // add layer
         if (!_.isNil(diff.added.layers)) {
-            //AudioEngine.load(this.props.round)
+            console.log('added layers', diff)
             for (let [, layer] of Object.entries(diff.added.layers)) {
                 AudioEngine.createTrack(layer)
             }
@@ -1915,15 +1916,16 @@ class PlayUI extends Component {
             label.attr({ id: `${e}_pattern_label` })
             label.x(labelX)
             label.y(labelY)
-            const isFirst = patterns[0].id === id
-            currentPatternGraphic.attr({ id: `${e}_pattern`, fill: 'none', opacity: isFirst ? 0.3 : 0.1, cursor: 'pointer' })
+            //const isFirst = patterns[0].id === id
+            const isSelected = id === this.activePatternId
+            currentPatternGraphic.attr({ id: `${e}_pattern`, fill: 'none', opacity: isSelected ? 0.4 : 0.1, cursor: 'pointer' })
             currentPatternGraphic.stroke({ color: user.color, width: 18 })
             currentPatternGraphic.fill('none')
             currentPatternGraphic.x(x)
             currentPatternGraphic.y(y)
             this.microPatternGraphics.push(currentPatternGraphic)
             if (layers && layers.length > 0) {
-                await this.renderMicroRound({ x: x + 1.5, y: y + 1.5, pattern: currentPatternGraphic, layers })
+                this.renderMicroRound({ x: x + 1.5, y: y + 1.5, pattern: currentPatternGraphic, layers })
             }
             const clickableButton = this.container.nested().circle(patternDiameter + 20)
             clickableButton.fill({ color: '#000', opacity: 0.001 })
@@ -2010,15 +2012,15 @@ class PlayUI extends Component {
 
             if (isFilled) {
                 const sequenceBackground = this.container.nested().circle(sequenceDiameter - 12)
-                sequenceBackground.attr({ id: `${i}_sequence_bg`, cursor: 'pointer' })
-                sequenceBackground.stroke({ color: user.color, width: 8, opacity: isHighlighted ? 0.55 : 0.35 })
+                sequenceBackground.attr({ id: `${i}_sequence_bg` })
+                sequenceBackground.stroke({ color: user.color, width: 8, opacity: isHighlighted ? 0.5 : 0.1 })
                 sequenceBackground.fill({
                     color: 'rgba(0,0,0,0.01)'
                 })
                 sequenceBackground.x(sX + 6)
                 sequenceBackground.y(sY + 6)
             }
-            sequencePattern.attr({ id: `${i}_sequence_pattern`, cursor: 'pointer' })
+            sequencePattern.attr({ id: `${i}_sequence_pattern` })
             sequencePattern.stroke({ color: user.color, width: 1, opacity: 0.5, })
             sequencePattern.fill({ color: 'rgba(0,0,0,0.01)' })
             sequencePattern.x(sX)
@@ -2026,9 +2028,8 @@ class PlayUI extends Component {
             const layers = pattern && pattern.state && [...pattern.state.layers]
 
             if (layers) {
-                await this.renderMicroRound({ x: sX + 3.5, y: sY + 3.5, pattern: sequencePattern, layers, isFilled: isHighlighted, diameter: sequenceDiameter })
+                this.renderMicroRound({ x: sX + 3.5, y: sY + 3.5, pattern: sequencePattern, layers, isFilled: isHighlighted, diameter: sequenceDiameter })
             }
-
             this.sequenceGraphics.push(sequencePattern)
             i++
         }
@@ -2180,7 +2181,7 @@ class PlayUI extends Component {
         const layerStrokeSize = diameter ? HTML_UI_Params.micro2LayerStrokeMax : HTML_UI_Params.microLayerStrokeMax
         const layerGraphic =
             this.container.circle(layerDiameter).fill('none')
-                .stroke({ color: user.color, width: layerStrokeSize, opacity: 0.1 })
+                .stroke({ color: user.color, width: layerStrokeSize, opacity: 0.00001 })
         layerGraphic.x(xOffset)
         layerGraphic.y(yOffset)
         layerGraphic.id = layer.id
