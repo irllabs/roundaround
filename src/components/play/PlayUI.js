@@ -169,7 +169,7 @@ class PlayUI extends Component {
         }
 
         if (!sameLayerLength) {
-            this.onSavePattern(this.activePatternId)
+            await this.onSavePattern(this.activePatternId)
         }
 
         //layer removal
@@ -1423,9 +1423,9 @@ class PlayUI extends Component {
         }
     }
 
-    saveLayer(id, round) {
+    async saveLayer(id, round) {
         const currentRound = round || this.props.round
-        this.context.updateLayer(this.round.id, id, _.find(currentRound.layers, { id }))
+        await this.context.updateLayer(this.round.id, id, _.find(currentRound.layers, { id }))
     }
 
     removeAllStepEventListeners() {
@@ -1453,7 +1453,7 @@ class PlayUI extends Component {
         this.stepModalThumb.y((1 - stepGraphic.velocity) * (HTML_UI_Params.stepModalDimensions - HTML_UI_Params.stepModalThumbDiameter))
     }
 
-    onStepClick(stepGraphic) {
+    async onStepClick(stepGraphic) {
         const { user } = this.props
         let step = this.getStep(stepGraphic.id)
         // update internal round so that it doesn't trigger another update when we receive a change after the dispatch
@@ -1463,10 +1463,10 @@ class PlayUI extends Component {
         const firstPattern = this.props.round.userPatterns[user.id].patterns[0]
         AudioEngine.recalculateParts(this.round)
         if (!this.activePatternId || this.activePatternId === firstPattern.id) {
-            this.saveLayer(stepGraphic.layerId)
+            await this.saveLayer(stepGraphic.layerId)
         }
         if (this.activePatternId) {
-            this.onSavePattern(this.activePatternId)
+            await this.onSavePattern(this.activePatternId)
         }
         this.draw()
     }
@@ -1753,12 +1753,12 @@ class PlayUI extends Component {
         this.props.setIsRecordingSequence(!this.props.display.isRecordingSequence)
     }
 
-    onSavePattern = (id) => {
+    onSavePattern = async (id) => {
         this.setState({ selectedPattern: id })
         this.selectedPatternNeedsSaving = false
         const state = this.getCurrentState(this.props.user.id)
         this.props.saveUserPattern(this.props.user.id, id, state)
-        this.context.saveUserPatterns(this.props.round.id, this.props.user.id, this.props.round.userPatterns[this.props.user.id])
+        await this.context.saveUserPatterns(this.props.round.id, this.props.user.id, this.props.round.userPatterns[this.props.user.id])
     }
 
     getCurrentState = (userId) => {
