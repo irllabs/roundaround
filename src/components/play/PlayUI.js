@@ -1198,7 +1198,7 @@ class PlayUI extends Component {
         const _this = this
         if (stepGraphic.isAllowedInteraction) {
 
-            stepGraphic.on('mouseout', (e) => {
+            stepGraphic.on('mouseout', async (e) => {
                 if (!_.isNil(_this.stepMoveTimer)) {
                     // we've swiped / dragged out of the step, toggle this step and listen for mouseovers on all other steps
                     // add listener to layergraphic to cancel swiping
@@ -1454,17 +1454,14 @@ class PlayUI extends Component {
     }
 
     async onStepClick(stepGraphic) {
-        const { user } = this.props
+        //const { user } = this.props
         let step = this.getStep(stepGraphic.id)
         // update internal round so that it doesn't trigger another update when we receive a change after the dispatch
         step.isOn = !step.isOn
         this.updateStep(step, false)
         this.props.dispatch({ type: TOGGLE_STEP, payload: { layerId: stepGraphic.layerId, stepId: stepGraphic.id, lastUpdated: new Date().getTime(), isOn: step.isOn, user: null } })
-        const firstPattern = this.props.round.userPatterns[user.id].patterns[0]
         AudioEngine.recalculateParts(this.round)
-        if (!this.activePatternId || this.activePatternId === firstPattern.id) {
-            await this.saveLayer(stepGraphic.layerId)
-        }
+        await this.saveLayer(stepGraphic.layerId)
         if (this.activePatternId) {
             await this.onSavePattern(this.activePatternId)
         }
@@ -1928,7 +1925,16 @@ class PlayUI extends Component {
             currentPatternGraphic.fill('none')
             currentPatternGraphic.x(x)
             currentPatternGraphic.y(y)
-            this.microPatternGraphics.push(currentPatternGraphic)
+
+            if (this.activePatternId === id) {
+                const patternOutline = this.container.nested().circle(patternDiameter + 25)
+                patternOutline.stroke({
+                    color: user.color, width: 2
+                }).fill('none')
+                patternOutline.x(x - 12.5)
+                patternOutline.y(y - 12.5)
+            }
+            //this.microPatternGraphics.push(currentPatternGraphic)
             if (layers && layers.length > 0) {
                 this.renderMicroRound({ x: x + 1.5, y: y + 1.5, pattern: currentPatternGraphic, layers })
             }
@@ -1956,7 +1962,7 @@ class PlayUI extends Component {
                             pattern.state.layers.push(existingLayerClone)
                         }
                         this.props.dispatch({ type: UPDATE_LAYERS, payload: { layers: pattern.state.layers } })
-                        this.onSavePattern(id)
+                        await this.onSavePattern(id)
                     }
 
                     if (patternLayers) {
