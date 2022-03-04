@@ -148,6 +148,8 @@ class PlayUI extends Component {
         let redraw = false
         let shouldRecalculateParts = false
         const _this = this
+        const sameLayerLength = prevProps.round.layers.length === round.layers.length
+
         this.isPlayingSequence = round.userPatterns[user.id].isPlayingSequence
 
         !this.activePatternId &&
@@ -166,7 +168,11 @@ class PlayUI extends Component {
             return
         }
 
-        // remove layer
+        if (!sameLayerLength) {
+            this.onSavePattern(this.activePatternId)
+        }
+
+        //layer removal
         for (let layer of this.round.layers) {
             let newLayer = _.find(this.props.round.layers, { id: layer.id })
             if (_.isNil(newLayer)) {
@@ -204,7 +210,6 @@ class PlayUI extends Component {
 
         // add layer
         if (!_.isNil(diff.added.layers)) {
-            console.log('added layers', diff)
             for (let [, layer] of Object.entries(diff.added.layers)) {
                 AudioEngine.createTrack(layer)
             }
@@ -2155,12 +2160,23 @@ class PlayUI extends Component {
         const { round, user } = this.props
         const patterns = round.userPatterns[user.id].patterns
         for (let i = 0; i < patterns.length; i++) {
+            const { state: { layers } } = patterns[i]
             const rnd = document.getElementById(`${i}_pattern`)
             const lbl = document.getElementById(`${i}_pattern_label`)
             const btn = document.getElementById(`${i}_pattern_clickable_button`)
             rnd && rnd.parentNode.removeChild(rnd)
             lbl && lbl.parentNode.removeChild(lbl)
             btn && btn.parentNode.removeChild(btn)
+            layers && layers.forEach(layer => {
+                const { steps } = layer;
+                steps && steps.forEach(step => {
+                    const { id, isOn } = step
+                    if (isOn) {
+                        const stepNode = document.getElementById(`micro-step-${id}`)
+                        stepNode && stepNode.parentNode.removeChild(stepNode)
+                    }
+                })
+            })
         }
     }
 
@@ -2200,11 +2216,13 @@ class PlayUI extends Component {
         angle += angleTimeOffset
         layerGraphic.firstStep = null
         await layer.steps.map((step, i) => {
+            const { id } = step
             const x = Math.round(layerDiameter / 2 + radius * Math.cos(angle) - stepDiameter / 2) + xOffset;
             const y = Math.round(layerDiameter / 2 + radius * Math.sin(angle) - stepDiameter / 2) + yOffset;
             const stepGraphic = this.container.circle(stepDiameter)
             stepGraphic.stroke('none')
             stepGraphic.fill({ color: step.isOn ? user.color : 'rgba(0,0,0,0)', opacity: 1 })
+            stepGraphic.attr({ id: `micro-step-${id}` })
             stepGraphic.x(x)
             stepGraphic.y(y)
             angle += stepSize
@@ -2232,11 +2250,7 @@ class PlayUI extends Component {
 
     render() {
         return (
-            <>
-                <div className="round" id="round"></div>
-                <div className="sequencer" id="sequencer"></div>
-            </>
-
+            <div className="round" id="round"></div>
         )
     }
 }
