@@ -92,9 +92,8 @@ class PlayUI extends Component {
         // load sequence if enabled
         const patterns = round.userPatterns
         this.loadSequence(patterns)
-
-        await this.createRound()
         this.setDefaultPattern()
+        await this.createRound()
     }
 
     async componentWillUnmount() {
