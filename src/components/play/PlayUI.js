@@ -148,6 +148,8 @@ class PlayUI extends Component {
         let redraw = false
         let shouldRecalculateParts = false
         const _this = this
+        const sameLayerLength = prevProps.round.layers.length === round.layers.length
+
         this.isPlayingSequence = round.userPatterns[user.id].isPlayingSequence
 
         !this.activePatternId &&
@@ -166,7 +168,11 @@ class PlayUI extends Component {
             return
         }
 
-        // remove layer
+        if (!sameLayerLength) {
+            await this.onSavePattern(this.activePatternId)
+        }
+
+        //layer removal
         for (let layer of this.round.layers) {
             let newLayer = _.find(this.props.round.layers, { id: layer.id })
             if (_.isNil(newLayer)) {
@@ -178,6 +184,7 @@ class PlayUI extends Component {
         // sequence update
         if (!_.isNil(diff.updated.userPatterns)) {
             this.loadSequence(diff.updated.userPatterns)
+            redraw = true
         }
 
 
@@ -203,7 +210,6 @@ class PlayUI extends Component {
 
         // add layer
         if (!_.isNil(diff.added.layers)) {
-            //AudioEngine.load(this.props.round)
             for (let [, layer] of Object.entries(diff.added.layers)) {
                 AudioEngine.createTrack(layer)
             }
@@ -1192,7 +1198,7 @@ class PlayUI extends Component {
         const _this = this
         if (stepGraphic.isAllowedInteraction) {
 
-            stepGraphic.on('mouseout', (e) => {
+            stepGraphic.on('mouseout', async (e) => {
                 if (!_.isNil(_this.stepMoveTimer)) {
                     // we've swiped / dragged out of the step, toggle this step and listen for mouseovers on all other steps
                     // add listener to layergraphic to cancel swiping
@@ -1417,9 +1423,9 @@ class PlayUI extends Component {
         }
     }
 
-    saveLayer(id, round) {
+    async saveLayer(id, round) {
         const currentRound = round || this.props.round
-        this.context.updateLayer(this.round.id, id, _.find(currentRound.layers, { id }))
+        await this.context.updateLayer(this.round.id, id, _.find(currentRound.layers, { id }))
     }
 
     removeAllStepEventListeners() {
@@ -1447,20 +1453,17 @@ class PlayUI extends Component {
         this.stepModalThumb.y((1 - stepGraphic.velocity) * (HTML_UI_Params.stepModalDimensions - HTML_UI_Params.stepModalThumbDiameter))
     }
 
-    onStepClick(stepGraphic) {
-        const { user } = this.props
+    async onStepClick(stepGraphic) {
+        //const { user } = this.props
         let step = this.getStep(stepGraphic.id)
         // update internal round so that it doesn't trigger another update when we receive a change after the dispatch
         step.isOn = !step.isOn
         this.updateStep(step, false)
         this.props.dispatch({ type: TOGGLE_STEP, payload: { layerId: stepGraphic.layerId, stepId: stepGraphic.id, lastUpdated: new Date().getTime(), isOn: step.isOn, user: null } })
-        const firstPattern = this.props.round.userPatterns[user.id].patterns[0]
         AudioEngine.recalculateParts(this.round)
-        if (!this.activePatternId || this.activePatternId === firstPattern.id) {
-            this.saveLayer(stepGraphic.layerId)
-        }
+        await this.saveLayer(stepGraphic.layerId)
         if (this.activePatternId) {
-            this.onSavePattern(this.activePatternId)
+            await this.onSavePattern(this.activePatternId)
         }
         this.draw()
     }
@@ -1747,12 +1750,12 @@ class PlayUI extends Component {
         this.props.setIsRecordingSequence(!this.props.display.isRecordingSequence)
     }
 
-    onSavePattern = (id) => {
+    onSavePattern = async (id) => {
         this.setState({ selectedPattern: id })
         this.selectedPatternNeedsSaving = false
         const state = this.getCurrentState(this.props.user.id)
         this.props.saveUserPattern(this.props.user.id, id, state)
-        this.context.saveUserPatterns(this.props.round.id, this.props.user.id, this.props.round.userPatterns[this.props.user.id])
+        await this.context.saveUserPatterns(this.props.round.id, this.props.user.id, this.props.round.userPatterns[this.props.user.id])
     }
 
     getCurrentState = (userId) => {
@@ -1915,15 +1918,25 @@ class PlayUI extends Component {
             label.attr({ id: `${e}_pattern_label` })
             label.x(labelX)
             label.y(labelY)
-            const isFirst = patterns[0].id === id
-            currentPatternGraphic.attr({ id: `${e}_pattern`, fill: 'none', opacity: isFirst ? 0.3 : 0.1, cursor: 'pointer' })
+            //const isFirst = patterns[0].id === id
+            const isSelected = id === this.activePatternId
+            currentPatternGraphic.attr({ id: `${e}_pattern`, fill: 'none', opacity: isSelected ? 0.4 : 0.1, cursor: 'pointer' })
             currentPatternGraphic.stroke({ color: user.color, width: 18 })
             currentPatternGraphic.fill('none')
             currentPatternGraphic.x(x)
             currentPatternGraphic.y(y)
-            this.microPatternGraphics.push(currentPatternGraphic)
+
+            if (this.activePatternId === id) {
+                const patternOutline = this.container.nested().circle(patternDiameter + 25)
+                patternOutline.stroke({
+                    color: user.color, width: 2
+                }).fill('none')
+                patternOutline.x(x - 12.5)
+                patternOutline.y(y - 12.5)
+            }
+            //this.microPatternGraphics.push(currentPatternGraphic)
             if (layers && layers.length > 0) {
-                await this.renderMicroRound({ x: x + 1.5, y: y + 1.5, pattern: currentPatternGraphic, layers })
+                this.renderMicroRound({ x: x + 1.5, y: y + 1.5, pattern: currentPatternGraphic, layers })
             }
             const clickableButton = this.container.nested().circle(patternDiameter + 20)
             clickableButton.fill({ color: '#000', opacity: 0.001 })
@@ -1949,7 +1962,7 @@ class PlayUI extends Component {
                             pattern.state.layers.push(existingLayerClone)
                         }
                         this.props.dispatch({ type: UPDATE_LAYERS, payload: { layers: pattern.state.layers } })
-                        this.onSavePattern(id)
+                        await this.onSavePattern(id)
                     }
 
                     if (patternLayers) {
@@ -2010,15 +2023,15 @@ class PlayUI extends Component {
 
             if (isFilled) {
                 const sequenceBackground = this.container.nested().circle(sequenceDiameter - 12)
-                sequenceBackground.attr({ id: `${i}_sequence_bg`, cursor: 'pointer' })
-                sequenceBackground.stroke({ color: user.color, width: 8, opacity: isHighlighted ? 0.55 : 0.35 })
+                sequenceBackground.attr({ id: `${i}_sequence_bg` })
+                sequenceBackground.stroke({ color: user.color, width: 8, opacity: isHighlighted ? 0.5 : 0.1 })
                 sequenceBackground.fill({
                     color: 'rgba(0,0,0,0.01)'
                 })
                 sequenceBackground.x(sX + 6)
                 sequenceBackground.y(sY + 6)
             }
-            sequencePattern.attr({ id: `${i}_sequence_pattern`, cursor: 'pointer' })
+            sequencePattern.attr({ id: `${i}_sequence_pattern` })
             sequencePattern.stroke({ color: user.color, width: 1, opacity: 0.5, })
             sequencePattern.fill({ color: 'rgba(0,0,0,0.01)' })
             sequencePattern.x(sX)
@@ -2026,9 +2039,8 @@ class PlayUI extends Component {
             const layers = pattern && pattern.state && [...pattern.state.layers]
 
             if (layers) {
-                await this.renderMicroRound({ x: sX + 3.5, y: sY + 3.5, pattern: sequencePattern, layers, isFilled: isHighlighted, diameter: sequenceDiameter })
+                this.renderMicroRound({ x: sX + 3.5, y: sY + 3.5, pattern: sequencePattern, layers, isFilled: isHighlighted, diameter: sequenceDiameter })
             }
-
             this.sequenceGraphics.push(sequencePattern)
             i++
         }
@@ -2154,12 +2166,23 @@ class PlayUI extends Component {
         const { round, user } = this.props
         const patterns = round.userPatterns[user.id].patterns
         for (let i = 0; i < patterns.length; i++) {
+            const { state: { layers } } = patterns[i]
             const rnd = document.getElementById(`${i}_pattern`)
             const lbl = document.getElementById(`${i}_pattern_label`)
             const btn = document.getElementById(`${i}_pattern_clickable_button`)
             rnd && rnd.parentNode.removeChild(rnd)
             lbl && lbl.parentNode.removeChild(lbl)
             btn && btn.parentNode.removeChild(btn)
+            layers && layers.forEach(layer => {
+                const { steps } = layer;
+                steps && steps.forEach(step => {
+                    const { id, isOn } = step
+                    if (isOn) {
+                        const stepNode = document.getElementById(`micro-step-${id}`)
+                        stepNode && stepNode.parentNode.removeChild(stepNode)
+                    }
+                })
+            })
         }
     }
 
@@ -2180,7 +2203,7 @@ class PlayUI extends Component {
         const layerStrokeSize = diameter ? HTML_UI_Params.micro2LayerStrokeMax : HTML_UI_Params.microLayerStrokeMax
         const layerGraphic =
             this.container.circle(layerDiameter).fill('none')
-                .stroke({ color: user.color, width: layerStrokeSize, opacity: 0.1 })
+                .stroke({ color: user.color, width: layerStrokeSize, opacity: 0.00001 })
         layerGraphic.x(xOffset)
         layerGraphic.y(yOffset)
         layerGraphic.id = layer.id
@@ -2199,11 +2222,13 @@ class PlayUI extends Component {
         angle += angleTimeOffset
         layerGraphic.firstStep = null
         await layer.steps.map((step, i) => {
+            const { id } = step
             const x = Math.round(layerDiameter / 2 + radius * Math.cos(angle) - stepDiameter / 2) + xOffset;
             const y = Math.round(layerDiameter / 2 + radius * Math.sin(angle) - stepDiameter / 2) + yOffset;
             const stepGraphic = this.container.circle(stepDiameter)
             stepGraphic.stroke('none')
             stepGraphic.fill({ color: step.isOn ? user.color : 'rgba(0,0,0,0)', opacity: 1 })
+            stepGraphic.attr({ id: `micro-step-${id}` })
             stepGraphic.x(x)
             stepGraphic.y(y)
             angle += stepSize
@@ -2231,11 +2256,7 @@ class PlayUI extends Component {
 
     render() {
         return (
-            <>
-                <div className="round" id="round"></div>
-                <div className="sequencer" id="sequencer"></div>
-            </>
-
+            <div className="round" id="round"></div>
         )
     }
 }
