@@ -1629,15 +1629,6 @@ class PlayUI extends Component {
                     <path fill-rule="evenodd" clip-rule="evenodd" d="M9.53014 4.05693L8.2715 1.8769C7.62095 0.750117 5.99458 0.750118 5.34403 1.8769L0.692891 9.93291C0.0423411 11.0597 0.855527 12.4682 2.15663 12.4682H11.4589C12.76 12.4682 13.5732 11.0597 12.9226 9.93291L12.171 8.63102V8.47966H12.0836L10.1534 5.13645L12.5612 0.966028L11.6263 0.42627L9.53014 4.05693ZM9.48765 6.28956L8.2232 8.47966H10.7521L9.48765 6.28956ZM8.86439 5.21004L6.97668 8.47966H2.86342L6.34265 2.45346C6.54937 2.09542 7.06616 2.09542 7.27288 2.45346L8.86439 5.21004ZM11.4179 9.63277H2.19767L1.69152 10.5095C1.4848 10.8675 1.74319 11.3151 2.15663 11.3151H11.4589C11.8723 11.3151 12.1307 10.8675 11.924 10.5095L11.4179 9.63277Z" fill="white" fill-opacity="0.9"/>
                 </svg>`)
 
-            // const sButtonX = xOffset + HTML_UI_Params.sequenceButtonXOffset
-            // const sButtonY = yOffset + HTML_UI_Params.sequenceButtonYOffset
-
-            // const tempoButtonX = xOffset + HTML_UI_Params.tempoButtonXOffset
-            // const tempoButtonY = xOffset + HTML_UI_Params.tempoButtonYOffset
-
-            // const tempoIconX = xOffset + HTML_UI_Params.tempoIconXOffset
-            // const tempoIconY = xOffset + HTML_UI_Params.tempoIconYOffset
-
             const tempoButtonX = xOffset + HTML_UI_Params.tempoButtonXOffset
             const tempoButtonY = yOffset + HTML_UI_Params.tempoButtonYOffset
 
