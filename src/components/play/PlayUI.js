@@ -1632,11 +1632,20 @@ class PlayUI extends Component {
             // const sButtonX = xOffset + HTML_UI_Params.sequenceButtonXOffset
             // const sButtonY = yOffset + HTML_UI_Params.sequenceButtonYOffset
 
+            // const tempoButtonX = xOffset + HTML_UI_Params.tempoButtonXOffset
+            // const tempoButtonY = xOffset + HTML_UI_Params.tempoButtonYOffset
+
+            // const tempoIconX = xOffset + HTML_UI_Params.tempoIconXOffset
+            // const tempoIconY = xOffset + HTML_UI_Params.tempoIconYOffset
+
             const tempoButtonX = xOffset + HTML_UI_Params.tempoButtonXOffset
-            const tempoButtonY = xOffset + HTML_UI_Params.tempoButtonYOffset
+            const tempoButtonY = yOffset + HTML_UI_Params.tempoButtonYOffset
 
             const tempoIconX = xOffset + HTML_UI_Params.tempoIconXOffset
-            const tempoIconY = xOffset + HTML_UI_Params.tempoIconYOffset
+            const tempoIconY = yOffset + HTML_UI_Params.tempoIconYOffset
+
+            const tempoButtonTextX = xOffset + HTML_UI_Params.tempoButtonTextXOffset
+            const tempoButtonTextY = yOffset + HTML_UI_Params.tempoButtonTextYOffset
 
             tempoIcon.x(tempoIconX)
             tempoIcon.y(tempoIconY)
@@ -1647,8 +1656,8 @@ class PlayUI extends Component {
             tempoButton.fill('#fff').attr({ opacity: 0.1 })
             const tempoButtonText = this.container.nested().plain(round.bpm)
 
-            tempoButtonText.x(tempoButtonX + 30)
-            tempoButtonText.y(tempoButtonY + 8)
+            tempoButtonText.x(tempoButtonTextX)
+            tempoButtonText.y(tempoButtonTextY)
 
             tempoButtonText.font({
                 family: 'Arial',
