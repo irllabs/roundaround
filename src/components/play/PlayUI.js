@@ -186,12 +186,6 @@ class PlayUI extends Component {
             redraw = true
         }
 
-
-        if (this.props.selectedLayerId && (prevProps.selectedLayerId !== this.props.selectedLayerId) && !redraw) {
-            // prevent reloads and recalculations when only layer is selected
-            return
-        }
-
         //  tempo changed
         if (this.round.bpm !== this.props.round.bpm) {
             this.round.bpm = this.props.round.bpm
@@ -602,7 +596,8 @@ class PlayUI extends Component {
         const _this = this
         this.toneParts = []
         for (const layer of this.round.layers) {
-            const notes = this.convertStepsToNotes(layer.steps, this.userColors[layer.createdBy])
+            const color = layer.isMuted ? '#FFFFFF' : this.userColors[layer.createdBy]
+            const notes = this.convertStepsToNotes(layer.steps, color)
             for (let note of notes) {
                 note.time += 'i';
             }
@@ -610,10 +605,9 @@ class PlayUI extends Component {
                 Tone.Draw.schedule(function () {
                     const stepGraphic = _.find(_this.stepGraphics, { id: note.id })
                     if (!_.isNil(stepGraphic)) {
-                        stepGraphic.stroke({ color: '#FFFFFF' })
-                        stepGraphic.animate().stroke({ color: note.color })
+                        stepGraphic.stroke({ color: '#FFFFFF', opacity: layer.isMuted ? 0.1 : 1 })
+                        stepGraphic.animate().stroke({ color: note.color, opacity: layer.isMuted ? 0.1 : 1 })
                     }
-
                 }, time)
             }, notes)
             part.loop = true
@@ -893,9 +887,10 @@ class PlayUI extends Component {
             const x = Math.round(layerDiameter / 2 + radius * Math.cos(angle) - stepDiameter / 2) + xOffset;
             const y = Math.round(layerDiameter / 2 + radius * Math.sin(angle) - stepDiameter / 2) + yOffset;
             const stepGraphic = this.container.circle(stepDiameter)
-            stepGraphic.stroke({ color: this.userColors[layer.createdBy], width: stepStrokeWidth + 'px' }).opacity(!createdByThisUser ? 0.5 : 1)
-            // stepGraphic.stroke({ opacity: 1 })
-            layer.isMuted && stepGraphic.stroke({ color: 'rgba(255,255,255,0.1)' })
+            stepGraphic.stroke({
+                color: layer.isMuted ? 'rgba(255,255,255, 0.1)' : this.userColors[layer.createdBy],
+                width: stepStrokeWidth + 'px'
+            }).opacity(!createdByThisUser ? 0.5 : 1)
             stepGraphic.x(x)
             stepGraphic.y(y)
             angle += stepSize
@@ -957,7 +952,11 @@ class PlayUI extends Component {
                 // add delay so that graphic updates after activity indicator hits it
                 _.delay(() => {
                     if (step.isOn) {
-                        stepGraphic.animate(HTML_UI_Params.stepAnimationUpdateTime).attr({ fill: _this.userColors[layer.createdBy], 'fill-opacity': step.probability })
+                        stepGraphic.animate(HTML_UI_Params.stepAnimationUpdateTime).attr({
+                            fill: layer.isMuted ? 'rgba(255,255,255, 0.1)' : _this.userColors[layer.createdBy],
+                            stroke: layer.isMuted ? 'rgba(255,255,255, 0.1)' : _this.userColors[layer.createdBy],
+                            'fill-opacity': step.probability
+                        })
                         stepGraphic.animate(HTML_UI_Params.stepAnimationUpdateTime).transform({
                             scale: numberRange(step.velocity, 0, 1, 0.5, 1)
                         })
@@ -968,7 +967,11 @@ class PlayUI extends Component {
                 this.animateActivityIndicator(layer.createdBy, stepGraphic.x() + (HTML_UI_Params.stepDiameter / 2), stepGraphic.y() + (HTML_UI_Params.stepDiameter / 2))
             } else {
                 if (step.isOn) {
-                    stepGraphic.attr({ fill: _this.userColors[layer.createdBy], 'fill-opacity': step.probability })
+                    stepGraphic.attr({
+                        fill: layer.isMuted ? 'rgba(255,255,255, 0.1)' : _this.userColors[layer.createdBy],
+                        stroke: layer.isMuted ? 'rgba(255,255,255, 0.1)' : _this.userColors[layer.createdBy],
+                        'fill-opacity': step.probability
+                    })
                     stepGraphic.transform({
                         scale: numberRange(step.velocity, 0, 1, 0.5, 1)
                     })
