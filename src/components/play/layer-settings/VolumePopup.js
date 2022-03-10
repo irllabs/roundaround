@@ -87,6 +87,9 @@ const VolumePopup = ({
     round,
     user,
     showVolumePopup,
+    volumeSliderRef,
+    muteRef,
+    soloRef,
     selectedLayer,
     onMute,
     onSolo
@@ -94,13 +97,19 @@ const VolumePopup = ({
     return (
         <Box className={showVolumePopup ? classes.root : classes.hidden}>
             <Box className={classes.volumeSliderContainer}>
-                <VolumeSlider hideText={true} selectedLayer={selectedLayer} roundId={round.id} user={user} />
+                <VolumeSlider
+                    sliderRef={volumeSliderRef}
+                    hideText={true}
+                    selectedLayer={selectedLayer}
+                    roundId={round.id}
+                    user={user}
+                />
             </Box>
             <Box className={classes.containerSoloMute}>
-                <IconButton onClick={onSolo} className={classes.mixerButton}>
+                <IconButton ref={soloRef} onClick={() => onSolo(selectedLayer)} className={classes.mixerButton}>
                     <Typography style={{ fontWeight: 'bold' }}>S</Typography>
                 </IconButton>
-                <IconButton onClick={onMute} className={classes.mixerButton}>
+                <IconButton ref={muteRef} onClick={() => onMute(selectedLayer)} className={classes.mixerButton}>
                     <Typography style={{ fontWeight: 'bold' }}>M</Typography>
                 </IconButton>
             </Box>
