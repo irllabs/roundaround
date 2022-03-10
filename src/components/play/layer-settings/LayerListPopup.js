@@ -13,6 +13,7 @@ const LayerListPopup = ({
     selectedInstrument,
     instrumentIcon,
     onMuteClick,
+    onSoloClick,
     toggleShowMixerPopup,
     onLayerSelect,
     ref,
@@ -72,7 +73,7 @@ const LayerListPopup = ({
                                 <VolumeSlider hideText={true} selectedLayer={layer} roundId={round.id} user={user} />
                             </Box>
                             <Box className={classes.containerSoloMute}>
-                                <IconButton className={classes.mixerButton}>
+                                <IconButton onClick={() => onSoloClick(layer)} className={classes.mixerButton}>
                                     <Typography style={{ fontWeight: 'bold' }}>S</Typography>
                                 </IconButton>
                                 <IconButton onClick={() => onMuteClick(layer)} className={classes.mixerButton}>
