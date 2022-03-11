@@ -1715,6 +1715,8 @@ class PlayUI extends Component {
                 this.props.setIsRecordingSequence(false)
                 this.props.setIsPlayingSequence(this.props.user.id, true)
             }
+            /** set next available slot as current(highlighted) */
+            this.props.setCurrentSequencePattern(firstAvailbleSlot)
         }
     }
 
