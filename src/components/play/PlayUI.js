@@ -1877,12 +1877,12 @@ class PlayUI extends Component {
     setIsPlayingSequenceGraphic = ({ x, y }) => {
         const { user, round } = this.props
         const isPlayingSequence = round.userPatterns[this.props.user.id].isPlayingSequence
-        const switchLabelContainer = this.container.nested().circle(28)
-        let switchLabelContainerX = x + 195
-        let switchLabelContainerY = y + 150
+        const switchLabelContainer = this.container.nested().circle(HTML_UI_Params.sequenceSwitchLabelContainerSize)
+        let switchLabelContainerX = x + HTML_UI_Params.sequenceSwitchLabelContainerOffXOffset
+        let switchLabelContainerY = y + HTML_UI_Params.sequenceSwitchLabelContainerYOffset
 
         if (isPlayingSequence) {
-            switchLabelContainerX = x + 227
+            switchLabelContainerX = x + HTML_UI_Params.sequenceSwitchLabelContainerONXOffset
         }
 
         switchLabelContainer.x(switchLabelContainerX)
