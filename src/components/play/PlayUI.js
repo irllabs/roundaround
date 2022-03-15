@@ -1712,6 +1712,7 @@ class PlayUI extends Component {
                 this.props.setIsRecordingSequence(false)
             }
             if (firstAvailbleSlot === seq.length - 1) {
+                this.onToggleRecordSequence()
                 this.props.setIsRecordingSequence(false)
                 this.props.setIsPlayingSequence(this.props.user.id, true)
             }
@@ -1788,34 +1789,34 @@ class PlayUI extends Component {
 
     renderPlayingSequenceIndicator = ({ x, y }) => {
         const { user } = this.props
-        const sequenceSwitch = this.container.nested().rect(70, 38).radius(19)
-        const switchLetterSubContainer = this.container.nested().circle(15)
-        const switchLetter = this.container.nested().plain('A')
-        const clickableSwitch = this.container.nested().rect(70, 38).radius(19)
+        const sequenceSwitch = this.container.nested().rect(HTML_UI_Params.sequenceSwitchWidth, HTML_UI_Params.sequenceSwitchHeight).radius(HTML_UI_Params.sequenceButtonRadius)
+        const switchLabelSubContainer = this.container.nested().circle(15)
+        const switchLabel = this.container.nested().plain('A')
+        const clickableSwitch = this.container.nested().rect(HTML_UI_Params.sequenceSwitchWidth, HTML_UI_Params.sequenceSwitchHeight).radius(HTML_UI_Params.sequenceButtonRadius)
         const sequence = this.props.round.userPatterns[user.id].sequence
-        let dotAngle = Math.PI / -1.335
+        let dotAngle = Math.PI / HTML_UI_Params.anglePIDivisor
 
-        switchLetter.font({
+        switchLabel.font({
             family: 'Arial',
             size: 11,
             weight: 900,
             opacity: 1
         })
-        switchLetter.fill(user.color)
-        switchLetter.attr({ id: 'switch-letter' })
+        switchLabel.fill(user.color)
+        switchLabel.attr({ id: 'switch-letter' })
 
-        const sSwitchX = x + 190
-        const sSwitchY = y + 145
+        const sSwitchX = x + HTML_UI_Params.sequenceSwitchXOffset
+        const sSwitchY = y + HTML_UI_Params.sequenceSwitchYOffset
 
         for (let i = 0; i < HTML_UI_Params.sequenceButtonDots; i++) {
             const dotSize = (2 * Math.PI) / sequence.length
-            let dotDiameter = HTML_UI_Params.dotDiameter - 1
+            let dotDiameter = HTML_UI_Params.dotDiameter - HTML_UI_Params.sequenceSwitchDotOffset
             dotAngle += dotSize
-            const switchDotsDiameter = HTML_UI_Params.sequenceButtonDiameter - 4
+            const switchDotsDiameter = HTML_UI_Params.sequenceButtonDiameter - HTML_UI_Params.sequenceSwitchDotsDiameterOffset
             const radius = switchDotsDiameter / 2;
 
-            const bSX = (Math.round(switchDotsDiameter / 2 + radius * Math.cos(dotAngle) - dotDiameter / 2) + sSwitchX) + 46
-            const bSY = (Math.round(switchDotsDiameter / 2 + radius * Math.sin(dotAngle) - dotDiameter / 2) + sSwitchY) + 13
+            const bSX = (Math.round(radius + (radius * Math.cos(dotAngle)) - dotDiameter / 2) + sSwitchX) + HTML_UI_Params.sequenceSwitchDotsXOffset
+            const bSY = (Math.round(radius + (radius * Math.sin(dotAngle)) - dotDiameter / 2) + sSwitchY) + HTML_UI_Params.sequenceSwitchDotsYOffset
 
             const sequenceSwitchDot = this.container.nested().circle(dotDiameter)
             sequenceSwitchDot.attr({ id: `${i}_sequence_dot`, fill: 'rgba(0,0,0,0.1)', opacity: 1 })
@@ -1836,17 +1837,19 @@ class PlayUI extends Component {
         sequenceSwitch.x(sSwitchX)
         sequenceSwitch.y(sSwitchY)
         this.setIsPlayingSequenceGraphic({ x, y })
-        const letterX = sSwitchX + 5
-        const letterY = sSwitchY + 5
-        switchLetterSubContainer.attr({
+        switchLabelSubContainer.attr({
             id: 'switch-letter-subcontainer'
         })
-        switchLetterSubContainer.fill('none')
-        switchLetterSubContainer.stroke({ color: user.color, width: 0.5 })
-        switchLetterSubContainer.x(letterX + 6.5)
-        switchLetterSubContainer.y(letterY + 6.5)
-        switchLetter.x(letterX + 10)
-        switchLetter.y(letterY + 8)
+        switchLabelSubContainer.fill('none')
+        switchLabelSubContainer.stroke({ color: user.color, width: 0.5 })
+        const switchLabelSubContainerX = x + HTML_UI_Params.sequenceSwitchLabelSubContainerXOffset
+        const switchLabelSubContainerY = y + HTML_UI_Params.sequenceSwitchLabelSubContainerYOffset
+        const switchLabelX = x + HTML_UI_Params.sequenceSwitchLabelXOffset
+        const switchLabelY = y + HTML_UI_Params.sequenceSwitchLabelYOffset
+        switchLabelSubContainer.x(switchLabelSubContainerX)
+        switchLabelSubContainer.y(switchLabelSubContainerY)
+        switchLabel.x(switchLabelX)
+        switchLabel.y(switchLabelY)
 
         /** clickable button */
         clickableSwitch.fill({
@@ -1876,18 +1879,18 @@ class PlayUI extends Component {
     setIsPlayingSequenceGraphic = ({ x, y }) => {
         const { user, round } = this.props
         const isPlayingSequence = round.userPatterns[this.props.user.id].isPlayingSequence
-        const switchLetterContainer = this.container.nested().circle(28)
-        let switchLetterContainerX = x + 195
-        let switchLetterContainerY = y + 150
+        const switchLabelContainer = this.container.nested().circle(HTML_UI_Params.sequenceSwitchLabelContainerSize)
+        let switchLabelContainerX = x + HTML_UI_Params.sequenceSwitchLabelContainerOffXOffset
+        let switchLabelContainerY = y + HTML_UI_Params.sequenceSwitchLabelContainerYOffset
 
         if (isPlayingSequence) {
-            switchLetterContainerX = x + 227
+            switchLabelContainerX = x + HTML_UI_Params.sequenceSwitchLabelContainerONXOffset
         }
 
-        switchLetterContainer.x(switchLetterContainerX)
-        switchLetterContainer.y(switchLetterContainerY)
-        switchLetterContainer.fill(user.color)
-        switchLetterContainer.attr({
+        switchLabelContainer.x(switchLabelContainerX)
+        switchLabelContainer.y(switchLabelContainerY)
+        switchLabelContainer.fill(user.color)
+        switchLabelContainer.attr({
             id: 'switch-letter-container',
             opacity: 0.2
         })
@@ -2145,11 +2148,11 @@ class PlayUI extends Component {
 
     clearPresetPatternsSequencer = () => {
 
-        const switchLetter = document.getElementById('switch-letter')
-        switchLetter && switchLetter.parentNode.removeChild(switchLetter)
+        const switchLabel = document.getElementById('switch-letter')
+        switchLabel && switchLabel.parentNode.removeChild(switchLabel)
 
-        const switchLetterSubcontainer = document.getElementById('switch-letter-subcontainer')
-        switchLetterSubcontainer && switchLetterSubcontainer.parentNode.removeChild(switchLetterSubcontainer)
+        const switchLabelSubcontainer = document.getElementById('switch-letter-subcontainer')
+        switchLabelSubcontainer && switchLabelSubcontainer.parentNode.removeChild(switchLabelSubcontainer)
 
         const sequenceSwitch = document.getElementById('sequence-switch')
         sequenceSwitch && sequenceSwitch.parentNode.removeChild(sequenceSwitch)
@@ -2157,8 +2160,8 @@ class PlayUI extends Component {
         const clickableSwitch = document.getElementById('clickable-switch')
         clickableSwitch && clickableSwitch.parentNode.removeChild(clickableSwitch)
 
-        const switchLetterContainer = document.getElementById('switch-letter-container')
-        switchLetterContainer && switchLetterContainer.parentNode.removeChild(switchLetterContainer)
+        const switchLabelContainer = document.getElementById('switch-letter-container')
+        switchLabelContainer && switchLabelContainer.parentNode.removeChild(switchLabelContainer)
 
         for (let i = 0; i < HTML_UI_Params.sequenceButtonDots; i++) {
             const currentDot = document.getElementById(`${i}_sequence_dot`)
