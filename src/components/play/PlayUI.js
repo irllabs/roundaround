@@ -142,7 +142,7 @@ class PlayUI extends Component {
     }
 
     async componentDidUpdate(prevProps) {
-        const { round, user } = this.props
+        const { round, user, display } = this.props
         const oldRound = prevProps.round
         let redraw = false
         let shouldRecalculateParts = false
@@ -156,6 +156,10 @@ class PlayUI extends Component {
 
         let diff = detailedDiff(this.round, this.props.round)
         if (!_.isEqual(round.userPatterns[user.id].isPlayingSequence, oldRound.userPatterns[user.id].isPlayingSequence)) {
+            redraw = true
+        }
+
+        if (!_.isEqual(display.isRecordingSequence, prevProps.display.isRecordingSequence)) {
             redraw = true
         }
 
@@ -823,6 +827,7 @@ class PlayUI extends Component {
     }
 
     addLayer(layer, order, shouldAnimate = true) {
+        const dim = this.isRecordingSequence //|| this.isPlayingSequence
         // let animateTime = shouldAnimate ? 600 : 0
         const createdByThisUser = layer.createdBy === this.props.user.id;
         //const layerDiameter = HTML_UI_Params.addNewLayerButtonDiameter + HTML_UI_Params.initialLayerPadding + ((HTML_UI_Params.stepDiameter + HTML_UI_Params.layerPadding + HTML_UI_Params.layerPadding + HTML_UI_Params.stepDiameter) * (order + 1))
@@ -837,7 +842,7 @@ class PlayUI extends Component {
         const layerGraphic =
             this.container.circle(layerDiameter, layerDiameter).attr({ fill: 'none' })
                 .stroke({ color: this.userColors[layer.createdBy], width: layerStrokeSize + 'px' })
-                .opacity(!createdByThisUser ? 0.5 : 1)
+                .opacity(dim ? 0.2 : !createdByThisUser ? 0.5 : 1)
         layer.isMuted && layerGraphic.stroke({ color: 'rgba(255,255,255,0.1)' })
         layerGraphic.x(xOffset)
         layerGraphic.y(yOffset)
@@ -890,13 +895,13 @@ class PlayUI extends Component {
             stepGraphic.stroke({
                 color: layer.isMuted ? 'rgba(255,255,255, 0.1)' : this.userColors[layer.createdBy],
                 width: stepStrokeWidth + 'px'
-            }).opacity(!createdByThisUser ? 0.5 : 1)
+            }).opacity(dim ? 0.2 : !createdByThisUser ? 0.5 : 1)
             stepGraphic.x(x)
             stepGraphic.y(y)
             angle += stepSize
             stepGraphic.layerId = layer.id
             stepGraphic.id = step.id
-            stepGraphic.isAllowedInteraction = layer.createdBy === this.props.user.id
+            stepGraphic.isAllowedInteraction = !dim && layer.createdBy === this.props.user.id
             stepGraphic.userColor = this.userColors[layer.createdBy]
             if (layer.createdBy === this.props.user.id) {
                 stepGraphic.addClass(this.props.classes.button)
@@ -1612,6 +1617,7 @@ class PlayUI extends Component {
 
     renderPatternPresetsSequencer = async () => {
         const { user, round } = this.props
+        const dim = !this.isRecordingSequence //|| !this.isPlayingSequence
         this.clearPresetPatternsSequencer()
         const userHasLayer = round.layers.find(layer => layer.createdBy === user.id)
         const layerDiameter = !userHasLayer ? HTML_UI_Params.initialLayerDiameter : this.getLayerDiameter(1)
@@ -1623,8 +1629,8 @@ class PlayUI extends Component {
         const yOffset = (this.containerHeight / HTML_UI_Params.patternsMainContainerDivisor) - (layerDiameter / HTML_UI_Params.patternsLayerDiameterDivisor)
         if (!_.isNil(round) && !_.isNil(round.userPatterns) && !_.isNil(round.userPatterns[user.id])) {
 
-            this.renderPresetPatterns({ patternsContainerDiameter, xOffset, yOffset })
-            this.renderSequences();
+            this.renderPresetPatterns({ patternsContainerDiameter, xOffset, yOffset, dim })
+            this.renderSequences(dim);
             const tempoButton = this.container.nested().rect(HTML_UI_Params.tempoButtonWidth, HTML_UI_Params.tempoButtonHeight).radius(HTML_UI_Params.tempoButtonRadius)
             const tempoIcon = this.container.nested()
 
@@ -1747,7 +1753,14 @@ class PlayUI extends Component {
             this.props.setCurrentSequencePattern(0)
         } else {
             // finish write
-            this.isPlayingSequence = true
+            const { round, setIsPlayingSequence, setCurrentSequencePattern, user } = this.props
+            setCurrentSequencePattern(0)
+            const isPlayingSequence = true
+            this.isPlayingSequence = isPlayingSequence
+            setIsPlayingSequence(user.id, isPlayingSequence)
+            const newRound = { ...round }
+            newRound.userPatterns[user.id].isPlayingSequence = isPlayingSequence
+            this.context.saveUserPatterns(round.id, user.id, newRound.userPatterns[user.id])
             this.props.setIsPlayingSequence(this.props.user.id, true)
         }
         this.props.setIsRecordingSequence(!this.props.display.isRecordingSequence)
@@ -1867,7 +1880,7 @@ class PlayUI extends Component {
         setIsPlayingSequence(user.id, isPlayingSequence)
         const newRound = { ...round }
         newRound.userPatterns[user.id].isPlayingSequence = isPlayingSequence
-        !this.isPlayingSequence && this.context.saveUserPatterns(round.id, user.id, newRound.userPatterns[user.id])
+        this.context.saveUserPatterns(round.id, user.id, newRound.userPatterns[user.id])
         this.isPlayingSequence = isPlayingSequence
     }
 
@@ -1891,7 +1904,7 @@ class PlayUI extends Component {
         })
     }
 
-    renderPresetPatterns = async ({ patternsContainerDiameter, xOffset, yOffset }) => {
+    renderPresetPatterns = async ({ patternsContainerDiameter, xOffset, yOffset, dim }) => {
         const { round, user } = this.props
         const patterns = round.userPatterns[user.id].patterns
         let angle = Math.PI / HTML_UI_Params.anglePIDivisor
@@ -1900,6 +1913,8 @@ class PlayUI extends Component {
             const { state: { layers }, id } = pattern
             const patternSize = (2 * Math.PI) / patterns.length
             let patternDiameter = HTML_UI_Params.stepDiameter
+            const isSelected = id === this.activePatternId
+            const opacity = dim && !isSelected ? 0.2 : isSelected && dim ? 0.5 : !dim && isSelected ? 1 : 0.2
             angle += patternSize
             const letter = PRESET_LETTERS[pattern.order]
             const radius = patternsContainerDiameter / 2;
@@ -1918,12 +1933,12 @@ class PlayUI extends Component {
             const labelX = x + HTML_UI_Params.presetLabelXOffset
             const labelY = y + HTML_UI_Params.presetLabelYOffset
             label.fill({ color: user.color })
-            label.attr({ id: `${e}_pattern_label` })
+            label.attr({ id: `${e}_pattern_label`, opacity })
             label.x(labelX)
             label.y(labelY)
             //const isFirst = patterns[0].id === id
-            const isSelected = id === this.activePatternId
-            currentPatternGraphic.attr({ id: `${e}_pattern`, fill: 'none', opacity: isSelected ? 0.4 : 0.1, cursor: 'pointer' })
+
+            currentPatternGraphic.attr({ id: `${e}_pattern`, fill: 'none', opacity: dim || !isSelected ? opacity : 0.6, cursor: 'pointer' })
             currentPatternGraphic.stroke({ color: user.color, width: 18 })
             currentPatternGraphic.fill('none')
             currentPatternGraphic.x(x)
@@ -1933,7 +1948,7 @@ class PlayUI extends Component {
                 const patternOutline = this.container.nested().circle(patternDiameter + HTML_UI_Params.presetPatternOulineDiameterOffset)
                 patternOutline.stroke({
                     color: user.color, width: 2
-                }).fill('none')
+                }).fill('none').opacity(dim ? 0.1 : 1)
                 const patternOutlineX = x - HTML_UI_Params.presetPatternOutlineXOffset
                 const PatternOutlineY = y - HTML_UI_Params.presetPatternOutlineYOffset
                 patternOutline.x(patternOutlineX)
@@ -1941,7 +1956,7 @@ class PlayUI extends Component {
             }
             //this.microPatternGraphics.push(currentPatternGraphic)
             if (layers && layers.length > 0) {
-                this.renderMicroRound({ x: x + 1.5, y: y + 1.5, pattern: currentPatternGraphic, layers })
+                this.renderMicroRound({ x: x + 1.5, y: y + 1.5, pattern: currentPatternGraphic, layers, dim, opacity })
             }
             const clickableButtonDiameter = patternDiameter + HTML_UI_Params.presetClickableButtonDiameterOffset
             const clickableButton = this.container.nested().circle(clickableButtonDiameter)
@@ -1988,7 +2003,7 @@ class PlayUI extends Component {
         }
     }
 
-    renderSequences = async () => {
+    renderSequences = async (dim) => {
         const { round, user } = this.props
         const sequence = round.userPatterns[this.props.user.id].sequence
         const userHasLayer = round.layers.find(layer => layer.createdBy === user.id)
@@ -1996,6 +2011,7 @@ class PlayUI extends Component {
         const sequenceContainerDiameter = layerDiameter - HTML_UI_Params.sequenceContainerDiameterOffset
         const xOffset = (this.containerWidth / 2) - (layerDiameter / HTML_UI_Params.patternsLayerDiameterDivisor)
         const yOffset = (this.containerHeight / 2) - (layerDiameter / HTML_UI_Params.patternsLayerDiameterDivisor)
+
         let sAngle = Math.PI / HTML_UI_Params.anglePIDivisor
         let i = 0
         for (const id of sequence) {
@@ -2003,6 +2019,8 @@ class PlayUI extends Component {
             const patterns = round.userPatterns[this.props.user.id].patterns
             const pattern = patterns.find(pattern => pattern.id === id);
             const isHighlighted = i === this.props.display.currentSequencePattern
+            const opacity = dim && !isHighlighted ? 0.2 : isHighlighted && dim ? 0.5 : !dim && isHighlighted ? 1 : 0.2
+
             const sequenceSize = (2 * Math.PI) / sequence.length
             let sequenceDiameter = HTML_UI_Params.stepDiameter - HTML_UI_Params.sequenceDiameterOffset
             sAngle += sequenceSize
@@ -2033,7 +2051,7 @@ class PlayUI extends Component {
                 const sequenceBackgroundDiameter = sequenceDiameter - HTML_UI_Params.sequenceBackgroundDiameterOffset
                 const sequenceBackground = this.container.nested().circle(sequenceBackgroundDiameter)
                 sequenceBackground.attr({ id: `${i}_sequence_bg` })
-                sequenceBackground.stroke({ color: user.color, width: HTML_UI_Params.sequenceBackgroundWidth, opacity: isHighlighted ? 0.5 : 0.1 })
+                sequenceBackground.stroke({ color: user.color, width: HTML_UI_Params.sequenceBackgroundWidth, opacity: dim && isHighlighted ? 0.4 : !dim && isHighlighted ? 0.6 : opacity })
                 sequenceBackground.fill({
                     color: 'rgba(0,0,0,0.01)'
                 })
@@ -2043,14 +2061,23 @@ class PlayUI extends Component {
                 sequenceBackground.y(sequencBackgroundY)
             }
             sequencePattern.attr({ id: `${i}_sequence_pattern` })
-            sequencePattern.stroke({ color: user.color, width: 1, opacity: 0.5, })
-            sequencePattern.fill({ color: 'rgba(0,0,0,0.01)' })
+            sequencePattern.stroke({ color: user.color, width: 1, opacity: dim ? 0.2 : 0.5 })
+            sequencePattern.fill('none')
             sequencePattern.x(sX)
             sequencePattern.y(sY)
             const layers = pattern && pattern.state && [...pattern.state.layers]
 
             if (layers) {
-                this.renderMicroRound({ x: sX + HTML_UI_Params.patternsLayerDiameterDivisor, y: sY + HTML_UI_Params.patternsLayerDiameterDivisor, pattern: sequencePattern, layers, isFilled: isHighlighted, diameter: sequenceDiameter })
+                this.renderMicroRound({
+                    x: sX + HTML_UI_Params.patternsLayerDiameterDivisor,
+                    y: sY + HTML_UI_Params.patternsLayerDiameterDivisor,
+                    pattern: sequencePattern,
+                    layers,
+                    dim,
+                    opacity,
+                    isFilled: isHighlighted,
+                    diameter: sequenceDiameter
+                })
             }
             this.sequenceGraphics.push(sequencePattern)
             i++
@@ -2210,7 +2237,7 @@ class PlayUI extends Component {
         return diameter
     }
 
-    addMicroLayer = async (layer, order, { containerXOffset, containerYOffset, diameter, isFilled }) => {
+    addMicroLayer = async (layer, order, { containerXOffset, containerYOffset, diameter, dim, opacity, isFilled }) => {
         const { user } = this.props
         const layerDiameter = this.getMicroLayerDiameter(order, diameter)
         const xOffset = containerXOffset + 6 - (order * (diameter ? HTML_UI_Params.micro2LayerOffsetMultiplier : HTML_UI_Params.microLayerOffsetMultiplier))
@@ -2242,7 +2269,7 @@ class PlayUI extends Component {
             const y = Math.round(layerDiameter / 2 + radius * Math.sin(angle) - stepDiameter / 2) + yOffset;
             const stepGraphic = this.container.circle(stepDiameter)
             stepGraphic.stroke('none')
-            stepGraphic.fill({ color: step.isOn ? user.color : 'rgba(0,0,0,0)', opacity: 1 })
+            stepGraphic.fill({ color: step.isOn ? user.color : 'rgba(0,0,0,0)', opacity })
             stepGraphic.attr({ id: `micro-step-${id}` })
             stepGraphic.x(x)
             stepGraphic.y(y)
@@ -2260,11 +2287,11 @@ class PlayUI extends Component {
         layerGraphic.labelYOffset = 32 * (anglePercentOffset + angleTimeOffset)
     }
 
-    renderMicroRound = async ({ x, y, pattern, layers, isFilled, diameter }) => {
+    renderMicroRound = async ({ x, y, pattern, layers, isFilled, diameter, dim, opacity }) => {
         if (this.activePattern === pattern) return
         const sortedLayers = await this.orderAndReturnLayers(layers)
         sortedLayers && sortedLayers.map(async (layer, i) => {
-            return await this.addMicroLayer(layer, i++, { containerXOffset: x, containerYOffset: y, diameter, isFilled })
+            return await this.addMicroLayer(layer, i++, { containerXOffset: x, containerYOffset: y, diameter, isFilled, dim, opacity })
         })
         this.activePattern = pattern
     }
