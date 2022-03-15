@@ -1948,7 +1948,7 @@ class PlayUI extends Component {
                 const patternOutline = this.container.nested().circle(patternDiameter + HTML_UI_Params.presetPatternOulineDiameterOffset)
                 patternOutline.stroke({
                     color: user.color, width: 2
-                }).fill('none').opacity(dim ? 0.1 : 1)
+                }).fill('none').opacity(dim || !isSelected ? opacity : 0.6)
                 const patternOutlineX = x - HTML_UI_Params.presetPatternOutlineXOffset
                 const PatternOutlineY = y - HTML_UI_Params.presetPatternOutlineYOffset
                 patternOutline.x(patternOutlineX)
