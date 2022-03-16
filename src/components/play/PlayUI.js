@@ -2049,7 +2049,6 @@ class PlayUI extends Component {
                 const sequenceBackgroundDiameter = sequenceDiameter - HTML_UI_Params.sequenceBackgroundDiameterOffset
                 const sequenceBackground = this.container.nested().circle(sequenceBackgroundDiameter)
                 sequenceBackground.attr({ id: `${i}_sequence_bg` })
-                console.log({ pattern })
                 sequenceBackground.stroke({ color: user.color, width: HTML_UI_Params.sequenceBackgroundWidth, opacity: isHighlighted && pattern ? 0.3 : 0.1 })
                 sequenceBackground.fill({
                     color: 'rgba(0,0,0,0.01)'
