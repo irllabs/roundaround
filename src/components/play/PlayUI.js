@@ -2275,7 +2275,7 @@ class PlayUI extends Component {
             const y = Math.round(layerDiameter / 2 + radius * Math.sin(angle) - stepDiameter / 2) + yOffset;
             const stepGraphic = this.container.circle(stepDiameter)
             stepGraphic.stroke('none')
-            stepGraphic.fill({ color: step.isOn ? user.color : 'rgba(0,0,0,0)', opacity: isFilled ? 1 : 0.2 })
+            stepGraphic.fill({ color: step.isOn ? user.color : 'rgba(0,0,0,0)', opacity: isFilled ? 1 : 0.6 })
             stepGraphic.attr({ id: `micro-step-${id}` })
             stepGraphic.x(x)
             stepGraphic.y(y)
