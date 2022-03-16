@@ -142,7 +142,7 @@ class PlayUI extends Component {
     }
 
     async componentDidUpdate(prevProps) {
-        const { round, user } = this.props
+        const { round, user, display, setIsRecordingSequence } = this.props
         const oldRound = prevProps.round
         let redraw = false
         let shouldRecalculateParts = false
@@ -157,6 +157,11 @@ class PlayUI extends Component {
         let diff = detailedDiff(this.round, this.props.round)
         if (!_.isEqual(round.userPatterns[user.id].isPlayingSequence, oldRound.userPatterns[user.id].isPlayingSequence)) {
             redraw = true
+        }
+
+        if (!_.isEqual(this.isRecordingSequence, display.isRecordingSequence)) {
+            /** update props to match state */
+            setIsRecordingSequence(this.isPlayingSequence)
         }
 
         // whole round has changed
@@ -1958,10 +1963,10 @@ class PlayUI extends Component {
             clickableButton.y(clickableButtonY)
             clickableButton.on('click', async () => {
                 const { round, isPlaying } = this.props
-                this.activePatternId = id
                 const patterns = round.userPatterns[user.id].patterns
                 if (this.isPlayingSequence && isPlaying) return
                 if (!this.isRecordingSequence) {
+                    this.activePatternId = id
                     const pattern = _.find(patterns, { id })
                     const patternLayers = pattern.state.layers
                     if (!patternLayers) {
@@ -1985,6 +1990,7 @@ class PlayUI extends Component {
                     this.draw()
                 }
                 if (layers && layers.length > 0 && this.isRecordingSequence) {
+                    this.activePatternId = id
                     this.onLoadPattern(id)
                     this.draw()
                 }
