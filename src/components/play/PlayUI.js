@@ -1926,12 +1926,12 @@ class PlayUI extends Component {
                 family: 'Arial',
                 size: 25,
                 weight: 900,
-                opacity: 1
+                opacity: isSelected ? 1 : 0.6
             })
             const labelX = x + HTML_UI_Params.presetLabelXOffset
             const labelY = y + HTML_UI_Params.presetLabelYOffset
             label.fill({ color: user.color })
-            label.attr({ id: `${e}_pattern_label`, opacity: 1 })
+            label.attr({ id: `${e}_pattern_label` })
             label.x(labelX)
             label.y(labelY)
             //const isFirst = patterns[0].id === id
@@ -2274,7 +2274,7 @@ class PlayUI extends Component {
             const y = Math.round(layerDiameter / 2 + radius * Math.sin(angle) - stepDiameter / 2) + yOffset;
             const stepGraphic = this.container.circle(stepDiameter)
             stepGraphic.stroke('none')
-            stepGraphic.fill({ color: step.isOn ? user.color : 'rgba(0,0,0,0)', opacity: isFilled ? 1 : 0.6 })
+            stepGraphic.fill({ color: step.isOn ? user.color : 'rgba(0,0,0,0)', opacity: isFilled ? 1 : 0.5 })
             stepGraphic.attr({ id: `micro-step-${id}` })
             stepGraphic.x(x)
             stepGraphic.y(y)
