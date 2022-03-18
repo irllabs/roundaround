@@ -161,8 +161,11 @@ class PlayUI extends Component {
 
         if (!_.isEqual(display.isRecordingSequence, prevProps.display.isRecordingSequence)) {
             redraw = true
+        }
+
+        if (!_.isEqual(this.isRecordingSequence, display.isRecordingSequence)) {
             /** update props to match state */
-            setIsRecordingSequence(this.isPlayingSequence)
+            setIsRecordingSequence(this.isRecordingSequence)
         }
 
         // whole round has changed
