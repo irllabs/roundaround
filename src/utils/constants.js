@@ -77,7 +77,24 @@ export const HTML_UI_Params = {
     presetClickableButtonDiameterOffset: 20,
     presetPatternOulineDiameterOffset: 25,
     presetClickableButtonXOffset: 10,
-    presetClickableButtonYoffset: 10
+    presetClickableButtonYoffset: 10,
+    sequenceSwitchWidth: 70,
+    sequenceSwitchHeight: 38,
+    sequenceSwitchBorderRadius: 19,
+    sequenceSwitchXOffset: 190,
+    sequenceSwitchYOffset: 145,
+    sequenceSwitchDotOffset: 1,
+    sequenceSwitchDotsDiameterOffset: 4,
+    sequenceSwitchDotsXOffset: 46,
+    sequenceSwitchDotsYOffset: 13,
+    sequenceSwitchLabelSubContainerXOffset: 201.5,
+    sequenceSwitchLabelSubContainerYOffset: 156.5,
+    sequenceSwitchLabelXOffset: 205,
+    sequenceSwitchLabelYOffset: 158,
+    sequenceSwitchLabelContainerSize: 28,
+    sequenceSwitchLabelContainerOffXOffset: 195,
+    sequenceSwitchLabelContainerYOffset: 150,
+    sequenceSwitchLabelContainerONXOffset: 227,
 }
 
 export const Colors = ['#f44336', '#e91e63', '#9c27b0', '#673ab7', '#3f51b5', '#2196f3', '#00bcd4', '#009688', '#4caf50', '#8bc34a', '#cddc39', '#ffeb3b', '#ffc107', '#ff9800', '#ff5722']
