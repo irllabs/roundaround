@@ -1,5 +1,6 @@
 import {
     SET_IS_SHOWING_SIGNIN_DIALOG,
+    SET_IS_SHOWING_CREATE_ROUND_MODAL,
     SET_USER,
     SET_REDIRECT_AFTER_SIGN_IN,
     SET_ROUNDS,
@@ -65,6 +66,10 @@ export const addUserBus = (userId, userBus) => ({
 // Display
 export const setIsShowingSignInDialog = (value) => ({
     type: SET_IS_SHOWING_SIGNIN_DIALOG,
+    payload: { value }
+})
+export const setIsShowingCreateRoundModal = (value) => ({
+    type: SET_IS_SHOWING_CREATE_ROUND_MODAL,
     payload: { value }
 })
 export const setRedirectAfterSignIn = (value) => ({
