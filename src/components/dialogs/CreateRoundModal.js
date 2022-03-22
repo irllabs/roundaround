@@ -2,7 +2,7 @@ import React, { useState } from 'react'
 import { connect } from 'react-redux'
 import { withStyles } from '@material-ui/styles'
 
-import { Typography } from '@material-ui/core'
+import { Button, Typography } from '@material-ui/core'
 import { Close } from '@material-ui/icons'
 import DialogTitle from '@material-ui/core/DialogTitle'
 import Dialog from '@material-ui/core/Dialog'
@@ -28,6 +28,7 @@ const styles = makeStyles({
         width: 363
     },
     title: {
+        position: 'relative',
         textAlign: 'center',
         fontSize: 20
     },
@@ -49,14 +50,17 @@ const styles = makeStyles({
         cursor: 'pointer'
     },
     closeContainer: {
-        flex: 2,
+        position: 'absolute',
+        flex: 1,
         display: 'flex',
         justifyContent: 'flex-start',
         cursor: 'pointer'
     },
     titleText: {
-        flex: 4,
+        flex: 1,
         display: 'flex',
+        justifyContent: 'center',
+        textAlign: 'center',
         marginLeft: 5
     },
     tile: {
@@ -102,6 +106,17 @@ const styles = makeStyles({
     },
     loader: {
 
+    },
+    buttonContainer: {
+        padding: '1rem',
+        borderTop: 'solid 1px rgba(255,255,255,0.1)'
+    },
+    createProject: {
+        paddingLeft: 10,
+        paddingRight: 10,
+        width: 331,
+        height: 48,
+        backgroundColor: 'rgba(255, 255, 255, 0.1)'
     }
 })
 
@@ -110,18 +125,37 @@ const CreateRoundModal = ({
     defaultRoundCreate,
     isShowingCreateRoundModal
 }) => {
+
     const classes = styles()
     const [showLoader, setShowLoader] = useState(false)
+    const [showUploadSound, setShowUploadSound] = useState(false)
+    const [uploaded, setUploaded] = useState()
+    const onClose = (all) => {
+        if (!showUploadSound || all) {
+            toggleCreateRoundModal()
+        }
+        setShowUploadSound(false)
+    }
+
     return (
-        <Dialog classes={{ paper: classes.paper }} onClose={() => toggleCreateRoundModal()} aria-labelledby="simple-dialog-title" open={isShowingCreateRoundModal}>
+        <Dialog
+            classes={{ paper: classes.paper }}
+            onClose={() => onClose(true)}
+            aria-labelledby="simple-dialog-title"
+            open={isShowingCreateRoundModal}
+        >
             <DialogTitle className={classes.title}>
                 <Box className={classes.titleSub}>
-                    <Box className={classes.closeContainer}><Close className={classes.close} onClick={() => toggleCreateRoundModal()} /></Box>
-                    <Typography className={classes.titleText}>New Project</Typography>
+                    <Box className={classes.closeContainer}>
+                        <Close className={classes.close} onClick={() => onClose()} />
+                    </Box>
+                    <Typography className={classes.titleText}>
+                        {showUploadSound ? 'Upload custom sounds' : 'New Project'}
+                    </Typography>
                 </Box>
             </DialogTitle>
             <Box className={classes.body}>
-                {!showLoader ?
+                {!showLoader && !showUploadSound ?
                     <>
                         <Box
                             id='random-round'
@@ -144,7 +178,7 @@ const CreateRoundModal = ({
                                 Random sound from 3 different stock instruments
                             </Typography>
                         </Box>
-                        <Box id='default-round' className={classes.tile}>
+                        <Box id='default-round' onClick={() => setShowUploadSound(true)} className={classes.tile}>
                             <Box>
                                 <Upload />
                             </Box>
@@ -156,18 +190,38 @@ const CreateRoundModal = ({
                             </Typography>
                         </Box>
                     </> :
-                    <Box className={classes.loaderContainer}>
-                        <Loader
-                            className={classes.loader}
-                            type="Puff"
-                            color="#FFFFFF"
-                            height={60}
-                            width={50}
-                            visible={true}
-                        />
-                    </Box>
+                    showUploadSound ? <>
+                        <Box className={classes.tile} style={{ height: 252 }}>
+                            <Box>
+                                <Upload />
+                            </Box>
+                            <Typography className={classes.tileSub}>
+                                Choose audio files or drag and drop
+                            </Typography>
+                            <Typography className={classes.tileText}>
+                                .aif or .wav
+                            </Typography>
+                        </Box>
+                    </> :
+                        <Box className={classes.loaderContainer}>
+                            <Loader
+                                className={classes.loader}
+                                type="Puff"
+                                color="#FFFFFF"
+                                height={60}
+                                width={50}
+                                visible={true}
+                            />
+                        </Box>
                 }
             </Box>
+            {
+                showUploadSound && <Box className={classes.buttonContainer}>
+                    <Button disabled={!uploaded} className={classes.createProject}>
+                        <Typography style={{ fontWeight: 700 }}>Upload and create project</Typography>
+                    </Button>
+                </Box>
+            }
         </Dialog>
     )
 }
