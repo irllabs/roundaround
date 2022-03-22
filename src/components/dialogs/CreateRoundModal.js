@@ -1,6 +1,5 @@
 import React, { useState } from 'react'
 import { connect } from 'react-redux'
-import { withStyles } from '@material-ui/styles'
 
 import { Button, Typography } from '@material-ui/core'
 import { Close } from '@material-ui/icons'
@@ -246,4 +245,4 @@ export default connect(
         setIsShowingRenameDialog,
         setSelectedRoundId
     }
-)(withStyles(styles)(CreateRoundModal));
+)(CreateRoundModal);
