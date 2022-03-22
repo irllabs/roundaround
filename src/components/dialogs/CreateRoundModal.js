@@ -191,7 +191,9 @@ const CreateRoundModal = ({
                         </Box>
                     </> :
                     showUploadSound ? <>
-                        <Box className={classes.tile} style={{ height: 252 }}>
+                        <Box onDrop={(e) => {
+                            setUploaded(true)
+                        }} className={classes.tile} style={{ height: 252 }}>
                             <Box>
                                 <Upload />
                             </Box>
