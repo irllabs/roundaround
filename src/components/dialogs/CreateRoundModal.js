@@ -1,4 +1,5 @@
-import React, { useState } from 'react'
+/* eslint-disable react-hooks/exhaustive-deps */
+import React, { useState, useRef, useEffect } from 'react'
 import { connect } from 'react-redux'
 
 import { Button, Typography } from '@material-ui/core'
@@ -18,6 +19,10 @@ import { Box, makeStyles } from '@material-ui/core'
 import Di from '../play/layer-settings/resources/Di'
 import Upload from '../play/layer-settings/resources/Upload'
 import Loader from 'react-loader-spinner'
+import Add from '../play/layer-settings/resources/Add'
+import Playback from '../play/layer-settings/resources/Playback'
+import Trash from '../play/layer-settings/resources/Trash'
+import { cloneDeep } from 'lodash'
 
 const styles = makeStyles({
     paper: {
@@ -39,8 +44,10 @@ const styles = makeStyles({
     body: {
         display: 'flex',
         flexDirection: 'column',
+        height: 283,
         padding: '1rem',
         paddingBottom: 0,
+        overflow: 'hidden',
         borderTop: 'solid 1px rgba(255,255,255,0.1)'
     },
     close: {
@@ -61,6 +68,33 @@ const styles = makeStyles({
         justifyContent: 'center',
         textAlign: 'center',
         marginLeft: 5
+    },
+    tileAlt: {
+        display: 'flex',
+        flexDirection: 'row',
+        width: 331,
+        height: 48,
+        borderRadius: 12,
+        marginBottom: 10,
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        backgroundColor: 'rgba(255,255,255, 0.1)',
+        transition: 'all 0.2s ease-in-out'
+    },
+    tileAltIconContainer: {
+        display: 'flex',
+        flex: 1,
+        paddingLeft: 17,
+        paddingRight: 17,
+        alignItems: 'center',
+        cursor: 'pointer'
+    },
+    tileAltTypeContainer: {
+        display: 'flex',
+        flex: 8,
+        flexDirection: 'column',
+        textAlign: 'left',
+        justifyContent: 'flex-start'
     },
     tile: {
         display: 'flex',
@@ -103,9 +137,7 @@ const styles = makeStyles({
         justifyContent: 'center',
         alignItems: 'center'
     },
-    loader: {
-
-    },
+    loader: {},
     buttonContainer: {
         padding: '1rem',
         borderTop: 'solid 1px rgba(255,255,255,0.1)'
@@ -116,6 +148,12 @@ const styles = makeStyles({
         width: 331,
         height: 48,
         backgroundColor: 'rgba(255, 255, 255, 0.1)'
+    },
+    preUploadList: {
+        height: 150,
+        overflow: 'scroll',
+        scrollBehavior: 'smooth',
+        scrollbarWidth: 3
     }
 })
 
@@ -126,19 +164,75 @@ const CreateRoundModal = ({
 }) => {
 
     const classes = styles()
+    const uploadInputRef = useRef()
     const [showLoader, setShowLoader] = useState(false)
     const [showUploadSound, setShowUploadSound] = useState(false)
-    const [uploaded, setUploaded] = useState()
+    const [preUploaded, setPreUploaded] = useState()
+
+    const processFiles = (files) => {
+        if (files && files[0]) {
+            const file = files[0]
+            const fileType = file.type
+            if (fileType.includes('aiff') || fileType.includes('wav')) {
+                const base64 = URL.createObjectURL(file)
+                const newSound = {
+                    name: file.name,
+                    type: file.type,
+                    file: base64
+                }
+                if (preUploaded) {
+                    const newPreUploaded = [...preUploaded, newSound]
+                    setPreUploaded(newPreUploaded)
+                } else {
+                    setPreUploaded([newSound])
+                }
+            }
+        }
+    }
+
+    useEffect(() => {
+        setUpEventListeners()
+    })
+
+    const setUpEventListeners = () => {
+        /** Stop default behaviour on drag related events */
+        const events = ['dragenter', 'dragover', 'dragleave', 'drop']
+        events.forEach((event) => {
+            document.addEventListener(event, (e) => {
+                e.preventDefault()
+                e.stopPropagation()
+            })
+        })
+    }
+
     const onClose = (all) => {
         if (!showUploadSound || all) {
             toggleCreateRoundModal()
         }
+        setPreUploaded(null)
         setShowUploadSound(false)
+    }
+
+    const soundPlayback = (i) => {
+        //TODO: sound playback action
+        const newPreUploaded = cloneDeep(preUploaded)
+        const isPlaying = !newPreUploaded[i].isPlaying
+        newPreUploaded[i].isPlaying = isPlaying
+        setPreUploaded(newPreUploaded)
+    }
+
+    const trashSound = (index) => {
+        const newPreUploaded = cloneDeep(preUploaded)
+        newPreUploaded.splice(index, 1)
+        if (newPreUploaded.length)
+            setPreUploaded(newPreUploaded)
+        else setPreUploaded(null)
     }
 
     return (
         <Dialog
             classes={{ paper: classes.paper }}
+
             onClose={() => onClose(true)}
             aria-labelledby="simple-dialog-title"
             open={isShowingCreateRoundModal}
@@ -153,7 +247,7 @@ const CreateRoundModal = ({
                     </Typography>
                 </Box>
             </DialogTitle>
-            <Box className={classes.body}>
+            <Box className={classes.body} >
                 {!showLoader && !showUploadSound ?
                     <>
                         <Box
@@ -189,21 +283,7 @@ const CreateRoundModal = ({
                             </Typography>
                         </Box>
                     </> :
-                    showUploadSound ? <>
-                        <Box onDrop={(e) => {
-                            setUploaded(true)
-                        }} className={classes.tile} style={{ height: 252 }}>
-                            <Box>
-                                <Upload />
-                            </Box>
-                            <Typography className={classes.tileSub}>
-                                Choose audio files or drag and drop
-                            </Typography>
-                            <Typography className={classes.tileText}>
-                                .aif or .wav
-                            </Typography>
-                        </Box>
-                    </> :
+                    !showUploadSound ?
                         <Box className={classes.loaderContainer}>
                             <Loader
                                 className={classes.loader}
@@ -213,12 +293,75 @@ const CreateRoundModal = ({
                                 width={50}
                                 visible={true}
                             />
-                        </Box>
+                        </Box> :
+                        <>
+                            {
+                                <Box>
+                                    <input
+                                        hidden
+                                        ref={uploadInputRef}
+                                        onChange={(e) => {
+                                            const files = e.target.files
+                                            processFiles(files)
+                                        }}
+                                        type='file'
+                                    />
+                                    <Box
+                                        className={classes.tile}
+                                        id='file-drop-zone'
+                                        onDrop={(e) => {
+                                            e.preventDefault()
+                                            e.stopPropagation()
+                                            const dt = e.dataTransfer
+                                            const files = dt.files
+                                            processFiles(files)
+                                        }}
+                                        onClick={(e) => {
+                                            e.stopPropagation()
+                                            uploadInputRef.current.click()
+                                        }}
+                                        style={{ height: preUploaded ? 104 : 252 }}
+                                    >
+                                        <Box>
+                                            {preUploaded ? <Add /> : <Upload />}
+                                        </Box>
+                                        <Typography className={classes.tileSub}>
+                                            {preUploaded ? 'Add more sounds' : 'Choose audio files or drag and drop'}
+                                        </Typography>
+                                        <Typography className={classes.tileText}>
+                                            .aif or .wav
+                                        </Typography>
+                                    </Box>
+                                    {
+                                        preUploaded && preUploaded.length &&
+                                        <Box className={classes.preUploadList}>
+                                            {preUploaded.map((item, i) => {
+                                                return (
+                                                    <Box className={classes.tileAlt} key={i}>
+                                                        <Box onClick={() => soundPlayback(i)} className={classes.tileAltIconContainer} style={{ justifyContent: 'flex-start' }}>
+                                                            <Playback />
+                                                        </Box>
+                                                        <Box className={classes.tileAltTypeContainer}>
+                                                            <Typography style={{ fontSize: 14 }}>{item.name}</Typography>
+                                                            <Typography id='dummy-time' style={{ fontSize: 12 }}>00:01:34</Typography>
+                                                        </Box>
+                                                        <Box onClick={() => trashSound(i)} className={classes.tileAltIconContainer} style={{ justifyContent: 'flex-end' }}>
+                                                            <Trash />
+                                                        </Box>
+                                                    </Box>
+                                                )
+                                            })}
+                                        </Box>
+                                    }
+                                </Box>
+                            }
+                        </>
+
                 }
             </Box>
             {
                 showUploadSound && <Box className={classes.buttonContainer}>
-                    <Button disabled={!uploaded} className={classes.createProject}>
+                    <Button disabled={!preUploaded} className={classes.createProject}>
                         <Typography style={{ fontWeight: 700 }}>Upload and create project</Typography>
                     </Button>
                 </Box>
