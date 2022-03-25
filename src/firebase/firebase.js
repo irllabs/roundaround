@@ -35,7 +35,6 @@ class Firebase {
         this.onUserUpdatedObservers = [];
 
         app.auth().onAuthStateChanged((user) => {
-            // console.log('onAuthStateChanged', user);
             if (user) {
                 this.currentUser = user;
                 this.onUserUpdatedObservers.map(observer => observer(user));
@@ -47,6 +46,24 @@ class Firebase {
         });
     }
 
+    uploadSound = (id, sounds) => {
+        return new Promise(async (resolve) => {
+            try {
+                console.log({ id })
+                const storageRef = this.storage.ref()
+                const currentUserStorageRef = storageRef.child(`/${id}`)
+                if (id && sounds && Array.isArray(sounds)) {
+                    sounds.forEach(async sound => {
+                        await currentUserStorageRef.child(sound.name).put(sound.file).then((uploadResponse) => {
+                            console.log({ uploadResponse })
+                        })
+                    })
+                }
+            } catch (e) {
+                console.error(e)
+            }
+        })
+    }
 
     // User
     loadUser = (id) => {

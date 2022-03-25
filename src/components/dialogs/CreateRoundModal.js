@@ -1,6 +1,7 @@
 /* eslint-disable react-hooks/exhaustive-deps */
-import React, { useState, useRef, useEffect } from 'react'
+import React, { useState, useRef, useEffect, useContext } from 'react'
 import { connect } from 'react-redux'
+import { FirebaseContext } from '../../firebase';
 
 import { Button, Typography } from '@material-ui/core'
 import { Close } from '@material-ui/icons'
@@ -160,9 +161,10 @@ const styles = makeStyles({
 const CreateRoundModal = ({
     toggleCreateRoundModal,
     defaultRoundCreate,
-    isShowingCreateRoundModal
+    isShowingCreateRoundModal,
+    user
 }) => {
-
+    const firebase = useContext(FirebaseContext);
     const classes = styles()
     const uploadInputRef = useRef()
     const [showLoader, setShowLoader] = useState(false)
@@ -174,12 +176,12 @@ const CreateRoundModal = ({
             const file = files[0]
             const fileType = file.type
             if (fileType.includes('aiff') || fileType.includes('wav')) {
-                const base64 = URL.createObjectURL(file)
+                //const base64 = URL.createObjectURL(file)
                 const newSound = {
                     name: file.name,
                     type: file.type,
                     isPlaying: false,
-                    file: base64
+                    file
                 }
                 if (preUploaded) {
                     const newPreUploaded = [...preUploaded, newSound]
@@ -230,6 +232,10 @@ const CreateRoundModal = ({
         else
             sound.pause()
         setPreUploaded(newPreUploaded)
+    }
+
+    const onUploadSound = () => {
+        firebase.uploadSound(user.id, preUploaded)
     }
 
     const trashSound = (index) => {
@@ -371,7 +377,7 @@ const CreateRoundModal = ({
             </Box>
             {
                 showUploadSound && <Box className={classes.buttonContainer}>
-                    <Button disabled={!preUploaded} className={classes.createProject}>
+                    <Button onClick={onUploadSound} disabled={!preUploaded} className={classes.createProject}>
                         <Typography style={{ fontWeight: 700 }}>Upload and create project</Typography>
                     </Button>
                 </Box>
