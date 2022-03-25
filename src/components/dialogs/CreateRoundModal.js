@@ -178,6 +178,7 @@ const CreateRoundModal = ({
                 const newSound = {
                     name: file.name,
                     type: file.type,
+                    isPlaying: false,
                     file: base64
                 }
                 if (preUploaded) {
@@ -213,11 +214,21 @@ const CreateRoundModal = ({
         setShowUploadSound(false)
     }
 
-    const soundPlayback = (i) => {
-        //TODO: sound playback action
+    const soundPlaybackToggle = (i) => {
         const newPreUploaded = cloneDeep(preUploaded)
         const isPlaying = !newPreUploaded[i].isPlaying
         newPreUploaded[i].isPlaying = isPlaying
+        const sound = new Audio(newPreUploaded[i].file)
+        if (isPlaying)
+            sound.play().catch(e => {
+                if (e.message.indexOf('supported'))
+                    /** temp alert TODO: use proper user friendly alerts */
+                    alert('browser doesn\'t support aiff files')
+                else
+                    alert('an error occured white trying to playback sound')
+            })
+        else
+            sound.pause()
         setPreUploaded(newPreUploaded)
     }
 
@@ -232,7 +243,6 @@ const CreateRoundModal = ({
     return (
         <Dialog
             classes={{ paper: classes.paper }}
-
             onClose={() => onClose(true)}
             aria-labelledby="simple-dialog-title"
             open={isShowingCreateRoundModal}
@@ -338,7 +348,7 @@ const CreateRoundModal = ({
                                             {preUploaded.map((item, i) => {
                                                 return (
                                                     <Box className={classes.tileAlt} key={i}>
-                                                        <Box onClick={() => soundPlayback(i)} className={classes.tileAltIconContainer} style={{ justifyContent: 'flex-start' }}>
+                                                        <Box onClick={() => soundPlaybackToggle(i)} className={classes.tileAltIconContainer} style={{ justifyContent: 'flex-start' }}>
                                                             <Playback />
                                                         </Box>
                                                         <Box className={classes.tileAltTypeContainer}>
