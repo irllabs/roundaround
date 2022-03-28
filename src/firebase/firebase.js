@@ -47,18 +47,23 @@ class Firebase {
     }
 
     uploadSound = (id, sounds) => {
-        return new Promise(async (resolve) => {
+        return new Promise(async (resolve, reject) => {
             try {
-                console.log({ id })
                 const storageRef = this.storage.ref()
                 const currentUserStorageRef = storageRef.child(`/${id}`)
+                const fileURLs = []
                 if (id && sounds && Array.isArray(sounds)) {
                     sounds.forEach(async sound => {
-                        await currentUserStorageRef.child(sound.name).put(sound.file).then((uploadResponse) => {
-                            console.log({ uploadResponse })
+                        await currentUserStorageRef.child(sound.name).put(sound.file).then(async (uploadResponse) => {
+                            const url = await uploadResponse.ref.getDownloadURL()
+                            fileURLs.push(url)
+                            if (fileURLs.length === sounds.length) {
+                                resolve(fileURLs)
+                            }
                         })
                     })
                 }
+                else reject({ message: 'missing required data' })
             } catch (e) {
                 console.error(e)
             }

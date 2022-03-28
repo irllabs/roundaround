@@ -16,6 +16,12 @@ import {
     setSelectedRoundId
 } from '../../redux/actions'
 
+import { getDefaultSample } from '../../utils/defaultData'
+// import CustomSamples from '../../audio-engine/CustomSamples'
+// import { UPDATE_LAYER_INSTRUMENT, SET_IS_PLAYING } from '../../redux/actionTypes'
+// import AudioEngine from '../../audio-engine/AudioEngine';
+
+
 import { Box, makeStyles } from '@material-ui/core'
 import Di from '../play/layer-settings/resources/Di'
 import Upload from '../play/layer-settings/resources/Upload'
@@ -176,7 +182,6 @@ const CreateRoundModal = ({
             const file = files[0]
             const fileType = file.type
             if (fileType.includes('aiff') || fileType.includes('wav')) {
-                //const base64 = URL.createObjectURL(file)
                 const newSound = {
                     name: file.name,
                     type: file.type,
@@ -212,6 +217,7 @@ const CreateRoundModal = ({
         if (!showUploadSound || all) {
             toggleCreateRoundModal()
         }
+        setShowLoader(false)
         setPreUploaded(null)
         setShowUploadSound(false)
     }
@@ -234,8 +240,29 @@ const CreateRoundModal = ({
         setPreUploaded(newPreUploaded)
     }
 
-    const onUploadSound = () => {
-        firebase.uploadSound(user.id, preUploaded)
+    const createSamples = (urls) => {
+        return new Promise(async resolve => {
+            const newSamples = []
+            urls && Array.isArray(urls) && urls.forEach(async url => {
+                let sample = getDefaultSample(user.id)
+                sample.remoteURL = url
+                await firebase.createSample(sample)
+                newSamples.push(sample)
+                if (newSamples.length === urls.length) {
+                    resolve(newSamples)
+                }
+            })
+        })
+
+    }
+
+
+    const onUploadSound = async () => {
+        setShowLoader(true)
+        const urls = await firebase.uploadSound(user.id, preUploaded)
+        const samples = await createSamples(urls)
+        setShowLoader(false)
+        console.log({ samples })
     }
 
     const trashSound = (index) => {
@@ -299,17 +326,7 @@ const CreateRoundModal = ({
                             </Typography>
                         </Box>
                     </> :
-                    !showUploadSound ?
-                        <Box className={classes.loaderContainer}>
-                            <Loader
-                                className={classes.loader}
-                                type="Puff"
-                                color="#FFFFFF"
-                                height={60}
-                                width={50}
-                                visible={true}
-                            />
-                        </Box> :
+                    showUploadSound && !showLoader ?
                         <>
                             {
                                 <Box>
@@ -371,13 +388,22 @@ const CreateRoundModal = ({
                                     }
                                 </Box>
                             }
-                        </>
-
+                        </> :
+                        <Box className={classes.loaderContainer}>
+                            <Loader
+                                className={classes.loader}
+                                type="Puff"
+                                color="#FFFFFF"
+                                height={60}
+                                width={50}
+                                visible={true}
+                            />
+                        </Box>
                 }
             </Box>
             {
                 showUploadSound && <Box className={classes.buttonContainer}>
-                    <Button onClick={onUploadSound} disabled={!preUploaded} className={classes.createProject}>
+                    <Button onClick={onUploadSound} disabled={!preUploaded || showLoader} className={classes.createProject}>
                         <Typography style={{ fontWeight: 700 }}>Upload and create project</Typography>
                     </Button>
                 </Box>
