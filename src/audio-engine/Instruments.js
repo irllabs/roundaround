@@ -54,13 +54,13 @@ const Instruments = {
 
     create(instrumentName, articulation) {
         if (!_.isNil(instrumentName)) {
-            let _this = this;
+            let _this = this
             return new Promise(async function (resolve, reject) {
-                let InstrumentClass = _this.instrumentClasses[instrumentName];
-                let instrument = new InstrumentClass();
-                await instrument.load(articulation);
-                _this.instruments.push(instrument);
-                resolve(instrument);
+                let InstrumentClass = _this.instrumentClasses[instrumentName]
+                let instrument = new InstrumentClass()
+                await instrument.load(articulation)
+                _this.instruments.push(instrument)
+                resolve(instrument)
             });
         }
     },

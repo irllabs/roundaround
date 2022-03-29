@@ -2,8 +2,8 @@
 import { getDefaultRoundData, getDefaultStepData } from './defaultData'
 import { Colors } from './constants'
 
-export const createRound = async (userId) => {
-    return await getDefaultRoundData(userId)
+export const createRound = async (userId, samples) => {
+    return await getDefaultRoundData(userId, samples)
 }
 
 export const randomInt = (min, max) => {

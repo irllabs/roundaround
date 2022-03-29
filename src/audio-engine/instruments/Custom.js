@@ -3,16 +3,16 @@ import _ from 'lodash'
 import CustomSamples from '../CustomSamples'
 
 export default class Custom extends InstrumentBaseClass {
-    static instrumentName = 'custom';
-    static label = 'Custom';
-    static folder = '';
+    static instrumentName = 'custom'
+    static label = 'Custom'
+    static folder = ''
     static articulations = {}
-    static defaultArticulation = null;
-    constructor () {
+    static defaultArticulation = null
+    constructor() {
         super(Custom.instrumentName, Custom.articulations, Custom.folder)
         this.parameters.articulation = Custom.defaultArticulation;
     }
-    getSampleMap (sample) {
+    getSampleMap(sample) {
         let url = sample.localURL
         if (_.isNil(url)) {
             url = sample.remoteURL
@@ -22,7 +22,7 @@ export default class Custom extends InstrumentBaseClass {
         }
         return map
     }
-    load (sampleId) {
+    load(sampleId) {
         //  console.log('custom::load()', sampleId);
         const _this = this
         return new Promise(async function (resolve, reject) {
@@ -37,7 +37,7 @@ export default class Custom extends InstrumentBaseClass {
             resolve()
         })
     }
-    calculateMidiNoteFromVelocity (velocity) {
+    calculateMidiNoteFromVelocity(velocity) {
         return 60
     }
 }

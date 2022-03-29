@@ -355,7 +355,9 @@ class Firebase {
             try {
                 await this.db.collection('samples')
                     .doc(sample.id)
-                    .set(sampleClone)
+                    .set(sampleClone).catch(e => {
+                        console.log('create sample error', e)
+                    })
                 resolve()
             } catch (e) {
                 console.error(e)

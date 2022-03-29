@@ -55,7 +55,47 @@ export const getDefaultLayerData = async (userId, instrument) => {
     return layer;
 };
 
-export const getDefaultRoundData = async (userId) => {
+/** TODO: create new round using custom sounds */
+
+export const getDefaultRoundData = async (userId, samples) => {
+    if (samples) {
+        // const name = 'instrument 1'
+        // const name1 = 'instrument 2'
+        // const name2 = 'instrument 3'
+        const layers = []
+        Instruments.init()
+        samples.map(async (sample, i) => {
+            const articulation = await Instruments.create('custom', sample.id)
+            const layer = await getDefaultLayerData(userId, {
+                "instrument": "Sampler",
+                "sampler": 'Custom ' + i,
+                "sample": articulation,
+            })
+            layers.push(layer)
+        })
+        const round = {
+            "createdBy": userId || null,
+            "id": uuid(),
+            "dataVersion": 1.5,
+            "bpm": 120,
+            swing: 0,
+            "name": "Default Round",
+            "createdAt": Date.now(),
+            "currentUsers": [],
+            "layers": layers,
+            userBuses: {},
+            userPatterns: {}
+        }
+        round.userBuses[userId] = getDefaultUserBus(userId)
+        round.userPatterns[userId] = getDefaultUserPatterns(userId)
+        // increase each layer createdAt time by 1 ms so they're not equal
+        let i = 0
+        for (let layer of round.layers) {
+            layer.name = "Layer " + (i + 1)
+            layer.createdAt += i++
+        }
+        return round
+    }
     const newInstruments = await Instruments.classes();
     const newInstrumentsKeyArray = Object.keys(newInstruments);
     const upperLimit = newInstrumentsKeyArray.length - 1;

@@ -186,7 +186,8 @@ const CreateRoundModal = ({
                     name: file.name,
                     type: file.type,
                     isPlaying: false,
-                    file
+                    file,
+                    forPlay: URL.createObjectURL(file)
                 }
                 if (preUploaded) {
                     const newPreUploaded = [...preUploaded, newSound]
@@ -226,7 +227,7 @@ const CreateRoundModal = ({
         const newPreUploaded = cloneDeep(preUploaded)
         const isPlaying = !newPreUploaded[i].isPlaying
         newPreUploaded[i].isPlaying = isPlaying
-        const sound = new Audio(newPreUploaded[i].file)
+        const sound = new Audio(newPreUploaded[i].forPlay)
         if (isPlaying)
             sound.play().catch(e => {
                 if (e.message.indexOf('supported'))
@@ -256,13 +257,12 @@ const CreateRoundModal = ({
 
     }
 
-
     const onUploadSound = async () => {
         setShowLoader(true)
         const urls = await firebase.uploadSound(user.id, preUploaded)
         const samples = await createSamples(urls)
         setShowLoader(false)
-        console.log({ samples })
+        defaultRoundCreate(null, samples)
     }
 
     const trashSound = (index) => {

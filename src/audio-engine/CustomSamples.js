@@ -23,7 +23,7 @@ const CustomSamples = {
             if (!_.isNil(id)) {
                 try {
                     let sample = await this.firebase.getSample(id)
-                    // console.log('CustomSamples::get() from firebase', sample);
+                    //console.log('CustomSamples::get() from firebase', sample);
                     _this.samples[id] = _.cloneDeep(sample)
                     resolve(sample)
                 } catch (e) {

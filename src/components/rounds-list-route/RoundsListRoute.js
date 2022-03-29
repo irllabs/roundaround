@@ -36,6 +36,7 @@ import MenuItem from '@material-ui/core/MenuItem';
 import MenuList from '@material-ui/core/MenuList';
 import { uuid } from '../../utils/index'
 import CreateRoundModal from '../dialogs/CreateRoundModal';
+import CustomSamples from '../../audio-engine/CustomSamples';
 
 const styles = theme => ({
     root: {
@@ -65,8 +66,12 @@ class RoundsListRoute extends Component {
         this.onMenuClick = this.onMenuClick.bind(this)
     }
 
-    async onNewRoundClick(callback) {
-        let newRound = await createRound(this.props.user.id)
+    componentDidMount() {
+        CustomSamples.init(this.context)
+    }
+
+    async onNewRoundClick(callback, sounds) {
+        let newRound = await createRound(this.props.user.id, sounds)
         let newRounds = [newRound, ...this.props.rounds]
         await this.context.createRound(newRound)
         await this.props.setRounds(newRounds)
@@ -207,10 +212,9 @@ class RoundsListRoute extends Component {
                 <SignInDialog />
                 <CreateRoundModal
                     toggleCreateRoundModal={this.toggleCreateRoundModal}
-                    defaultRoundCreate={(callback) => {
-                        this.onNewRoundClick(callback)
-                    }
-                    }
+                    defaultRoundCreate={(callback, sounds) => {
+                        this.onNewRoundClick(callback, sounds)
+                    }}
                 />
             </>
         )
