@@ -11,7 +11,7 @@ import { randomInt } from "../utils";
 const Instruments = {
     instrumentClasses: {},
     instruments: [],
-    init() {
+    async init() {
         const classes = [
             HiHats,
             Kicks,
@@ -24,12 +24,12 @@ const Instruments = {
         }
     },
     async getRandomArticulation(instrumentName) {
-        const instruments = await this.classes();
-        let randomSoundNo = 0;
-        const instrument = instruments[instrumentName];
-        const sampleKeys = instrument['sampleKeys'];
-        randomSoundNo = randomInt(0, sampleKeys.length - 1);
-        return sampleKeys[randomSoundNo];
+        const instruments = await this.classes()
+        let randomSoundNo = 0
+        const instrument = instruments[instrumentName]
+        const sampleKeys = instrument['sampleKeys']
+        randomSoundNo = await randomInt(0, sampleKeys.length - 1)
+        return sampleKeys[randomSoundNo]
     },
     async classes() {
         const classes = [
@@ -52,17 +52,22 @@ const Instruments = {
         return inst;
     },
 
-    create(instrumentName, articulation) {
-        if (!_.isNil(instrumentName)) {
-            let _this = this
-            return new Promise(async function (resolve, reject) {
+    async create(instrumentName, articulation, articulationId) {
+        let _this = this
+        return new Promise(async (resolve, reject) => {
+            if (!_.isNil(instrumentName)) {
                 let InstrumentClass = _this.instrumentClasses[instrumentName]
                 let instrument = new InstrumentClass()
-                await instrument.load(articulation)
-                _this.instruments.push(instrument)
+                if (instrumentName === 'custom' && articulationId) {
+                    await instrument.load(articulationId)
+                }
+                else
+                    await instrument.load(articulation)
+                _this.instruments = [..._this.instruments, instrument]
                 resolve(instrument)
-            });
-        }
+            }
+            else reject(null)
+        });
     },
     dispose(id) {
         let instrument = _.find(this.instruments, {

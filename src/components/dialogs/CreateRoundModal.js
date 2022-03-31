@@ -263,6 +263,7 @@ const CreateRoundModal = ({
         const samples = await createSamples(urls)
         setShowLoader(false)
         defaultRoundCreate(null, samples)
+        onClose(true)
     }
 
     const trashSound = (index) => {

@@ -57,22 +57,28 @@ export const getDefaultLayerData = async (userId, instrument) => {
 
 /** TODO: create new round using custom sounds */
 
-export const getDefaultRoundData = async (userId, samples) => {
-    if (samples) {
-        // const name = 'instrument 1'
-        // const name1 = 'instrument 2'
-        // const name2 = 'instrument 3'
+export const generateLayers = async (samples, userId) => {
+    return new Promise(async resolve => {
         const layers = []
-        Instruments.init()
-        samples.map(async (sample, i) => {
+        await samples.map(async (sample, i) => {
             const articulation = await Instruments.create('custom', sample.id)
             const layer = await getDefaultLayerData(userId, {
                 "instrument": "Sampler",
-                "sampler": 'Custom ' + i,
-                "sample": articulation,
+                "sampler": 'custom',
+                "sample": articulation.name,
+                "sampleId": sample.id
             })
             layers.push(layer)
+            if (layers.length === samples.length)
+                resolve(layers)
         })
+    })
+}
+
+export const getDefaultRoundData = async (userId, samples) => {
+    if (samples && samples.length) {
+        await Instruments.init()
+        const layers = await generateLayers(samples, userId)
         const round = {
             "createdBy": userId || null,
             "id": uuid(),

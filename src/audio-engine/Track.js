@@ -251,6 +251,7 @@ export default class Track {
         // console.time('setInstrument', instrument)
         const instrumentName = instrument.sampler
         const articulation = instrument.sample
+        const articulationId = instrument.sampleId
         let _this = this
         return new Promise(async function (resolve, reject) {
             if (!_.isNil(_this.instrument)) {
@@ -262,7 +263,8 @@ export default class Track {
             }
             _this.instrument = await Instruments.create(
                 instrumentName,
-                articulation
+                articulation,
+                articulationId
             )
             // console.log('instrument created')
             _this.buildAudioChain()

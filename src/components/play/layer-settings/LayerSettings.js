@@ -37,7 +37,8 @@ import {
     TrashIcon,
     HamburgerMenuIcon,
     CloseIcon,
-    ElipsisIcon
+    ElipsisIcon,
+    Custom
 } from './resources'
 
 const styles = (theme) => ({
@@ -741,6 +742,8 @@ class LayerSettings extends Component {
                 Icon = SnareIcon
             if (name === 'Perc')
                 Icon = PercIcon
+            if (name === 'custom')
+                Icon = Custom
             return <Box style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', margin: 0, padding: 0 }}>
                 <Icon />
             </Box>
