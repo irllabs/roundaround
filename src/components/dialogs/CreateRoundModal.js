@@ -175,24 +175,28 @@ const CreateRoundModal = ({
     const uploadInputRef = useRef()
     const [showLoader, setShowLoader] = useState(false)
     const [showUploadSound, setShowUploadSound] = useState(false)
-    const [preUploaded, setPreUploaded] = useState()
+    const [preUploaded, setPreUploaded] = useState([])
 
     const processFiles = (files) => {
         if (files && files[0]) {
             const filesArray = Array.from(files)
             const newPreUploaded = preUploaded ? [...preUploaded] : []
-            filesArray.forEach(file => {
+            filesArray.map((file, i) => {
                 const fileType = file.type
-                if (fileType.includes('aiff') || fileType.includes('wav')) {
-                    const newSound = {
-                        name: file.name,
-                        type: file.type,
-                        isPlaying: false,
-                        file,
-                        forPlay: URL.createObjectURL(file)
-                    }
-                    newPreUploaded.push(newSound)
-                }
+                if (/**fileType.includes('aiff') || */fileType.includes('wav')) {
+                    const forPlay = URL.createObjectURL(file)
+                    if (file.size <= 20000000) {
+                        const newSound = {
+                            name: file.name,
+                            type: file.type,
+                            isPlaying: false,
+                            file,
+                            duration: 0,
+                            forPlay
+                        }
+                        newPreUploaded.push(newSound)
+                    } else alert(`file ${file.name} is too large!`)
+                } else alert(`file ${file.name} is not supported!`)
             })
             setPreUploaded(newPreUploaded)
         }
@@ -220,6 +224,19 @@ const CreateRoundModal = ({
         setShowLoader(false)
         setPreUploaded(null)
         setShowUploadSound(false)
+    }
+
+    const soundPreLoad = (i) => {
+        const newPreUploaded = cloneDeep(preUploaded)
+        const isPlaying = !newPreUploaded[i].isPlaying
+        newPreUploaded[i].isPlaying = isPlaying
+        const sound = new Audio(newPreUploaded[i].forPlay)
+        sound.addEventListener('loadedmetadata', () => {
+            const duration = sound.duration
+            newPreUploaded[i].duration = duration
+            setPreUploaded(newPreUploaded)
+
+        })
     }
 
     const soundPlaybackToggle = (i) => {
@@ -263,6 +280,19 @@ const CreateRoundModal = ({
         setShowLoader(false)
         defaultRoundCreate(null, samples)
         onClose(true)
+    }
+
+    const convertHMS = (value) => {
+        const sec = parseFloat(value)
+        let hours = Math.floor(sec / 3600)
+        let minutes = Math.floor((sec - (hours * 3600)) / 60)
+        let seconds = Math.floor(sec - (hours * 3600) - (minutes * 60))
+        let miliseconds = parseInt((sec - (hours * 3600) - (minutes * 60) - seconds) * 1000)
+        if (hours < 10) { hours = "0" + hours }
+        if (minutes < 10) { minutes = "0" + minutes }
+        if (seconds < 10) { seconds = "0" + seconds }
+        if (miliseconds < 10) { miliseconds = "0" + miliseconds }
+        return hours + ':' + minutes + ':' + seconds + ':' + miliseconds
     }
 
     const trashSound = (index) => {
@@ -354,13 +384,13 @@ const CreateRoundModal = ({
                                             e.stopPropagation()
                                             uploadInputRef.current.click()
                                         }}
-                                        style={{ height: preUploaded ? 104 : 252 }}
+                                        style={{ height: preUploaded && preUploaded.length ? 104 : 252 }}
                                     >
                                         <Box>
-                                            {preUploaded ? <Add /> : <Upload />}
+                                            {preUploaded && preUploaded.length ? <Add /> : <Upload />}
                                         </Box>
                                         <Typography className={classes.tileSub}>
-                                            {preUploaded ? 'Add more sounds' : 'Choose audio files or drag and drop'}
+                                            {preUploaded && preUploaded.length ? 'Add more sounds' : 'Choose audio files or drag and drop'}
                                         </Typography>
                                         <Typography className={classes.tileText}>
                                             .aif or .wav
@@ -372,6 +402,8 @@ const CreateRoundModal = ({
                                             {preUploaded.map((item, i) => {
                                                 const name = item.name
                                                 const nameLength = name.length
+                                                if (!item.duration)
+                                                    soundPreLoad(i)
                                                 return (
                                                     <Box className={classes.tileAlt} key={i}>
                                                         <Box onClick={() => soundPlaybackToggle(i)} className={classes.tileAltIconContainer} style={{ justifyContent: 'flex-start' }}>
@@ -379,7 +411,7 @@ const CreateRoundModal = ({
                                                         </Box>
                                                         <Box className={classes.tileAltTypeContainer}>
                                                             <Typography style={{ fontSize: 14 }}>{nameLength > 25 ? name.substring(0, 25) + '...' : name}</Typography>
-                                                            <Typography id='dummy-time' style={{ fontSize: 12 }}>00:01:34</Typography>
+                                                            <Typography id='dummy-time' style={{ fontSize: 12 }}>{convertHMS(item.duration)}</Typography>
                                                         </Box>
                                                         <Box onClick={() => trashSound(i)} className={classes.tileAltIconContainer} style={{ justifyContent: 'flex-end' }}>
                                                             <Trash />
@@ -406,7 +438,7 @@ const CreateRoundModal = ({
             </Box>
             {
                 showUploadSound && <Box className={classes.buttonContainer}>
-                    <Button onClick={onUploadSound} disabled={!preUploaded || showLoader} className={classes.createProject}>
+                    <Button onClick={onUploadSound} disabled={!preUploaded || !preUploaded.length || showLoader} className={classes.createProject}>
                         <Typography style={{ fontWeight: 700 }}>Upload and create project</Typography>
                     </Button>
                 </Box>
