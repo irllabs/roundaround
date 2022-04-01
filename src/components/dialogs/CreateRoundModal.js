@@ -179,23 +179,22 @@ const CreateRoundModal = ({
 
     const processFiles = (files) => {
         if (files && files[0]) {
-            const file = files[0]
-            const fileType = file.type
-            if (fileType.includes('aiff') || fileType.includes('wav')) {
-                const newSound = {
-                    name: file.name,
-                    type: file.type,
-                    isPlaying: false,
-                    file,
-                    forPlay: URL.createObjectURL(file)
+            const filesArray = Array.from(files)
+            const newPreUploaded = preUploaded ? [...preUploaded] : []
+            filesArray.forEach(file => {
+                const fileType = file.type
+                if (fileType.includes('aiff') || fileType.includes('wav')) {
+                    const newSound = {
+                        name: file.name,
+                        type: file.type,
+                        isPlaying: false,
+                        file,
+                        forPlay: URL.createObjectURL(file)
+                    }
+                    newPreUploaded.push(newSound)
                 }
-                if (preUploaded) {
-                    const newPreUploaded = [...preUploaded, newSound]
-                    setPreUploaded(newPreUploaded)
-                } else {
-                    setPreUploaded([newSound])
-                }
-            }
+            })
+            setPreUploaded(newPreUploaded)
         }
     }
 
@@ -338,6 +337,7 @@ const CreateRoundModal = ({
                                             const files = e.target.files
                                             processFiles(files)
                                         }}
+                                        multiple
                                         type='file'
                                     />
                                     <Box
@@ -370,13 +370,15 @@ const CreateRoundModal = ({
                                         preUploaded && preUploaded.length &&
                                         <Box className={classes.preUploadList}>
                                             {preUploaded.map((item, i) => {
+                                                const name = item.name
+                                                const nameLength = name.length
                                                 return (
                                                     <Box className={classes.tileAlt} key={i}>
                                                         <Box onClick={() => soundPlaybackToggle(i)} className={classes.tileAltIconContainer} style={{ justifyContent: 'flex-start' }}>
                                                             <Playback />
                                                         </Box>
                                                         <Box className={classes.tileAltTypeContainer}>
-                                                            <Typography style={{ fontSize: 14 }}>{item.name}</Typography>
+                                                            <Typography style={{ fontSize: 14 }}>{nameLength > 25 ? name.substring(0, 25) + '...' : name}</Typography>
                                                             <Typography id='dummy-time' style={{ fontSize: 12 }}>00:01:34</Typography>
                                                         </Box>
                                                         <Box onClick={() => trashSound(i)} className={classes.tileAltIconContainer} style={{ justifyContent: 'flex-end' }}>
