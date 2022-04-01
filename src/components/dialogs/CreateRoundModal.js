@@ -17,9 +17,6 @@ import {
 } from '../../redux/actions'
 
 import { getDefaultSample } from '../../utils/defaultData'
-// import CustomSamples from '../../audio-engine/CustomSamples'
-// import { UPDATE_LAYER_INSTRUMENT, SET_IS_PLAYING } from '../../redux/actionTypes'
-// import AudioEngine from '../../audio-engine/AudioEngine';
 
 
 import { Box, makeStyles } from '@material-ui/core'
@@ -181,7 +178,7 @@ const CreateRoundModal = ({
         if (files && files[0]) {
             const filesArray = Array.from(files)
             const newPreUploaded = preUploaded ? [...preUploaded] : []
-            filesArray.map((file, i) => {
+            filesArray.forEach((file) => {
                 const fileType = file.type
                 if (/**fileType.includes('aiff') || */fileType.includes('wav')) {
                     const forPlay = URL.createObjectURL(file)
