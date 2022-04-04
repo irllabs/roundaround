@@ -1916,7 +1916,7 @@ class PlayUI extends Component {
         const { round, user } = this.props
         const patterns = round.userPatterns[user.id].patterns
         let angle = Math.PI / HTML_UI_Params.anglePIDivisor
-        let e = 0
+        let i = 0
         for (const pattern of patterns) {
             const { state: { layers }, id } = pattern
             const patternSize = (2 * Math.PI) / patterns.length
@@ -1941,12 +1941,11 @@ class PlayUI extends Component {
             const labelX = x + HTML_UI_Params.presetLabelXOffset
             const labelY = y + HTML_UI_Params.presetLabelYOffset
             label.fill({ color: user.color })
-            label.attr({ id: `${e}_pattern_label` })
+            label.attr({ id: `${i}_pattern_label` })
             label.x(labelX)
             label.y(labelY)
-            //const isFirst = patterns[0].id === id
 
-            currentPatternGraphic.attr({ id: `${e}_pattern`, fill: 'none', opacity: isSelected ? 0.3 : 0.15, cursor: 'pointer' })
+            currentPatternGraphic.attr({ id: `${i}_pattern`, fill: 'none', opacity: isSelected ? 0.3 : 0.15, cursor: 'pointer' })
             currentPatternGraphic.stroke({ color: user.color, width: 18 })
             currentPatternGraphic.fill('none')
             currentPatternGraphic.x(x)
@@ -1962,14 +1961,13 @@ class PlayUI extends Component {
                 patternOutline.x(patternOutlineX)
                 patternOutline.y(PatternOutlineY)
             }
-            //this.microPatternGraphics.push(currentPatternGraphic)
             if (layers && layers.length > 0) {
                 this.renderMicroRound({ x: x + 1.5, y: y + 1.5, pattern: currentPatternGraphic, isFilled: isSelected, layers, opacity })
             }
             const clickableButtonDiameter = patternDiameter + HTML_UI_Params.presetClickableButtonDiameterOffset
             const clickableButton = this.container.nested().circle(clickableButtonDiameter)
             clickableButton.fill({ color: '#000', opacity: 0.001 })
-            clickableButton.attr({ cursor: 'pointer', id: `${e}_pattern_clickable_button` })
+            clickableButton.attr({ cursor: 'pointer', id: `${i}_pattern_clickable_button` })
             const clickableButtonX = x - HTML_UI_Params.presetClickableButtonXOffset
             const clickableButtonY = y - HTML_UI_Params.presetClickableButtonYoffset
             clickableButton.x(clickableButtonX)
@@ -2008,7 +2006,7 @@ class PlayUI extends Component {
                     this.draw()
                 }
             })
-            e++
+            i++
         }
     }
 

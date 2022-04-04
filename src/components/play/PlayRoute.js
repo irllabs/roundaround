@@ -16,7 +16,6 @@ import FX from '../../audio-engine/FX'
 import ShareDialog from '../dialogs/ShareDialog'
 import { getDefaultUserBus, getDefaultUserPatterns } from '../../utils/defaultData'
 import LayerSettings from './layer-settings/LayerSettings';
-//import OrientationDialog from '../dialogs/OrientationDialog';
 import CustomSamples from '../../audio-engine/CustomSamples';
 
 const styles = theme => ({
@@ -70,9 +69,6 @@ class PlayRoute extends Component {
         if (!_.isNil(this.props.round) && !_.isNil(this.props.round.currentUsers)) {
             this.props.setIsPlaying(false)
         }
-        /*let currentUsers = _.cloneDeep(this.props.round.currentUsers)
-        _.pull(currentUsers, this.props.user.id)
-        await this.context.updateRound(this.props.round.id, { currentUsers })*/
         this.props.setRound(null)
         this.props.setUsers([])
         this.isLoadingRound = false;
@@ -170,10 +166,7 @@ class PlayRoute extends Component {
                         _this.reloadCollaborationLayersThrottled()
                     }
                 }
-                if (change.type === 'added') {
-                    _this.reloadCollaborationLayersThrottled()
-                }
-                if (change.type === 'removed') {
+                if (change.type === 'added' || change.type === 'removed') {
                     _this.reloadCollaborationLayersThrottled()
                 }
             });
@@ -345,13 +338,11 @@ class PlayRoute extends Component {
                         visible={true}
                     />
                 }
-                {/* <PatternsSidebar /> */}
                 <EffectsSidebar />
                 <ShareDialog />
                 <Box style={{ position: 'relative', display: 'flex', justifyContent: 'center', width: '100%' }}>
                     <LayerSettings playUIRef={this.playUIRef} />
                 </Box>
-                {/* <OrientationDialog /> */}
             </Box>
         )
     }

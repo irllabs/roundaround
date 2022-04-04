@@ -82,14 +82,11 @@ class PatternSequencer extends Component {
     }
 
     onPlayingSequenceToggle(event) {
-        //   console.log('here 1');
         this.props.setCurrentSequencePattern(0)
         this.props.setIsPlayingSequence(this.props.user.id, event.target.checked)
-        // console.log('here 2', this.props.round.userPatterns[this.props.user.id]);
         let userPatternsClone = _.cloneDeep(this.props.round.userPatterns[this.props.user.id])
         userPatternsClone.isPlayingSequence = event.target.checked
         this.context.saveUserPatterns(this.props.round.id, this.props.user.id, userPatternsClone)
-        // console.log('here 3');
     }
 
     getPatternOrderDisplay(id) {
@@ -126,7 +123,6 @@ class PatternSequencer extends Component {
                 </Box>
                 {(!_.isNil(this.props.user) && !_.isNil(this.props.round) && !_.isNil(this.props.round.userPatterns[this.props.user.id])) &&
                     <>
-
                         <Button size="small" variant="contained" color="secondary" disableElevation onClick={this.onWriteClick}>{this.props.display.isRecordingSequence ? 'Stop' : 'Write'}</Button>
                         <Box className={classes.switchContainer}>
                             <SequenceOffIcon className={classes.sequenceOffIcon} />
@@ -137,7 +133,6 @@ class PatternSequencer extends Component {
                             />
                             <SequenceIcon className={classes.sequenceIcon} />
                         </Box>
-
                     </>
                 }
             </Box>

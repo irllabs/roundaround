@@ -1,19 +1,17 @@
 import React, { Component } from 'react'
-import PropTypes from 'prop-types';
-import { withStyles } from '@material-ui/styles';
-import Box from '@material-ui/core/Box';
-import { connect } from "react-redux";
+import PropTypes from 'prop-types'
+import { withStyles } from '@material-ui/styles'
+import Box from '@material-ui/core/Box'
+import { connect } from "react-redux"
 import AudioEngine from "../../audio-engine/AudioEngine"
-import { FirebaseContext } from '../../firebase';
+import { FirebaseContext } from '../../firebase'
 import {
     setUserBusFx,
     setUserBusFxOverride
-} from "../../redux/actions";
-//import { sortableContainer, sortableElement, sortableHandle } from 'react-sortable-hoc';
+} from "../../redux/actions"
 import arrayMove from 'array-move'
-//import { DragIndicator } from '@material-ui/icons';
-import EffectThumbControl from './EffectThumbControl';
-import ChevronRightIcon from '@material-ui/icons/ChevronRight';
+import EffectThumbControl from './EffectThumbControl'
+import ChevronRightIcon from '@material-ui/icons/ChevronRight'
 import _ from 'lodash'
 
 const styles = theme => ({
@@ -89,17 +87,6 @@ const styles = theme => ({
     }
 })
 
-/*const DragHandle = sortableHandle(({ classes }) => <span className={classes.effectsSidebarListItemDragHandle}><DragIndicator /></span>);
-const SortableItem = sortableElement(({ fx, onSwitchOn, onSwitchOff, classes }) => (
-    <li className={classes.effectsSidebarListItem}>
-        <DragHandle classes={classes} />
-        <EffectThumbControl label={toTitleCase(fx.label)} fxId={fx.id} userId={fx.userId} switchOn={onSwitchOn} switchOff={onSwitchOff} name={fx.name} />
-    </li>
-));
-const SortableContainer = sortableContainer(({ children, classes }) => {
-    return <ul className={classes.effectsSidebarList}>{children}</ul>;
-});*/
-
 const toTitleCase = (str) => {
     return str.replace(
         /\w\S*/g,
@@ -126,6 +113,7 @@ class EffectsSidebar extends Component {
     onPlayClick() {
         this.props.togglePlay()
     }
+
     onSortEnd = ({ oldIndex, newIndex }) => {
         let userBus = _.cloneDeep(this.props.round.userBuses[this.props.user.id])
         userBus.fx = arrayMove(userBus.fx, oldIndex, newIndex)
@@ -133,18 +121,13 @@ class EffectsSidebar extends Component {
             userBus.fx[i].order = i
         }
         this.props.setUserBusFx(this.props.user.id, userBus.fx)
-        //this.props.dispatch({ type: SET_USER_BUS_FX, payload: { userId: this.props.user.id, data: userBus.fx } })
         AudioEngine.busesByUser[this.props.user.id].setFxOrder(userBus.fx)
         this.context.updateUserBus(this.props.round.id, this.props.user.id, userBus)
+    }
 
-        /*this.setState(({ items }) => ({
-            items: arrayMove(items, oldIndex, newIndex),
-        }));*/
-    };
     onSwitchOn(fxId) {
         AudioEngine.busesByUser[this.props.user.id].fx[fxId].override = true
         this.props.setUserBusFxOverride(this.props.user.id, fxId, true)
-        //this.props.dispatch({ type: SET_USER_BUS_FX_OVERRIDE, payload: { fxId, userId: this.props.user.id, value: true } })
         let userBus = _.cloneDeep(this.props.round.userBuses[this.props.user.id])
         let fx = _.find(userBus.fx, { id: fxId })
         fx.isOverride = true
@@ -153,7 +136,6 @@ class EffectsSidebar extends Component {
     onSwitchOff(fxId) {
         AudioEngine.busesByUser[this.props.user.id].fx[fxId].override = false
         this.props.setUserBusFxOverride(this.props.user.id, fxId, false)
-        //this.props.dispatch({ type: SET_USER_BUS_FX_OVERRIDE, payload: { fxId, userId: this.props.user.id, value: false } })
         let userBus = _.cloneDeep(this.props.round.userBuses[this.props.user.id])
         let fx = _.find(userBus.fx, { id: fxId })
         fx.isOverride = false
@@ -184,8 +166,10 @@ class EffectsSidebar extends Component {
         return (
             <Box className={classes.root + ' ' + isMinimizedClass}>
                 <Box className={classes.effectContainer}>
-                    <Box className={classes.minimizeButton + ' ' + buttonIsMinimizedClass} onClick={this.onMinimizeClick}><ChevronRightIcon size="small" /></Box>
-                    {items && items.length > 0 && items.map((fx, index) => (
+                    <Box className={classes.minimizeButton + ' ' + buttonIsMinimizedClass} onClick={this.onMinimizeClick}>
+                        <ChevronRightIcon size="small" />
+                    </Box>
+                    {items.map((fx) => (
                         <EffectThumbControl key={fx.id} isOn={fx.isOn} isOverride={fx.isOverride} className={classes.thumbControl} label={toTitleCase(fx.label)} fxId={fx.id} userId={fx.userId} switchOn={this.onSwitchOn} switchOff={this.onSwitchOff} name={fx.name} />
                     ))}
                 </Box>
@@ -195,19 +179,19 @@ class EffectsSidebar extends Component {
 }
 EffectsSidebar.propTypes = {
     classes: PropTypes.object.isRequired,
-};
+}
 
 const mapStateToProps = state => {
     return {
         round: state.round,
         user: state.user,
         display: state.display
-    };
-};
+    }
+}
 
 export default connect(
     mapStateToProps, {
     setUserBusFx,
     setUserBusFxOverride
 }
-)(withStyles(styles)(EffectsSidebar));
+)(withStyles(styles)(EffectsSidebar))

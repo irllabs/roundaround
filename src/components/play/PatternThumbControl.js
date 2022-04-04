@@ -71,7 +71,6 @@ class PatternThumbControl extends Component {
                 }
             } else {
                 this.thumbBackground.fill('#171717')
-                //this.thumbBackground.stroke({ width: 1, color: '#999999' })
             }
         }
     }
@@ -134,28 +133,7 @@ class PatternThumbControl extends Component {
             }
         })
     }
-    onMouseMove(e) {
-        // e.preventDefault()
-        // let x = e.pageX - this.dragStart
-        // if (x > containerWidth - thumbWidth) {
-        //     x = containerWidth - thumbWidth
-        // } else if (x < 0) {
-        //     x = 0
-        // }
-        // if (x > (containerWidth - thumbWidth) / 2) {
-        //     this.saveContainer.show()
-        //     this.label.hide()
-        //     this.arrowContainer.hide()
-        // } else {
-        //     this.saveContainer.hide()
-        //     if (!this.props.isFilled) {
-        //         this.arrowContainer.show()
-        //     } else {
-        //         this.label.show()
-        //     }
-        // }
-        // this.thumb.x(x)
-    }
+
     onMouseUp(e) {
         e.preventDefault()
         document.removeEventListener('mouseup', this.onMouseUp)
@@ -204,7 +182,6 @@ class PatternThumbControl extends Component {
         }
         return (
             <div style={{ width: '48px', height: '48px', backgroundColor: 'rgba(0,0,0,0.5)', borderRadius: '24px', position: 'relative', marginBottom: '0.5rem' }}>
-                {/* <Save fontSize="small" style={saveStyles} /> */}
                 <div style={{ zIndex: 2, position: 'absolute' }}>
                     <div ref={this.thumbControlRef} style={{ display: 'flex', zIndex: 2 }}></div>
                 </div>
