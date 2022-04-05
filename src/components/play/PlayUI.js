@@ -62,6 +62,7 @@ class PlayUI extends Component {
         this.microLayerGraphics = []
         this.microPatternGraphics = []
         this.sequenceGraphics = []
+        this.sequencerButtons = []
         this.activePattern = undefined
         this.activeSequence = undefined
         this.round = null // local copy of round, prevent mutating store.
@@ -524,10 +525,6 @@ class PlayUI extends Component {
             }
 
             AudioEngine.recalculateParts(this.round)
-            // console.timeEnd('loadPattern')
-
-            // this.props.dispatch({ type: UPDATE_LAYERS, payload: { layers: pattern.state.layers } })
-            // this.props.dispatch({ type: SET_CURRENT_SEQUENCE_PATTERN, payload: { value: order } })
         }
     }
 
@@ -1354,8 +1351,6 @@ class PlayUI extends Component {
         const userHasLayer = round.layers.find(layer => layer.createdBy === user.id)
         const layerDiameter = !userHasLayer ? HTML_UI_Params.initialLayerDiameter : this.getLayerDiameter(1)
         const patternsContainerDiameter = layerDiameter - HTML_UI_Params.patternsContainerDiameterOffset
-        this.sequenceGraphics = []
-        this.microPatternGraphics = []
 
         const xOffset = (this.containerWidth / HTML_UI_Params.patternsMainContainerDivisor) - (layerDiameter / HTML_UI_Params.patternsLayerDiameterDivisor)
         const yOffset = (this.containerHeight / HTML_UI_Params.patternsMainContainerDivisor) - (layerDiameter / HTML_UI_Params.patternsLayerDiameterDivisor)
@@ -1381,11 +1376,14 @@ class PlayUI extends Component {
 
             tempoIcon.x(tempoIconX)
             tempoIcon.y(tempoIconY)
+            tempoIcon.attr({ id: 'tempIcon' })
 
             tempoButton.x(tempoButtonX)
             tempoButton.y(tempoButtonY)
 
-            tempoButton.fill('#fff').attr({ opacity: 0.1 })
+            tempoButton.fill('#fff').attr({ opacity: 0.1, id: 'tempo-button' })
+            this.sequencerButtons.push(tempoButton)
+            this.sequencerButtons.push(tempoIcon)
             const tempoButtonText = this.container.nested().plain(round.bpm)
 
             tempoButtonText.x(tempoButtonTextX)
@@ -1398,6 +1396,7 @@ class PlayUI extends Component {
                 opacity: 1,
             })
             tempoButtonText.fill('#fff')
+            tempoButtonText.attr({ id: 'tempo-button-text' })
 
             this.renderPlayingSequenceIndicator({ x: xOffset, y: yOffset })
             this.renderRecordSequenceButton(xOffset, yOffset)
@@ -1549,6 +1548,7 @@ class PlayUI extends Component {
         })
         switchLabel.fill(user.color)
         switchLabel.attr({ id: 'switch-letter' })
+        this.microLayerGraphics.push(switchLabel)
 
         const sSwitchX = x + HTML_UI_Params.sequenceSwitchXOffset
         const sSwitchY = y + HTML_UI_Params.sequenceSwitchYOffset
@@ -1568,6 +1568,7 @@ class PlayUI extends Component {
             sequenceSwitchDot.stroke({ color: user.color, width: 1 })
             sequenceSwitchDot.x(bSX)
             sequenceSwitchDot.y(bSY)
+            this.microLayerGraphics.push(sequenceSwitchDot)
         }
 
         sequenceSwitch.stroke({ width: 0.3, color: user.color })
@@ -1608,6 +1609,10 @@ class PlayUI extends Component {
         clickableSwitch.on('click', this.toggleIsPlayingSequence)
         clickableSwitch.x(sSwitchX)
         clickableSwitch.y(sSwitchY)
+        this.microLayerGraphics.push(sequenceSwitch)
+        this.microLayerGraphics.push(clickableSwitch)
+        this.microLayerGraphics.push(switchLabel)
+        this.microLayerGraphics.push(switchLabelSubContainer)
     }
 
     toggleIsPlayingSequence = () => {
@@ -1679,6 +1684,8 @@ class PlayUI extends Component {
             currentPatternGraphic.fill('none')
             currentPatternGraphic.x(x)
             currentPatternGraphic.y(y)
+            this.microPatternGraphics.push(currentPatternGraphic)
+            this.microLayerGraphics.push(label)
 
             if (isSelected) {
                 const patternOutline = this.container.nested().circle(patternDiameter + HTML_UI_Params.presetPatternOulineDiameterOffset)
@@ -1689,6 +1696,8 @@ class PlayUI extends Component {
                 const PatternOutlineY = y - HTML_UI_Params.presetPatternOutlineYOffset
                 patternOutline.x(patternOutlineX)
                 patternOutline.y(PatternOutlineY)
+                patternOutline.attr({ id: `${i}-pattern-outline` })
+                this.microLayerGraphics.push(patternOutline)
             }
             if (layers && layers.length > 0) {
                 this.renderMicroRound({ x: x + 1.5, y: y + 1.5, pattern: currentPatternGraphic, isFilled: isSelected, layers, opacity })
@@ -1701,6 +1710,7 @@ class PlayUI extends Component {
             const clickableButtonY = y - HTML_UI_Params.presetClickableButtonYoffset
             clickableButton.x(clickableButtonX)
             clickableButton.y(clickableButtonY)
+            this.microLayerGraphics.push(clickableButton)
             clickableButton.on('click', async () => {
                 const { round, isPlaying } = this.props
                 const patterns = round.userPatterns[user.id].patterns
@@ -1846,6 +1856,7 @@ class PlayUI extends Component {
                 sequenceButtonDots.stroke({ color: user.color, width: 1 })
                 sequenceButtonDots.x(bSX)
                 sequenceButtonDots.y(bSY)
+                this.microLayerGraphics.push(sequenceButtonDots)
             }
             const sequenceText = this.container.nested().plain('Sequence').font({
                 family: 'Arial',
@@ -1864,6 +1875,9 @@ class PlayUI extends Component {
             clickableSequenceButton.attr({ id: 'sequence-cickable-button', fill: '#000', opacity: 0.00001, cursor: 'pointer' })
             clickableSequenceButton.x(sButtonX)
             clickableSequenceButton.y(sButtonY)
+            this.microLayerGraphics.push(sequenceButton)
+            this.microLayerGraphics.push(sequenceText)
+            this.microLayerGraphics.push(clickableSequenceButton)
         }
 
         if (this.isRecordingSequence) {
@@ -1899,6 +1913,10 @@ class PlayUI extends Component {
             clickableSequenceButton.attr({ id: 'sequence-button', fill: '#000', opacity: 0.00001, cursor: 'pointer' })
             clickableSequenceButton.x(sStopButtonX)
             clickableSequenceButton.y(sStopButtonY)
+            this.microLayerGraphics.push(sequenceText)
+            this.microLayerGraphics.push(sequenceButton)
+            this.microLayerGraphics.push(sequenceStop)
+            this.microLayerGraphics.push(clickableSequenceButton)
         }
     }
 
@@ -1912,62 +1930,24 @@ class PlayUI extends Component {
     }
 
     clearPresetPatternsSequencer = () => {
-
-        const switchLabel = document.getElementById('switch-letter')
-        switchLabel && switchLabel.parentNode.removeChild(switchLabel)
-
-        const switchLabelSubcontainer = document.getElementById('switch-letter-subcontainer')
-        switchLabelSubcontainer && switchLabelSubcontainer.parentNode.removeChild(switchLabelSubcontainer)
-
-        const sequenceSwitch = document.getElementById('sequence-switch')
-        sequenceSwitch && sequenceSwitch.parentNode.removeChild(sequenceSwitch)
-
-        const clickableSwitch = document.getElementById('clickable-switch')
-        clickableSwitch && clickableSwitch.parentNode.removeChild(clickableSwitch)
-
-        const switchLabelContainer = document.getElementById('switch-letter-container')
-        switchLabelContainer && switchLabelContainer.parentNode.removeChild(switchLabelContainer)
-
-        for (let i = 0; i < HTML_UI_Params.sequenceButtonDots; i++) {
-            const currentDot = document.getElementById(`${i}_sequence_dot`)
-            currentDot && currentDot.parentNode.removeChild(currentDot)
+        for (let graphic of this.microPatternGraphics) {
+            graphic.clear()
+        }
+        for (let graphic of this.sequenceGraphics) {
+            graphic.clear()
         }
         this.clearPresetGraphics()
-
-        const sbtn = document.getElementById('sequence-button')
-        sbtn && sbtn.parentNode.removeChild(sbtn)
-
-        const sText = document.getElementById('sequence-text')
-        sText && sText.parentNode.removeChild(sText)
-        for (let i = 0; i < HTML_UI_Params.sequenceButtonDots; i++) {
-            const dot = document.getElementById(`${i}-sbuttonDot`)
-            dot && dot.parentNode.removeChild(dot)
-        }
-        const sStop = document.getElementById('sequence-stop')
-        sStop && sStop.parentNode.removeChild(sStop)
     }
 
     clearPresetGraphics = () => {
-        const { round, user } = this.props
-        const patterns = round.userPatterns[user.id].patterns
-        for (let i = 0; i < patterns.length; i++) {
-            const { state: { layers } } = patterns[i]
-            const rnd = document.getElementById(`${i}_pattern`)
-            const lbl = document.getElementById(`${i}_pattern_label`)
-            const btn = document.getElementById(`${i}_pattern_clickable_button`)
-            rnd && rnd.parentNode.removeChild(rnd)
-            lbl && lbl.parentNode.removeChild(lbl)
-            btn && btn.parentNode.removeChild(btn)
-            layers && layers.forEach(layer => {
-                const { steps } = layer;
-                steps && steps.forEach(step => {
-                    const { id, isOn } = step
-                    if (isOn) {
-                        const stepNode = document.getElementById(`micro-step-${id}`)
-                        stepNode && stepNode.parentNode.removeChild(stepNode)
-                    }
-                })
-            })
+        for (let graphic of this.microStepGraphics) {
+            graphic.clear()
+        }
+        for (let graphic of this.microLayerGraphics) {
+            graphic.clear()
+        }
+        for (let graphic of this.sequencerButtons) {
+            graphic.clear()
         }
     }
 
@@ -1994,7 +1974,7 @@ class PlayUI extends Component {
         layerGraphic.id = layer.id
         layerGraphic.order = order
         layerGraphic.isAllowedInteraction = false
-        //this.microLayerGraphics.push(layerGraphic)
+        this.microLayerGraphics.push(layerGraphic)
 
         // draw steps
         const stepSize = (2 * Math.PI) / layer.steps.length;
