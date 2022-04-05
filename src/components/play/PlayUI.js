@@ -275,204 +275,6 @@ class PlayUI extends Component {
             _this.draw(false)
         }
         this.round = _.cloneDeep(this.props.round)
-
-        /*
-    
-            if (this.round.id !== this.props.round.id) {
-                // whole round has changed
-                this.round = _.cloneDeep(this.props.round)
-                AudioEngine.load(this.props.round)
-                this.draw()
-                return
-            }
-    
-            if (this.round.bpm !== this.props.round.bpm) {
-                this.round.bpm = this.props.round.bpm
-                AudioEngine.setTempo(this.round.bpm)
-                this.reclaculateIndicatorAnimation()
-                this.adjustAllLayerOffsets()
-            }
-    
-            // User profile color changed
-            const userColors = this.getUserColors()
-            if (!_.isEqual(userColors, this.userColors)) {
-                this.userColors = userColors
-                redraw = true
-            }
-    
-            // Edit all interactions changed
-            if (this.editAllLayers !== this.props.editAllLayers) {
-                this.editAllLayers = this.props.editAllLayers
-                this.removeAllStepEventListeners()
-                for (let layerGraphic of this.layerGraphics) {
-                    if (this.editAllLayers) {
-                        layerGraphic.isAllowedInteraction = true
-                    } else {
-                        //  console.log('layer', _.find(this.props.round.layers, { id: layerGraphic.id }));
-                        const layer = _.find(this.props.round.layers, { id: layerGraphic.id })
-                        if (!_.isNil(layer)) {
-                            layerGraphic.isAllowedInteraction = layer.createdBy === this.props.user.id
-                        }
-                    }
-                    this.addLayerEventListeners(layerGraphic)
-                }
-                for (let stepGraphic of this.stepGraphics) {
-                    if (this.editAllLayers) {
-                        stepGraphic.isAllowedInteraction = true
-                    } else {
-                        stepGraphic.isAllowedInteraction = this.stepLayerDictionary[stepGraphic.id].createdBy === this.props.user.id
-                    }
-                    this.addStepEventListeners(stepGraphic)
-                }
-            }
-    
-            if (!this.isOn && this.props.isOn && !_.isNil(this.positionLine)) {
-                //console.log('playing timeline');
-                // adding 200ms delay to compensate for starting audio with delay to reduce audio glitches. Todo: sync this better with the transport
-                _.delay(() => {
-                    this.positionLine.timeline().play()
-                    this.isOn = true
-                }, 200)
-            } else if (this.isOn && !this.props.isOn && !_.isNil(this.positionLine)) {
-                //console.log('pausing timeline');
-                _.delay(() => {
-                    this.positionLine.timeline().stop()
-                    this.isOn = false
-                }, 200)
-            }
-    
-            // check for one or more layers added
-            this.cacheStepLayers()
-            for (let layer of this.props.round.layers) {
-                let oldLayer = _.find(this.round.layers, { id: layer.id })
-                if (_.isNil(oldLayer)) {
-                    await AudioEngine.createTrack(layer)
-                    redraw = true
-                }
-            }
-    
-            for (let layer of this.round.layers) {
-                let newLayer = _.find(this.props.round.layers, { id: layer.id })
-                if (_.isNil(newLayer)) {
-                    AudioEngine.removeTrack(layer.id)
-                    redraw = true
-                }
-            }
-    
-            // check for number of steps per layer changed
-            let previousSteps = []
-            for (let i = 0; i < this.round.layers.length; i++) {
-                const layer = this.round.layers[i]
-                previousSteps.push(...layer.steps)
-                const newLayer = _.find(this.props.round.layers, { id: layer.id })
-                if (!_.isNil(newLayer)) {
-                    if (newLayer.steps.length !== layer.steps.length) {
-                        // number of steps has changed
-                        redraw = true
-                        AudioEngine.recalculateParts(this.props.round)
-                    }
-                }
-            }
-    
-            // Check if an individual step has changed
-            let newSteps = []
-            for (let layer of this.props.round.layers) {
-                for (let newStep of layer.steps) {
-                    newSteps.push(newStep)
-                }
-    
-            }
-            let shouldRecalculateParts = false
-        //    console.timeEnd('componentDidUpdate B3 B')
-            for (let previousStep of previousSteps) {
-            //    console.time('componentDidUpdate B3 C')
-                let newStep = _.find(newSteps, { id: previousStep.id })
-            //    console.timeEnd('componentDidUpdate B3 C')
-                if (!_.isNil(newStep)) {
-                //    console.time('componentDidUpdate B3 D')
-                    //const shouldUpdate = !_.isEqual(previousStep, newStep)
-                    let shouldUpdate = false
-                    if (previousStep.isOn != newStep.isOn) {
-                        shouldUpdate = true
-                    }
-                //    console.timeEnd('componentDidUpdate B3 D')
-                    if (shouldUpdate) {
-                        //   console.log('found changed step', previousStep, newStep);
-                    //    console.time('componentDidUpdate B3 E')
-                        //this.updateStep(newStep, true)
-                    //    console.timeEnd('componentDidUpdate B3 E')
-                    //    console.time('componentDidUpdate B3 F')
-                        shouldRecalculateParts = true
-                        //AudioEngine.recalculateParts(this.props.round)
-                    //    console.timeEnd('componentDidUpdate B3 F')
-                    }
-                }
-            }
-            
-    
-            // Check for layer type or instrument changes
-            for (let layer of this.round.layers) {
-                let newLayer = _.find(this.props.round.layers, { id: layer.id })
-                if (!_.isNil(newLayer) && !_.isEqual(layer.instrument, newLayer.instrument)) {
-                    // instrument has changed
-                    // console.log('instrument has changed', newLayer.instrument);
-                    AudioEngine.tracksById[newLayer.id].setInstrument(newLayer.instrument)
-                    this.updateLayerLabelText(layer.id, newLayer.instrument.sampler)
-                }
-                if (!_.isNil(newLayer) && !_.isEqual(layer.type, newLayer.type)) {
-                    // type has changed
-                    //console.log('layer type has changed');
-                    AudioEngine.tracksById[newLayer.id].setType(newLayer.type, newLayer.automationFxId)
-                }
-                if (!_.isNil(newLayer) && !_.isEqual(layer.automationFxId, newLayer.automationFxId)) {
-                    // automation has changed
-                    //  console.log('layer automation fx id has changed');
-                    AudioEngine.tracksById[newLayer.id].setAutomatedFx(newLayer.automationFxId)
-                }
-            }
-            // Check for gain changes
-            for (let layer of this.round.layers) {
-                let newLayer = _.find(this.props.round.layers, { id: layer.id })
-                if (!_.isNil(newLayer) && !_.isEqual(layer.gain, newLayer.gain)) {
-                    //  console.log('gain has changed', newLayer.gain)
-                    AudioEngine.tracksById[newLayer.id].setVolume(newLayer.gain)
-                }
-            }
-    
-            // Check for mute changes
-            for (let layer of this.round.layers) {
-                let newLayer = _.find(this.props.round.layers, { id: layer.id })
-                if (!_.isNil(newLayer) && !_.isEqual(layer.isMuted, newLayer.isMuted)) {
-                    //  console.log('mute has changed', newLayer.isMuted)
-                    AudioEngine.tracksById[newLayer.id].setMute(newLayer.isMuted)
-                }
-            }
-    
-            // Check for layer time offset changes
-            for (let layer of this.round.layers) {
-                let newLayer = _.find(this.props.round.layers, { id: layer.id })
-                if (!_.isNil(newLayer) && !_.isEqual(layer.timeOffset, newLayer.timeOffset)) {
-                    AudioEngine.recalculateParts(this.props.round)
-                    this.adjustLayerOffset(newLayer.id, newLayer.percentOffset, newLayer.timeOffset)
-                }
-                if (!_.isNil(newLayer) && !_.isEqual(layer.percentOffset, newLayer.percentOffset)) {
-                    AudioEngine.recalculateParts(this.props.round)
-                    this.adjustLayerOffset(newLayer.id, newLayer.percentOffset, newLayer.timeOffset)
-                }
-            }
-    
-            // Check for sequence changes
-            for (let [, userPatterns] of Object.entries(this.round.userPatterns)) {
-                let newUserPatterns = _.find(this.props.round.userPatterns, { id: userPatterns.id })
-                if (!userPatterns.isPlayingSequence && newUserPatterns.isPlayingSequence) {
-                    //console.log('isPlayingSequence turned on');
-                    AudioEngine.recalculateParts(this.props.round)
-                    this.calculateSequence(newUserPatterns)
-                } else {
-                    // console.log('isPlayingSequence turned off');
-                }
-            }
-            */
     }
 
     loadSequence = (patterns) => {
@@ -514,20 +316,6 @@ class PlayUI extends Component {
         this.orderLayers()
         this.cacheStepLayers()
 
-        // position line
-        /*  this.isOn = this.props.isOn
-          const positionLineLength = (HTML_UI_Params.addNewLayerButtonDiameter / 2) + (HTML_UI_Params.initialLayerPadding / 2) + ((HTML_UI_Params.stepDiameter + HTML_UI_Params.layerPadding) * this.round.layers.length)
-  
-          const positionLineWidth = 16
-          const positionLineTime = (60 / this.round.bpm) * 4000
-          this.positionLine = this.container.rect(positionLineWidth, positionLineLength).fill('#666666')
-          this.positionLine.move((this.containerWidth / 2) - (positionLineWidth / 2), (this.containerHeight / 2) - positionLineLength)
-          this.positionLineAnimation = this.positionLine.animate({ duration: positionLineTime }).ease('-').transform({ rotate: 360, relative: true, origin: 'bottom center' }).loop()
-          if (!this.isOn) {
-              this.positionLine.timeline().pause()
-          } else {
-              this.positionLine.timeline().seek(AudioEngine.getPositionMilliseconds())
-          }*/
         // draw layers
         this.stepGraphics = []
         this.layerGraphics = []
@@ -546,7 +334,6 @@ class PlayUI extends Component {
         this.playbackToggle.y((this.containerHeight / 2) - (HTML_UI_Params.addNewLayerButtonDiameter / 2))
         this.playbackToggle.click(this.onPlaybackToggle)
         this.playbackToggle.addClass(this.props.classes.button)
-        //this.playbackToggle.svg('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="white" width="18px" height="18px"><path d="M0 0h24v24H0z" fill="white"/><path fill="white" d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/></svg>')
         this.playbackToggleIcon = this.container.nested()
         if (!isPlaying)
             this.playbackToggleIcon.svg(`<svg width="36" height="39" viewBox="0 0 36 39" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -745,50 +532,6 @@ class PlayUI extends Component {
     }
 
     loadPattern(userId, id, order) {
-        // console.log('load pattern', id);
-        // console.time('loadPattern')
-        // this.props.dispatch({ type: SET_CURRENT_SEQUENCE_PATTERN, payload: { value: order } })
-        // const pattern = _.find(this.props.round.userPatterns[userId].patterns, { id })
-        /*if (!_.isEmpty(pattern.state)) {
-            // check if we have layers in the round not referenced in the pattern then set all steps in that layer to off
-            for (const existingLayer of this.props.round.layers) {
-                if (_.isNil(_.find(pattern.state.layers, { id: existingLayer.id })) && existingLayer.createdBy === this.props.user.id) {
-                    let existingLayerClone = _.cloneDeep(existingLayer)
-                    for (const step of existingLayerClone.steps) {
-                        step.isOn = false
-                    }
-                    pattern.state.layers.push(existingLayerClone)
-                }
-            }
-
-            // check we haven't deleted the layer that is referenced in the pattern
-            let layersToDelete = []
-            for (const layer of pattern.state.layers) {
-                const layerExists = _.find(this.props.round.layers, { id: layer.id })
-                if (_.isNil(layerExists)) {
-                    layersToDelete.push(layer)
-                }
-            }
-
-            _.remove(pattern.state.layers, function (n) {
-                return layersToDelete.indexOf(n) > -1
-            })
-            //this.props.updateLayers(pattern.state.layers)
-
-            //    console.log('loadPattern updating internal layers', this.round.layers, pattern.state.layers);
-
-            // for (let layer of this.round.layers) {
-            //   layer.steps = _.find(pattern.state.layers, { id: layer.id }).steps
-            // }
-
-            //AudioEngine.recalculateParts(this.round)
-            // console.timeEnd('loadPattern')
-
-            this.props.dispatch({ type: UPDATE_LAYERS, payload: { layers: pattern.state.layers } })
-            this.props.dispatch({ type: SET_CURRENT_SEQUENCE_PATTERN, payload: { value: order } })
-        }*/
-
-
         this.props.dispatch({ type: UPDATE_LAYERS, payload: { layers: this.round.layers } })
         this.props.dispatch({ type: SET_CURRENT_SEQUENCE_PATTERN, payload: { value: order } })
         this.clear()
@@ -928,14 +671,11 @@ class PlayUI extends Component {
             let layer = this.round.layers[i]
             if (layer.createdBy === this.props.user.id) {
                 diameter += HTML_UI_Params.stepDiameter + HTML_UI_Params.layerPadding + HTML_UI_Params.layerPadding + HTML_UI_Params.stepDiameter
-                //diameter += HTML_UI_Params.stepDiameter + HTML_UI_Params.stepDiameter
             } else {
                 diameter += ((HTML_UI_Params.stepDiameter + HTML_UI_Params.layerPadding + HTML_UI_Params.layerPadding + HTML_UI_Params.stepDiameter) / HTML_UI_Params.otherUserLayerSizeDivisor)
-                //diameter += ((HTML_UI_Params.stepDiameter + HTML_UI_Params.stepDiameter) / 2)
             }
         }
         return diameter
-        //HTML_UI_Params.addNewLayerButtonDiameter + HTML_UI_Params.initialLayerPadding + ((HTML_UI_Params.stepDiameter + HTML_UI_Params.layerPadding + HTML_UI_Params.layerPadding + HTML_UI_Params.stepDiameter) * (order + 1))
     }
 
     updateLayerLabel(layerGraphic) {
@@ -993,7 +733,6 @@ class PlayUI extends Component {
 
     highlightLayer(layerGraphic, unhighlightExceptLayerId) {
         this.unhighlightAllLayers(unhighlightExceptLayerId)
-        // layerGraphic.animate().stroke({ opacity: HTML_UI_Params.layerStrokeOpacity * 2 })
         layerGraphic.stroke({ opacity: HTML_UI_Params.layerStrokeOpacity * 2 })
     }
 
@@ -1026,7 +765,7 @@ class PlayUI extends Component {
         const layer = _.find(this.round.layers, { id })
         let stepGraphics = _.filter(this.stepGraphics, { layerId: id })
         const layerGraphic = _.find(this.layerGraphics, { id })
-        const layerDiameter = this.getLayerDiameter(order) //HTML_UI_Params.addNewLayerButtonDiameter + HTML_UI_Params.initialLayerPadding + ((HTML_UI_Params.stepDiameter + HTML_UI_Params.layerPadding + HTML_UI_Params.layerPadding + HTML_UI_Params.stepDiameter) * (layerGraphic.order))
+        const layerDiameter = this.getLayerDiameter(order)
         const xOffset = (this.containerWidth / 2) - (layerDiameter / 2)
         const yOffset = (this.containerHeight / 2) - (layerDiameter / 2)
         const stepSize = (2 * Math.PI) / layer.steps.length;
@@ -1218,8 +957,6 @@ class PlayUI extends Component {
                     _this.swipeToggleActive = true
                     _this.touchStartStepGraphic = stepGraphic
                     _this.onStepClick(stepGraphic)
-
-                    // _this.addStepSwipeCancelListener(stepGraphic)
                 }
             })
 
@@ -1263,7 +1000,6 @@ class PlayUI extends Component {
                     if (_.isNil(_this.stepMoveTimer) && !_this.swipeToggleActive) {
                         _this.onStepDragMove(stepGraphic, e.touches[0].pageX, e.touches[0].pageY)
                     } else {
-                        // _this.swipeToggleActive = stepGraphic
                         _this.touchStartStepGraphic = stepGraphic
                         _this.isOverStep(stepGraphic, e.touches[0].pageX, e.touches[0].pageY)
                     }
@@ -1381,8 +1117,6 @@ class PlayUI extends Component {
                 deltaY = -100
             }
             deltaY = deltaY / -100
-            //delta += 1
-            //stepGraphic.velocity = delta * stepGraphic.velocityPanStart;
             stepGraphic.velocity = stepGraphic.velocityPanStart + deltaY;
             if (stepGraphic.velocity < 0) {
                 stepGraphic.velocity = 0
@@ -1413,9 +1147,7 @@ class PlayUI extends Component {
         if (stepGraphic.isOn) {
             const step = this.getStep(stepGraphic.id)
             step.probability = _.round(stepGraphic.probability, 1)
-            // this.props.dispatch({ type: SET_STEP_PROBABILITY, payload: { probability: step.probability, layerId: stepGraphic.layerId, stepId: stepGraphic.id, user: this.props.user.id } })
             step.velocity = _.round(stepGraphic.velocity, 1)
-            // this.props.dispatch({ type: SET_STEP_VELOCITY, payload: { velocity: step.velocity, layerId: stepGraphic.layerId, stepId: stepGraphic.id, user: this.props.user.id } })
             this.props.dispatch({ type: UPDATE_STEP, payload: { step: step, layerId: stepGraphic.layerId } })
             this.saveLayer(stepGraphic.layerId)
         }
@@ -1458,7 +1190,6 @@ class PlayUI extends Component {
     }
 
     updateStepModal(stepGraphic) {
-        //this.stepModalText.text('Velocity: ' + _.round(stepGraphic.velocity, 1) + '\nProbability: ' + _.round(stepGraphic.probability, 1))
         this.stepModal.x(stepGraphic.x() - ((HTML_UI_Params.stepModalDimensions / 2) - HTML_UI_Params.stepDiameter / 2))
         this.stepModal.y(stepGraphic.y() - ((HTML_UI_Params.stepModalDimensions / 2) - HTML_UI_Params.stepDiameter / 2))
         this.stepModalThumb.x(stepGraphic.probability * (HTML_UI_Params.stepModalDimensions - HTML_UI_Params.stepModalThumbDiameter))
@@ -1523,8 +1254,6 @@ class PlayUI extends Component {
             if (!_.isNil(_this.container)) {
                 let width = window.innerWidth
                 let height = window.innerHeight
-                // _this.containerWidth = Math.max(window.screen.width || 0, window.innerWidth || 0)
-                //_this.containerheight = Math.max(window.screen.height || 0, window.innerHeight || 0)
                 _this.containerWidth = width
                 _this.containerheight = height
                 const roundElement = document.getElementById('round')
