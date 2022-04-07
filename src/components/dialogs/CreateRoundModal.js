@@ -260,6 +260,7 @@ const CreateRoundModal = ({
             urls && Array.isArray(urls) && urls.forEach(async url => {
                 let sample = getDefaultSample(user.id)
                 sample.remoteURL = url
+                sample.displayName = 'Custom'
                 await firebase.createSample(sample)
                 newSamples.push(sample)
                 if (newSamples.length === urls.length) {

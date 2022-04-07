@@ -66,7 +66,8 @@ export const generateLayers = async (samples, userId) => {
                 "instrument": "Sampler",
                 "sampler": 'custom',
                 "sample": articulation.name,
-                "sampleId": sample.id
+                "sampleId": sample.id,
+                "displayName": sample.displayName
             })
             layers.push(layer)
             if (layers.length === samples.length)

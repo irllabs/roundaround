@@ -96,7 +96,7 @@ const Instruments = {
         options = _.sortBy(options, "label");
         return options;
     },
-    getInstrumentArticulationOptions(instrumentName, userId) {
+    getInstrumentArticulationOptions(instrumentName, userId, instrument) {
         // console.log('getInstrumentArticulationOptions()', instrumentName);
         if (instrumentName !== 'custom') {
             let options = [];
@@ -114,13 +114,20 @@ const Instruments = {
         } else {
             let options = []
             //   console.log('CustomSamples.samples', CustomSamples.samples);
-            for (let [id, sample] of Object.entries(CustomSamples.samples)) {
-                if (sample.createdBy === userId) {
-                    options.push({
-                        name: sample.name,
-                        value: id
-                    })
+            if (instrumentName !== 'custom' && !instrument.sampleId)
+                for (let [id, sample] of Object.entries(CustomSamples.samples)) {
+                    if (sample.createdBy === userId) {
+                        options.push({
+                            name: sample.name,
+                            value: id
+                        })
+                    }
                 }
+            else {
+                options.push({
+                    name: instrument.displayName,
+                    value: instrument.displayName
+                })
             }
             //   console.log('got sample options', options);
             return options

@@ -32,9 +32,10 @@ const LayerInstrument = ({
 }) => {
     const [selectedInstrument, setSelectedInstrument] = React.useState(selectedLayer.instrument.sampler)
     const [selectedArticulation, setSelectedArticulation] = React.useState(selectedLayer.instrument.sample)
+    const [selectedInstrumentFull, setSelectedInstrumentFull] = React.useState(selectedLayer.instrument)
     const dispatch = useDispatch();
     const instrumentOptions = Instruments.getInstrumentOptions(false)
-    const articulationOptions = Instruments.getInstrumentArticulationOptions(selectedInstrument, user.id)
+    const articulationOptions = Instruments.getInstrumentArticulationOptions(selectedInstrument, user.id, selectedInstrumentFull)
     const firebase = useContext(FirebaseContext);
 
     const onInstrumentSelect = async (instrument) => {
@@ -55,6 +56,7 @@ const LayerInstrument = ({
     }
 
     useEffect(() => {
+        setSelectedInstrumentFull(selectedLayer.instrument)
         setSelectedInstrument(selectedLayer.instrument.sampler)
         setSelectedArticulation(selectedLayer.instrument.sample)
     }, [selectedLayer])
