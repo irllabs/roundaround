@@ -72,8 +72,8 @@ class PatternsSidebar extends Component {
         this.onSavePattern = this.onSavePattern.bind(this)
         this.onMinimizeClick = this.onMinimizeClick.bind(this)
     }
+
     async onLoadPattern(id) {
-        console.log('onLoadPattern', id);
         if (!this.props.display.isRecordingSequence) {
             const pattern = _.find(this.props.round.userPatterns[this.props.user.id].patterns, { id })
             if (!_.isEmpty(pattern.state)) {
@@ -152,7 +152,6 @@ class PatternsSidebar extends Component {
         }
     }
     onSavePattern(id) {
-        //console.log('onSavePattern', id);
         // save all steps for this user
         this.setState({ selectedPattern: id, selectedPatternNeedsSaving: false })
         const state = this.getCurrentState(this.props.user.id)
@@ -180,8 +179,9 @@ class PatternsSidebar extends Component {
         }
         return state
     }
+
     render() {
-        const { classes } = this.props;
+        const { classes, user } = this.props;
         let selectedPatternNeedsSaving = false;
         if (!_.isNil(this.state.selectedPattern) && !_.isNil(this.props.round)) {
             const pattern = _.find(this.props.round.userPatterns[this.props.user.id].patterns, { id: this.state.selectedPattern })

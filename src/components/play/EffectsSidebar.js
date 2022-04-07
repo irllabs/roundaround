@@ -125,10 +125,6 @@ class EffectsSidebar extends Component {
         this.context.updateUserBus(this.props.round.id, this.props.user.id, userBus)
     }
 
-        /*this.setState(({ items }) => ({
-            items: arrayMove(items, oldIndex, newIndex),
-        }));*/
-    };
     onSwitchOn(fxId) {
         AudioEngine.busesByUser[this.props.user.id].fx[fxId].override = true
         this.props.setUserBusFxOverride(this.props.user.id, fxId, true)
@@ -170,8 +166,10 @@ class EffectsSidebar extends Component {
         return (
             <Box className={classes.root + ' ' + isMinimizedClass}>
                 <Box className={classes.effectContainer}>
-                    <Box className={classes.minimizeButton + ' ' + buttonIsMinimizedClass} onClick={this.onMinimizeClick}><ChevronRightIcon size="small" /></Box>
-                    {items.map((fx, index) => (
+                    <Box className={classes.minimizeButton + ' ' + buttonIsMinimizedClass} onClick={this.onMinimizeClick}>
+                        <ChevronRightIcon size="small" />
+                    </Box>
+                    {items.map((fx) => (
                         <EffectThumbControl key={fx.id} isOn={fx.isOn} isOverride={fx.isOverride} className={classes.thumbControl} label={toTitleCase(fx.label)} fxId={fx.id} userId={fx.userId} switchOn={this.onSwitchOn} switchOff={this.onSwitchOff} name={fx.name} />
                     ))}
                 </Box>
