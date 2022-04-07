@@ -10,7 +10,6 @@ import {
 import { withStyles } from '@material-ui/core/styles';
 import ShareIcon from '@material-ui/icons/Share';
 import { BackButton } from '../play/layer-settings/resources';
-import PlayButton from './PlayButton';
 import { setUser, setIsShowingSignInDialog, setRedirectAfterSignIn, setRounds, setUserDisplayName, setSignUpDisplayName, setIsShowingShareDialog } from '../../redux/actions'
 import _ from 'lodash'
 import HeaderAvatar from './HeaderAvatar'
@@ -181,9 +180,6 @@ class Header extends Component {
 							{users.length > 1 && <JitsiComponent />}
 							<Box>
 								<IconButton className={classes.shareButton} onClick={this.onShareClick}><ShareIcon /></IconButton>
-							</Box>
-							<Box>
-								<PlayButton />
 							</Box>
 							<Box>
 								<HeaderMenu />

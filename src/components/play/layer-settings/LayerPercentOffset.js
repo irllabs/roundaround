@@ -63,6 +63,7 @@ export default function LayerPercentOffset({
     horizontal,
     roundId,
     playUIRef,
+    offsetSliderRef,
     percentageButtonRef,
     msButtonRef,
 }) {
@@ -139,7 +140,7 @@ export default function LayerPercentOffset({
                         </IconButton>
                     </Box >
                 }
-                <Slider value={sliderValue} min={-100} max={100} valueLabelDisplay="off" onChange={_onChange} aria-labelledby="continuous-slider" />
+                <Slider ref={offsetSliderRef} value={sliderValue} min={-100} max={100} valueLabelDisplay="off" onChange={_onChange} aria-labelledby="continuous-slider" />
             </FormControl >
         </Box >
     )

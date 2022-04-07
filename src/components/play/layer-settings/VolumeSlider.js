@@ -26,7 +26,7 @@ const styles = makeStyles(function (theme) {
     }
 })
 
-export default function VolumeSlider({ selectedLayer, user, roundId, hideText }) {
+export default function VolumeSlider({ selectedLayer, sliderRef, user, roundId, hideText }) {
     const dispatch = useDispatch();
     const firebase = useContext(FirebaseContext);
     const [sliderValue, setSliderValue] = useState(80)
