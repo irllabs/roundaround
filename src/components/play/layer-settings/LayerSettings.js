@@ -459,6 +459,12 @@ class LayerSettings extends Component {
         this.showDeleteClearPopupButton = React.createRef()
         this.layerPopupButton = React.createRef()
         this.volumePopupButton = React.createRef()
+
+        this.muteToggle = React.createRef()
+        this.soloButton = React.createRef()
+        this.offsetSlider = React.createRef()
+        this.volumeSlider = React.createRef()
+
         this.instrumentsButton = React.createRef()
         this.soundsButton = React.createRef()
         this.hamburgerButton = React.createRef()
@@ -553,22 +559,28 @@ class LayerSettings extends Component {
             && (!this.layerPopupButton.current || (this.layerPopupButton.current && !this.layerPopupButton.current.contains(target)))
             && (!this.mixerPopupButton.current || (this.mixerPopupButton.current && !this.mixerPopupButton.current.contains(target)))
             && (!this.volumePopupButton.current || (this.volumePopupButton && !this.volumePopupButton.current.contains(target)))
+            && (!this.muteToggle.current || (this.muteToggle && !this.muteToggle.current.contains(target)))
+            && (!this.soloButton.current || (this.soloButton && !this.soloButton.current.contains(target)))
+            && (!this.volumeSlider.current || (this.volumeSlider && !this.volumeSlider.current.contains(target)))
+            && (!this.offsetSlider.current || (this.offsetSlider && !this.offsetSlider.current.contains(target)))
         )) {
             this.hideAllLayerInspectorModals()
         }
     }
 
-    hideAllLayerInspectorModals = () => this.setState({
-        showMixerPopup: false,
-        showInstrumentsPopup: false,
-        showInstrumentsList: false,
-        showSoundsList: false,
-        showArticulationOptions: false,
-        showLayerPopup: false,
-        showVolumePopup: false,
-        showDeleteClearPopup: false,
-        showHamburgerPopup: false
-    })
+    hideAllLayerInspectorModals = () => {
+        this.setState({
+            showMixerPopup: false,
+            showInstrumentsPopup: false,
+            showInstrumentsList: false,
+            showSoundsList: false,
+            showArticulationOptions: false,
+            showLayerPopup: false,
+            showVolumePopup: false,
+            showDeleteClearPopup: false,
+            showHamburgerPopup: false
+        })
+    }
 
     onCloseClick() {
         this.props.dispatch({ type: SET_IS_SHOWING_LAYER_SETTINGS, payload: { value: false } })
@@ -585,9 +597,8 @@ class LayerSettings extends Component {
         // TODO: only audible to this user (mute for all others)
     }
 
-    onSoloClick = async () => {
-        const selectedLayer = this.props.selectedLayer;
-        const layers = this.props.round.layers;
+    onSoloClick = async (selectedLayer) => {
+        const layers = this.props.round.layers
         if (selectedLayer) {
             await layers.forEach(layer => {
                 const id = layer.id;
@@ -601,17 +612,22 @@ class LayerSettings extends Component {
         }
     }
 
-    onMuteClick(selectedLayer) {
-        const isMuted = !selectedLayer.isMuted
-        AudioEngine.tracksById[selectedLayer.id].setMute(isMuted)
-        this.props.dispatch({ type: SET_LAYER_MUTE, payload: { id: selectedLayer.id, value: isMuted, user: this.props.user.id } })
-        this.context.updateLayer(this.props.round.id, selectedLayer.id, { isMuted })
+    onMuteClick = (selectedLayer) => {
+        if (selectedLayer) {
+            const isMuted = !selectedLayer.isMuted
+            AudioEngine.tracksById[selectedLayer.id].setMute(isMuted)
+            this.props.dispatch({ type: SET_LAYER_MUTE, payload: { id: selectedLayer.id, value: isMuted, user: this.props.user.id } })
+            this.context.updateLayer(this.props.round.id, selectedLayer.id, { isMuted })
+        }
     }
 
     onDeleteLayerClick() {
-        this.props.dispatch({ type: REMOVE_LAYER, payload: { id: this.props.selectedLayer.id, user: this.props.user.id } })
-        this.context.deleteLayer(this.props.round.id, this.props.selectedLayer.id)
-        this.onCloseClick()
+        const selectedLayer = this.props.selectedLayer
+        if (selectedLayer) {
+            this.props.dispatch({ type: REMOVE_LAYER, payload: { id: selectedLayer.id, user: this.props.user.id } })
+            this.context.deleteLayer(this.props.round.id, selectedLayer.id)
+            this.onCloseClick()
+        }
     }
 
     onAddLayerClick = async () => {
@@ -739,7 +755,8 @@ class LayerSettings extends Component {
                     round={this.props.round}
                     user={user}
                     onLayerSelect={this.onLayerClicked}
-                    onMuteClick={this.onMuteClick.bind(this)}
+                    onMuteClick={this.onMuteClick}
+                    onSoloClick={this.onSoloClick}
                     userColors={userColors}
                     toggleShowMixerPopup={this.toggleShowMixerPopup}
                     showMixerPopup={showMixerPopup}
@@ -799,7 +816,6 @@ class LayerSettings extends Component {
                                     selectedInstrumentLabel={selectedInstrument}
                                     toggleShowInstrumentList={this.toggleShowInstrumentList}
                                     toggleArticulationOptions={this.toggleArticulationOptions}
-                                    hideAllLayerInspectorModals={this.hideAllLayerInspectorModals}
                                     classes={classes}
                                     showArticulationOptions={showArticulationOptions}
                                     selectedLayer={selectedLayer}
@@ -843,6 +859,7 @@ class LayerSettings extends Component {
                                     showLayerPopup={showLayerPopup}
                                     selectedLayer={selectedLayer}
                                     round={this.props.round}
+                                    offsetSliderRef={this.offsetSlider}
                                     user={user}
                                     playUIRef={this.props.playUIRef}
                                 />
@@ -862,11 +879,15 @@ class LayerSettings extends Component {
                             </Box>
                             <Box className={classes.actionButtonContainer}>
                                 <VolumePopup
-                                    onMute={this.onMuteClick.bind(this, selectedLayer)}
+                                    onMute={this.onMuteClick}
                                     onSolo={this.onSoloClick}
+                                    muteRef={this.muteToggle}
+                                    soloRef={this.soloButton}
+                                    volumeSliderRef={this.volumeSlider}
                                     showVolumePopup={showVolumePopup}
                                     selectedLayer={selectedLayer}
-                                    round={this.props.round} user={user}
+                                    round={this.props.round}
+                                    user={user}
                                 />
                                 <IconButton
                                     ref={this.volumePopupButton}

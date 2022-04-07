@@ -26,7 +26,7 @@ const styles = makeStyles(function (theme) {
     }
 })
 
-export default function VolumeSlider({ selectedLayer, user, roundId, hideText }) {
+export default function VolumeSlider({ selectedLayer, sliderRef, user, roundId, hideText }) {
     const dispatch = useDispatch();
     const firebase = useContext(FirebaseContext);
     const [sliderValue, setSliderValue] = useState(80)
@@ -39,6 +39,8 @@ export default function VolumeSlider({ selectedLayer, user, roundId, hideText })
         updateVolumeState(dB, selectedLayerId)
     }, 2000), []);
     const onSliderChange = (e, percent) => {
+        e.preventDefault()
+        e.stopPropagation()
         setSliderValue(percent)
         const dB = convertPercentToDB(percent)
         AudioEngine.tracksById[selectedLayer.id].setVolume(dB)
@@ -54,6 +56,7 @@ export default function VolumeSlider({ selectedLayer, user, roundId, hideText })
         <Box className={classes.root}>
             {!hideText && <Typography variant="caption">Volume</Typography>}
             <Slider
+                ref={sliderRef}
                 className={classes.slider}
                 orientation="horizontal"
                 value={selectedLayer.isMuted ? 0 : Math.floor(sliderValue)}

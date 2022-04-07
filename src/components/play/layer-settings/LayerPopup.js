@@ -123,6 +123,7 @@ const LayerPopup = ({
     selectedLayer,
     addStepsButtonRef,
     subtractStepsButtonRef,
+    offsetSliderRef,
     percentageButtonRef,
     msButtonRef,
 }) => {
@@ -144,6 +145,7 @@ const LayerPopup = ({
                     percentageButtonRef={percentageButtonRef}
                     msButtonRef={msButtonRef}
                     horizontal={true}
+                    offsetSliderRef={offsetSliderRef}
                     selectedLayer={selectedLayer}
                     roundId={round.id}
                     user={user}

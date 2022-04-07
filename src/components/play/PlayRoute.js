@@ -16,7 +16,6 @@ import FX from '../../audio-engine/FX'
 import ShareDialog from '../dialogs/ShareDialog'
 import { getDefaultUserBus, getDefaultUserPatterns } from '../../utils/defaultData'
 import LayerSettings from './layer-settings/LayerSettings';
-//import OrientationDialog from '../dialogs/OrientationDialog';
 import CustomSamples from '../../audio-engine/CustomSamples';
 
 const styles = theme => ({
@@ -51,7 +50,6 @@ class PlayRoute extends Component {
         this.playUIRef = null;
     }
     componentDidMount() {
-        //console.log('PlayRoute::componentDidMount()', this.props.user, this.isLoadingRound, this.hasLoadedRound, this.props.round);
         this.addStartAudioContextListener()
         if (!this.isLoadingRound && !this.hasLoadedRound && !_.isNil(this.props.user)) {
             this.loadRound()
@@ -71,9 +69,6 @@ class PlayRoute extends Component {
         if (!_.isNil(this.props.round) && !_.isNil(this.props.round.currentUsers)) {
             this.props.setIsPlaying(false)
         }
-        /*let currentUsers = _.cloneDeep(this.props.round.currentUsers)
-        _.pull(currentUsers, this.props.user.id)
-        await this.context.updateRound(this.props.round.id, { currentUsers })*/
         this.props.setRound(null)
         this.props.setUsers([])
         this.isLoadingRound = false;
@@ -83,7 +78,6 @@ class PlayRoute extends Component {
     async loadRound() {
         this.isLoadingRound = true;
         let roundId = this.props.location.pathname.split('/play/')[1]
-        // console.log('PlayRoute::loadRound()', roundId);
         let round = await this.context.getRound(roundId)
         if (_.isNil(round) || _.isNil(round.currentUsers)) {
             // probably deleted round
@@ -119,9 +113,7 @@ class PlayRoute extends Component {
         await AudioEngine.init()
         Instruments.init()
         FX.init()
-        //console.log('PlayRoute loading audio engine');
         await AudioEngine.load(round)
-        // console.log('PlayRoute finished loading audio engine');
 
         this.props.setUsers(currentUsers)
         this.props.setRound(round)
@@ -138,7 +130,6 @@ class PlayRoute extends Component {
         // Round
         this.context.db.collection('rounds').doc(this.props.round.id).onSnapshot(async (doc) => {
             const updatedRound = doc.data()
-            // console.log('### round change listener fired', this.props.round, updatedRound);
             if (_.isNull(this.props.round)) {
                 // probably deleted round
                 _this.props.history.push('/rounds')
@@ -146,13 +137,11 @@ class PlayRoute extends Component {
             }
             if (!this.isDisposing) {
                 if (!_.isEqual(_this.props.round.currentUsers, updatedRound.currentUsers)) {
-                    //    console.log('new user added or removed');
                     let users = []
                     for (const userId of updatedRound.currentUsers) {
                         let user = await _this.context.loadUser(userId)
                         users.push(user)
                     }
-                    //    console.log('setUsers()', users);
                     _this.props.setUsers(users)
                     _this.props.setRoundCurrentUsers(updatedRound.currentUsers)
                     _this.addUsersListeners()
@@ -170,23 +159,14 @@ class PlayRoute extends Component {
 
         // Layers
         this.layersChangeListenerUnsubscribe = this.context.db.collection('rounds').doc(this.props.round.id).collection('layers').onSnapshot((layerCollectionSnapshot) => {
-            //  console.log('### layer change listener fired');
             layerCollectionSnapshot.docChanges().forEach(change => {
                 if (change.type === 'modified') {
-                    //  console.log('Modified layer: ', change.doc.data());
                     const layer = change.doc.data()
                     if (layer.createdBy !== _this.props.user.id) {
                         _this.reloadCollaborationLayersThrottled()
-                    } else {
-                        // console.log('ignoring own firebase change');
                     }
                 }
-                if (change.type === 'added') {
-                    //   console.log('New layer: ', change.doc.data());
-                    _this.reloadCollaborationLayersThrottled()
-                }
-                if (change.type === 'removed') {
-                    //    console.log('Removed layer: ', change.doc.data());
+                if (change.type === 'added' || change.type === 'removed') {
                     _this.reloadCollaborationLayersThrottled()
                 }
             });
@@ -194,12 +174,10 @@ class PlayRoute extends Component {
 
         // Userbus (FX)
         this.userBusChangeListenerUnsubscribe = this.context.db.collection('rounds').doc(this.props.round.id).collection('userBuses').onSnapshot((userBusesCollectionSnapshot) => {
-            //  console.log('### userbus change listener fired');
             userBusesCollectionSnapshot.docChanges().forEach(change => {
                 const userBus = change.doc.data()
                 userBus.id = change.doc.id
                 if (change.type === 'modified') {
-                    //  console.log('Modified userbus: ', change.doc.data(), _this.props.round.userBuses[userBus.id]);
                     _this.handleUserBusChange(userBus)
                 }
                 if (change.type === 'added') {
@@ -208,15 +186,11 @@ class PlayRoute extends Component {
                         AudioEngine.addUser(userBus.id, userBus.fx)
                     }
                 }
-                if (change.type === 'removed') {
-                    //console.log('Removed userbus: ', change.doc.data());
-                }
             });
         })
 
         // UserPatterns
         this.userPatternsChangeListenerUnsubscribe = this.context.db.collection('rounds').doc(this.props.round.id).collection('userPatterns').onSnapshot((userPatternsCollectionSnapshot) => {
-            //  console.log('### layer change listener fired');
             userPatternsCollectionSnapshot.docChanges().forEach(async change => {
                 const data = change.doc.data();
                 const userId = change.doc.id;
@@ -240,16 +214,11 @@ class PlayRoute extends Component {
                         _this.props.setRound(newRound)
                     }
                 }
-                if (change.type === 'removed') {
-                    //    console.log('Removed layer: ', change.doc.data());
-                    // _this.reloadCollaborationLayersThrottled()
-                }
             });
         })
     }
 
     removeFirebaseListeners() {
-        //console.log('removeFirebaseListeners()');
         if (!_.isNil(this.layersChangeListenerUnsubscribe)) {
             this.layersChangeListenerUnsubscribe();
         }
@@ -265,7 +234,6 @@ class PlayRoute extends Component {
         const _this = this;
         for (const user of this.props.users) {
             let userListenerUnsubscribe = this.context.db.collection('users').doc(user.id).onSnapshot((doc) => {
-                //    console.log('### user change listener fired');
                 _this.loadUsers()
             })
             this.usersChangeListenersUnsubscribe.push(userListenerUnsubscribe)
@@ -278,7 +246,6 @@ class PlayRoute extends Component {
             let user = await this.context.loadUser(userId)
             users.push(user)
         }
-        // console.log('setUsers()', users);
         this.props.setUsers(users)
         this.props.setRoundCurrentUsers(this.props.round.currentUsers)
     }
@@ -296,7 +263,6 @@ class PlayRoute extends Component {
         for (let fx of userBus.fx) {
             const currentFx = _.find(this.props.round.userBuses[userBus.id].fx, { id: fx.id })
             if (!_.isEqual(fx.isOverride, currentFx.isOverride)) {
-                //  console.log('found fx override change', fx, currentFx);
                 AudioEngine.busesByUser[userBus.id].fx[fx.id].override = fx.isOverride
                 this.props.setUserBusFxOverride(userBus.id, fx.id, fx.isOverride)
             }
@@ -310,14 +276,12 @@ class PlayRoute extends Component {
     }
 
     handleUserPatternsChange(userPatterns) {
-        console.log('userPatternsChange', userPatterns);
         this.props.setIsPlayingSequence(userPatterns.id, userPatterns.isPlayingSequence)
     }
 
     // if any of the subcollections for a collaboration user change, trigger a (throttled) reload of all collaboration layers as there could be multiple changes
     // to do: maybe add an id to the query to make sure we don't overwrite the local round with an await result that comes in late
     async reloadCollaborationLayers() {
-        //console.log('reloadCollaborationLayers()');
         const _this = this;
         if (!_.isNil(this.props.round)) {
             const newRound = await this.context.getRound(this.props.round.id)
@@ -327,7 +291,6 @@ class PlayRoute extends Component {
             const oldLayers = _.filter(this.props.round.layers, (layer) => {
                 return layer.createdBy !== _this.props.user.id
             })
-            // console.log('comparing layers', _.isEqual(newLayers, oldLayers));
             if (!_.isEqual(newLayers, oldLayers)) {
                 const userLayers = _.filter(this.props.round.layers, (layer) => {
                     return layer.createdBy === _this.props.user.id
@@ -345,7 +308,6 @@ class PlayRoute extends Component {
         window.addEventListener('touchstart', this.startAudioContext)
     }
     startAudioContext() {
-        //console.log('startAudioContext()');
         AudioEngine.startAudioContext()
         this.removeStartAudioContextListener()
     }
@@ -358,7 +320,6 @@ class PlayRoute extends Component {
     }
 
     render() {
-        //  console.log('PlayRoute::render()', this.props.round);
         const { classes, round } = this.props;
         return (
             <Box className={classes.root}>
@@ -377,13 +338,11 @@ class PlayRoute extends Component {
                         visible={true}
                     />
                 }
-                {/* <PatternsSidebar /> */}
                 <EffectsSidebar />
                 <ShareDialog />
                 <Box style={{ position: 'relative', display: 'flex', justifyContent: 'center', width: '100%' }}>
                     <LayerSettings playUIRef={this.playUIRef} />
                 </Box>
-                {/* <OrientationDialog /> */}
             </Box>
         )
     }
