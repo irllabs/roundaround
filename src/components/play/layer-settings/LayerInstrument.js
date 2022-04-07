@@ -73,13 +73,13 @@ const LayerInstrument = ({
                         {showInstrumentsList && <Box style={{ display: 'flex', justifyContent: 'flex-start', flex: 1 }}>
                             <img alt='right arrow' src={LeftArrow} />
                         </Box>}
-                        <Box style={{ flex: showInstrumentsList ? 7 : 5, display: 'flex', justifyContent: 'flex-start' }}>
-                            <Typography style={{ textAlign: 'left', textTransform: 'Capitalize' }}>Instrument</Typography>
+                        <Box style={{ flex: showInstrumentsList ? 7 : 5, display: 'flex', flexDirection: 'row', justifyContent: 'flex-start' }}>
+                            <Typography style={{ display: 'flex', flex: 2, textAlign: 'left', textTransform: 'Capitalize' }}>Instrument</Typography>
                         </Box>
                         {!showInstrumentsList &&
                             <>
                                 <Typography style={{ flex: 3, textAlign: 'left', textTransform: 'Capitalize' }}>
-                                    {selectedInstrumentLabel}
+                                    {selectedInstrument}
                                 </Typography>
                                 <Box style={{ display: 'flex', justifyContent: 'flex-end', flex: 1 }}>
                                     <img alt='right arrow' src={RightArrow} />
