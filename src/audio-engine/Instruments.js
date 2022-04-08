@@ -140,7 +140,9 @@ const Instruments = {
         return this.instrumentClasses[instrumentName].articulations[articulation];
     },
     getInstrumentLabel(instrumentName) {
-        return this.instrumentClasses[instrumentName].label
+        let label = ''
+        if (instrumentName && this.instrumentClasses[instrumentName]) label = this.instrumentClasses[instrumentName].label
+        return label
     },
     getDefaultArticulation(instrumentName) {
         //console.log('Instruments::getDefaultArticulation() instrumentName', instrumentName, this.instrumentClasses);

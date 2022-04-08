@@ -56,7 +56,7 @@ const AudioEngine = {
     },
     play() {
         this.startAudioContext()
-        Tone.Transport.start("+0.1");
+        Tone.Transport.start("+0.1")
         Tone.Transport.loop = false
         Tone.Transport.loopEnd = '1:0:0'
     },

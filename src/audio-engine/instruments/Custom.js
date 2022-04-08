@@ -63,7 +63,11 @@ export default class Custom extends InstrumentBaseClass {
         return new Promise((resolve, reject) => {
             this.dispose()
             try {
-                this.instrument = new Tone.Sampler(sampleMap, {
+                this.instrument = new Tone.PolySynth().toDestination();
+                // set the attributes across all the voices using 'set'
+                this.instrument.set({
+                    detune: -1200,
+                    sampleMap,
                     onload: () => {
                         this.updateParameters(this.parameters)
                         if (!_.isNil(this.connectedToChannel)) {
@@ -72,7 +76,17 @@ export default class Custom extends InstrumentBaseClass {
                         this.loaded()
                         resolve()
                     }
-                })
+                });
+                // this.instrument = new Tone.Sampler(sampleMap, {
+                //     onload: () => {
+                //         this.updateParameters(this.parameters)
+                //         if (!_.isNil(this.connectedToChannel)) {
+                //             this.instrument.connect(this.connectedToChannel)
+                //         }
+                //         this.loaded()
+                //         resolve()
+                //     }
+                // })
                 resolve()
             } catch (e) {
                 console.log('error loading samples', e);

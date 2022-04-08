@@ -49,7 +49,7 @@ const LayerListPopup = ({
                         key={i}
                         className={classes.layerSubContainer}
                     >
-                        <Box className={classes.layer} style={(round.layers.length - 1) === i ? { borderBottom: 'none' } : {}}>
+                        <Box className={classes.layer} style={round && (round.layers.length - 1) === i ? { borderBottom: 'none' } : {}}>
                             <Box style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', justifyContent: 'center', flex: 4 }}>
                                 <Box style={{ display: 'flex', flexDirection: 'row', justifyContent: 'flex-start', alignItems: 'center', paddingBottom: 5 }}>
                                     <Box style={{ marginRight: 5 }}>
@@ -70,7 +70,7 @@ const LayerListPopup = ({
                                 </Box>
                             </Box>
                             <Box className={classes.volumeSliderContainer}>
-                                <VolumeSlider hideText={true} selectedLayer={layer} roundId={round.id} user={user} />
+                                {round && <VolumeSlider hideText={true} selectedLayer={layer} roundId={round.id} user={user} />}
                             </Box>
                             <Box className={classes.containerSoloMute}>
                                 <IconButton onClick={() => onSoloClick(layer)} className={classes.mixerButton}>

@@ -515,7 +515,6 @@ class PlayUI extends Component {
             _.remove(pattern.state.layers, function (n) {
                 return layersToDelete.indexOf(n) > -1
             })
-            //this.props.updateLayers(pattern.state.layers)
 
             for (let layer of this.round.layers) {
                 let patternLayer = _.find(pattern.state.layers, { id: layer.id })
@@ -529,7 +528,7 @@ class PlayUI extends Component {
     }
 
     loadPattern(userId, id, order) {
-        this.props.dispatch({ type: UPDATE_LAYERS, payload: { layers: this.round.layers } })
+        this.round.layers && this.props.dispatch({ type: UPDATE_LAYERS, payload: { layers: this.round.layers } })
         this.props.dispatch({ type: SET_CURRENT_SEQUENCE_PATTERN, payload: { value: order } })
         this.clear()
         this.draw(false)
@@ -1454,6 +1453,7 @@ class PlayUI extends Component {
                 this.props.setIsPlayingSequence(this.props.user.id, true)
             }
             /** set next available slot as current(highlighted) */
+            if (!seq || firstAvailbleSlot < 0) return
             this.props.setCurrentSequencePattern(firstAvailbleSlot)
         }
     }
@@ -1461,8 +1461,6 @@ class PlayUI extends Component {
     patternLayersToRound = async (pattern) => {
         // make sure layers are ordered the same
         let orderedLayers = []
-
-        // this.props.updateLayers(pattern.state.layers)
         for (const layer of pattern.state.layers) {
             let index = _.findIndex(this.props.round.layers, { id: layer.id })
             orderedLayers[index] = layer
