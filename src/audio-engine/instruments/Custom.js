@@ -1,5 +1,6 @@
 import * as Tone from 'tone'
 import InstrumentBaseClass from './InstrumentBaseClass'
+import { randomBool } from '../../utils/index'
 import _ from 'lodash'
 import CustomSamples from '../CustomSamples'
 
@@ -63,11 +64,7 @@ export default class Custom extends InstrumentBaseClass {
         return new Promise((resolve, reject) => {
             this.dispose()
             try {
-                this.instrument = new Tone.PolySynth().toDestination();
-                // set the attributes across all the voices using 'set'
-                this.instrument.set({
-                    detune: -1200,
-                    sampleMap,
+                this.instrument = new Tone.Sampler(sampleMap, {
                     onload: () => {
                         this.updateParameters(this.parameters)
                         if (!_.isNil(this.connectedToChannel)) {
@@ -76,23 +73,56 @@ export default class Custom extends InstrumentBaseClass {
                         this.loaded()
                         resolve()
                     }
-                });
-                // this.instrument = new Tone.Sampler(sampleMap, {
-                //     onload: () => {
-                //         this.updateParameters(this.parameters)
-                //         if (!_.isNil(this.connectedToChannel)) {
-                //             this.instrument.connect(this.connectedToChannel)
-                //         }
-                //         this.loaded()
-                //         resolve()
-                //     }
-                // })
+                })
                 resolve()
             } catch (e) {
                 console.log('error loading samples', e);
             }
-
         })
+    }
+    loadPart(
+        notes, numberOfBars
+    ) {
+        let _this = this
+        // console.log('instrument loading notes', notes);
+        this.clearPart()
+        this.notes = _.cloneDeep(notes)
+        this.beforeLoadPart(this.notes)
+        for (let note of this.notes) {
+            note.time += 'i';
+            note.duration += 'i';
+            note.midi = this.calculateMidiNoteFromVelocity(note.velocity)
+        }
+        this.part = new Tone.Part(function (time, note) {
+            if (
+                !_.isNil(_this.instrument) &&
+                !_.isNil(_this.instrument.context)
+            ) {
+                let shouldPlayNote = true
+                if (note.probability < 1) {
+                    shouldPlayNote = randomBool(note.probability)
+                }
+                if (shouldPlayNote) {
+                    _this.instrument.triggerAttackRelease(
+                        Tone.Midi(note.midi),
+                        note.duration,
+                        time,
+                        note.velocity
+                    )
+                }
+            }
+        }, this.notes)
+        this.afterPartLoaded()
+        // console.log('this.part', this.part);
+        this.part.loop = true
+        this.part.loopEnd = numberOfBars + ":0:0"
+        this.part.start(0)
+    }
+    beforeLoadPart(notes) {
+        // to be overidden if necessary
+    }
+    afterPartLoaded() {
+        // to be overidden if necessary
     }
     dispose() {
         if (!_.isNil(this.instrument) && !_.isNil(this.instrument._context)) {
