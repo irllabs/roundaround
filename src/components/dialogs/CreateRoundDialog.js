@@ -161,10 +161,10 @@ const styles = makeStyles({
     }
 })
 
-const CreateRoundModal = ({
-    toggleCreateRoundModal,
+const CreateRoundDialog = ({
+    toggleCreateRoundDialog,
     defaultRoundCreate,
-    isShowingCreateRoundModal,
+    isShowingCreateRoundDialog,
     user
 }) => {
     const firebase = useContext(FirebaseContext);
@@ -216,7 +216,7 @@ const CreateRoundModal = ({
 
     const onClose = (all) => {
         if (!showUploadSound || all) {
-            toggleCreateRoundModal()
+            toggleCreateRoundDialog()
         }
         setShowLoader(false)
         setPreUploaded(null)
@@ -306,7 +306,7 @@ const CreateRoundModal = ({
             classes={{ paper: classes.paper }}
             onClose={() => onClose(true)}
             aria-labelledby="simple-dialog-title"
-            open={isShowingCreateRoundModal}
+            open={isShowingCreateRoundDialog}
         >
             <DialogTitle className={classes.title}>
                 <Box className={classes.titleSub}>
@@ -326,7 +326,7 @@ const CreateRoundModal = ({
                             onClick={() => {
                                 setShowLoader(true)
                                 defaultRoundCreate(() => {
-                                    toggleCreateRoundModal()
+                                    toggleCreateRoundDialog()
                                     setShowLoader(false)
                                 })
                             }}
@@ -450,7 +450,7 @@ const mapStateToProps = state => {
         user: state.user,
         rounds: state.rounds,
         selectedRoundId: state.display.selectedRoundId,
-        isShowingCreateRoundModal: state.display.isShowingCreateRoundModal,
+        isShowingCreateRoundDialog: state.display.isShowingCreateRoundDialog,
     };
 };
 
@@ -463,4 +463,4 @@ export default connect(
         setIsShowingRenameDialog,
         setSelectedRoundId
     }
-)(CreateRoundModal);
+)(CreateRoundDialog);

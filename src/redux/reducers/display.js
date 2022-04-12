@@ -32,7 +32,7 @@ const initialState = {
     isShowingOrientationDialog: false,
     isRecordingSequence: false,
     currentSequencePattern: null,
-    isShowingCreateRoundModal: false
+    isShowingCreateRoundDialog: false
 };
 
 export default function (state = initialState, action) {
@@ -44,7 +44,7 @@ export default function (state = initialState, action) {
         }
         case SET_IS_SHOWING_CREATE_ROUND_MODAL: {
             return update(state, {
-                isShowingCreateRoundModal: { $set: action.payload.value }
+                isShowingCreateRoundDialog: { $set: action.payload.value }
             })
         }
         case SET_REDIRECT_AFTER_SIGN_IN: {

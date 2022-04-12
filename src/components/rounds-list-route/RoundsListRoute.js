@@ -18,7 +18,7 @@ import { connect } from "react-redux";
 import _ from 'lodash';
 import {
     setIsShowingSignInDialog,
-    setIsShowingCreateRoundModal,
+    setIsShowingCreateRoundDialog,
     setRedirectAfterSignIn,
     setRounds,
     setIsShowingDeleteRoundDialog,
@@ -35,7 +35,7 @@ import Popper from '@material-ui/core/Popper';
 import MenuItem from '@material-ui/core/MenuItem';
 import MenuList from '@material-ui/core/MenuList';
 import { uuid } from '../../utils/index'
-import CreateRoundModal from '../dialogs/CreateRoundModal';
+import CreateRoundDialog from '../dialogs/CreateRoundDialog';
 import CustomSamples from '../../audio-engine/CustomSamples';
 
 const styles = theme => ({
@@ -80,12 +80,12 @@ class RoundsListRoute extends Component {
         callback && callback()
     }
 
-    toggleCreateRoundModal = (val) => {
-        const { isShowingCreateRoundModal, setIsShowingCreateRoundModal } = this.props
-        const newShowing = !isShowingCreateRoundModal
+    toggleCreateRoundDialog = (val) => {
+        const { isShowingCreateRoundDialog, setIsShowingCreateRoundDialog } = this.props
+        const newShowing = !isShowingCreateRoundDialog
         if (val === undefined)
-            setIsShowingCreateRoundModal(newShowing)
-        else setIsShowingCreateRoundModal(val)
+            setIsShowingCreateRoundDialog(newShowing)
+        else setIsShowingCreateRoundDialog(val)
     }
 
     onLaunchRoundClick(id) {
@@ -161,7 +161,7 @@ class RoundsListRoute extends Component {
                         </Box>
                         <Box>
                             {/* <Button data-test="button-new-round" className={classes.getStartedButton} variant="contained" color="secondary" disableElevation onClick={this.onNewRoundClick} startIcon={<AddIcon />}>New round</Button> */}
-                            <Button data-test="button-new-round" className={classes.getStartedButton} variant="contained" color="secondary" disableElevation onClick={() => this.toggleCreateRoundModal()}>New Project</Button>
+                            <Button data-test="button-new-round" className={classes.getStartedButton} variant="contained" color="secondary" disableElevation onClick={() => this.toggleCreateRoundDialog()}>New Project</Button>
                         </Box>
                     </Box>
                     <Box>
@@ -210,8 +210,8 @@ class RoundsListRoute extends Component {
                     </Popper>
                 </Container>
                 <SignInDialog />
-                <CreateRoundModal
-                    toggleCreateRoundModal={this.toggleCreateRoundModal}
+                <CreateRoundDialog
+                    toggleCreateRoundDialog={this.toggleCreateRoundDialog}
                     defaultRoundCreate={(callback, sounds) => {
                         this.onNewRoundClick(callback, sounds)
                     }}
@@ -228,7 +228,7 @@ const mapStateToProps = state => {
     return {
         user: state.user,
         rounds: state.rounds,
-        isShowingCreateRoundModal: state.display.isShowingCreateRoundModal,
+        isShowingCreateRoundDialog: state.display.isShowingCreateRoundDialog,
         selectedRoundId: state.display.selectedRoundId
     };
 };
@@ -239,7 +239,7 @@ export default connect(
         setIsShowingSignInDialog,
         setRedirectAfterSignIn,
         setRounds,
-        setIsShowingCreateRoundModal,
+        setIsShowingCreateRoundDialog,
         setIsShowingDeleteRoundDialog,
         setIsShowingRenameDialog,
         setSelectedRoundId

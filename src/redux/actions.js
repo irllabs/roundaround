@@ -68,7 +68,7 @@ export const setIsShowingSignInDialog = (value) => ({
     type: SET_IS_SHOWING_SIGNIN_DIALOG,
     payload: { value }
 })
-export const setIsShowingCreateRoundModal = (value) => ({
+export const setIsShowingCreateRoundDialog = (value) => ({
     type: SET_IS_SHOWING_CREATE_ROUND_MODAL,
     payload: { value }
 })

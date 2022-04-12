@@ -12,6 +12,7 @@ import { UPDATE_LAYER_INSTRUMENT } from '../../../redux/actionTypes'
 import RightArrow from './resources/svg/rightArrow.svg'
 import Check from './resources/svg/check.svg'
 import LeftArrow from './resources/svg/leftArrow.svg'
+import Plus from './resources/svg/plus.svg'
 import { FirebaseContext } from '../../../firebase'
 
 
@@ -72,24 +73,42 @@ const LayerInstrument = ({
         <Box className={showInstrumentsPopup ? classes.instrumentPopup : classes.hidden}>
             {!showArticulationOptions &&
                 <Box>
-                    <IconButton ref={instrumentsButtonRef} id='instrument' onClick={toggleShowInstrumentList} style={{ borderBottom: showInstrumentsList ? 'thin solid rgba(255, 255, 255, 0.1)' : 'none' }} className={classes.rectButton}>
-                        {showInstrumentsList && <Box style={{ display: 'flex', justifyContent: 'flex-start', flex: 1 }}>
-                            <img alt='right arrow' src={LeftArrow} />
-                        </Box>}
-                        <Box style={{ flex: showInstrumentsList ? 7 : 5, display: 'flex', flexDirection: 'row', justifyContent: 'flex-start' }}>
-                            <Typography style={{ display: 'flex', flex: 2, textAlign: 'left', textTransform: 'Capitalize' }}>Instrument</Typography>
-                        </Box>
-                        {!showInstrumentsList &&
-                            <>
-                                <Typography style={{ flex: 3, textAlign: 'left', textTransform: 'Capitalize' }}>
-                                    {selectedInstrument}
-                                </Typography>
-                                <Box style={{ display: 'flex', justifyContent: 'flex-end', flex: 1 }}>
-                                    <img alt='right arrow' src={RightArrow} />
-                                </Box>
-                            </>
+                    <Box style={{
+                        display: 'flex',
+                        flexDirection: 'row'
+                    }}>
+                        <IconButton ref={instrumentsButtonRef} id='instrument' onClick={toggleShowInstrumentList} style={{ flex: 6, borderBottom: showInstrumentsList ? 'thin solid rgba(255, 255, 255, 0.1)' : 'none' }} className={classes.rectButton}>
+                            {showInstrumentsList && <Box style={{ display: 'flex', justifyContent: 'flex-start', flex: 1 }}>
+                                <img alt='right arrow' src={LeftArrow} />
+                            </Box>}
+                            <Box style={{ flex: showInstrumentsList ? 7 : 5, display: 'flex', flexDirection: 'row', justifyContent: 'flex-start' }}>
+                                <Typography style={{ display: 'flex', flex: 2, textAlign: 'left', textTransform: 'Capitalize' }}>Instrument</Typography>
+                            </Box>
+                            {!showInstrumentsList &&
+                                <>
+                                    <Typography style={{ flex: 3, textAlign: 'left', textTransform: 'Capitalize' }}>
+                                        {selectedInstrument}
+                                    </Typography>
+                                    <Box style={{ display: 'flex', justifyContent: 'flex-end', flex: 1 }}>
+                                        <img alt='right arrow' src={RightArrow} />
+                                    </Box>
+                                </>
+                            }
+                        </IconButton>
+                        {showInstrumentsList &&
+                            <Box style={{ display: 'flex', flex: 1, borderBottom: 'thin solid rgba(255, 255, 255, 0.1)', padding: 5 }}>
+                                <IconButton
+                                    onClick={(e) => {
+                                        e.preventDefault()
+                                        e.stopPropagation()
+                                    }}
+                                    style={{ height: 25, width: 25 }}
+                                >
+                                    <img alt="new instrument" src={Plus} />
+                                </IconButton>
+                            </Box>
                         }
-                    </IconButton>
+                    </Box>
                     {showInstrumentsList &&
                         <Box style={{ display: 'flex', flexDirection: 'column' }}>
                             {instrumentOptions.map((instrument, i) =>
