@@ -40,6 +40,8 @@ import {
     ElipsisIcon,
     Custom
 } from './resources'
+import { setIsShowingCustomInstrumentDialog } from '../../../redux/actions';
+import CustomInstrumentDialog from '../../dialogs/CustomInstrumentDialog';
 
 const styles = (theme) => ({
     container: {
@@ -449,6 +451,7 @@ class LayerSettings extends Component {
             showHamburgerPopup: false,
             showDeleteClearPopup: false,
             windowWidth: 340,
+            isShowingCustomInstrumentDialog: false,
             instrumentOptions: Instruments.getInstrumentOptions(false),
             selectedInstrument: ''
         }
@@ -709,6 +712,14 @@ class LayerSettings extends Component {
         this.setState({ showDeleteClearPopup })
     }
 
+    toggleShowCustomInstrumentDialog = (val) => {
+        const { isShowingCustomInstrumentDialog, setIsShowingCustomInstrumentDialog } = this.props
+        const newShowing = !isShowingCustomInstrumentDialog
+        if (val === undefined)
+            setIsShowingCustomInstrumentDialog(newShowing)
+        else setIsShowingCustomInstrumentDialog(val)
+    }
+
     render() {
         const {
             showMixerPopup,
@@ -748,6 +759,11 @@ class LayerSettings extends Component {
 
         const form = (
             <Box className={classes.root}>
+                <CustomInstrumentDialog
+                    toggleCustomInstrumentDialog={this.toggleShowCustomInstrumentDialog}
+                    defaultRoundCreate={() => { }}
+                    user={user}
+                />
                 <LayerListPopup
                     instrumentIcon={instrumentIcon}
                     height={this.height}
@@ -809,6 +825,7 @@ class LayerSettings extends Component {
                         <Box style={{ display: 'flex', flex: 1, flexDirection: 'row' }}>
                             <Box className={classes.actionButtonContainer}>
                                 <LayerInstrument
+                                    toggleCustomInstrumentDialog={this.toggleShowCustomInstrumentDialog}
                                     showInstrumentsPopup={showInstrumentsPopup}
                                     instrumentsListRef={this.instrumentsListButton}
                                     articulationsListRef={this.articulationsListButton}
@@ -951,11 +968,15 @@ const mapStateToProps = state => {
         users: state.users,
         selectedLayerId: state.display.selectedLayerId,
         selectedLayer,
-        isOpen: state.display.isShowingLayerSettings
+        isOpen: state.display.isShowingLayerSettings,
+        isShowingCustomInstrumentDialog: state.display.isShowingCustomInstrumentDialog,
     };
 };
 
 
 export default connect(
-    mapStateToProps
+    mapStateToProps,
+    {
+        setIsShowingCustomInstrumentDialog
+    }
 )(withStyles(styles, { withTheme: true })(LayerSettings))

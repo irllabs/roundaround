@@ -20,7 +20,7 @@ const LayerInstrument = ({
     showInstrumentsPopup,
     toggleShowInstrumentList,
     toggleArticulationOptions,
-    selectedInstrumentLabel,
+    toggleCustomInstrumentDialog,
     showArticulationOptions,
     showInstrumentsList,
     classes,
@@ -101,6 +101,7 @@ const LayerInstrument = ({
                                     onClick={(e) => {
                                         e.preventDefault()
                                         e.stopPropagation()
+                                        toggleCustomInstrumentDialog()
                                     }}
                                     style={{ height: 25, width: 25 }}
                                 >

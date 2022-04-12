@@ -1,6 +1,7 @@
 import {
     SET_IS_SHOWING_SIGNIN_DIALOG,
     SET_IS_SHOWING_CREATE_ROUND_MODAL,
+    SET_IS_SHOWING_CUSTOM_INSTRUMENT_DIALOG,
     SET_USER,
     SET_REDIRECT_AFTER_SIGN_IN,
     SET_ROUNDS,
@@ -70,6 +71,10 @@ export const setIsShowingSignInDialog = (value) => ({
 })
 export const setIsShowingCreateRoundDialog = (value) => ({
     type: SET_IS_SHOWING_CREATE_ROUND_MODAL,
+    payload: { value }
+})
+export const setIsShowingCustomInstrumentDialog = (value) => ({
+    type: SET_IS_SHOWING_CUSTOM_INSTRUMENT_DIALOG,
     payload: { value }
 })
 export const setRedirectAfterSignIn = (value) => ({
