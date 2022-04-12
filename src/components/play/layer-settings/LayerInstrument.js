@@ -1,3 +1,4 @@
+/* eslint-disable react-hooks/exhaustive-deps */
 import React, { useContext, useEffect } from 'react'
 import { Box, Typography } from '@material-ui/core'
 import IconButton from '@material-ui/core/IconButton'
@@ -34,7 +35,7 @@ const LayerInstrument = ({
     const [selectedArticulation, setSelectedArticulation] = React.useState(selectedLayer.instrument.sample)
     const [selectedInstrumentFull, setSelectedInstrumentFull] = React.useState(selectedLayer.instrument)
     const dispatch = useDispatch();
-    const instrumentOptions = Instruments.getInstrumentOptions(false)
+    const instrumentOptions = Instruments.getInstrumentOptions(true)
     const articulationOptions = Instruments.getInstrumentArticulationOptions(selectedInstrument, user.id, selectedInstrumentFull)
     const firebase = useContext(FirebaseContext);
 

@@ -495,12 +495,10 @@ class LayerSettings extends Component {
     componentDidUpdate(prevProps) {
         if (this.props.round && this.props.selectedLayerId) {
             const selectedLayer = _.find(this.props.round.layers, { id: this.props.selectedLayerId })
-            //console.log('instrument in sampler', !selectedLayer.instrument.sampler.indexOf(this.state.selectedInstrument) > -1)
             if (selectedLayer &&
                 (
                     (prevProps.selectedLayerId !== this.props.selectedLayerId) ||
                     (!this.state.selectedInstrument && selectedLayer)
-                    //|| (this.state.selectedInstrument && (selectedLayer.instrument.sampler.indexOf(this.state.selectedInstrument) === -1))
                 )
             ) {
                 this.setSelectedInstrument(selectedLayer)
@@ -522,12 +520,12 @@ class LayerSettings extends Component {
     updateWindowWidth = () => this.setState({ windowWidth: window.innerWidth })
 
     setSelectedInstrument = async (selectedLayer) => {
-        const instrumentOptions = await Instruments.getInstrumentOptions(false)
+        const instrumentOptions = await Instruments.getInstrumentOptions()
         if (instrumentOptions && this.props.round) {
             const localLayer = _.find(this.props.round.layers, { id: this.props.selectedLayerId })
             const sampler = selectedLayer?.instrument?.sampler || localLayer?.instrument?.sampler;
             const instrument = _.find(instrumentOptions, { name: sampler })
-            if (instrument)
+            if (instrument && this.state.selectedInstrument !== instrument.label)
                 this.setState({ selectedInstrument: instrument.label })
         }
     }
@@ -712,7 +710,6 @@ class LayerSettings extends Component {
     }
 
     render() {
-        // console.log('Layer settings render()', this.props.user);
         const {
             showMixerPopup,
             showInstrumentsPopup,
@@ -724,7 +721,7 @@ class LayerSettings extends Component {
             showVolumePopup,
             showDeleteClearPopup,
             windowWidth
-        } = this.state;
+        } = this.state
 
         const { classes, theme, user } = this.props
         const selectedLayer = this.props.selectedLayer
@@ -843,7 +840,7 @@ class LayerSettings extends Component {
                                     </Box>
                                     <Box className={classes.selectedInstrumentInfo}>
                                         <Typography style={{ fontWeight: 'bolder', lineHeight: 1, textTransform: 'capitalize' }}>
-                                            {selectedInstrument}
+                                            {selectedInstrument === 'Custom' ? selectedLayer.instrument.displayName : selectedInstrument}
                                         </Typography>
                                         <Typography style={{ fontSize: 30, marginLeft: 5, marginRight: 5, lineHeight: .5 }}>&#183;</Typography>
                                     </Box>
@@ -944,7 +941,6 @@ class LayerSettings extends Component {
 }
 
 const mapStateToProps = state => {
-    //  console.log('mapStateToProps', state);
     let selectedLayer = null;
     if (!_.isNil(state.display.selectedLayerId) && !_.isNil(state.round) && !_.isNil(state.round.layers)) {
         selectedLayer = _.find(state.round.layers, { id: state.display.selectedLayerId })

@@ -97,7 +97,6 @@ const Instruments = {
         return options;
     },
     getInstrumentArticulationOptions(instrumentName, userId, instrument) {
-        // console.log('getInstrumentArticulationOptions()', instrumentName);
         if (instrumentName !== 'custom') {
             let options = [];
             for (let [, value] of Object.entries(
@@ -109,11 +108,9 @@ const Instruments = {
                 };
                 options.push(option);
             }
-            //   console.log('got instrument options', options);
             return options;
         } else {
             let options = []
-            //   console.log('CustomSamples.samples', CustomSamples.samples);
             if (instrumentName !== 'custom' && !instrument.sampleId)
                 for (let [id, sample] of Object.entries(CustomSamples.samples)) {
                     if (sample.createdBy === userId) {
@@ -126,10 +123,9 @@ const Instruments = {
             else {
                 options.push({
                     name: instrument.displayName,
-                    value: instrument.displayName
+                    value: instrument.sample
                 })
             }
-            //   console.log('got sample options', options);
             return options
         }
     },
@@ -145,7 +141,6 @@ const Instruments = {
         return label
     },
     getDefaultArticulation(instrumentName) {
-        //console.log('Instruments::getDefaultArticulation() instrumentName', instrumentName, this.instrumentClasses);
         return this.instrumentClasses[instrumentName].defaultArticulation
         /*return !_.isNil(this.instrumentClasses[instrumentName].defaultArticulation)
             ? this.instrumentClasses[instrumentName].defaultArticulation
