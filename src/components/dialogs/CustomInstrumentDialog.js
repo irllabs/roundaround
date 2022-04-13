@@ -20,7 +20,6 @@ import { getDefaultSample } from '../../utils/defaultData'
 
 
 import { Box, makeStyles } from '@material-ui/core'
-import Di from '../play/layer-settings/resources/Di'
 import Upload from '../play/layer-settings/resources/Upload'
 import Loader from 'react-loader-spinner'
 import Add from '../play/layer-settings/resources/Add'
