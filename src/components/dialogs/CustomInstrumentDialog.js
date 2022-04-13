@@ -3,8 +3,8 @@ import React, { useState, useRef, useEffect, useContext } from 'react'
 import { connect } from 'react-redux'
 import { FirebaseContext } from '../../firebase';
 
-import { Button, Typography } from '@material-ui/core'
-import { Close } from '@material-ui/icons'
+import { Button, IconButton, Typography, TextField } from '@material-ui/core'
+import Close from '../play/layer-settings/resources/Close'
 import DialogTitle from '@material-ui/core/DialogTitle'
 import Dialog from '@material-ui/core/Dialog'
 
@@ -37,7 +37,7 @@ const styles = makeStyles({
     title: {
         position: 'relative',
         textAlign: 'center',
-        fontSize: 20
+        fontSize: 20,
     },
     titleSub: {
         display: 'flex',
@@ -60,9 +60,11 @@ const styles = makeStyles({
     },
     closeContainer: {
         position: 'absolute',
+        bottom: 5,
         flex: 1,
         display: 'flex',
         justifyContent: 'flex-start',
+        alignItems: 'center',
         cursor: 'pointer'
     },
     titleText: {
@@ -110,6 +112,7 @@ const styles = makeStyles({
         alignItems: 'center',
         backgroundColor: 'rgba(255,255,255, 0.1)',
         cursor: 'pointer',
+        marginTop: 15,
         transition: 'all 0.2s ease-in-out',
         '&:hover': {
             boxShadow: '0 1px 2px 1px rgba(0,0,0,0.3)',
@@ -134,6 +137,19 @@ const styles = makeStyles({
         marginBottom: '1rem',
         textAlign: 'center',
     },
+    buttonNoEffects: {
+        display: 'flex',
+        marginBottom: '1rem',
+        textAlign: 'center',
+        padding: 0,
+        backgroundColor: 'transparent',
+        '&:hover': {
+            backgroundColor: 'transparent'
+        },
+        '&:active': {
+            backgroundColor: 'transparent'
+        }
+    },
     loaderContainer: {
         flex: 1,
         display: 'flex',
@@ -157,6 +173,18 @@ const styles = makeStyles({
         overflow: 'scroll',
         scrollBehavior: 'smooth',
         scrollbarWidth: 3
+    },
+    inputContainer: {
+        display: 'flex',
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        paddingLeft: 12,
+        paddingRight: 12,
+        paddingTop: 5,
+        paddingBottom: 5,
+        borderRadius: 12,
+        border: '1px solid rgba(255, 255, 255, 0.1)',
     }
 })
 
@@ -172,6 +200,7 @@ const CustomInstrumentDialog = ({
     const [showLoader, setShowLoader] = useState(false)
     const [showUploadSound, setShowUploadSound] = useState(false)
     const [preUploaded, setPreUploaded] = useState([])
+    const [instrumentName, setInsrumentName] = useState('')
 
     const processFiles = (files) => {
         if (files && files[0]) {
@@ -300,6 +329,12 @@ const CustomInstrumentDialog = ({
         else setPreUploaded(null)
     }
 
+    const setCurrentInstrumentName = (e) => {
+        const name = e.target.value
+        if (name.length <= 15)
+            setInsrumentName(name)
+    }
+
     return (
         <Dialog
             classes={{ paper: classes.paper }}
@@ -310,7 +345,9 @@ const CustomInstrumentDialog = ({
             <DialogTitle className={classes.title}>
                 <Box className={classes.titleSub}>
                     <Box className={classes.closeContainer}>
-                        <Close className={classes.close} onClick={() => onClose()} />
+                        <IconButton className={classes.buttonNoEffects} onClick={() => onClose()}>
+                            <Close className={classes.close} />
+                        </IconButton>
                     </Box>
                     <Typography className={classes.titleText}>
                         Upload custom sounds
@@ -320,71 +357,94 @@ const CustomInstrumentDialog = ({
             <Box className={classes.body} >
                 {!showLoader ?
                     <>
-                        {
-                            <Box>
-                                <input
-                                    hidden
-                                    ref={uploadInputRef}
-                                    onChange={(e) => {
-                                        const files = e.target.files
-                                        processFiles(files)
-                                    }}
-                                    multiple
-                                    type='file'
-                                />
-                                <Box
-                                    className={classes.tile}
-                                    id='file-drop-zone'
-                                    onDrop={(e) => {
-                                        e.preventDefault()
-                                        e.stopPropagation()
-                                        const dt = e.dataTransfer
-                                        const files = dt.files
-                                        processFiles(files)
-                                    }}
-                                    onClick={(e) => {
-                                        e.stopPropagation()
-                                        uploadInputRef.current.click()
-                                    }}
-                                    style={{ height: preUploaded && preUploaded.length ? 104 : 252 }}
-                                >
-                                    <Box>
-                                        {preUploaded && preUploaded.length ? <Add /> : <Upload />}
+                        <Box style={{ overflow: 'scroll' }}>
+                            <Box style={{ display: 'flex', flexDirection: 'column', borderBottom: '1px solid rgba(255,255,255, 0.1)' }}>
+                                <Box className={classes.inputContainer}>
+                                    <Box style={{ display: 'flex', flexDirection: 'column', padding: 0, margin: 0 }}>
+                                        <Typography style={{ flex: 1, fontSize: 12 }}>Instrument Name</Typography>
+                                        <TextField
+                                            style={{ flex: 5, width: 250, border: '0 solid rgba(255,255,255, 0)', fontSize: 14 }}
+                                            fullWidth={true}
+                                            value={instrumentName}
+                                            onChange={setCurrentInstrumentName}
+                                            InputProps={{ disableUnderline: true }}
+                                        />
                                     </Box>
-                                    <Typography className={classes.tileSub}>
-                                        {preUploaded && preUploaded.length ? 'Add more sounds' : 'Choose audio files or drag and drop'}
-                                    </Typography>
-                                    <Typography className={classes.tileText}>
-                                        .aif or .wav
-                                    </Typography>
+                                    <Close className={classes.close} onClick={() => { }} />
                                 </Box>
-                                {
-                                    preUploaded && preUploaded.length &&
-                                    <Box className={classes.preUploadList}>
-                                        {preUploaded.map((item, i) => {
-                                            const name = item.name
-                                            const nameLength = name.length
-                                            if (!item.duration)
-                                                soundPreLoad(i)
-                                            return (
-                                                <Box className={classes.tileAlt} key={i}>
-                                                    <Box onClick={() => soundPlaybackToggle(i)} className={classes.tileAltIconContainer} style={{ justifyContent: 'flex-start' }}>
-                                                        <Playback />
-                                                    </Box>
-                                                    <Box className={classes.tileAltTypeContainer}>
-                                                        <Typography style={{ fontSize: 14 }}>{nameLength > 25 ? name.substring(0, 25) + '...' : name}</Typography>
-                                                        <Typography id='dummy-time' style={{ fontSize: 12 }}>{convertHMS(item.duration)}</Typography>
-                                                    </Box>
-                                                    <Box onClick={() => trashSound(i)} className={classes.tileAltIconContainer} style={{ justifyContent: 'flex-end' }}>
-                                                        <Trash />
-                                                    </Box>
-                                                </Box>
-                                            )
-                                        })}
+                                <Box style={{ display: 'flex', flexDirection: 'row', justifyContent: 'space-between' }}>
+                                    <Box style={{ display: 'flex', alignItems: 'center' }}>
+                                        <Typography style={{ fontSize: 12 }}>Enter a short name</Typography>
                                     </Box>
-                                }
+                                    <Box style={{ display: 'flex', flexDirection: 'row', alignItems: 'center' }}>
+                                        <Typography style={{ fontSize: 12 }}>{instrumentName.length}</Typography>
+                                        <Box style={{ display: 'flex', lineHeight: 2 }}>/</Box>
+                                        <Typography style={{ fontSize: 12 }}>15</Typography>
+                                    </Box>
+                                </Box>
                             </Box>
-                        }
+                            <input
+                                hidden
+                                ref={uploadInputRef}
+                                onChange={(e) => {
+                                    const files = e.target.files
+                                    processFiles(files)
+                                }}
+                                multiple
+                                type='file'
+                            />
+                            <Box
+                                className={classes.tile}
+                                id='file-drop-zone'
+                                onDrop={(e) => {
+                                    e.preventDefault()
+                                    e.stopPropagation()
+                                    const dt = e.dataTransfer
+                                    const files = dt.files
+                                    processFiles(files)
+                                }}
+                                onClick={(e) => {
+                                    e.stopPropagation()
+                                    uploadInputRef.current.click()
+                                }}
+                                style={{ height: preUploaded && preUploaded.length ? 104 : 147 }}
+                            >
+                                <Box>
+                                    {preUploaded && preUploaded.length ? <Add /> : <Upload />}
+                                </Box>
+                                <Typography className={classes.tileSub}>
+                                    {preUploaded && preUploaded.length ? 'Add more sounds' : 'Choose audio files or drag and drop'}
+                                </Typography>
+                                <Typography className={classes.tileText}>
+                                    .aif or .wav
+                                </Typography>
+                            </Box>
+                            {
+                                preUploaded && preUploaded.length > 0 &&
+                                <Box className={classes.preUploadList}>
+                                    {preUploaded.map((item, i) => {
+                                        const name = item.name
+                                        const nameLength = name.length
+                                        if (!item.duration)
+                                            soundPreLoad(i)
+                                        return (
+                                            <Box className={classes.tileAlt} key={i}>
+                                                <Box onClick={() => soundPlaybackToggle(i)} className={classes.tileAltIconContainer} style={{ justifyContent: 'flex-start' }}>
+                                                    <Playback />
+                                                </Box>
+                                                <Box className={classes.tileAltTypeContainer}>
+                                                    <Typography style={{ fontSize: 14 }}>{nameLength > 25 ? name.substring(0, 25) + '...' : name}</Typography>
+                                                    <Typography id='dummy-time' style={{ fontSize: 12 }}>{convertHMS(item.duration)}</Typography>
+                                                </Box>
+                                                <Box onClick={() => trashSound(i)} className={classes.tileAltIconContainer} style={{ justifyContent: 'flex-end' }}>
+                                                    <Trash />
+                                                </Box>
+                                            </Box>
+                                        )
+                                    })}
+                                </Box>
+                            }
+                        </Box>
                     </> :
                     <Box className={classes.loaderContainer}>
                         <Loader

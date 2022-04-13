@@ -3,8 +3,8 @@ import React, { useState, useRef, useEffect, useContext } from 'react'
 import { connect } from 'react-redux'
 import { FirebaseContext } from '../../firebase';
 
-import { Button, Typography } from '@material-ui/core'
-import { Close } from '@material-ui/icons'
+import { IconButton, Button, Typography } from '@material-ui/core'
+import Close from '../play/layer-settings/resources/Close'
 import DialogTitle from '@material-ui/core/DialogTitle'
 import Dialog from '@material-ui/core/Dialog'
 
@@ -61,9 +61,11 @@ const styles = makeStyles({
     },
     closeContainer: {
         position: 'absolute',
+        bottom: 5,
         flex: 1,
         display: 'flex',
         justifyContent: 'flex-start',
+        alignItems: 'center',
         cursor: 'pointer'
     },
     titleText: {
@@ -134,6 +136,19 @@ const styles = makeStyles({
     button: {
         marginBottom: '1rem',
         textAlign: 'center',
+    },
+    buttonNoEffects: {
+        display: 'flex',
+        marginBottom: '1rem',
+        textAlign: 'center',
+        padding: 0,
+        backgroundColor: 'transparent',
+        '&:hover': {
+            backgroundColor: 'transparent'
+        },
+        '&:active': {
+            backgroundColor: 'transparent'
+        }
     },
     loaderContainer: {
         flex: 1,
@@ -311,7 +326,9 @@ const CreateRoundDialog = ({
             <DialogTitle className={classes.title}>
                 <Box className={classes.titleSub}>
                     <Box className={classes.closeContainer}>
-                        <Close className={classes.close} onClick={() => onClose()} />
+                        <IconButton className={classes.buttonNoEffects} onClick={() => onClose()}>
+                            <Close className={classes.close} />
+                        </IconButton>
                     </Box>
                     <Typography className={classes.titleText}>
                         {showUploadSound ? 'Upload custom sounds' : 'New Project'}
