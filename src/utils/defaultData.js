@@ -89,6 +89,7 @@ export const getDefaultRoundData = async (userId, samples) => {
             "name": "Default Round",
             "createdAt": Date.now(),
             "currentUsers": [],
+            "customInstruments": {},
             "layers": layers,
             userBuses: {},
             userPatterns: {}

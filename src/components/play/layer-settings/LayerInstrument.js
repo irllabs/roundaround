@@ -25,6 +25,7 @@ const LayerInstrument = ({
     showInstrumentsList,
     classes,
     selectedLayer,
+    round,
     roundId,
     instrumentsListRef,
     articulationsListRef,
@@ -35,8 +36,9 @@ const LayerInstrument = ({
     const [selectedInstrument, setSelectedInstrument] = React.useState(selectedLayer.instrument.sampler)
     const [selectedArticulation, setSelectedArticulation] = React.useState(selectedLayer.instrument.sample)
     const [selectedInstrumentFull, setSelectedInstrumentFull] = React.useState(selectedLayer.instrument)
+    const [combinedInstrumentOptions, setCombinedInstrumentOptions] = React.useState([])
     const dispatch = useDispatch();
-    const instrumentOptions = Instruments.getInstrumentOptions(true)
+    const instrumentOptions = Instruments.getInstrumentOptions(false)
     const articulationOptions = Instruments.getInstrumentArticulationOptions(selectedInstrument, user.id, selectedInstrumentFull)
     const firebase = useContext(FirebaseContext);
 
@@ -62,6 +64,32 @@ const LayerInstrument = ({
         setSelectedInstrument(selectedLayer.instrument.sampler)
         setSelectedArticulation(selectedLayer.instrument.sample)
     }, [selectedLayer])
+
+    useEffect(async () => {
+        const { customInstruments } = round
+        if (customInstruments) {
+            const cmb = await addCustomInstruments(customInstruments)
+            setCombinedInstrumentOptions(cmb)
+        }
+    }, [round])
+
+    const addCustomInstruments = (customInstruments) => {
+        return new Promise(async resolve => {
+            const customInstrumentArray = []
+            let preCombined = []
+            const length = Object.keys(customInstruments).length
+            Object.values(customInstruments).forEach(async instrument => {
+                const articulation = await Instruments.create('custom', instrument.id)
+                customInstrumentArray.push({
+                    label: instrument.displayName.replaceAll(' ', '-'),
+                    name: instrument.displayName,
+                    articulations: { [instrument.displayName]: [articulation] }
+                })
+                preCombined = [...instrumentOptions, ...customInstrumentArray]
+                if (length === customInstrumentArray.length) resolve(preCombined)
+            })
+        })
+    }
 
     const onArticulationSelect = async (articulation) => {
         setSelectedArticulation(articulation.value);
@@ -111,8 +139,8 @@ const LayerInstrument = ({
                         }
                     </Box>
                     {showInstrumentsList &&
-                        <Box style={{ display: 'flex', flexDirection: 'column' }}>
-                            {instrumentOptions.map((instrument, i) =>
+                        <Box style={{ display: 'flex', flexDirection: 'column', overflow: 'scroll' }}>
+                            {combinedInstrumentOptions.map((instrument, i) =>
                                 <IconButton
                                     ref={instrumentsListRef}
                                     id={`instrument-${i}`}

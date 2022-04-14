@@ -164,6 +164,7 @@ class Firebase {
                 round.layers = await this.getLayers(roundId)
                 round.userBuses = await this.getUserBuses(roundId)
                 round.userPatterns = await this.getUserPatterns(roundId)
+                round.customInstruments = await this.getCustomInstruments(roundId)
                 //  console.log('got round', round);
                 resolve(round)
             } catch (e) {
@@ -183,11 +184,34 @@ class Firebase {
                     .get();
                 layerSnapshot.forEach(layerDoc => {
                     let layer = layerDoc.data();
-                    layer.id = layerDoc.id;
+                    //layer.id = layerDoc.id;
                     layers.push(layer);
                 })
 
                 resolve(layers)
+            }
+            catch (e) {
+                console.error(e)
+                reject(e)
+            }
+        })
+    }
+
+    getCustomInstruments = async (roundId) => {
+        return new Promise(async (resolve, reject) => {
+            let customInstruments = {}
+            try {
+                const instrumentSnapshot = await this.db
+                    .collection("rounds")
+                    .doc(roundId)
+                    .collection('customInstruments')
+                    .get();
+                instrumentSnapshot.forEach(instDoc => {
+                    let instrument = instDoc.data()
+                    customInstruments = { ...customInstruments, ...instrument }
+                })
+
+                resolve(customInstruments)
             }
             catch (e) {
                 console.error(e)
@@ -419,6 +443,22 @@ class Firebase {
             catch (e) {
                 console.error(e)
                 reject(e)
+            }
+        })
+    }
+
+    updateCustomInstruments = async (roundId, userId, customInstruments) => {
+        let customInstrumentsClone = _.cloneDeep(customInstruments)
+        return new Promise(async (resolve, reject) => {
+            try {
+                await this.db.collection('rounds')
+                    .doc(roundId)
+                    .collection('customInstruments')
+                    .doc(userId)
+                    .set(customInstrumentsClone)
+                resolve()
+            } catch (e) {
+                console.error(e)
             }
         })
     }

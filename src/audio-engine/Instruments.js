@@ -111,7 +111,7 @@ const Instruments = {
             return options;
         } else {
             let options = []
-            if (instrumentName !== 'custom' && !instrument.sampleId)
+            if (!instrument.sampleId)
                 for (let [id, sample] of Object.entries(CustomSamples.samples)) {
                     if (sample.createdBy === userId) {
                         options.push({

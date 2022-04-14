@@ -2,7 +2,7 @@ import React, { Component } from 'react'
 import { connect } from "react-redux";
 import { Typography } from '@material-ui/core';
 import IconButton from '@material-ui/core/IconButton';
-import _ from 'lodash'
+import _, { cloneDeep } from 'lodash'
 import {
     SET_LAYER_MUTE,
     REMOVE_LAYER,
@@ -40,7 +40,10 @@ import {
     ElipsisIcon,
     Custom
 } from './resources'
-import { setIsShowingCustomInstrumentDialog } from '../../../redux/actions';
+import {
+    setIsShowingCustomInstrumentDialog,
+    updateCustomInstruments
+} from '../../../redux/actions';
 import CustomInstrumentDialog from '../../dialogs/CustomInstrumentDialog';
 
 const styles = (theme) => ({
@@ -720,6 +723,16 @@ class LayerSettings extends Component {
         else setIsShowingCustomInstrumentDialog(val)
     }
 
+    addInstrumentToRound = (samples) => {
+        const { round, user, updateCustomInstruments } = this.props
+        const customInstruments = round?.customInstruments ? cloneDeep(round.customInstruments) : {}
+        samples.forEach(sample => {
+            customInstruments[sample.id] = sample
+        })
+        this.context.updateCustomInstruments(round.id, user.id, customInstruments)
+        updateCustomInstruments(customInstruments)
+    }
+
     render() {
         const {
             showMixerPopup,
@@ -734,14 +747,14 @@ class LayerSettings extends Component {
             windowWidth
         } = this.state
 
-        const { classes, theme, user } = this.props
+        const { classes, theme, user, round } = this.props
         const selectedLayer = this.props.selectedLayer
         const userColors = this.getUserColors()
         const isMobile = windowWidth < theme.breakpoints.values.sm
         const sample = selectedLayer?.instrument?.sample
 
         const instrumentIcon = (name) => {
-            let Icon = <svg></svg>;
+            let Icon = Custom;
             if (name === 'HiHats')
                 Icon = HiHatsIcon
             if (name === 'Kicks')
@@ -750,8 +763,6 @@ class LayerSettings extends Component {
                 Icon = SnareIcon
             if (name === 'Perc')
                 Icon = PercIcon
-            if (name === 'custom')
-                Icon = Custom
             return <Box style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', margin: 0, padding: 0 }}>
                 <Icon />
             </Box>
@@ -761,7 +772,7 @@ class LayerSettings extends Component {
             <Box className={classes.root}>
                 <CustomInstrumentDialog
                     toggleCustomInstrumentDialog={this.toggleShowCustomInstrumentDialog}
-                    defaultRoundCreate={() => { }}
+                    addInstrumentToRound={this.addInstrumentToRound}
                     user={user}
                 />
                 <LayerListPopup
@@ -836,6 +847,7 @@ class LayerSettings extends Component {
                                     classes={classes}
                                     showArticulationOptions={showArticulationOptions}
                                     selectedLayer={selectedLayer}
+                                    round={round}
                                     roundId={this.props.round.id}
                                     instrumentsButtonRef={this.instrumentsButton}
                                     soundsButtonRef={this.soundsButton}
@@ -973,10 +985,14 @@ const mapStateToProps = state => {
     };
 };
 
+const mapDispatchToProps = dispatch => ({
+    setIsShowingCustomInstrumentDialog: val => dispatch(setIsShowingCustomInstrumentDialog(val)),
+    updateCustomInstruments: val => dispatch(updateCustomInstruments(val)),
+    dispatch
+})
+
 
 export default connect(
     mapStateToProps,
-    {
-        setIsShowingCustomInstrumentDialog
-    }
+    mapDispatchToProps
 )(withStyles(styles, { withTheme: true })(LayerSettings))

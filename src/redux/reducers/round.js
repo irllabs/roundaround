@@ -2,6 +2,7 @@
 import {
     SET_ROUND,
     UPDATE_LAYERS,
+    UPDATE_CUSTOM_INSTRUMENTS,
     TOGGLE_STEP,
     SET_STEP_VELOCITY,
     SET_STEP_PROBABILITY,
@@ -87,6 +88,16 @@ export default function (state = initialState, action) {
                 layers: layersUpdate
             })
         }
+
+        case UPDATE_CUSTOM_INSTRUMENTS: {
+            const { customInstruments } = action.payload
+            return update(state, {
+                customInstruments: {
+                    $set: customInstruments
+                }
+            })
+        }
+
         case UPDATE_STEP: {
             const { step, layerId } = action.payload;
             const layerIndex = _.findIndex(state.layers, { id: layerId })
@@ -104,6 +115,7 @@ export default function (state = initialState, action) {
                 }
             });
         }
+
         case ADD_STEP: {
             const { layerId, step } = action.payload;
             const layerIndex = _.findIndex(state.layers, { id: layerId })
@@ -117,6 +129,7 @@ export default function (state = initialState, action) {
                 }
             })
         }
+
         case REMOVE_STEP: {
             const { layerId, stepId } = action.payload;
             const layerIndex = _.findIndex(state.layers, { id: layerId })

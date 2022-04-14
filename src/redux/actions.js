@@ -31,6 +31,7 @@ import {
     SET_IS_SHOWING_ORIENTATION_DIALOG,
     UPDATE_LAYER,
     UPDATE_LAYERS,
+    UPDATE_CUSTOM_INSTRUMENTS,
     SET_IS_RECORDING_SEQUENCE,
     SET_USER_PATTERN_SEQUENCE,
     SET_IS_PLAYING_SEQUENCE,
@@ -141,6 +142,10 @@ export const setRound = (value) => ({
 export const updateLayers = (layers) => ({
     type: UPDATE_LAYERS,
     payload: { layers }
+})
+export const updateCustomInstruments = (customInstruments) => ({
+    type: UPDATE_CUSTOM_INSTRUMENTS,
+    payload: { customInstruments }
 })
 export const setIsPlaying = (value) => ({
     type: SET_IS_PLAYING,

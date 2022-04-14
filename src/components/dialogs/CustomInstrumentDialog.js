@@ -190,7 +190,7 @@ const styles = makeStyles({
 
 const CustomInstrumentDialog = ({
     toggleCustomInstrumentDialog,
-    defaultRoundCreate,
+    addInstrumentToRound,
     isShowingCustomInstrumentDialog,
     user
 }) => {
@@ -260,7 +260,6 @@ const CustomInstrumentDialog = ({
             const duration = sound.duration
             newPreUploaded[i].duration = duration
             setPreUploaded(newPreUploaded)
-
         })
     }
 
@@ -288,7 +287,7 @@ const CustomInstrumentDialog = ({
             urls && Array.isArray(urls) && urls.forEach(async url => {
                 let sample = getDefaultSample(user.id)
                 sample.remoteURL = url
-                sample.displayName = 'Custom'
+                sample.displayName = instrumentName || 'Custom'
                 await firebase.createSample(sample)
                 newSamples.push(sample)
                 if (newSamples.length === urls.length) {
@@ -304,7 +303,7 @@ const CustomInstrumentDialog = ({
         const urls = await firebase.uploadSound(user.id, preUploaded)
         const samples = await createSamples(urls)
         setShowLoader(false)
-        defaultRoundCreate(null, samples)
+        addInstrumentToRound(samples)
         onClose(true)
     }
 
