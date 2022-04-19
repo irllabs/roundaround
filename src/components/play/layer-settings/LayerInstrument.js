@@ -42,9 +42,20 @@ const LayerInstrument = ({
     const articulationOptions = Instruments.getInstrumentArticulationOptions(selectedInstrument, user.id, selectedInstrumentFull)
     const firebase = useContext(FirebaseContext);
 
+    console.log({ selectedInstrument })
+
     const onInstrumentSelect = async (instrument) => {
-        setSelectedInstrument(instrument.name)
-        let defaultArticulation = await Instruments.getRandomArticulation(instrument.name)
+        let defaultArticulation
+        if (instrument.type === 'custom') {
+            setSelectedInstrument('custom')
+            defaultArticulation = instrument.articulations[instrument.name]
+            console.log({ instrument })
+        } else {
+            setSelectedInstrument(instrument.name)
+            defaultArticulation = await Instruments.getRandomArticulation(instrument.name)
+        }
+        console.log({ defaultArticulation })
+
         if (!_.isNil(defaultArticulation)) {
             setSelectedArticulation(defaultArticulation)
             dispatch({
@@ -61,7 +72,11 @@ const LayerInstrument = ({
 
     useEffect(() => {
         setSelectedInstrumentFull(selectedLayer.instrument)
-        setSelectedInstrument(selectedLayer.instrument.sampler)
+        let sampler = selectedLayer.instrument.sampler
+        if (typeof selectedLayer.instrument.sample === 'object') {
+            sampler = 'custom'
+        }
+        setSelectedInstrument(sampler)
         setSelectedArticulation(selectedLayer.instrument.sample)
     }, [selectedLayer])
 
@@ -79,10 +94,11 @@ const LayerInstrument = ({
             let preCombined = []
             const length = Object.keys(customInstruments).length
             Object.values(customInstruments).forEach(async instrument => {
-                const articulation = await Instruments.create('custom', instrument.id)
+                const articulation = await Instruments.create('custom', instrument.id, instrument.id)
                 customInstrumentArray.push({
                     label: instrument.displayName.replaceAll(' ', '-'),
                     name: instrument.displayName,
+                    type: 'custom',
                     articulations: { [instrument.displayName]: [articulation] }
                 })
                 preCombined = [...instrumentOptions, ...customInstrumentArray]

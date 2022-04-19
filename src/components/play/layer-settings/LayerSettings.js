@@ -751,7 +751,11 @@ class LayerSettings extends Component {
         const selectedLayer = this.props.selectedLayer
         const userColors = this.getUserColors()
         const isMobile = windowWidth < theme.breakpoints.values.sm
-        const sample = selectedLayer?.instrument?.sample
+        let sample = selectedLayer?.instrument?.sample
+
+        if (typeof sample === 'object') {
+            sample = selectedLayer?.instrument?.sampler
+        }
 
         const instrumentIcon = (name) => {
             let Icon = Custom;
@@ -874,8 +878,8 @@ class LayerSettings extends Component {
                                         <Typography style={{ fontSize: 30, marginLeft: 5, marginRight: 5, lineHeight: .5 }}>&#183;</Typography>
                                     </Box>
                                     <Typography className={classes.instrumentSample}>
-                                        {`${selectedLayer?.instrument?.sample.substring(0, isMobile ? 6 : sample.length)}${isMobile &&
-                                            selectedLayer?.instrument?.sample.length > 6 ? '...' : ''}`}
+                                        {`${sample.substring(0, isMobile ? 6 : sample.length)}${isMobile &&
+                                            sample.length > 6 ? '...' : ''}`}
                                     </Typography>
                                 </IconButton>
                             </Box>
