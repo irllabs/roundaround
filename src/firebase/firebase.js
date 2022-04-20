@@ -482,7 +482,6 @@ class Firebase {
     }
 
     updateRound = async (roundId, data) => {
-        // console.log('updateRound', roundId, data)
         try {
             await this.db.collection('rounds')
                 .doc(roundId)
@@ -494,7 +493,6 @@ class Firebase {
     }
 
     updateLayer = async (roundId, layerId, data) => {
-        //   console.log('updateLayer', roundId, data)
         try {
             await this.db.collection('rounds')
                 .doc(roundId)
@@ -507,7 +505,6 @@ class Firebase {
     }
 
     updateUserBus = async (roundId, userId, userBus) => {
-        // console.log('firebase::updateUserBus()', roundId, userId, userBus);
         return new Promise(async (resolve, reject) => {
             try {
                 await this.db.collection('rounds')

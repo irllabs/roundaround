@@ -2,7 +2,7 @@
 import React, { useContext, useEffect } from 'react'
 import { Box, Typography } from '@material-ui/core'
 import IconButton from '@material-ui/core/IconButton'
-import _ from 'lodash'
+import _, { cloneDeep } from 'lodash'
 import { useDispatch } from "react-redux";
 
 import Instruments from '../../../audio-engine/Instruments'
@@ -42,19 +42,15 @@ const LayerInstrument = ({
     const articulationOptions = Instruments.getInstrumentArticulationOptions(selectedInstrument, user.id, selectedInstrumentFull)
     const firebase = useContext(FirebaseContext);
 
-    console.log({ selectedInstrument })
-
     const onInstrumentSelect = async (instrument) => {
         let defaultArticulation
         if (instrument.type === 'custom') {
             setSelectedInstrument('custom')
             defaultArticulation = instrument.articulations[instrument.name]
-            console.log({ instrument })
         } else {
             setSelectedInstrument(instrument.name)
             defaultArticulation = await Instruments.getRandomArticulation(instrument.name)
         }
-        console.log({ defaultArticulation })
 
         if (!_.isNil(defaultArticulation)) {
             setSelectedArticulation(defaultArticulation)
@@ -66,7 +62,11 @@ const LayerInstrument = ({
                     user: user.id
                 }
             })
-            firebase.updateLayer(roundId, selectedLayer.id, { instrument: { sampler: instrument.name, sample: defaultArticulation } })
+            console.log('sent instrument', instrument)
+            if (instrument.type === 'custom')
+                firebase.updateLayer(roundId, selectedLayer.id, { instrument: { sampler: instrument.name, sample: 'custom', type: 'custom', sampleId: instrument.id, displayName: instrument.name } })
+            else
+                firebase.updateLayer(roundId, selectedLayer.id, { instrument: { sampler: instrument.name, sample: defaultArticulation } })
         };
     }
 
@@ -82,10 +82,9 @@ const LayerInstrument = ({
 
     useEffect(async () => {
         const { customInstruments } = round
-        if (customInstruments) {
-            const cmb = await addCustomInstruments(customInstruments)
-            setCombinedInstrumentOptions(cmb)
-        }
+        const newCustomInstruments = customInstruments ? cloneDeep(customInstruments) : []
+        const cmb = await addCustomInstruments(newCustomInstruments)
+        setCombinedInstrumentOptions(cmb)
     }, [round])
 
     const addCustomInstruments = (customInstruments) => {
@@ -93,17 +92,20 @@ const LayerInstrument = ({
             const customInstrumentArray = []
             let preCombined = []
             const length = Object.keys(customInstruments).length
-            Object.values(customInstruments).forEach(async instrument => {
-                const articulation = await Instruments.create('custom', instrument.id, instrument.id)
-                customInstrumentArray.push({
-                    label: instrument.displayName.replaceAll(' ', '-'),
-                    name: instrument.displayName,
-                    type: 'custom',
-                    articulations: { [instrument.displayName]: [articulation] }
+            if (length > 0)
+                Object.values(customInstruments).forEach(async instrument => {
+                    const articulation = await Instruments.create('custom', instrument.id, instrument.id)
+                    customInstrumentArray.push({
+                        label: instrument.displayName.replaceAll(' ', '-'),
+                        name: instrument.displayName,
+                        type: 'custom',
+                        id: instrument.id,
+                        articulations: { [instrument.displayName]: [articulation] }
+                    })
+                    preCombined = [...instrumentOptions, ...customInstrumentArray]
+                    if (length === customInstrumentArray.length) resolve(preCombined)
                 })
-                preCombined = [...instrumentOptions, ...customInstrumentArray]
-                if (length === customInstrumentArray.length) resolve(preCombined)
-            })
+            else resolve(instrumentOptions)
         })
     }
 

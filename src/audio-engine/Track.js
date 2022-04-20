@@ -19,6 +19,7 @@ export default class Track {
         this.instrument = null
         this.automation = null
         this.notes = null
+        console.log('setting type --')
         this.setType(type)
     }
     setType(type, automationFxId) {
@@ -53,6 +54,8 @@ export default class Track {
             }
             this.automation = new Automation(this.trackParameters.automationFxId, this.userId)
         }
+        console.log('pre parts calc')
+        console.log('user patterns', this.userPatterns)
         this.calculatePart(this.trackParameters, this.userPatterns)
     }
     setFxOrder(updatedFxOrders) {
@@ -181,7 +184,7 @@ export default class Track {
         }
     }
     calculatePart(layer, userPatterns) {
-        //console.log('Track::calculatePart()', layer, userPatterns);
+        console.log('Track::calculatePart()', layer, userPatterns);
         this.trackParameters = layer
         if (!_.isNil(userPatterns)) {
             // if (!userPatterns.isPlayingSequence) {

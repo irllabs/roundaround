@@ -38,7 +38,7 @@ import {
     HamburgerMenuIcon,
     CloseIcon,
     ElipsisIcon,
-    Custom
+    CustomIcon
 } from './resources'
 import {
     setIsShowingCustomInstrumentDialog,
@@ -758,7 +758,7 @@ class LayerSettings extends Component {
         }
 
         const instrumentIcon = (name) => {
-            let Icon = Custom;
+            let Icon = CustomIcon;
             if (name === 'HiHats')
                 Icon = HiHatsIcon
             if (name === 'Kicks')

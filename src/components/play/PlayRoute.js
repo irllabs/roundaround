@@ -79,6 +79,7 @@ class PlayRoute extends Component {
         this.isLoadingRound = true;
         let roundId = this.props.location.pathname.split('/play/')[1]
         let round = await this.context.getRound(roundId)
+        console.log('got round', round)
         if (_.isNil(round) || _.isNil(round.currentUsers)) {
             // probably deleted round
             this.props.history.push('/rounds')
@@ -109,13 +110,16 @@ class PlayRoute extends Component {
         }
 
         // load audio
+        console.log('loading custom samples ')
         CustomSamples.init(this.context)
         await AudioEngine.init()
         Instruments.init()
         FX.init()
+        console.log('audio engine loading round')
         await AudioEngine.load(round)
 
         this.props.setUsers(currentUsers)
+        console.log('setting round')
         this.props.setRound(round)
         this.hasLoadedRound = true
         this.isLoadingRound = false

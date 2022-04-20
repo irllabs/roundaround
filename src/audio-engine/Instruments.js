@@ -55,16 +55,20 @@ const Instruments = {
     async create(instrumentName, articulation, articulationId) {
         let _this = this
         return new Promise(async (resolve, reject) => {
+            if (!_this.instrumentClasses[instrumentName])
+                await this.init()
             if (!_.isNil(instrumentName)) {
                 let InstrumentClass = _this.instrumentClasses[instrumentName]
-                let instrument = new InstrumentClass()
-                if (instrumentName === 'custom' && articulationId) {
-                    await instrument.load(articulationId)
+                if (InstrumentClass) {
+                    let instrument = new InstrumentClass()
+                    if (instrumentName === 'custom' && articulationId) {
+                        await instrument.load(articulationId)
+                    }
+                    else
+                        await instrument.load(articulation)
+                    _this.instruments = [..._this.instruments, instrument]
+                    resolve(instrument)
                 }
-                else
-                    await instrument.load(articulation)
-                _this.instruments = [..._this.instruments, instrument]
-                resolve(instrument)
             }
             else reject(null)
         });
