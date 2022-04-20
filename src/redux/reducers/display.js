@@ -1,6 +1,8 @@
 /* eslint-disable import/no-anonymous-default-export */
 import {
     SET_IS_SHOWING_SIGNIN_DIALOG,
+    SET_IS_SHOWING_CREATE_ROUND_MODAL,
+    SET_IS_SHOWING_CUSTOM_INSTRUMENT_DIALOG,
     SET_REDIRECT_AFTER_SIGN_IN,
     SET_SIGNUP_DISPLAYNAME,
     SET_SELECTED_LAYER_ID,
@@ -30,7 +32,9 @@ const initialState = {
     selectedRoundId: null,
     isShowingOrientationDialog: false,
     isRecordingSequence: false,
-    currentSequencePattern: null
+    currentSequencePattern: null,
+    isShowingCreateRoundDialog: false,
+    isShowingCustomInstrumentDialog: false
 };
 
 export default function (state = initialState, action) {
@@ -38,6 +42,16 @@ export default function (state = initialState, action) {
         case SET_IS_SHOWING_SIGNIN_DIALOG: {
             return update(state, {
                 isShowingSignInDialog: { $set: action.payload.value }
+            })
+        }
+        case SET_IS_SHOWING_CREATE_ROUND_MODAL: {
+            return update(state, {
+                isShowingCreateRoundDialog: { $set: action.payload.value }
+            })
+        }
+        case SET_IS_SHOWING_CUSTOM_INSTRUMENT_DIALOG: {
+            return update(state, {
+                isShowingCustomInstrumentDialog: { $set: action.payload.value }
             })
         }
         case SET_REDIRECT_AFTER_SIGN_IN: {

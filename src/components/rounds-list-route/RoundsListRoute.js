@@ -12,12 +12,18 @@ import ListItemSecondaryAction from '@material-ui/core/ListItemSecondaryAction';
 import ListItemAvatar from '@material-ui/core/ListItemAvatar';
 import Avatar from '@material-ui/core/Avatar';
 import ImageIcon from '@material-ui/icons/Image';
-import AddIcon from '@material-ui/icons/Add';
+//import AddIcon from '@material-ui/icons/Add';
 import MoreHorizIcon from '@material-ui/icons/MoreHoriz';
 import { connect } from "react-redux";
 import _ from 'lodash';
 import {
-    setIsShowingSignInDialog, setRedirectAfterSignIn, setRounds, setIsShowingDeleteRoundDialog, setIsShowingRenameDialog, setSelectedRoundId
+    setIsShowingSignInDialog,
+    setIsShowingCreateRoundDialog,
+    setRedirectAfterSignIn,
+    setRounds,
+    setIsShowingDeleteRoundDialog,
+    setIsShowingRenameDialog,
+    setSelectedRoundId
 } from '../../redux/actions'
 import SignInDialog from '../dialogs/SignInDialog'
 import { createRound } from '../../utils/index'
@@ -29,11 +35,15 @@ import Popper from '@material-ui/core/Popper';
 import MenuItem from '@material-ui/core/MenuItem';
 import MenuList from '@material-ui/core/MenuList';
 import { uuid } from '../../utils/index'
+import CreateRoundDialog from '../dialogs/CreateRoundDialog';
+import CustomSamples from '../../audio-engine/CustomSamples';
 
 const styles = theme => ({
     root: {
         paddingTop: '64px'
-
+    },
+    paper: {
+        borderRadius: 8
     },
     header: {
         display: 'flex',
@@ -45,7 +55,7 @@ const styles = theme => ({
 
 class RoundsListRoute extends Component {
     static contextType = FirebaseContext;
-    constructor (props) {
+    constructor(props) {
         super(props);
         this.state = {
             menuIsOpen: false,
@@ -56,22 +66,33 @@ class RoundsListRoute extends Component {
         this.onMenuClick = this.onMenuClick.bind(this)
     }
 
-    async onNewRoundClick () {
-        console.log('create new round');
-        let newRound = createRound(this.props.user.id)
-        console.log('newRound', newRound);
-        let newRounds = [...this.props.rounds, newRound]
-        await this.context.createRound(newRound)
-        this.props.setRounds(newRounds)
-        // redirect to new round
-        this.onLaunchRoundClick(newRound.id)
+    componentDidMount() {
+        CustomSamples.init(this.context)
     }
 
-    onLaunchRoundClick (id) {
+    async onNewRoundClick(callback, sounds) {
+        let newRound = await createRound(this.props.user.id, sounds)
+        let newRounds = [newRound, ...this.props.rounds]
+        await this.context.createRound(newRound)
+        await this.props.setRounds(newRounds)
+        // redirect to new round
+        this.onLaunchRoundClick(newRound.id)
+        callback && callback()
+    }
+
+    toggleCreateRoundDialog = (val) => {
+        const { isShowingCreateRoundDialog, setIsShowingCreateRoundDialog } = this.props
+        const newShowing = !isShowingCreateRoundDialog
+        if (val === undefined)
+            setIsShowingCreateRoundDialog(newShowing)
+        else setIsShowingCreateRoundDialog(val)
+    }
+
+    onLaunchRoundClick(id) {
         this.props.history.push('/play/' + id)
     }
 
-    getCreatedString (round) {
+    getCreatedString(round) {
         const date = new Date(round.createdAt)
         let dateString = date.toLocaleTimeString(
             'en-gb',
@@ -84,9 +105,8 @@ class RoundsListRoute extends Component {
         return dateString
     }
 
-    onMenuClick (roundId, e) {
+    onMenuClick(roundId, e) {
         let element = e.currentTarget
-        console.log('onMenuClick', roundId, element);
         this.props.setSelectedRoundId(roundId)
         this.setState({
             anchorElement: element,
@@ -108,13 +128,12 @@ class RoundsListRoute extends Component {
         this.props.setIsShowingRenameDialog(true)
     }
     onDuplicateClick = async () => {
-        console.log('onDuplicateClick');
         let selectedRound = await this.context.getRound(this.props.selectedRoundId)
         let clonedRound = _.cloneDeep(selectedRound)
         clonedRound.id = uuid()
         clonedRound.name += ' (duplicate)'
         clonedRound.createdAt = Date.now()
-        this.context.createRound(clonedRound)
+        await this.context.createRound(clonedRound)
         let clonedRounds = _.cloneDeep(this.props.rounds)
         clonedRounds.push(clonedRound)
         this.props.setRounds(clonedRounds)
@@ -129,26 +148,27 @@ class RoundsListRoute extends Component {
         this.props.setIsShowingDeleteRoundDialog(true)
     }
 
-    render () {
-        console.log('rendering rounds', this.props.rounds);
-
+    render() {
         const { classes } = this.props;
-        const rounds = this.props.rounds;
+        const rounds = [...this.props.rounds];
         return (
             <>
                 <Container className={classes.root}>
 
                     <Box className={classes.header}>
-                        <div><h1>My rounds</h1></div>
-                        <div>
-                            <Button className={classes.getStartedButton} variant="contained" color="secondary" disableElevation onClick={this.onNewRoundClick} startIcon={<AddIcon />}>New round</Button>
-                        </div>
+                        <Box>
+                            <h1>My rounds</h1>
+                        </Box>
+                        <Box>
+                            {/* <Button data-test="button-new-round" className={classes.getStartedButton} variant="contained" color="secondary" disableElevation onClick={this.onNewRoundClick} startIcon={<AddIcon />}>New round</Button> */}
+                            <Button data-test="button-new-round" className={classes.getStartedButton} variant="contained" color="secondary" disableElevation onClick={() => this.toggleCreateRoundDialog()}>New Project</Button>
+                        </Box>
                     </Box>
                     <Box>
                         <List>
                             {
                                 rounds.map((round) => (
-                                    <ListItem key={round.id} button onClick={this.onLaunchRoundClick.bind(this, round.id)}>
+                                    <ListItem key={round.id} button onClick={this.onLaunchRoundClick.bind(this, round.id)} data-test="list-item-round">
                                         <ListItemAvatar>
                                             <Avatar>
                                                 <ImageIcon />
@@ -174,14 +194,13 @@ class RoundsListRoute extends Component {
                                 {...TransitionProps}
                                 style={{ transformOrigin: placement === 'bottom' ? 'center top' : 'center bottom' }}
                             >
-                                <Paper size="md">
+                                <Paper className={classes.paper} size="md">
                                     <ClickAwayListener onClickAway={this.onMenuClose}>
                                         <Box>
                                             <MenuList autoFocusItem={this.state.menuIsOpen} id="menu-list-grow">
                                                 <MenuItem onClick={this.onRenameClick} className={classes.menuListItem}>Rename</MenuItem>
                                                 <MenuItem onClick={this.onDuplicateClick} className={classes.menuListItem}>Duplicate</MenuItem>
                                                 <MenuItem onClick={this.onDeleteClick} className={classes.menuListItem}>Delete</MenuItem>
-
                                             </MenuList>
                                         </Box>
                                     </ClickAwayListener>
@@ -191,6 +210,12 @@ class RoundsListRoute extends Component {
                     </Popper>
                 </Container>
                 <SignInDialog />
+                <CreateRoundDialog
+                    toggleCreateRoundDialog={this.toggleCreateRoundDialog}
+                    defaultRoundCreate={(callback, sounds) => {
+                        this.onNewRoundClick(callback, sounds)
+                    }}
+                />
             </>
         )
     }
@@ -203,6 +228,7 @@ const mapStateToProps = state => {
     return {
         user: state.user,
         rounds: state.rounds,
+        isShowingCreateRoundDialog: state.display.isShowingCreateRoundDialog,
         selectedRoundId: state.display.selectedRoundId
     };
 };
@@ -213,6 +239,7 @@ export default connect(
         setIsShowingSignInDialog,
         setRedirectAfterSignIn,
         setRounds,
+        setIsShowingCreateRoundDialog,
         setIsShowingDeleteRoundDialog,
         setIsShowingRenameDialog,
         setSelectedRoundId

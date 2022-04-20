@@ -3,8 +3,6 @@ import { withStyles } from '@material-ui/styles';
 import Box from '@material-ui/core/Box';
 import Button from '@material-ui/core/Button';
 import { connect } from "react-redux";
-import MicIcon from '@material-ui/icons/MicOutlined';
-import StopIcon from '@material-ui/icons/Stop';
 import UploadIcon from '@material-ui/icons/CloudUploadOutlined';
 import AudioEngine from '../../../audio-engine/AudioEngine'
 import AudioRecorder from '../../../audio-engine/AudioRecorder'
@@ -19,11 +17,12 @@ import Dropzone from 'react-dropzone'
 
 const styles = theme => ({
     root: {
+        display: 'flex',
         width: '100%',
         padding: theme.spacing(1)
     },
     buttonContainer: {
-        width: '100%',
+        flex: 1,
         marginBottom: theme.spacing(2),
         display: 'flex',
         justifyContent: 'space-between',
@@ -31,7 +30,10 @@ const styles = theme => ({
             flexDirection: "column"
         }
     },
-
+    fullWidthFlex: {
+        display: 'flex',
+        flex: 1
+    },
     button: {
         minWidth: 130,
         height: 36,
@@ -41,19 +43,17 @@ const styles = theme => ({
         }
     },
     uploadButton: {
-        minWidth: 130,
-        height: 36,
+        flex: 1,
+        width: '100%',
+        minWidth: '100%',
         border: '1px dashed rgba(255,255,255,0.2)',
-        [theme.breakpoints.down('sm')]: {
-            minWidth: 118
-        }
     },
 
 })
 
 class LayerCustomSounds extends Component {
     static contextType = FirebaseContext
-    constructor (props) {
+    constructor(props) {
         super(props)
         this.state = {
             mode: null,
@@ -78,7 +78,7 @@ class LayerCustomSounds extends Component {
     /*componentDidMount () {
         window.addEventListener('drop', this.onDropFile);
     }*/
-    async onRecordClick () {
+    async onRecordClick() {
         // console.log('onRecordClick', this.state.mode)
         if (_.isNil(this.state.mode)) {
             if (!AudioEngine.isOn()) {
@@ -102,18 +102,18 @@ class LayerCustomSounds extends Component {
             // console.log('ignoring click');
         }
     }
-    onCountDown (value) {
+    onCountDown(value) {
         this.setState({ recordButtonText: value })
     }
-    onRecordLevel (level) {
+    onRecordLevel(level) {
         this.setState({
             level
         })
     }
-    onRecordingStarted () {
+    onRecordingStarted() {
         this.setState({ mode: 'recording', recordButtonText: 'Recording' })
     }
-    async onRecordingFinished (blob) {
+    async onRecordingFinished(blob) {
         // console.log('recording finsished');
         this.setState({ mode: 'upload' })
 
@@ -150,11 +150,11 @@ class LayerCustomSounds extends Component {
 
     }
 
-    onCustomSampleFileUploaderChange () {
+    onCustomSampleFileUploaderChange() {
 
     }
 
-    async onDropFile (files) {
+    async onDropFile(files) {
         // console.log('onDropFile', files);
         const file = files?.[0]
         if (!file) {
@@ -197,46 +197,20 @@ class LayerCustomSounds extends Component {
         }
     }
 
-    render () {
+    render() {
         //console.log('########### render()', this.state.mode);
         const { classes } = this.props;
-        let startIcon = this.state.mode === 'recording' ? <StopIcon /> : <MicIcon />
         let uploadStartIcon = this.state.mode === 'fileUpload' ? '' : <UploadIcon />
-        let recordButtonColor = (this.state.mode === 'recording') ? 'red' : 'white'
-        if (this.state.mode === 'countdown' || this.state.mode === 'upload' || this.state.mode === 'fileUpload') {
-            startIcon = ''
-            recordButtonColor = '#1E1E1E'
-        }
         return (
             <Box className={classes.root}>
-
-                <Box className={classes.buttonContainer} display="flex" justifyContent="space-evenly">
-                    <Button
-                        className={classes.button}
-                        variant="contained"
-                        color={(this.state.mode === 'countdown' || this.state.mode === 'recording' || this.state.mode === 'upload' || this.state.mode === 'fileUpload') ? 'primary' : 'secondary'}
-                        style={{ color: recordButtonColor }}
-                        disableElevation
-                        startIcon={startIcon}
-                        onClick={this.onRecordClick}>
-                        {
-                            this.state.mode !== 'upload' &&
-                            <span>{this.state.recordButtonText}</span>
-                        }
-                        {
-                            this.state.mode === 'upload' &&
-                            <CircularProgress color="secondary" size={24} />
-                        }
-                    </Button>
-
-                    <Dropzone onDrop={this.onDropFile}>
+                <Box className={classes.buttonContainer} display="flex">
+                    <Dropzone className={classes.fullWidthFlex} onDrop={this.onDropFile}>
                         {({ getRootProps, getInputProps }) => (
-                            <section>
-                                <div {...getRootProps()}>
+                            <section className={classes.fullWidthFlex}>
+                                <div className={classes.fullWidthFlex} {...getRootProps()}>
                                     <input {...getInputProps()} />
                                     <Button
                                         className={classes.uploadButton}
-
                                         color="primary"
                                         disableElevation
                                         startIcon={
@@ -255,9 +229,6 @@ class LayerCustomSounds extends Component {
                             </section>
                         )}
                     </Dropzone>
-
-
-
                 </Box>
                 {
                     (this.state.mode === 'recording' || this.state.mode === 'countdown') &&

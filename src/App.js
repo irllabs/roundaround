@@ -19,7 +19,7 @@ import DeleteRoundDialog from './components/dialogs/DeleteRoundDialog';
 
 
 
-function App ({ setUser, setRounds, setIsShowingSignInDialog }) {
+function App({ setUser, setRounds, setIsShowingSignInDialog }) {
   const theme = React.useMemo(
     () =>
       unstable_createMuiStrictModeTheme({
@@ -42,6 +42,15 @@ function App ({ setUser, setRounds, setIsShowingSignInDialog }) {
             active: '#EAEAEA'
           }
         },
+        breakpoints: {
+          values: {
+            xs: 0,
+            sm: 500,
+            md: 900,
+            lg: 1200,
+            xl: 1536,
+          },
+        },
         shape: {
           borderRadius: 32
         },
@@ -57,7 +66,7 @@ function App ({ setUser, setRounds, setIsShowingSignInDialog }) {
 
 
   return (
-    <div className="App">
+    <div className="App" data-test="app">
       <ThemeProvider theme={theme}>
         <CssBaseline />
         <Router>

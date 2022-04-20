@@ -1,5 +1,6 @@
 import Delay from '../audio-engine/fx/delay';
 import Lowpass from '../audio-engine/fx/lowpass';
+import PingPong from '../audio-engine/fx/pingpong';
 import Highpass from '../audio-engine/fx/highpass';
 import Distortion from '../audio-engine/fx/distortion';
 import Bitcrusher from '../audio-engine/fx/bitcrusher';
@@ -11,13 +12,13 @@ const FX = {
     fxClasses: {},
     fx: [],
     fxById: {},
-    init () {
-        let classes = [Delay, Distortion, Bitcrusher, Autowah, Reverb, Lowpass, Highpass]
+    init() {
+        let classes = [Lowpass, Delay, PingPong, Highpass, Distortion, Bitcrusher, Autowah, Reverb]
         for (let fxClass of classes) {
             this.fxClasses[fxClass.fxName] = fxClass
         }
     },
-    create (fxParameters) {
+    create(fxParameters) {
         let _this = this
         return new Promise(async function (resolve, reject) {
             let fxClass = _this.fxClasses[fxParameters.name]
@@ -27,16 +28,16 @@ const FX = {
             resolve(fx)
         })
     },
-    reset () {
+    reset() {
         // todo
     },
-    dispose () {
+    dispose() {
         // todo
     },
-    getUI (name) {
+    getUI(name) {
         return this.fxClasses[name].ui
     },
-    getIcon (name) {
+    getIcon(name) {
         let fxClass = this.fxClasses[name]
         if (!_.isNil(fxClass)) {
             return this.fxClasses[name].icon

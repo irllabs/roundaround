@@ -1,7 +1,9 @@
 import { Layer } from './constants';
 import { uuid } from './index';
+import { randomInt } from './index';
+import Instruments from '../audio-engine/Instruments';
 //import Track from '../audio-engine/Track'
-import _ from 'lodash'
+import _ from 'lodash';
 
 export const refrashAllIdsInArray = (array) => {
     return array.map(item => ({ ...item, id: uuid() }))
@@ -17,7 +19,13 @@ export const getDefaultStepData = () => {
     }
 };
 
-export const getDefaultLayerData = (userId, instrument) => {
+export const getDefaultLayerData = async (userId, instrument) => {
+    const newInstruments = await Instruments.classes();
+    const newInstrumentsKeyArray = Object.keys(newInstruments);
+    const upperLimit = newInstrumentsKeyArray.length - 1;
+    const instrumentNo = randomInt(0, upperLimit);
+    const randInstName = newInstrumentsKeyArray[instrumentNo];
+    const randArticulation = await Instruments.getRandomArticulation(randInstName);
     const layer = {
         "id": uuid(),
         "createdBy": userId || null,
@@ -32,8 +40,8 @@ export const getDefaultLayerData = (userId, instrument) => {
         "instrument": {
             "noteLength": "64n",
             "instrument": "Sampler",
-            "sampler": "HiHats",
-            "sample": "quick",
+            "sampler": randInstName,
+            "sample": randArticulation,
             ...instrument
         },
         "steps": Array(Layer.DefaultStepsAmount).fill(null).map(() => { return getDefaultStepData() }),
@@ -47,7 +55,67 @@ export const getDefaultLayerData = (userId, instrument) => {
     return layer;
 };
 
-export const getDefaultRoundData = (userId) => {
+/** TODO: create new round using custom sounds */
+
+export const generateLayers = async (samples, userId) => {
+    return new Promise(async resolve => {
+        const layers = []
+        await samples.map(async (sample, i) => {
+            const articulation = await Instruments.create('custom', sample.id)
+            const layer = await getDefaultLayerData(userId, {
+                "instrument": "Sampler",
+                "sampler": 'custom',
+                "sample": articulation.name,
+                "sampleId": sample.id,
+                "displayName": sample.displayName
+            })
+            layers.push(layer)
+            if (layers.length === samples.length)
+                resolve(layers)
+        })
+    })
+}
+
+export const getDefaultRoundData = async (userId, samples) => {
+    if (samples && samples.length) {
+        await Instruments.init()
+        const layers = await generateLayers(samples, userId)
+        const round = {
+            "createdBy": userId || null,
+            "id": uuid(),
+            "dataVersion": 1.5,
+            "bpm": 120,
+            swing: 0,
+            "name": "Default Round",
+            "createdAt": Date.now(),
+            "currentUsers": [],
+            "customInstruments": {},
+            "layers": layers,
+            userBuses: {},
+            userPatterns: {}
+        }
+        round.userBuses[userId] = getDefaultUserBus(userId)
+        round.userPatterns[userId] = getDefaultUserPatterns(userId)
+        // increase each layer createdAt time by 1 ms so they're not equal
+        let i = 0
+        for (let layer of round.layers) {
+            layer.name = "Layer " + (i + 1)
+            layer.createdAt += i++
+        }
+        return round
+    }
+    const newInstruments = await Instruments.classes();
+    const newInstrumentsKeyArray = Object.keys(newInstruments);
+    const upperLimit = newInstrumentsKeyArray.length - 1;
+    const instrumentNo = randomInt(0, upperLimit);
+    const instrumentNo1 = randomInt(0, upperLimit);
+    const instrumentNo2 = randomInt(0, upperLimit);
+    const randInstName = newInstrumentsKeyArray[instrumentNo];
+    const randInstName1 = newInstrumentsKeyArray[instrumentNo1];
+    const randInstName2 = newInstrumentsKeyArray[instrumentNo2];
+    const randomArticulation = await Instruments.getRandomArticulation(randInstName);
+    const randomArticulation1 = await Instruments.getRandomArticulation(randInstName1);
+    const randomArticulation2 = await Instruments.getRandomArticulation(randInstName2);
     const round = {
         "createdBy": userId || null,
         "id": uuid(),
@@ -58,20 +126,20 @@ export const getDefaultRoundData = (userId) => {
         "createdAt": Date.now(),
         "currentUsers": [],
         "layers": [
-            getDefaultLayerData(userId, {
+            await getDefaultLayerData(userId, {
                 "instrument": "Sampler",
-                "sampler": "HiHats",
-                "sample": "quick",
+                "sampler": randInstName,
+                "sample": randomArticulation,
             }),
-            getDefaultLayerData(userId, {
+            await getDefaultLayerData(userId, {
                 "instrument": "Sampler",
-                "sampler": "Snares",
-                "sample": "skintight",
+                "sampler": randInstName1,
+                "sample": randomArticulation1,
             }),
-            getDefaultLayerData(userId, {
+            await getDefaultLayerData(userId, {
                 "instrument": "Sampler",
-                "sampler": "Kicks",
-                "sample": "classic"
+                "sampler": randInstName2,
+                "sample": randomArticulation2,
             })
         ],
         userBuses: {},
@@ -99,39 +167,46 @@ export const getDefaultUserBusFx = () => {
     return [
         {
             "id": uuid(),
-            name: 'delay',
-            order: 3,
-            isOn: true,
-            isOverride: false
-        },
-        {
-            "id": uuid(),
-            name: 'distortion',
-            order: 4,
-            isOn: true,
-            isOverride: false
-        },
-        {
-            "id": uuid(),
-            name: 'autowah',
+            name: 'pingpong',
             order: 0,
             isOn: true,
             isOverride: false
         },
         {
             "id": uuid(),
-            name: 'lowpass',
+            name: 'autowah',
             order: 1,
             isOn: true,
             isOverride: false
         },
         {
             "id": uuid(),
-            name: 'highpass',
+            name: 'delay',
             order: 2,
             isOn: true,
             isOverride: false
-        }
+        },
+        {
+            "id": uuid(),
+            name: 'distortion',
+            order: 3,
+            isOn: true,
+            isOverride: false
+        },
+        {
+            "id": uuid(),
+            name: 'lowpass',
+            order: 4,
+            isOn: true,
+            isOverride: false
+        },
+        {
+            "id": uuid(),
+            name: 'highpass',
+            order: 5,
+            isOn: true,
+            isOverride: false
+        },
     ]
 }
 

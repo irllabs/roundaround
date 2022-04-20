@@ -17,7 +17,7 @@ var firebaseConfig = {
 };
 
 class Firebase {
-    constructor () {
+    constructor() {
         if (!firebase.apps.length) {
             app.initializeApp(firebaseConfig);
         }
@@ -35,7 +35,6 @@ class Firebase {
         this.onUserUpdatedObservers = [];
 
         app.auth().onAuthStateChanged((user) => {
-            // console.log('onAuthStateChanged', user);
             if (user) {
                 this.currentUser = user;
                 this.onUserUpdatedObservers.map(observer => observer(user));
@@ -47,6 +46,29 @@ class Firebase {
         });
     }
 
+    uploadSound = (id, sounds) => {
+        return new Promise(async (resolve, reject) => {
+            try {
+                const storageRef = this.storage.ref()
+                const currentUserStorageRef = storageRef.child(`/${id}`)
+                const fileURLs = []
+                if (id && sounds && Array.isArray(sounds)) {
+                    sounds.forEach(async sound => {
+                        await currentUserStorageRef.child(sound.name).put(sound.file).then(async (uploadResponse) => {
+                            const url = await uploadResponse.ref.getDownloadURL()
+                            fileURLs.push(url)
+                            if (fileURLs.length === sounds.length) {
+                                resolve(fileURLs)
+                            }
+                        })
+                    })
+                }
+                else reject({ message: 'missing required data' })
+            } catch (e) {
+                console.error(e)
+            }
+        })
+    }
 
     // User
     loadUser = (id) => {
@@ -114,6 +136,8 @@ class Firebase {
                 const roundsSnapshot = await this.db
                     .collection("rounds")
                     .where('createdBy', '==', userId)
+                    .orderBy('createdAt', 'desc')
+                    .limitToLast()
                     .get();
                 roundsSnapshot.forEach(roundDoc => {
                     let round = roundDoc.data();
@@ -140,6 +164,7 @@ class Firebase {
                 round.layers = await this.getLayers(roundId)
                 round.userBuses = await this.getUserBuses(roundId)
                 round.userPatterns = await this.getUserPatterns(roundId)
+                round.customInstruments = await this.getCustomInstruments(roundId)
                 //  console.log('got round', round);
                 resolve(round)
             } catch (e) {
@@ -159,11 +184,34 @@ class Firebase {
                     .get();
                 layerSnapshot.forEach(layerDoc => {
                     let layer = layerDoc.data();
-                    layer.id = layerDoc.id;
+                    //layer.id = layerDoc.id;
                     layers.push(layer);
                 })
 
                 resolve(layers)
+            }
+            catch (e) {
+                console.error(e)
+                reject(e)
+            }
+        })
+    }
+
+    getCustomInstruments = async (roundId) => {
+        return new Promise(async (resolve, reject) => {
+            let customInstruments = {}
+            try {
+                const instrumentSnapshot = await this.db
+                    .collection("rounds")
+                    .doc(roundId)
+                    .collection('customInstruments')
+                    .get();
+                instrumentSnapshot.forEach(instDoc => {
+                    let instrument = instDoc.data()
+                    customInstruments = { ...customInstruments, ...instrument }
+                })
+
+                resolve(customInstruments)
             }
             catch (e) {
                 console.error(e)
@@ -255,7 +303,7 @@ class Firebase {
         //  console.log('createRound()', data);
         return new Promise(async (resolve, reject) => {
             let round = _.cloneDeep(data)
-            const layers = [...round.layers]
+            const layers = round && round.layers ? [...round.layers] : []
             delete round.layers
             const userBuses = []
             for (const [userId, userBus] of Object.entries(round.userBuses)) {
@@ -331,7 +379,9 @@ class Firebase {
             try {
                 await this.db.collection('samples')
                     .doc(sample.id)
-                    .set(sampleClone)
+                    .set(sampleClone).catch(e => {
+                        console.log('create sample error', e)
+                    })
                 resolve()
             } catch (e) {
                 console.error(e)
@@ -397,6 +447,22 @@ class Firebase {
         })
     }
 
+    updateCustomInstruments = async (roundId, userId, customInstruments) => {
+        let customInstrumentsClone = _.cloneDeep(customInstruments)
+        return new Promise(async (resolve, reject) => {
+            try {
+                await this.db.collection('rounds')
+                    .doc(roundId)
+                    .collection('customInstruments')
+                    .doc(userId)
+                    .set(customInstrumentsClone)
+                resolve()
+            } catch (e) {
+                console.error(e)
+            }
+        })
+    }
+
     saveUserPatterns = async (roundId, userId, userPatterns) => {
         console.log('saveUserPatterns()', roundId, userId, userPatterns);
         let userPatternsClone = _.cloneDeep(userPatterns)
@@ -416,7 +482,6 @@ class Firebase {
     }
 
     updateRound = async (roundId, data) => {
-        // console.log('updateRound', roundId, data)
         try {
             await this.db.collection('rounds')
                 .doc(roundId)
@@ -428,7 +493,6 @@ class Firebase {
     }
 
     updateLayer = async (roundId, layerId, data) => {
-        //   console.log('updateLayer', roundId, data)
         try {
             await this.db.collection('rounds')
                 .doc(roundId)
@@ -441,7 +505,6 @@ class Firebase {
     }
 
     updateUserBus = async (roundId, userId, userBus) => {
-        // console.log('firebase::updateUserBus()', roundId, userId, userBus);
         return new Promise(async (resolve, reject) => {
             try {
                 await this.db.collection('rounds')

@@ -8,13 +8,13 @@ import {
 } from "react-router-dom";
 import { makeStyles } from '@material-ui/core/styles';
 import ShareIcon from '@material-ui/icons/Share';
-import ArrowBackIosIcon from '@material-ui/icons/ArrowBackIos';
 import PlayButton from './PlayButton';
+import { BackButton } from '../play/layer-settings/resources';
 import { useLocation } from 'react-router-dom'
 import { setUser, setIsShowingSignInDialog, setRedirectAfterSignIn, setRounds, setUserDisplayName, setSignUpDisplayName, setIsShowingShareDialog } from '../../redux/actions'
 import _ from 'lodash'
 import HeaderAvatar from './HeaderAvatar'
-import AudioChatComponent from '../play/AudioChatComponent';
+import JitsiComponent from '../play/JitsiComponent'
 import ProjectName from './ProjectName'
 import HeaderMenu from './HeaderMenu';
 import { FirebaseContext } from '../../firebase';
@@ -45,6 +45,12 @@ const headerStyles = makeStyles((theme) => ({
     roundAroundLogoButton: {
         fontWeight: 600
     },
+    iconButton: {
+        display: 'flex',
+        flexDirection: 'row',
+        justifyContent: 'center',
+        alignItems: 'center'
+    },
     avatars: {
         display: 'flex',
         marginRight: '1rem',
@@ -56,7 +62,7 @@ const headerStyles = makeStyles((theme) => ({
     }
 }))
 
-function Header ({ user, users, round, setUser, setIsShowingSignInDialog, redirectAfterSignIn, setRedirectAfterSignIn, rounds, setRounds, signupDisplayName, setIsShowingShareDialog }) {
+function Header({ user, users, round, setUser, setIsShowingSignInDialog, redirectAfterSignIn, setRedirectAfterSignIn, rounds, setRounds, signupDisplayName, setIsShowingShareDialog }) {
     const firebaseContext = useContext(FirebaseContext);
     const classes = headerStyles();
     const location = useLocation();
@@ -115,33 +121,31 @@ function Header ({ user, users, round, setUser, setIsShowingSignInDialog, redire
             }
         })
         // eslint-disable-next-line react-hooks/exhaustive-deps
-
-
     }, [])
-
-
 
     return (
 
         <Box className={classes.root} bgcolor={"background.default"}>
             {isPlayMode &&
                 <>
-                    <div>
-                        <IconButton to="/rounds" component={Link}>
-                            <ArrowBackIosIcon />
+                    <Box>
+                        <IconButton className={classes.iconButton} to="/rounds" component={Link}>
+                            <BackButton />
                         </IconButton>
-                    </div>
-                    <div>
+                    </Box>
+                    <Box>
                         {
                             round &&
-                            <div><ProjectName name={round.name} /></div>
+                            <Box>
+                                <ProjectName name={round.name} />
+                            </Box>
                         }
                         {
                             _.isNil(round) &&
-                            <div>Loading...</div>
+                            <Box>Loading...</Box>
 
                         }
-                    </div>
+                    </Box>
                     <Box className={classes.rightSide} >
                         <Box className={classes.avatars}>
                             {
@@ -150,23 +154,24 @@ function Header ({ user, users, round, setUser, setIsShowingSignInDialog, redire
                                 ))
                             }
                         </Box>
-                        <AudioChatComponent />
-                        <div>
+                        <JitsiComponent />
+                        <Box>
                             <Button className={classes.rightSideChild} onClick={onShareClick} variant="contained" color="secondary" disableElevation startIcon={<ShareIcon />}>Share</Button>
-                        </div>
-                        <div>
+                        </Box>
+                        <Box>
                             <PlayButton className={classes.rightSideChild} />
-                        </div>
-                        <div>
+                        </Box>
+                        <Box>
                             <HeaderMenu />
-                        </div>
+                        </Box>
                     </Box>
                 </>
             }
             {!isPlayMode &&
                 <>
-                    <div></div>
-                    <div><Button className={classes.roundAroundLogoButton} component={Link} to="/">RoundAround</Button></div>
+                    <Box>
+                        <Button className={classes.roundAroundLogoButton} component={Link} to="/">RoundAround</Button>
+                    </Box>
                     {
                         user &&
                         <HeaderAvatar user={user} users={users} shouldShowMenu={true} />
@@ -175,11 +180,8 @@ function Header ({ user, users, round, setUser, setIsShowingSignInDialog, redire
                         !user &&
                         <Button variant="contained" color="secondary" disableElevation onClick={onSignInClick}>Sign in</Button>
                     }
-
                 </>
             }
-
-
         </Box >
     )
 }
