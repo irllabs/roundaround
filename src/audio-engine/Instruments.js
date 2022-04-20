@@ -11,7 +11,7 @@ import { randomInt } from "../utils";
 const Instruments = {
     instrumentClasses: {},
     instruments: [],
-    init() {
+    async init() {
         const classes = [
             HiHats,
             Kicks,
@@ -24,12 +24,12 @@ const Instruments = {
         }
     },
     async getRandomArticulation(instrumentName) {
-        const instruments = await this.classes();
-        let randomSoundNo = 0;
-        const instrument = instruments[instrumentName];
-        const sampleKeys = instrument['sampleKeys'];
-        randomSoundNo = randomInt(0, sampleKeys.length - 1);
-        return sampleKeys[randomSoundNo];
+        const instruments = await this.classes()
+        let randomSoundNo = 0
+        const instrument = instruments[instrumentName]
+        const sampleKeys = instrument['sampleKeys']
+        randomSoundNo = await randomInt(0, sampleKeys.length - 1)
+        return sampleKeys[randomSoundNo]
     },
     async classes() {
         const classes = [
@@ -52,17 +52,26 @@ const Instruments = {
         return inst;
     },
 
-    create(instrumentName, articulation) {
-        if (!_.isNil(instrumentName)) {
-            let _this = this;
-            return new Promise(async function (resolve, reject) {
-                let InstrumentClass = _this.instrumentClasses[instrumentName];
-                let instrument = new InstrumentClass();
-                await instrument.load(articulation);
-                _this.instruments.push(instrument);
-                resolve(instrument);
-            });
-        }
+    async create(instrumentName, articulation, articulationId) {
+        let _this = this
+        return new Promise(async (resolve, reject) => {
+            if (!_this.instrumentClasses[instrumentName])
+                await this.init()
+            if (!_.isNil(instrumentName)) {
+                let InstrumentClass = _this.instrumentClasses[instrumentName]
+                if (InstrumentClass) {
+                    let instrument = new InstrumentClass()
+                    if (instrumentName === 'custom' && articulationId) {
+                        await instrument.load(articulationId)
+                    }
+                    else
+                        await instrument.load(articulation)
+                    _this.instruments = [..._this.instruments, instrument]
+                    resolve(instrument)
+                }
+            }
+            else reject(null)
+        });
     },
     dispose(id) {
         let instrument = _.find(this.instruments, {
@@ -91,8 +100,7 @@ const Instruments = {
         options = _.sortBy(options, "label");
         return options;
     },
-    getInstrumentArticulationOptions(instrumentName, userId) {
-        // console.log('getInstrumentArticulationOptions()', instrumentName);
+    getInstrumentArticulationOptions(instrumentName, userId, instrument) {
         if (instrumentName !== 'custom') {
             let options = [];
             for (let [, value] of Object.entries(
@@ -104,20 +112,24 @@ const Instruments = {
                 };
                 options.push(option);
             }
-            //   console.log('got instrument options', options);
             return options;
         } else {
             let options = []
-            //   console.log('CustomSamples.samples', CustomSamples.samples);
-            for (let [id, sample] of Object.entries(CustomSamples.samples)) {
-                if (sample.createdBy === userId) {
-                    options.push({
-                        name: sample.name,
-                        value: id
-                    })
+            if (!instrument.sampleId)
+                for (let [id, sample] of Object.entries(CustomSamples.samples)) {
+                    if (sample.createdBy === userId) {
+                        options.push({
+                            name: sample.name,
+                            value: id
+                        })
+                    }
                 }
+            else {
+                options.push({
+                    name: instrument.displayName,
+                    value: instrument.sample
+                })
             }
-            //   console.log('got sample options', options);
             return options
         }
     },
@@ -128,10 +140,11 @@ const Instruments = {
         return this.instrumentClasses[instrumentName].articulations[articulation];
     },
     getInstrumentLabel(instrumentName) {
-        return this.instrumentClasses[instrumentName].label
+        let label = ''
+        if (instrumentName && this.instrumentClasses[instrumentName]) label = this.instrumentClasses[instrumentName].label
+        return label
     },
     getDefaultArticulation(instrumentName) {
-        //console.log('Instruments::getDefaultArticulation() instrumentName', instrumentName, this.instrumentClasses);
         return this.instrumentClasses[instrumentName].defaultArticulation
         /*return !_.isNil(this.instrumentClasses[instrumentName].defaultArticulation)
             ? this.instrumentClasses[instrumentName].defaultArticulation

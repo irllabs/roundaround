@@ -1,7 +1,8 @@
+/* eslint-disable react-hooks/exhaustive-deps */
 import React, { useContext, useEffect } from 'react'
 import { Box, Typography } from '@material-ui/core'
 import IconButton from '@material-ui/core/IconButton'
-import _ from 'lodash'
+import _, { cloneDeep } from 'lodash'
 import { useDispatch } from "react-redux";
 
 import Instruments from '../../../audio-engine/Instruments'
@@ -11,6 +12,7 @@ import { UPDATE_LAYER_INSTRUMENT } from '../../../redux/actionTypes'
 import RightArrow from './resources/svg/rightArrow.svg'
 import Check from './resources/svg/check.svg'
 import LeftArrow from './resources/svg/leftArrow.svg'
+import Plus from './resources/svg/plus.svg'
 import { FirebaseContext } from '../../../firebase'
 
 
@@ -18,11 +20,12 @@ const LayerInstrument = ({
     showInstrumentsPopup,
     toggleShowInstrumentList,
     toggleArticulationOptions,
-    selectedInstrumentLabel,
+    toggleCustomInstrumentDialog,
     showArticulationOptions,
     showInstrumentsList,
     classes,
     selectedLayer,
+    round,
     roundId,
     instrumentsListRef,
     articulationsListRef,
@@ -32,14 +35,23 @@ const LayerInstrument = ({
 }) => {
     const [selectedInstrument, setSelectedInstrument] = React.useState(selectedLayer.instrument.sampler)
     const [selectedArticulation, setSelectedArticulation] = React.useState(selectedLayer.instrument.sample)
+    const [selectedInstrumentFull, setSelectedInstrumentFull] = React.useState(selectedLayer.instrument)
+    const [combinedInstrumentOptions, setCombinedInstrumentOptions] = React.useState([])
     const dispatch = useDispatch();
     const instrumentOptions = Instruments.getInstrumentOptions(false)
-    const articulationOptions = Instruments.getInstrumentArticulationOptions(selectedInstrument, user.id)
+    const articulationOptions = Instruments.getInstrumentArticulationOptions(selectedInstrument, user.id, selectedInstrumentFull)
     const firebase = useContext(FirebaseContext);
 
     const onInstrumentSelect = async (instrument) => {
-        setSelectedInstrument(instrument.name)
-        let defaultArticulation = await Instruments.getRandomArticulation(instrument.name)
+        let defaultArticulation
+        if (instrument.type === 'custom') {
+            setSelectedInstrument('custom')
+            defaultArticulation = instrument.articulations[instrument.name]
+        } else {
+            setSelectedInstrument(instrument.name)
+            defaultArticulation = await Instruments.getRandomArticulation(instrument.name)
+        }
+
         if (!_.isNil(defaultArticulation)) {
             setSelectedArticulation(defaultArticulation)
             dispatch({
@@ -50,14 +62,52 @@ const LayerInstrument = ({
                     user: user.id
                 }
             })
-            firebase.updateLayer(roundId, selectedLayer.id, { instrument: { sampler: instrument.name, sample: defaultArticulation } })
+            console.log('sent instrument', instrument)
+            if (instrument.type === 'custom')
+                firebase.updateLayer(roundId, selectedLayer.id, { instrument: { sampler: instrument.name, sample: 'custom', type: 'custom', sampleId: instrument.id, displayName: instrument.name } })
+            else
+                firebase.updateLayer(roundId, selectedLayer.id, { instrument: { sampler: instrument.name, sample: defaultArticulation } })
         };
     }
 
     useEffect(() => {
-        setSelectedInstrument(selectedLayer.instrument.sampler)
+        setSelectedInstrumentFull(selectedLayer.instrument)
+        let sampler = selectedLayer.instrument.sampler
+        if (typeof selectedLayer.instrument.sample === 'object') {
+            sampler = 'custom'
+        }
+        setSelectedInstrument(sampler)
         setSelectedArticulation(selectedLayer.instrument.sample)
     }, [selectedLayer])
+
+    useEffect(async () => {
+        const { customInstruments } = round
+        const newCustomInstruments = customInstruments ? cloneDeep(customInstruments) : []
+        const cmb = await addCustomInstruments(newCustomInstruments)
+        setCombinedInstrumentOptions(cmb)
+    }, [round])
+
+    const addCustomInstruments = (customInstruments) => {
+        return new Promise(async resolve => {
+            const customInstrumentArray = []
+            let preCombined = []
+            const length = Object.keys(customInstruments).length
+            if (length > 0)
+                Object.values(customInstruments).forEach(async instrument => {
+                    const articulation = await Instruments.create('custom', instrument.id, instrument.id)
+                    customInstrumentArray.push({
+                        label: instrument.displayName.replaceAll(' ', '-'),
+                        name: instrument.displayName,
+                        type: 'custom',
+                        id: instrument.id,
+                        articulations: { [instrument.displayName]: [articulation] }
+                    })
+                    preCombined = [...instrumentOptions, ...customInstrumentArray]
+                    if (length === customInstrumentArray.length) resolve(preCombined)
+                })
+            else resolve(instrumentOptions)
+        })
+    }
 
     const onArticulationSelect = async (articulation) => {
         setSelectedArticulation(articulation.value);
@@ -69,27 +119,46 @@ const LayerInstrument = ({
         <Box className={showInstrumentsPopup ? classes.instrumentPopup : classes.hidden}>
             {!showArticulationOptions &&
                 <Box>
-                    <IconButton ref={instrumentsButtonRef} id='instrument' onClick={toggleShowInstrumentList} style={{ borderBottom: showInstrumentsList ? 'thin solid rgba(255, 255, 255, 0.1)' : 'none' }} className={classes.rectButton}>
-                        {showInstrumentsList && <Box style={{ display: 'flex', justifyContent: 'flex-start', flex: 1 }}>
-                            <img alt='right arrow' src={LeftArrow} />
-                        </Box>}
-                        <Box style={{ flex: showInstrumentsList ? 7 : 5, display: 'flex', justifyContent: 'flex-start' }}>
-                            <Typography style={{ textAlign: 'left', textTransform: 'Capitalize' }}>Instrument</Typography>
-                        </Box>
-                        {!showInstrumentsList &&
-                            <>
-                                <Typography style={{ flex: 3, textAlign: 'left', textTransform: 'Capitalize' }}>
-                                    {selectedInstrumentLabel}
-                                </Typography>
-                                <Box style={{ display: 'flex', justifyContent: 'flex-end', flex: 1 }}>
-                                    <img alt='right arrow' src={RightArrow} />
-                                </Box>
-                            </>
+                    <Box style={{
+                        display: 'flex',
+                        flexDirection: 'row'
+                    }}>
+                        <IconButton ref={instrumentsButtonRef} id='instrument' onClick={toggleShowInstrumentList} style={{ flex: 6, borderBottom: showInstrumentsList ? 'thin solid rgba(255, 255, 255, 0.1)' : 'none' }} className={classes.rectButton}>
+                            {showInstrumentsList && <Box style={{ display: 'flex', justifyContent: 'flex-start', flex: 1 }}>
+                                <img alt='right arrow' src={LeftArrow} />
+                            </Box>}
+                            <Box style={{ flex: showInstrumentsList ? 7 : 5, display: 'flex', flexDirection: 'row', justifyContent: 'flex-start' }}>
+                                <Typography style={{ display: 'flex', flex: 2, textAlign: 'left', textTransform: 'Capitalize' }}>Instrument</Typography>
+                            </Box>
+                            {!showInstrumentsList &&
+                                <>
+                                    <Typography style={{ flex: 3, textAlign: 'left', textTransform: 'Capitalize' }}>
+                                        {selectedInstrument}
+                                    </Typography>
+                                    <Box style={{ display: 'flex', justifyContent: 'flex-end', flex: 1 }}>
+                                        <img alt='right arrow' src={RightArrow} />
+                                    </Box>
+                                </>
+                            }
+                        </IconButton>
+                        {showInstrumentsList &&
+                            <Box style={{ display: 'flex', flex: 1, borderBottom: 'thin solid rgba(255, 255, 255, 0.1)', padding: 5 }}>
+                                <IconButton
+                                    onClick={(e) => {
+                                        e.preventDefault()
+                                        e.stopPropagation()
+                                        toggleCustomInstrumentDialog()
+                                    }}
+                                    style={{ height: 25, width: 25 }}
+                                >
+                                    <img alt="new instrument" src={Plus} />
+                                </IconButton>
+                            </Box>
                         }
-                    </IconButton>
+                    </Box>
                     {showInstrumentsList &&
-                        <Box style={{ display: 'flex', flexDirection: 'column' }}>
-                            {instrumentOptions.map((instrument, i) =>
+                        <Box style={{ display: 'flex', flexDirection: 'column', overflow: 'scroll' }}>
+                            {combinedInstrumentOptions.map((instrument, i) =>
                                 <IconButton
                                     ref={instrumentsListRef}
                                     id={`instrument-${i}`}

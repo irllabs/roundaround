@@ -55,7 +55,55 @@ export const getDefaultLayerData = async (userId, instrument) => {
     return layer;
 };
 
-export const getDefaultRoundData = async (userId) => {
+/** TODO: create new round using custom sounds */
+
+export const generateLayers = async (samples, userId) => {
+    return new Promise(async resolve => {
+        const layers = []
+        await samples.map(async (sample, i) => {
+            const articulation = await Instruments.create('custom', sample.id)
+            const layer = await getDefaultLayerData(userId, {
+                "instrument": "Sampler",
+                "sampler": 'custom',
+                "sample": articulation.name,
+                "sampleId": sample.id,
+                "displayName": sample.displayName
+            })
+            layers.push(layer)
+            if (layers.length === samples.length)
+                resolve(layers)
+        })
+    })
+}
+
+export const getDefaultRoundData = async (userId, samples) => {
+    if (samples && samples.length) {
+        await Instruments.init()
+        const layers = await generateLayers(samples, userId)
+        const round = {
+            "createdBy": userId || null,
+            "id": uuid(),
+            "dataVersion": 1.5,
+            "bpm": 120,
+            swing: 0,
+            "name": "Default Round",
+            "createdAt": Date.now(),
+            "currentUsers": [],
+            "customInstruments": {},
+            "layers": layers,
+            userBuses: {},
+            userPatterns: {}
+        }
+        round.userBuses[userId] = getDefaultUserBus(userId)
+        round.userPatterns[userId] = getDefaultUserPatterns(userId)
+        // increase each layer createdAt time by 1 ms so they're not equal
+        let i = 0
+        for (let layer of round.layers) {
+            layer.name = "Layer " + (i + 1)
+            layer.createdAt += i++
+        }
+        return round
+    }
     const newInstruments = await Instruments.classes();
     const newInstrumentsKeyArray = Object.keys(newInstruments);
     const upperLimit = newInstrumentsKeyArray.length - 1;

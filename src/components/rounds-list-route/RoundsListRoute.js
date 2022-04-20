@@ -12,12 +12,18 @@ import ListItemSecondaryAction from '@material-ui/core/ListItemSecondaryAction';
 import ListItemAvatar from '@material-ui/core/ListItemAvatar';
 import Avatar from '@material-ui/core/Avatar';
 import ImageIcon from '@material-ui/icons/Image';
-import AddIcon from '@material-ui/icons/Add';
+//import AddIcon from '@material-ui/icons/Add';
 import MoreHorizIcon from '@material-ui/icons/MoreHoriz';
 import { connect } from "react-redux";
 import _ from 'lodash';
 import {
-    setIsShowingSignInDialog, setRedirectAfterSignIn, setRounds, setIsShowingDeleteRoundDialog, setIsShowingRenameDialog, setSelectedRoundId
+    setIsShowingSignInDialog,
+    setIsShowingCreateRoundDialog,
+    setRedirectAfterSignIn,
+    setRounds,
+    setIsShowingDeleteRoundDialog,
+    setIsShowingRenameDialog,
+    setSelectedRoundId
 } from '../../redux/actions'
 import SignInDialog from '../dialogs/SignInDialog'
 import { createRound } from '../../utils/index'
@@ -29,6 +35,8 @@ import Popper from '@material-ui/core/Popper';
 import MenuItem from '@material-ui/core/MenuItem';
 import MenuList from '@material-ui/core/MenuList';
 import { uuid } from '../../utils/index'
+import CreateRoundDialog from '../dialogs/CreateRoundDialog';
+import CustomSamples from '../../audio-engine/CustomSamples';
 
 const styles = theme => ({
     root: {
@@ -58,13 +66,26 @@ class RoundsListRoute extends Component {
         this.onMenuClick = this.onMenuClick.bind(this)
     }
 
-    async onNewRoundClick() {
-        let newRound = await createRound(this.props.user.id)
+    componentDidMount() {
+        CustomSamples.init(this.context)
+    }
+
+    async onNewRoundClick(callback, sounds) {
+        let newRound = await createRound(this.props.user.id, sounds)
         let newRounds = [newRound, ...this.props.rounds]
         await this.context.createRound(newRound)
-        this.props.setRounds(newRounds)
+        await this.props.setRounds(newRounds)
         // redirect to new round
         this.onLaunchRoundClick(newRound.id)
+        callback && callback()
+    }
+
+    toggleCreateRoundDialog = (val) => {
+        const { isShowingCreateRoundDialog, setIsShowingCreateRoundDialog } = this.props
+        const newShowing = !isShowingCreateRoundDialog
+        if (val === undefined)
+            setIsShowingCreateRoundDialog(newShowing)
+        else setIsShowingCreateRoundDialog(val)
     }
 
     onLaunchRoundClick(id) {
@@ -139,7 +160,8 @@ class RoundsListRoute extends Component {
                             <h1>My rounds</h1>
                         </Box>
                         <Box>
-                            <Button data-test="button-new-round" className={classes.getStartedButton} variant="contained" color="secondary" disableElevation onClick={this.onNewRoundClick} startIcon={<AddIcon />}>New round</Button>
+                            {/* <Button data-test="button-new-round" className={classes.getStartedButton} variant="contained" color="secondary" disableElevation onClick={this.onNewRoundClick} startIcon={<AddIcon />}>New round</Button> */}
+                            <Button data-test="button-new-round" className={classes.getStartedButton} variant="contained" color="secondary" disableElevation onClick={() => this.toggleCreateRoundDialog()}>New Project</Button>
                         </Box>
                     </Box>
                     <Box>
@@ -188,6 +210,12 @@ class RoundsListRoute extends Component {
                     </Popper>
                 </Container>
                 <SignInDialog />
+                <CreateRoundDialog
+                    toggleCreateRoundDialog={this.toggleCreateRoundDialog}
+                    defaultRoundCreate={(callback, sounds) => {
+                        this.onNewRoundClick(callback, sounds)
+                    }}
+                />
             </>
         )
     }
@@ -200,6 +228,7 @@ const mapStateToProps = state => {
     return {
         user: state.user,
         rounds: state.rounds,
+        isShowingCreateRoundDialog: state.display.isShowingCreateRoundDialog,
         selectedRoundId: state.display.selectedRoundId
     };
 };
@@ -210,6 +239,7 @@ export default connect(
         setIsShowingSignInDialog,
         setRedirectAfterSignIn,
         setRounds,
+        setIsShowingCreateRoundDialog,
         setIsShowingDeleteRoundDialog,
         setIsShowingRenameDialog,
         setSelectedRoundId
