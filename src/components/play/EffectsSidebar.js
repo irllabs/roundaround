@@ -126,6 +126,7 @@ class EffectsSidebar extends Component {
     }
 
     onSwitchOn(fxId) {
+        if (!this.props.user || !AudioEngine.busesByUser[this.props.user.id]) return
         AudioEngine.busesByUser[this.props.user.id].fx[fxId].override = true
         this.props.setUserBusFxOverride(this.props.user.id, fxId, true)
         let userBus = _.cloneDeep(this.props.round.userBuses[this.props.user.id])
@@ -134,6 +135,7 @@ class EffectsSidebar extends Component {
         this.context.updateUserBus(this.props.round.id, this.props.user.id, userBus)
     }
     onSwitchOff(fxId) {
+        if (!this.props.user || !AudioEngine.busesByUser[this.props.user.id]) return
         AudioEngine.busesByUser[this.props.user.id].fx[fxId].override = false
         this.props.setUserBusFxOverride(this.props.user.id, fxId, false)
         let userBus = _.cloneDeep(this.props.round.userBuses[this.props.user.id])

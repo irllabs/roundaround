@@ -79,6 +79,7 @@ class PlayRoute extends Component {
         this.isLoadingRound = true;
         let roundId = this.props.location.pathname.split('/play/')[1]
         let round = await this.context.getRound(roundId)
+        console.log('got round', round)
         if (_.isNil(round) || _.isNil(round.currentUsers)) {
             // probably deleted round
             this.props.history.push('/rounds')
@@ -109,13 +110,16 @@ class PlayRoute extends Component {
         }
 
         // load audio
+        console.log('loading custom samples ')
         CustomSamples.init(this.context)
         await AudioEngine.init()
         Instruments.init()
         FX.init()
+        console.log('audio engine loading round')
         await AudioEngine.load(round)
 
         this.props.setUsers(currentUsers)
+        console.log('setting round')
         this.props.setRound(round)
         this.hasLoadedRound = true
         this.isLoadingRound = false
@@ -216,6 +220,27 @@ class PlayRoute extends Component {
                 }
             });
         })
+
+        // UserPatterns
+        this.userPatternsChangeListenerUnsubscribe = this.context.db.collection('rounds').doc(this.props.round.id).collection('userPatterns').onSnapshot((userPatternsCollectionSnapshot) => {
+            //  console.log('### layer change listener fired');
+            userPatternsCollectionSnapshot.docChanges().forEach(change => {
+                if (change.type === 'modified') {
+                    //  console.log('Modified layer: ', change.doc.data());
+                    const userPatterns = change.doc.data()
+                    userPatterns.id = change.doc.id
+                    _this.handleUserPatternsChange(userPatterns)
+                }
+                if (change.type === 'added') {
+                    //   console.log('New layer: ', change.doc.data());
+                    // _this.reloadCollaborationLayersThrottled()
+                }
+                if (change.type === 'removed') {
+                    //    console.log('Removed layer: ', change.doc.data());
+                    // _this.reloadCollaborationLayersThrottled()
+                }
+            });
+        })
     }
 
     removeFirebaseListeners() {
@@ -274,7 +299,6 @@ class PlayRoute extends Component {
             AudioEngine.busesByUser[userBus.id].setFxOrder(userBus.fx)
         }
     }
-
     handleUserPatternsChange(userPatterns) {
         this.props.setIsPlayingSequence(userPatterns.id, userPatterns.isPlayingSequence)
     }

@@ -93,7 +93,6 @@ class PatternSequencer extends Component {
         let pattern = _.find(this.props.round.userPatterns[this.props.user.id].patterns, { id: id })
         return pattern.order + 1
     }
-
     render() {
         const { classes } = this.props;
         let items = []

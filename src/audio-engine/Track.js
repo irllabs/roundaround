@@ -11,7 +11,7 @@ export default class Track {
     static TRACK_TYPE_USER = 'TRACK_TYPE_USER' // User busses are routed to master
     static TRACK_TYPE_MASTER = 'TRACK_TYPE_MASTER'
     static TRACK_TYPE_AUTOMATION = 'TRACK_TYPE_AUTOMATION' // Each layer is routed to a user bus
-    constructor (trackParameters, type, userId) {
+    constructor(trackParameters, type, userId) {
         this.trackParameters = trackParameters
         this.id = trackParameters.id
         this.userId = userId
@@ -19,9 +19,10 @@ export default class Track {
         this.instrument = null
         this.automation = null
         this.notes = null
+        console.log('setting type --')
         this.setType(type)
     }
-    setType (type, automationFxId) {
+    setType(type, automationFxId) {
         this.dispose()
         this.type = type;
         this.trackParameters.type = type
@@ -55,7 +56,7 @@ export default class Track {
         }
         this.calculatePart(this.trackParameters, this.userPatterns)
     }
-    setFxOrder (updatedFxOrders) {
+    setFxOrder(updatedFxOrders) {
         /* this.disconnectAudioChain()
          for (let updatedFxOrder of updatedFxOrders) {
              _.find(this.sortedFx, { id: updatedFxOrder.id }).order = updatedFxOrder.order
@@ -63,13 +64,13 @@ export default class Track {
          this.sortedFx = _.sortBy(this.sortedFx, 'order')
          this.buildAudioChain()*/
     }
-    load (trackParameters, userPatterns) {
+    load(trackParameters, userPatterns) {
         this.trackParameters = trackParameters
         this.userPatterns = userPatterns
         this.calculatePart(trackParameters, userPatterns)
 
     }
-    async createFX (fxList) {
+    async createFX(fxList) {
         return new Promise(async (resolve, reject) => {
             if (!_.isNil(fxList)) {
                 this.fx = {}
@@ -84,7 +85,7 @@ export default class Track {
             resolve()
         })
     }
-    buildAudioChain () {
+    buildAudioChain() {
         // console.log('Track::buildAudioChain()', this.type, this.id, this.instrument);
         if (this.type === Track.TRACK_TYPE_MASTER) {
             this.channel.toDestination()
@@ -145,7 +146,7 @@ export default class Track {
 
         }
     }
-    disconnectAudioChain () {
+    disconnectAudioChain() {
         if (!_.isNil(this.channel) && !_.isNil(this.channel.context._context)) {
             this.channel.disconnect(0)
         }
@@ -159,7 +160,7 @@ export default class Track {
         }
 
     }
-    dispose () {
+    dispose() {
         this.disconnectAudioChain()
         if (!_.isNil(this.instrument)) {
             this.instrument.dispose()
@@ -180,8 +181,9 @@ export default class Track {
             }
         }
     }
-    calculatePart (layer, userPatterns) {
-        //console.log('Track::calculatePart()', layer, userPatterns);
+
+    calculatePart(layer, userPatterns) {
+        console.log('Track::calculatePart()', layer, userPatterns);
         this.trackParameters = layer
         if (!_.isNil(userPatterns)) {
             // if (!userPatterns.isPlayingSequence) {
@@ -204,7 +206,7 @@ export default class Track {
                }*/
         }
     }
-    convertStepsToNotes (steps, percentOffset, timeOffset) {
+    convertStepsToNotes(steps, percentOffset, timeOffset) {
         const PPQ = Tone.Transport.PPQ
         const totalTicks = PPQ * 4
         const ticksPerStep = Math.round(totalTicks / steps.length)
@@ -240,17 +242,18 @@ export default class Track {
         // console.log('notes', notes);
         return notes
     }
-    msToTicks (ms) {
+    msToTicks(ms) {
         const BPM = Tone.Transport.bpm.value
         const PPQ = Tone.Transport.PPQ
         const msPerBeat = 60000 / BPM
         const msPerTick = msPerBeat / PPQ
         return Math.round(ms / msPerTick)
     }
-    async setInstrument (instrument) {
+    async setInstrument(instrument) {
         // console.time('setInstrument', instrument)
         const instrumentName = instrument.sampler
         const articulation = instrument.sample
+        const articulationId = instrument.sampleId
         let _this = this
         return new Promise(async function (resolve, reject) {
             if (!_.isNil(_this.instrument)) {
@@ -262,7 +265,8 @@ export default class Track {
             }
             _this.instrument = await Instruments.create(
                 instrumentName,
-                articulation
+                articulation,
+                articulationId
             )
             // console.log('instrument created')
             _this.buildAudioChain()
@@ -275,10 +279,10 @@ export default class Track {
             resolve(_this.instrument)
         })
     }
-    clearInstrument () {
+    clearInstrument() {
         Instruments.dispose(this.instrument.id)
     }
-    setAutomatedFx (fxId) {
+    setAutomatedFx(fxId) {
         if (!_.isNil(this.automation)) {
             this.automation.setFx(fxId)
         } else {
@@ -286,10 +290,10 @@ export default class Track {
         }
         this.calculatePart(this.trackParameters, this.userPatterns)
     }
-    createAutomation (fxId, userId) {
+    createAutomation(fxId, userId) {
         this.automation = new Automation(fxId, userId)
     }
-    setVolume (value) {
+    setVolume(value) {
         //console.log('Track::setVolume()', value);
         const _this = this
         // temporary hack, todo investigate why this is necessary (when loading a preset the volume sometimes doesn't update)
@@ -297,10 +301,10 @@ export default class Track {
             _this.channel.volume.value = value
         }, 300)
     }
-    setSolo (value) {
+    setSolo(value) {
         this.channel.solo = value
     }
-    setMute (value) {
+    setMute(value) {
         // console.log('Track::setMute()', value);
         const _this = this
         // temporary hack, todo investigate why this is necessary (when loading a preset the mute sometimes doesn't work)
@@ -308,7 +312,7 @@ export default class Track {
             _this.channel.mute = value
         }, 300)
     }
-    async setMixerSettings (settings) {
+    async setMixerSettings(settings) {
         let _this = this
         return new Promise(async function (resolve, reject) {
             await _this.setStyle(settings.style)
@@ -321,32 +325,32 @@ export default class Track {
             resolve()
         })
     }
-    async setFXIsOn (fxId, value) {
+    async setFXIsOn(fxId, value) {
         // console.log('setFXIsOn', fxId, value);
         this.disconnectAudioChain()
         this.fx[fxId].isOn = value
         this.buildAudioChain()
     }
-    setFXParameter (fxId, parameter, value) {
+    setFXParameter(fxId, parameter, value) {
         if (this.fx[fxId].isOn) {
             this.fx[fxId][parameter] = value
         }
     }
-    releaseAll () {
+    releaseAll() {
         if (!_.isNil(this.instrument)) {
             this.instrument.releaseAll()
         }
     }
-    triggerNote (note) {
+    triggerNote(note) {
         this.instrument.triggerNote(note)
     }
-    triggerAttack (pitch, velocity) {
+    triggerAttack(pitch, velocity) {
         this.instrument.triggerAttack(pitch, velocity)
     }
-    triggerRelease (pitch) {
+    triggerRelease(pitch) {
         this.instrument.triggerRelease(pitch)
     }
-    getNotes () {
+    getNotes() {
         return this.notes
     }
 }

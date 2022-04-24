@@ -32,7 +32,7 @@ const styles = theme => ({
 
 class JitsiComponent extends Component {
     static contextType = FirebaseContext;
-    constructor (props) {
+    constructor(props) {
         super(props);
         this.state = {
             isEnabled: false,
@@ -43,7 +43,7 @@ class JitsiComponent extends Component {
         this.onMicClick = this.onMicClick.bind(this)
     }
 
-    async join () {
+    async join() {
         this.setState({
             isEnabled: true,
             isConnecting: true,
@@ -88,7 +88,7 @@ class JitsiComponent extends Component {
         })
     }
 
-    leave () {
+    leave() {
         this.setState({
             isEnabled: false,
             isConnecting: false
@@ -97,7 +97,7 @@ class JitsiComponent extends Component {
         this.api.dispose()
     }
 
-    async onMicClick () {
+    async onMicClick() {
         let audioIsMuted = await this.api.isAudioMuted()
         this.api.executeCommand('toggleAudio');
         audioIsMuted = !audioIsMuted
@@ -107,7 +107,7 @@ class JitsiComponent extends Component {
     }
 
 
-    render () {
+    render() {
         const { classes } = this.props;
         return (
             <>

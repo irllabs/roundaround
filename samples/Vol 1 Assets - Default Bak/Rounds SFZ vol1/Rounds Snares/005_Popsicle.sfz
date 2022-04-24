@@ -1,0 +1,36 @@
+// Sfz exported from a sf2 file with Polyphone
+// Name      : 
+// Author    : 
+// Copyright : 
+// Date      : 2021/03/11
+// Comment   : 
+
+<group>
+lokey=0 hikey=127
+loop_mode=no_loop
+ampeg_attack=0.001
+amplfo_freq=8.176
+fillfo_freq=8.176
+pitchlfo_freq=8.176
+fil_type=lpf_2p
+cutoff=19913
+
+<region>
+sample=samples\KSA_Snares_6b.wav
+volume=3
+pitch_keycenter=60
+lovel=0 hivel=64
+offset=0
+end=2844
+loop_start=0
+loop_end=2843
+
+<region>
+sample=samples\KSA_Snares_6a.wav
+volume=3
+pitch_keycenter=60
+lovel=65 hivel=127
+offset=0
+end=2844
+loop_start=0
+loop_end=2843

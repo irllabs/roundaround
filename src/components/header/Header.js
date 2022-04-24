@@ -13,7 +13,7 @@ import { BackButton } from '../play/layer-settings/resources';
 import { setUser, setIsShowingSignInDialog, setRedirectAfterSignIn, setRounds, setUserDisplayName, setSignUpDisplayName, setIsShowingShareDialog } from '../../redux/actions'
 import _ from 'lodash'
 import HeaderAvatar from './HeaderAvatar'
-import JitsiComponent from '../play/JitsiComponent';
+import JitsiComponent from '../play/JitsiComponent'
 import ProjectName from './ProjectName'
 import HeaderMenu from './HeaderMenu';
 import { FirebaseContext } from '../../firebase';
@@ -165,7 +165,6 @@ class Header extends Component {
 								{
 									_.isNil(round) &&
 									<Typography>Loading...</Typography>
-
 								}
 							</Box>
 						</Box>
@@ -207,7 +206,6 @@ class Header extends Component {
 								className="signed-out"
 							>Sign in</Button>
 						}
-
 					</>
 				}
 			</Box >

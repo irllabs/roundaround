@@ -2,7 +2,7 @@ import React, { Component } from 'react'
 import { connect } from "react-redux";
 import { Typography } from '@material-ui/core';
 import IconButton from '@material-ui/core/IconButton';
-import _ from 'lodash'
+import _, { cloneDeep } from 'lodash'
 import {
     SET_LAYER_MUTE,
     REMOVE_LAYER,
@@ -37,8 +37,14 @@ import {
     TrashIcon,
     HamburgerMenuIcon,
     CloseIcon,
-    ElipsisIcon
+    ElipsisIcon,
+    CustomIcon
 } from './resources'
+import {
+    setIsShowingCustomInstrumentDialog,
+    updateCustomInstruments
+} from '../../../redux/actions';
+import CustomInstrumentDialog from '../../dialogs/CustomInstrumentDialog';
 
 const styles = (theme) => ({
     container: {
@@ -448,6 +454,7 @@ class LayerSettings extends Component {
             showHamburgerPopup: false,
             showDeleteClearPopup: false,
             windowWidth: 340,
+            isShowingCustomInstrumentDialog: false,
             instrumentOptions: Instruments.getInstrumentOptions(false),
             selectedInstrument: ''
         }
@@ -494,12 +501,10 @@ class LayerSettings extends Component {
     componentDidUpdate(prevProps) {
         if (this.props.round && this.props.selectedLayerId) {
             const selectedLayer = _.find(this.props.round.layers, { id: this.props.selectedLayerId })
-            //console.log('instrument in sampler', !selectedLayer.instrument.sampler.indexOf(this.state.selectedInstrument) > -1)
             if (selectedLayer &&
                 (
                     (prevProps.selectedLayerId !== this.props.selectedLayerId) ||
                     (!this.state.selectedInstrument && selectedLayer)
-                    //|| (this.state.selectedInstrument && (selectedLayer.instrument.sampler.indexOf(this.state.selectedInstrument) === -1))
                 )
             ) {
                 this.setSelectedInstrument(selectedLayer)
@@ -521,12 +526,12 @@ class LayerSettings extends Component {
     updateWindowWidth = () => this.setState({ windowWidth: window.innerWidth })
 
     setSelectedInstrument = async (selectedLayer) => {
-        const instrumentOptions = await Instruments.getInstrumentOptions(false)
+        const instrumentOptions = await Instruments.getInstrumentOptions()
         if (instrumentOptions && this.props.round) {
             const localLayer = _.find(this.props.round.layers, { id: this.props.selectedLayerId })
             const sampler = selectedLayer?.instrument?.sampler || localLayer?.instrument?.sampler;
             const instrument = _.find(instrumentOptions, { name: sampler })
-            if (instrument)
+            if (instrument && this.state.selectedInstrument !== instrument.label)
                 this.setState({ selectedInstrument: instrument.label })
         }
     }
@@ -710,8 +715,25 @@ class LayerSettings extends Component {
         this.setState({ showDeleteClearPopup })
     }
 
+    toggleShowCustomInstrumentDialog = (val) => {
+        const { isShowingCustomInstrumentDialog, setIsShowingCustomInstrumentDialog } = this.props
+        const newShowing = !isShowingCustomInstrumentDialog
+        if (val === undefined)
+            setIsShowingCustomInstrumentDialog(newShowing)
+        else setIsShowingCustomInstrumentDialog(val)
+    }
+
+    addInstrumentToRound = (samples) => {
+        const { round, user, updateCustomInstruments } = this.props
+        const customInstruments = round?.customInstruments ? cloneDeep(round.customInstruments) : {}
+        samples.forEach(sample => {
+            customInstruments[sample.id] = sample
+        })
+        this.context.updateCustomInstruments(round.id, user.id, customInstruments)
+        updateCustomInstruments(customInstruments)
+    }
+
     render() {
-        // console.log('Layer settings render()', this.props.user);
         const {
             showMixerPopup,
             showInstrumentsPopup,
@@ -723,16 +745,20 @@ class LayerSettings extends Component {
             showVolumePopup,
             showDeleteClearPopup,
             windowWidth
-        } = this.state;
+        } = this.state
 
-        const { classes, theme, user } = this.props
+        const { classes, theme, user, round } = this.props
         const selectedLayer = this.props.selectedLayer
         const userColors = this.getUserColors()
         const isMobile = windowWidth < theme.breakpoints.values.sm
-        const sample = selectedLayer?.instrument?.sample
+        let sample = selectedLayer?.instrument?.sample
+
+        if (typeof sample === 'object') {
+            sample = selectedLayer?.instrument?.sampler
+        }
 
         const instrumentIcon = (name) => {
-            let Icon = <svg></svg>;
+            let Icon = CustomIcon;
             if (name === 'HiHats')
                 Icon = HiHatsIcon
             if (name === 'Kicks')
@@ -748,6 +774,11 @@ class LayerSettings extends Component {
 
         const form = (
             <Box className={classes.root}>
+                <CustomInstrumentDialog
+                    toggleCustomInstrumentDialog={this.toggleShowCustomInstrumentDialog}
+                    addInstrumentToRound={this.addInstrumentToRound}
+                    user={user}
+                />
                 <LayerListPopup
                     instrumentIcon={instrumentIcon}
                     height={this.height}
@@ -809,6 +840,7 @@ class LayerSettings extends Component {
                         <Box style={{ display: 'flex', flex: 1, flexDirection: 'row' }}>
                             <Box className={classes.actionButtonContainer}>
                                 <LayerInstrument
+                                    toggleCustomInstrumentDialog={this.toggleShowCustomInstrumentDialog}
                                     showInstrumentsPopup={showInstrumentsPopup}
                                     instrumentsListRef={this.instrumentsListButton}
                                     articulationsListRef={this.articulationsListButton}
@@ -819,6 +851,7 @@ class LayerSettings extends Component {
                                     classes={classes}
                                     showArticulationOptions={showArticulationOptions}
                                     selectedLayer={selectedLayer}
+                                    round={round}
                                     roundId={this.props.round.id}
                                     instrumentsButtonRef={this.instrumentsButton}
                                     soundsButtonRef={this.soundsButton}
@@ -840,13 +873,13 @@ class LayerSettings extends Component {
                                     </Box>
                                     <Box className={classes.selectedInstrumentInfo}>
                                         <Typography style={{ fontWeight: 'bolder', lineHeight: 1, textTransform: 'capitalize' }}>
-                                            {selectedInstrument}
+                                            {selectedInstrument === 'Custom' ? selectedLayer.instrument.displayName : selectedInstrument}
                                         </Typography>
                                         <Typography style={{ fontSize: 30, marginLeft: 5, marginRight: 5, lineHeight: .5 }}>&#183;</Typography>
                                     </Box>
                                     <Typography className={classes.instrumentSample}>
-                                        {`${selectedLayer?.instrument?.sample.substring(0, isMobile ? 6 : sample.length)}${isMobile &&
-                                            selectedLayer?.instrument?.sample.length > 6 ? '...' : ''}`}
+                                        {`${sample.substring(0, isMobile ? 6 : sample.length)}${isMobile &&
+                                            sample.length > 6 ? '...' : ''}`}
                                     </Typography>
                                 </IconButton>
                             </Box>
@@ -941,7 +974,6 @@ class LayerSettings extends Component {
 }
 
 const mapStateToProps = state => {
-    //  console.log('mapStateToProps', state);
     let selectedLayer = null;
     if (!_.isNil(state.display.selectedLayerId) && !_.isNil(state.round) && !_.isNil(state.round.layers)) {
         selectedLayer = _.find(state.round.layers, { id: state.display.selectedLayerId })
@@ -952,11 +984,19 @@ const mapStateToProps = state => {
         users: state.users,
         selectedLayerId: state.display.selectedLayerId,
         selectedLayer,
-        isOpen: state.display.isShowingLayerSettings
+        isOpen: state.display.isShowingLayerSettings,
+        isShowingCustomInstrumentDialog: state.display.isShowingCustomInstrumentDialog,
     };
 };
 
+const mapDispatchToProps = dispatch => ({
+    setIsShowingCustomInstrumentDialog: val => dispatch(setIsShowingCustomInstrumentDialog(val)),
+    updateCustomInstruments: val => dispatch(updateCustomInstruments(val)),
+    dispatch
+})
+
 
 export default connect(
-    mapStateToProps
+    mapStateToProps,
+    mapDispatchToProps
 )(withStyles(styles, { withTheme: true })(LayerSettings))

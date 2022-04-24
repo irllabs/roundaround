@@ -5,7 +5,6 @@ import PropTypes from 'prop-types'
 import { withStyles } from '@material-ui/styles'
 import Box from '@material-ui/core/Box'
 import { PRESET_LETTERS } from '../../utils/constants'
-
 import PatternThumbControl from './PatternThumbControl'
 import { FirebaseContext } from '../../firebase'
 import {
@@ -79,7 +78,6 @@ class PatternsSidebar extends Component {
             if (!_.isEmpty(pattern.state)) {
                 this.setState({ selectedPattern: pattern.id, selectedPatternNeedsSaving: false })
 
-
                 // check if we have layers in the round not referenced in the pattern then set all steps in that layer to off
                 for (const existingLayer of this.props.round.layers) {
                     if (_.isNil(_.find(pattern.state.layers, { id: existingLayer.id })) && existingLayer.createdBy === this.props.user.id) {
@@ -109,7 +107,6 @@ class PatternsSidebar extends Component {
                         layersToDelete.push(layer)
                     }
                 }
-
                 _.remove(pattern.state.layers, function (n) {
                     return layersToDelete.indexOf(n) > -1
                 })
