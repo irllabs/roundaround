@@ -63,7 +63,7 @@ We use [git flow](https://www.atlassian.com/git/tutorials/comparing-workflows/gi
 - Create feature/bug branches for every issue; put issue ID brance name, e.g. "bug/163-fix-step-count" for [Issue #163](https://github.com/irllabs/roundaround/issues/163)
 - Merge `feature` branches into `stage` as soon as it's ready to minimize merge conflicts and lack of transparency in what the code will look like once it's deployed to `prod`.
 
-### Branchines
+### Branches
 
 - `master` - always runs, is deployed to `prod` (http://rounds.studio and http:/rounds.irl.studio)
 - `stage` - always runs, features are merged to it; is deployed to `stage` (http://roundaround-stage.web.app) when testing integration of features
@@ -113,3 +113,18 @@ make sure the site is running locally.
 
 - Make sure you have the jaasauth.pk private key file in the root of the functions folder (not kept in git)
 - `firebase deploy --only functions`
+
+## Branches Status
+
+### Main & Stage
+
+The most recent feature to be added https://github.com/irllabs/roundaround/issues/213
+Moved pattern presets/sequencer to center of round from the left side as seen in the designs below.
+Figma designs https://www.figma.com/file/oRhqOzPSgnMgFPPz0tLWjv/Rounds-SoT?node-id=1733%3A198459
+
+### develop
+
+Feature under development https://github.com/irllabs/roundaround/issues/285
+Currently users can:
+1 - create new round using a custom instrument/sound
+2 - add custom instrument to an existing round
