@@ -42,7 +42,7 @@ import update from 'immutability-helper';
 import _ from 'lodash'
 
 const initialState = null;
-const updateStepProperty = (state, name, value, layerId, stepId) => {
+const updateStepProperty = (state, name, value, layerId, stepId, lastUpdated) => {
     const layerIndex = _.findIndex(state.layers, { id: layerId })
     const layer = _.find(state.layers, { id: layerId })
     const stepIndex = _.findIndex(layer.steps, { id: stepId })
@@ -54,6 +54,9 @@ const updateStepProperty = (state, name, value, layerId, stepId) => {
                     [stepIndex]: {
                         [name]: {
                             $set: value
+                        },
+                        lastUpdated: {
+                            $set: lastUpdated
                         }
                     }
                 }
@@ -130,8 +133,8 @@ export default function (state = initialState, action) {
             })
         }
         case TOGGLE_STEP: {
-            const { layerId, stepId, isOn } = action.payload;
-            return updateStepProperty(state, 'isOn', isOn, layerId, stepId);
+            const { layerId, stepId, isOn, lastUpdated } = action.payload;
+            return updateStepProperty(state, 'isOn', isOn, layerId, stepId, lastUpdated);
         }
         case SET_STEP_VELOCITY: {
             const { layerId, stepId, velocity } = action.payload;

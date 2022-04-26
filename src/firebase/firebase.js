@@ -17,7 +17,7 @@ var firebaseConfig = {
 };
 
 class Firebase {
-    constructor () {
+    constructor() {
         if (!firebase.apps.length) {
             app.initializeApp(firebaseConfig);
         }
@@ -114,6 +114,8 @@ class Firebase {
                 const roundsSnapshot = await this.db
                     .collection("rounds")
                     .where('createdBy', '==', userId)
+                    .orderBy('createdAt', 'desc')
+                    .limitToLast()
                     .get();
                 roundsSnapshot.forEach(roundDoc => {
                     let round = roundDoc.data();
@@ -255,7 +257,7 @@ class Firebase {
         //  console.log('createRound()', data);
         return new Promise(async (resolve, reject) => {
             let round = _.cloneDeep(data)
-            const layers = [...round.layers]
+            const layers = round && round.layers ? [...round.layers] : []
             delete round.layers
             const userBuses = []
             for (const [userId, userBus] of Object.entries(round.userBuses)) {

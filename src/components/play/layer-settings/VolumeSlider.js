@@ -13,16 +13,20 @@ import { Box } from '@material-ui/core';
 const styles = makeStyles(function (theme) {
     return {
         root: {
+            display: 'flex',
+            flexDirection: 'column',
+            justifyContent: 'center',
             width: '100%',
             padding: theme.spacing(1)
         },
         slider: {
+            minWidth: 108,
             width: '100%'
         }
     }
 })
 
-export default function VolumeSlider ({ selectedLayer, user, roundId }) {
+export default function VolumeSlider({ selectedLayer, sliderRef, user, roundId, hideText }) {
     const dispatch = useDispatch();
     const firebase = useContext(FirebaseContext);
     const [sliderValue, setSliderValue] = useState(80)
@@ -35,6 +39,8 @@ export default function VolumeSlider ({ selectedLayer, user, roundId }) {
         updateVolumeState(dB, selectedLayerId)
     }, 2000), []);
     const onSliderChange = (e, percent) => {
+        e.preventDefault()
+        e.stopPropagation()
         setSliderValue(percent)
         const dB = convertPercentToDB(percent)
         AudioEngine.tracksById[selectedLayer.id].setVolume(dB)
@@ -42,46 +48,18 @@ export default function VolumeSlider ({ selectedLayer, user, roundId }) {
     }
 
     useEffect(() => {
-        //console.log('selectedLayer.id changed', selectedLayer.id, selectedLayer.instrument.gain);
         setSliderValue(convertDBToPercent(selectedLayer.gain))
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [selectedLayer.id])
-
-    /* const verticalSliderMarks = [
-         {
-             value: 100,
-             label: '+6',
-         },
-         {
-             value: 80,
-             label: '0',
-         },
-         {
-             value: 60,
-             label: '-6',
-         },
- 
-         {
-             value: 34,
-             label: '-24',
-         },
- 
-         {
-             value: 0,
-             label: '-96',
-         }
-     ];*/
+    }, [selectedLayer.id, selectedLayer.gain])
 
     const classes = styles()
-    //console.log('rendering volume slider', selectedLayer.id);
     return (
-
         <Box className={classes.root}>
-            <Typography variant="caption">Volume</Typography>
+            {!hideText && <Typography variant="caption">Volume</Typography>}
             <Slider
+                ref={sliderRef}
                 className={classes.slider}
                 orientation="horizontal"
-                value={sliderValue}
+                value={selectedLayer.isMuted ? 0 : Math.floor(sliderValue)}
                 min={0}
                 max={100}
                 aria-labelledby="vertical-slider"

@@ -5,9 +5,13 @@ import * as Tone from 'tone';
 
 export default class Lowpass extends FXBaseClass {
     static fxName = 'lowpass';
-    static icon = '<svg width="20" height="15" viewBox="0 0 20 15" fill="none" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" clip-rule="evenodd" d="M9.47907 2.58182C9.22404 0.773399 7.42594 -0.389481 5.67204 0.119715L3.26753 0.817797C2.99573 0.896707 2.71413 0.936758 2.4311 0.936758L7.62939e-06 0.936757V2.93676L2.4311 2.93676C2.90281 2.93676 3.37215 2.87001 3.82515 2.73849L6.22966 2.04041C6.81429 1.87068 7.41366 2.2583 7.49867 2.86111L8.52447 10.135C8.87241 12.6022 10.9838 14.4368 13.4755 14.4368H19C19.5523 14.4368 20 13.989 20 13.4368C20 12.8845 19.5523 12.4368 19 12.4368H13.4755C11.9805 12.4368 10.7136 11.336 10.5049 9.85569L9.47907 2.58182Z" fill="white" fill-opacity="0.9"/></svg>'
+    static icon =
+        `<svg width="32" height="32" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <rect x="0.000488281" width="32.0004" height="32" rx="16" fill="white" fill-opacity="0.1"/>
+            <path fill-rule="evenodd" clip-rule="evenodd" d="M15.6534 13.0545C15.4833 11.8489 14.2846 11.0737 13.1153 11.4131L11.5122 11.8785C11.331 11.9311 11.1433 11.9578 10.9546 11.9578L9.33385 11.9578V13.2912L10.9546 13.2912C11.2691 13.2912 11.582 13.2467 11.884 13.159L13.487 12.6936C13.8768 12.5805 14.2764 12.8389 14.3331 13.2407L15.017 18.09C15.2489 19.7348 16.6566 20.9578 18.3177 20.9578H22.0008C22.369 20.9578 22.6675 20.6594 22.6675 20.2912C22.6675 19.923 22.369 19.6245 22.0008 19.6245H18.3177C17.321 19.6245 16.4764 18.8907 16.3373 17.9038L15.6534 13.0545Z" fill="white" fill-opacity="0.9"/>
+        </svg>`
 
-    constructor (fxParameters) {
+    constructor(fxParameters) {
         super(fxParameters)
         this._frequency = 500
         this._frequencyBeforeBypass = this._frequency
@@ -16,13 +20,13 @@ export default class Lowpass extends FXBaseClass {
         this.isOn = fxParameters.isOn
     }
 
-    set type (value) {
+    set type(value) {
         this._type = value
         if (this.isOn) {
             this.fx.type = value
         }
     }
-    setFrequency (value, time) {
+    setFrequency(value, time) {
         this._frequency = value
         if (this.isOn) {
             if (!_.isNil(time)) {
@@ -32,7 +36,7 @@ export default class Lowpass extends FXBaseClass {
             }
         }
     }
-    setBypass (value, time) {
+    setBypass(value, time) {
         if (value === true && !this._override) {
             // set frequency to max rather than turn off so that we can do this rapidly without needing to rebuild the audio chain
             if (this._frequency < 20000) {
@@ -44,12 +48,12 @@ export default class Lowpass extends FXBaseClass {
         }
     }
 
-    enable () {
+    enable() {
         this.fx = new Tone.Filter(this._frequency, this._type)
         this.setBypass(true)
     }
 
-    getAutomationOptions () {
+    getAutomationOptions() {
         return [
             {
                 label: 'Enabled',

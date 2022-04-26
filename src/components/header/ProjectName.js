@@ -13,20 +13,26 @@ import _ from 'lodash'
 import { uuid } from '../../utils/index';
 import { setRound, setIsShowingRenameDialog, setIsShowingDeleteRoundDialog, setSelectedRoundId } from '../../redux/actions';
 import { FirebaseContext } from '../../firebase';
+import { Box } from '@material-ui/core';
 
 const useStyles = makeStyles((theme) => ({
     root: {
         display: 'flex',
     },
     paper: {
-        marginRight: theme.spacing(2),
-        borderRadius: '16px'
+        //marginRight: theme.spacing(2),
+        justifySelf: 'flex-start',
+        width: 130,
+        borderRadius: 8,
+        [theme.breakpoints.down('xs')]: {
+            width: 100,
+        }
     },
     menuList: {
     }
 }));
 
-function ProjectName ({ name, setIsShowingRenameDialog, setIsShowingDeleteRoundDialog, setRound, round, setSelectedRoundId }) {
+function ProjectName({ name, setIsShowingRenameDialog, setIsShowingDeleteRoundDialog, setRound, round, setSelectedRoundId }) {
     const classes = useStyles();
     const [open, setOpen] = React.useState(false);
     const anchorRef = React.useRef(null);
@@ -56,16 +62,16 @@ function ProjectName ({ name, setIsShowingRenameDialog, setIsShowingDeleteRoundD
         setSelectedRoundId(round.id)
         setIsShowingDeleteRoundDialog(true)
     }
-    const onDuplicateClick = () => {
+    const onDuplicateClick = async () => {
         let clonedRound = _.cloneDeep(round)
         clonedRound.id = uuid()
         clonedRound.name += ' (duplicate)'
-        firebase.createRound(clonedRound)
+        await firebase.createRound(clonedRound)
         setRound(clonedRound)
         setOpen(false)
     }
 
-    function handleListKeyDown (event) {
+    function handleListKeyDown(event) {
         if (event.key === 'Tab') {
             event.preventDefault();
             setOpen(false);
@@ -83,9 +89,8 @@ function ProjectName ({ name, setIsShowingRenameDialog, setIsShowingDeleteRoundD
     }, [open]);
 
     return (
-        <div className={classes.root}>
-
-            <div>
+        <Box className={classes.root}>
+            <Box style={{ display: 'flex', flexDirection: 'column' }}>
                 <Button
                     ref={anchorRef}
                     aria-controls={open ? 'menu-list-grow' : undefined}
@@ -99,11 +104,11 @@ function ProjectName ({ name, setIsShowingRenameDialog, setIsShowingDeleteRoundD
                     {({ TransitionProps, placement }) => (
                         <Grow
                             {...TransitionProps}
-                            style={{ transformOrigin: placement === 'bottom' ? 'center top' : 'center bottom' }}
+                            style={{ display: 'flex' }}
                         >
-                            <Paper>
+                            <Paper className={classes.paper}>
                                 <ClickAwayListener onClickAway={handleClose}>
-                                    <MenuList autoFocusItem={open} id="menu-list-grow" onKeyDown={handleListKeyDown}>
+                                    <MenuList style={{ width: '100%' }} autoFocusItem={open} id="menu-list-grow" onKeyDown={handleListKeyDown}>
                                         <MenuItem onClick={onDuplicateClick}>Duplicate</MenuItem>
                                         <MenuItem onClick={onRenameClick}>Rename</MenuItem>
                                         <MenuItem onClick={onDeleteClick}>Delete</MenuItem>
@@ -113,8 +118,8 @@ function ProjectName ({ name, setIsShowingRenameDialog, setIsShowingDeleteRoundD
                         </Grow>
                     )}
                 </Popper>
-            </div>
-        </div>
+            </Box>
+        </Box>
     );
 }
 const mapStateToProps = state => {

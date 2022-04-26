@@ -1,229 +1,157 @@
-import React, { useEffect, useContext, useState, useRef } from 'react'
-import { useDispatch } from "react-redux";
-import Instruments from '../../../audio-engine/Instruments'
-import Button from '@material-ui/core/Button';
-import Menu from '@material-ui/core/Menu';
-import MenuItem from '@material-ui/core/MenuItem';
-import Select from '@material-ui/core/Select';
-import InputLabel from '@material-ui/core/InputLabel';
-import FormControl from '@material-ui/core/FormControl';
-import Box from '@material-ui/core/Box';
-import { makeStyles } from '@material-ui/core/styles';
-import { UPDATE_LAYER_INSTRUMENT, SET_DISABLE_KEY_LISTENER } from '../../../redux/actionTypes'
-import { FirebaseContext } from '../../../firebase';
+import React, { useContext, useEffect } from 'react'
+import { Box, Typography } from '@material-ui/core'
+import IconButton from '@material-ui/core/IconButton'
 import _ from 'lodash'
-import IconButton from '@material-ui/core/IconButton';
-import MoreVertIcon from '@material-ui/icons/MoreVert';
-import Dialog from '@material-ui/core/Dialog';
-import DialogTitle from '@material-ui/core/DialogTitle';
-import DialogActions from '@material-ui/core/DialogActions';
-import DialogContent from '@material-ui/core/DialogContent';
-import DialogContentText from '@material-ui/core/DialogContentText';
-import CustomSamples from '../../../audio-engine/CustomSamples'
-import { getDefaultLayerData } from '../../../utils/defaultData'
-import { TextField } from '@material-ui/core';
+import { useDispatch } from "react-redux";
 
-const useStyles = makeStyles((theme) => ({
-    root: {
-        width: '100%'
-    },
-    formControl: {
-        margin: theme.spacing(1),
-        minWidth: 188,
-        [theme.breakpoints.down('sm')]: {
-            minWidth: 100
-        },
-        marginBottom: '1rem'
-    },
-    selectEmpty: {
-        marginTop: theme.spacing(2),
-    },
-    articulationSelectContainer: {
-        display: 'flex',
-    },
-    articulationSelect: {
-        flexGrow: 1,
-        marginTop: theme.spacing(1)
-    },
-    articluationMenuButton: {
-        marginLeft: theme.spacing(1)
-    },
-    customInstrumentMenuItem: {
-        borderBottom: 'solid 1px rgba(255,255,255,0.12)'
-    }
-}));
+import Instruments from '../../../audio-engine/Instruments'
+import { UPDATE_LAYER_INSTRUMENT } from '../../../redux/actionTypes'
 
-export default function LayerInstrument ({ selectedLayer, user, roundId }) {
-    const dispatch = useDispatch();
-    const firebase = useContext(FirebaseContext);
-    const classes = useStyles();
-    const instrumentOptions = Instruments.getInstrumentOptions(false)
+/** SVGs */
+import RightArrow from './resources/svg/rightArrow.svg'
+import Check from './resources/svg/check.svg'
+import LeftArrow from './resources/svg/leftArrow.svg'
+import { FirebaseContext } from '../../../firebase'
+
+
+const LayerInstrument = ({
+    showInstrumentsPopup,
+    toggleShowInstrumentList,
+    toggleArticulationOptions,
+    selectedInstrumentLabel,
+    showArticulationOptions,
+    showInstrumentsList,
+    classes,
+    selectedLayer,
+    roundId,
+    instrumentsListRef,
+    articulationsListRef,
+    instrumentsButtonRef,
+    soundsButtonRef,
+    user
+}) => {
     const [selectedInstrument, setSelectedInstrument] = React.useState(selectedLayer.instrument.sampler)
+    const [selectedArticulation, setSelectedArticulation] = React.useState(selectedLayer.instrument.sample)
+    const dispatch = useDispatch();
+    const instrumentOptions = Instruments.getInstrumentOptions(false)
+    const articulationOptions = Instruments.getInstrumentArticulationOptions(selectedInstrument, user.id)
+    const firebase = useContext(FirebaseContext);
 
-    const onInstrumentSelect = (event) => {
-        setSelectedInstrument(event.target.value);
-        console.log('onInstrumentSelect', event.target.value);
-        let defaultArticulation = Instruments.getDefaultArticulation(event.target.value)
-        console.log('defaultArticulation', defaultArticulation);
+    const onInstrumentSelect = async (instrument) => {
+        setSelectedInstrument(instrument.name)
+        let defaultArticulation = await Instruments.getRandomArticulation(instrument.name)
         if (!_.isNil(defaultArticulation)) {
             setSelectedArticulation(defaultArticulation)
-            dispatch({ type: UPDATE_LAYER_INSTRUMENT, payload: { id: selectedLayer.id, instrument: { sampler: event.target.value, sample: defaultArticulation }, user: user.id } })
-            firebase.updateLayer(roundId, selectedLayer.id, { instrument: { sampler: event.target.value, sample: defaultArticulation } })
+            dispatch({
+                type: UPDATE_LAYER_INSTRUMENT,
+                payload: {
+                    id: selectedLayer.id,
+                    instrument: { sampler: instrument.name, sample: defaultArticulation },
+                    user: user.id
+                }
+            })
+            firebase.updateLayer(roundId, selectedLayer.id, { instrument: { sampler: instrument.name, sample: defaultArticulation } })
         };
     }
-    const instrumentMenuItems = () => {
-        let items = instrumentOptions.map(instrument => <MenuItem value={instrument.name} key={instrument.name}>{instrument.label}</MenuItem>)
-        items.unshift(<MenuItem className={classes.customInstrumentMenuItem} value={"custom"} key={"custom"}>{"Custom"}</MenuItem>)
-        return items
-    }
-    const articulationOptions = Instruments.getInstrumentArticulationOptions(selectedInstrument, user.id)
-    const [selectedArticulation, setSelectedArticulation] = React.useState(selectedLayer.instrument.sample)
-    const onArticulationSelect = async (event) => {
-        setSelectedArticulation(event.target.value);
-        // console.log('UPDATE_LAYER_INSTRUMENT', selectedInstrument, event.target.value);
-        dispatch({ type: UPDATE_LAYER_INSTRUMENT, payload: { id: selectedLayer.id, instrument: { sampler: selectedInstrument, sample: event.target.value }, user: user.id } })
-        firebase.updateLayer(roundId, selectedLayer.id, { instrument: { sample: event.target.value } })
-        if (selectedInstrument === 'custom') {
-            let sample = await CustomSamples.get(event.target.value)
-            setCustomSampleName(sample.name)
-        }
-    };
-    const articulationMenuItems = articulationOptions.map(articulation => <MenuItem value={articulation.value} key={articulation.value}>{articulation.name}</MenuItem>)
+
     useEffect(() => {
-        async function refreshCustomSampleName (sampleId) {
-            let sample = await CustomSamples.get(sampleId)
-            setCustomSampleName(sample.name)
-        }
         setSelectedInstrument(selectedLayer.instrument.sampler)
         setSelectedArticulation(selectedLayer.instrument.sample)
-        if (selectedLayer.instrument.sampler === 'custom') {
-            refreshCustomSampleName(selectedLayer.instrument.sample)
-        }
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [selectedLayer.id, selectedLayer.instrument.sample, selectedLayer.instrument.sampler])
+    }, [selectedLayer])
 
+    const onArticulationSelect = async (articulation) => {
+        setSelectedArticulation(articulation.value);
+        dispatch({ type: UPDATE_LAYER_INSTRUMENT, payload: { id: selectedLayer.id, instrument: { sampler: selectedInstrument, sample: articulation.value }, user: user.id } })
+        firebase.updateLayer(roundId, selectedLayer.id, { instrument: { sample: articulation.value } })
+    };
 
-    const [sampleAnchorElement, setSampleAnchorElement] = useState(null);
-    const onSampleMenuClick = (event) => {
-        setSampleAnchorElement(event.currentTarget);
-    };
-    const onSampleMenuClose = () => {
-        setSampleAnchorElement(null);
-    };
-    const onRenameSampleClick = () => {
-        setSampleAnchorElement(null);
-        setIsShowingRenameSampleDialog(true)
-        dispatch({ type: SET_DISABLE_KEY_LISTENER, payload: { value: true } })
-    }
-    const onDeleteSampleClick = () => {
-        setSampleAnchorElement(null);
-        setIsShowingDeleteSampleDialog(true)
-    }
-    const [isShowingDeleteSampleDialog, setIsShowingDeleteSampleDialog] = useState(false)
-    const onCloseDeleteSampleDialog = () => {
-        setIsShowingDeleteSampleDialog(false)
-    }
-    const deleteSample = async () => {
-        await CustomSamples.delete(selectedArticulation, user.id)
-        setIsShowingDeleteSampleDialog(false)
-        const defaultLayer = getDefaultLayerData()
-        dispatch({ type: UPDATE_LAYER_INSTRUMENT, payload: { id: selectedLayer.id, instrument: { sampler: defaultLayer.instrument.sampler, sample: defaultLayer.instrument.sample }, user: user.id } })
-        firebase.updateLayer(roundId, selectedLayer.id, { instrument: { sampler: defaultLayer.instrument.sampler, sample: defaultLayer.instrument.sample } })
-    }
-    const renameSampleTextField = useRef(null)
-    const [isShowingRenameSampleDialog, setIsShowingRenameSampleDialog] = useState(false)
-    const onCloseRenameSampleDialog = () => {
-        setIsShowingRenameSampleDialog(false)
-        dispatch({ type: SET_DISABLE_KEY_LISTENER, payload: { value: false } })
-    }
-    const renameSample = async () => {
-        const newName = renameSampleTextField.current.querySelectorAll("input")[0].value
-        // console.log('on rename click', newName);
-        CustomSamples.rename(selectedArticulation, newName)
-        onCloseRenameSampleDialog()
-    }
-    const [customSampleName, setCustomSampleName] = useState(null)
     return (
-        <Box className={classes.root} display="flex" flexDirection="column">
-            <FormControl className={classes.formControl}>
-                <InputLabel htmlFor="instrument-select-label">Instrument</InputLabel>
-                <Select
-                    value={selectedInstrument}
-                    onChange={onInstrumentSelect}
-                    labelId="instrument-select-label"
-                >
-                    {instrumentMenuItems()}
-                </Select>
-            </FormControl>
-            <FormControl className={classes.formControl}>
-                <InputLabel htmlFor="articulation-select-label">Sound</InputLabel>
-                <Box className={classes.articulationSelectContainer}>
-                    <Select
-                        className={classes.articulationSelect}
-                        value={selectedArticulation}
-                        onChange={onArticulationSelect}
-                        labelId="articulation-select-label"
-                    >
-                        {articulationMenuItems}
-                    </Select>
-                    {
-                        (selectedInstrument === 'custom') &&
-                        <>
-                            <IconButton className={classes.articluationMenuButton} onClick={onSampleMenuClick}>
-                                <MoreVertIcon fontSize="small" />
-                            </IconButton>
-                            <Menu
-                                anchorEl={sampleAnchorElement}
-                                keepMounted
-                                open={Boolean(sampleAnchorElement)}
-                                onClose={onSampleMenuClose}
-                            >
-                                <MenuItem onClick={onRenameSampleClick}>Rename</MenuItem>
-                                <MenuItem onClick={onDeleteSampleClick}>Delete</MenuItem>
-                            </Menu>
-                        </>
+        <Box className={showInstrumentsPopup ? classes.instrumentPopup : classes.hidden}>
+            {!showArticulationOptions &&
+                <Box>
+                    <IconButton ref={instrumentsButtonRef} id='instrument' onClick={toggleShowInstrumentList} style={{ borderBottom: showInstrumentsList ? 'thin solid rgba(255, 255, 255, 0.1)' : 'none' }} className={classes.rectButton}>
+                        {showInstrumentsList && <Box style={{ display: 'flex', justifyContent: 'flex-start', flex: 1 }}>
+                            <img alt='right arrow' src={LeftArrow} />
+                        </Box>}
+                        <Box style={{ flex: showInstrumentsList ? 7 : 5, display: 'flex', justifyContent: 'flex-start' }}>
+                            <Typography style={{ textAlign: 'left', textTransform: 'Capitalize' }}>Instrument</Typography>
+                        </Box>
+                        {!showInstrumentsList &&
+                            <>
+                                <Typography style={{ flex: 3, textAlign: 'left', textTransform: 'Capitalize' }}>
+                                    {selectedInstrumentLabel}
+                                </Typography>
+                                <Box style={{ display: 'flex', justifyContent: 'flex-end', flex: 1 }}>
+                                    <img alt='right arrow' src={RightArrow} />
+                                </Box>
+                            </>
+                        }
+                    </IconButton>
+                    {showInstrumentsList &&
+                        <Box style={{ display: 'flex', flexDirection: 'column' }}>
+                            {instrumentOptions.map((instrument, i) =>
+                                <IconButton
+                                    ref={instrumentsListRef}
+                                    id={`instrument-${i}`}
+                                    key={`instrument-${i}`}
+                                    onClick={(e) => {
+                                        e.stopPropagation()
+                                        onInstrumentSelect(instrument)
+                                    }
+                                    } style={{ justifyContent: 'space-between' }} className={classes.rectButton}>
+                                    <Typography style={{ textAlign: 'left' }}>{instrument.label}</Typography>
+                                    {selectedInstrument === instrument.name && <img alt='checked' src={Check} />}
+                                </IconButton>
+                            )}
+                        </Box>
                     }
                 </Box>
-            </FormControl>
-            <Dialog
-                open={isShowingDeleteSampleDialog}
-                onClose={onCloseDeleteSampleDialog}
-            >
-                <DialogContent>
-                    <DialogContentText id="alert-dialog-description">
-                        Are you sure you want to delete this sample?
-          </DialogContentText>
-                </DialogContent>
-                <DialogActions>
-                    <Button onClick={onCloseDeleteSampleDialog} color="primary">
-                        Cancel
-          </Button>
-                    <Button onClick={deleteSample} color="primary" variant="contained" disableElevation autoFocus>
-                        Delete
-          </Button>
-                </DialogActions>
-            </Dialog>
-            <Dialog open={isShowingRenameSampleDialog} onClose={onCloseRenameSampleDialog} aria-labelledby="form-dialog-title">
-                <DialogTitle id="form-dialog-title">Rename</DialogTitle>
-                <DialogContent>
-                    <TextField
-                        ref={renameSampleTextField}
-                        defaultValue={customSampleName ? customSampleName : ''}
-                        autoFocus
-                        margin="dense"
-                        id="renameSample"
-                        fullWidth
-                    />
-                </DialogContent>
-                <DialogActions>
-                    <Button onClick={onCloseRenameSampleDialog}>
-                        Cancel
-          </Button>
-                    <Button color="primary" variant="contained" disableElevation autoFocus onClick={renameSample}>
-                        Rename
-          </Button>
-                </DialogActions>
-            </Dialog>
+            }
+            {!showInstrumentsList &&
+                <Box>
+                    <IconButton
+                        id='sound'
+                        ref={soundsButtonRef}
+                        onClick={toggleArticulationOptions}
+                        style={{ borderBottom: showArticulationOptions ? 'thin solid rgba(255, 255, 255, 0.1)' : 'none' }}
+                        className={classes.rectButton}
+                    >
+                        {showArticulationOptions &&
+                            <Box style={{ display: 'flex', justifyContent: 'flex-start', flex: 1 }}>
+                                <img alt='right arrow' src={LeftArrow} />
+                            </Box>}
+                        <Typography style={{ flex: 5, textAlign: 'left', textTransform: 'Capitalize' }}>Sound</Typography>
+                        {!showArticulationOptions &&
+                            <>
+                                <Typography style={{ flex: 3, textAlign: 'left', textTransform: 'Capitalize' }}>
+                                    {selectedLayer?.instrument?.sample}
+                                </Typography>
+                                <Box style={{ display: 'flex', justifyContent: 'flex-end', flex: 1 }}><img alt='right arrow' src={RightArrow} /></Box>
+                            </>
+                        }
+                    </IconButton>
+                    {showArticulationOptions &&
+                        <Box style={{ display: 'flex', flexDirection: 'column', maxHeight: 300, overflow: 'scroll' }}>
+                            {articulationOptions.map((articulation, i) =>
+                                <IconButton
+                                    ref={articulationsListRef}
+                                    id={`articulation-${i}`}
+                                    key={`articulation-${i}`}
+                                    onClick={(e) => {
+                                        e.stopPropagation()
+                                        onArticulationSelect(articulation)
+                                    }
+                                    } style={{ justifyContent: 'space-between' }} className={classes.rectButton}>
+                                    <Typography style={{ textAlign: 'left' }}>{articulation.name}</Typography>
+                                    {selectedArticulation === articulation.value && <img alt='checked' src={Check} />}
+                                </IconButton>
+                            )}
+                        </Box>
+                    }
+                </Box>
+            }
         </Box>
     )
 }
+
+export default LayerInstrument;

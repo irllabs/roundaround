@@ -1,0 +1,26 @@
+name: End-to-end tests
+on: [push, pull_request]
+jobs:
+  cypress-eslint-run:
+    runs-on: ubuntu-20.04
+    # env:
+    #   CYPRESS_BASE_URL: https://roundaround-stage.web.app/
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+      # Install NPM dependencies, cache them correctlyand run all Cypress tests
+      - name: set master url
+        if: github.ref == 'refs/heads/master'
+        run: CYPRESS_BASE_URL=http://rounds.studio
+      - name: set stage url
+        if: github.ref == 'refs/heads/stage'
+        run: CYPRESS_BASE_URL=https://roundaround-stage.web.app/
+      - name: set dev url
+        if: github.ref != 'refs/heads/stage' && github.ref != 'refs/heads/master'
+        run: CYPRESS_BASE_URL=https://roundaround-dev.web.app/
+      - name: Cypress run
+        uses: cypress-io/github-action@v2
+        #uses: actions/download-artifact@v2
+      # Run Eslint checks
+      - name: Eslint run
+        run: ./node_modules/.bin/eslint --ext js,jsx src

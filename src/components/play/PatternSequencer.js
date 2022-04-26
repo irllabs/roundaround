@@ -2,7 +2,6 @@ import React, { Component } from 'react'
 import { connect } from "react-redux";
 import { Button } from '@material-ui/core';
 import { withStyles } from '@material-ui/styles';
-import FormControlLabel from '@material-ui/core/FormControlLabel';
 import Switch from '@material-ui/core/Switch';
 import PropTypes from 'prop-types';
 import Box from '@material-ui/core/Box';
@@ -64,12 +63,12 @@ const styles = theme => ({
 
 class PatternSequencer extends Component {
     static contextType = FirebaseContext;
-    constructor (props) {
+    constructor(props) {
         super(props)
         this.onWriteClick = this.onWriteClick.bind(this)
         this.onPlayingSequenceToggle = this.onPlayingSequenceToggle.bind(this)
     }
-    onWriteClick () {
+    onWriteClick() {
         if (!this.props.display.isRecordingSequence) {
             // start write
             this.props.setUserPatternSequence(this.props.user.id, getDefaultUserPatternSequence())
@@ -82,23 +81,20 @@ class PatternSequencer extends Component {
         this.props.setIsRecordingSequence(!this.props.display.isRecordingSequence)
     }
 
-    onPlayingSequenceToggle (event) {
-        //   console.log('here 1');
+    onPlayingSequenceToggle(event) {
         this.props.setCurrentSequencePattern(0)
         this.props.setIsPlayingSequence(this.props.user.id, event.target.checked)
-        // console.log('here 2', this.props.round.userPatterns[this.props.user.id]);
         let userPatternsClone = _.cloneDeep(this.props.round.userPatterns[this.props.user.id])
         userPatternsClone.isPlayingSequence = event.target.checked
         this.context.saveUserPatterns(this.props.round.id, this.props.user.id, userPatternsClone)
-        // console.log('here 3');
     }
 
-    getPatternOrderDisplay (id) {
+    getPatternOrderDisplay(id) {
         let pattern = _.find(this.props.round.userPatterns[this.props.user.id].patterns, { id: id })
         return pattern.order + 1
     }
 
-    render () {
+    render() {
         const { classes } = this.props;
         let items = []
         if (!_.isNil(this.props.round) && !_.isNil(this.props.round.userPatterns) && !_.isNil(this.props.round.userPatterns[this.props.user.id])) {
@@ -125,9 +121,8 @@ class PatternSequencer extends Component {
                     ))}
 
                 </Box>
-                { (!_.isNil(this.props.user) && !_.isNil(this.props.round) && !_.isNil(this.props.round.userPatterns[this.props.user.id])) &&
+                {(!_.isNil(this.props.user) && !_.isNil(this.props.round) && !_.isNil(this.props.round.userPatterns[this.props.user.id])) &&
                     <>
-
                         <Button size="small" variant="contained" color="secondary" disableElevation onClick={this.onWriteClick}>{this.props.display.isRecordingSequence ? 'Stop' : 'Write'}</Button>
                         <Box className={classes.switchContainer}>
                             <SequenceOffIcon className={classes.sequenceOffIcon} />
@@ -138,7 +133,6 @@ class PatternSequencer extends Component {
                             />
                             <SequenceIcon className={classes.sequenceIcon} />
                         </Box>
-
                     </>
                 }
             </Box>

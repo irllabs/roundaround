@@ -1,10 +1,11 @@
 {
-  "chromeWebSecurity": false,
-  "baseUrl": "http://localhost:3000/",
-  "defaultCommandTimeout": 15000,
-  "viewportWidth": 1300,
-  "reporter": "junit",
-  "reporterOptions": {
-    "mochaFile": "cypress/results/cypress-report-[hash].xml"
-  }
+	"chromeWebSecurity": false,
+	"baseUrl": "https://roundaround-dev.web.app/",
+	"defaultCommandTimeout": 20000,
+	"viewportWidth": 1300,
+	"reporter": "junit",
+	"reporterOptions": {
+		"mochaFile": "cypress/results/cypress-report-[hash].xml"
+	},
+	"projectId": "miag47"
 }
