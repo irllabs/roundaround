@@ -201,7 +201,6 @@ const SignInDialog = ({ isShowingSignInDialog, setIsShowingSignInDialog, setSign
                 !isShowingEmailForm && !isShowingEmailSignupForm && !isShowingUseAsGuestForm &&
                 <>
                     <DialogTitle className={classes.title} id="simple-dialog-title">
-
                         Sign in
                     </DialogTitle>
                     <Box className={classes.body}>
@@ -277,7 +276,6 @@ const SignInDialog = ({ isShowingSignInDialog, setIsShowingSignInDialog, setSign
                                 <strong>Sign in</strong>
                             </Button>
                         </form>
-
                     </Box>
                 </>
             }
