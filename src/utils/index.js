@@ -52,7 +52,7 @@ export const changeLayerLength = (layer, newLength) => {
     }
 
     if (oldLength < newLength) {
-        if (newLength % oldLength == 0) {
+        if (newLength % oldLength === 0) {
             // new length fits neatly in to old length
             let multiple = newLength / oldLength
             // console.log('new length is multiple of old', multiple);
@@ -67,7 +67,7 @@ export const changeLayerLength = (layer, newLength) => {
             }
         }
     } else {
-        if (oldLength % newLength == 0) {
+        if (oldLength % newLength === 0) {
             // new length fits neatly in to old length
             let multiple = oldLength / newLength
             // console.log('new length is multiple of old', multiple);
