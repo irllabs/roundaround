@@ -55,7 +55,7 @@ We use [git flow](https://www.atlassian.com/git/tutorials/comparing-workflows/gi
 - Create feature/bug branches for every issue; put issue ID brance name, e.g. "bug/163-fix-step-count" for [Issue #163](https://github.com/irllabs/roundaround/issues/163) 
 - Merge `feature` branches into `stage` as soon as it's ready to minimize merge conflicts and lack of transparency in what the code will look like once it's deployed to `prod`.
 
-### Branchines
+### Branches
 - `master` - always runs, is deployed to `prod` (http://rounds.studio and http:/rounds.irl.studio)
 - `stage` - always runs, features are merged to it; is deployed to `stage` (http://roundaround-stage.web.app) when testing integration of features
 - `feature/<GitHub-issue-number>-<Feature-Description>` - one for each issue labeled as `enhancement` in github, deployed to `dev` (http://roundaround-dev.web.app) when testing a feature is useful
@@ -77,7 +77,7 @@ We use [git flow](https://www.atlassian.com/git/tutorials/comparing-workflows/gi
 
 Summary - we never make a branch off master, only stage, and we only ever merge into master after stage is fully regression tested. We try to get feature branches into stage as soon as possible, so we can be confident we're always moving forward building on tested and verified work.
 
-
+=======
 
 ## Testing
 - As of now there's a git hook to make sure any code committed is linted and doesn't add malformed js
