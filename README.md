@@ -77,8 +77,6 @@ We use [git flow](https://www.atlassian.com/git/tutorials/comparing-workflows/gi
 
 Summary - we never make a branch off master, only stage, and we only ever merge into master after stage is fully regression tested. We try to get feature branches into stage as soon as possible, so we can be confident we're always moving forward building on tested and verified work.
 
-=======
-
 ## Testing
 - As of now there's a git hook to make sure any code committed is linted and doesn't add malformed js
 - As of now there's a smoke test that runs locally to make sure the site still loads when pushing
