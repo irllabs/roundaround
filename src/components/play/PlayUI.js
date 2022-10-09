@@ -211,9 +211,18 @@ class PlayUI extends Component {
             redraw = true
         }
 
-        // add layer
+        // add layer or step
         if (!_.isNil(diff.added.layers)) {
             for (let [, layer] of Object.entries(diff.added.layers)) {
+                AudioEngine.createTrack(layer)
+            }
+            shouldRecalculateParts = true
+            redraw = true
+        }
+
+        // add remove layer or step
+        if (!_.isNil(diff.deleted.layers)) {
+            for (let [, layer] of Object.entries(diff.deleted.layers)) {
                 AudioEngine.createTrack(layer)
             }
             shouldRecalculateParts = true
