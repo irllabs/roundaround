@@ -211,6 +211,12 @@ class PlayUI extends Component {
             redraw = true
         }
 
+        console.log('PlayUI', {
+            'diff.added': diff.added,
+            'diff.deleted': diff.deleted,
+            'this.round.layers': this.round.layers,
+        })
+
         // add layer or step
         if (!_.isNil(diff.added.layers)) {
             for (let [, layer] of Object.entries(diff.added.layers)) {
