@@ -1280,13 +1280,18 @@ class PlayUI extends Component {
     }
 
     getOrientation() {
-        let orientation;
-        if (window.orientation === 0 || window.orientation === 180) {
-            orientation = 'portrait'
-        } else {
-            orientation = 'landscape'
+        // Only phones and tablets are asked to rotate; a narrow desktop window is left alone.
+        const isTouchDevice = window.matchMedia && window.matchMedia('(pointer: coarse)').matches
+        if (!isTouchDevice) {
+            return 'landscape'
         }
-        return orientation
+        if (window.screen && window.screen.orientation && window.screen.orientation.type) {
+            return window.screen.orientation.type.startsWith('portrait') ? 'portrait' : 'landscape'
+        }
+        if (window.matchMedia && window.matchMedia('(orientation: portrait)').matches) {
+            return 'portrait'
+        }
+        return 'landscape'
     }
 
     checkOrientation() {

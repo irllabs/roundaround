@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useEffect, useContext } from 'react'
+import React, { useState, useEffect, useContext, useMemo, useRef } from 'react'
 import { useDispatch } from "react-redux";
 import Typography from '@material-ui/core/Typography';
 import Slider from '@material-ui/core/Slider';
@@ -72,75 +72,71 @@ export default function LayerPercentOffset({
     const firebase = useContext(FirebaseContext);
     const [sliderValue, setSliderValue] = useState(selectedLayer.percentOffset || 0)
     const [type, updateType] = useState('perc')
+    const isDragging = useRef(false)
 
-    useEffect(() => {
-        if (type === 'perc') {
-            setSliderValue(selectedLayer.percentOffset)
+    // Created once; reads changing values through a ref and takes the layer id as an argument so
+    // it can never write to a previously selected layer.
+    const latest = useRef({})
+    latest.current = { dispatch, firebase, roundId }
+
+    const persistOffset = useMemo(() => _.throttle((offsetType, value, layerId) => {
+        const { dispatch, firebase, roundId } = latest.current
+        if (offsetType === 'perc') {
+            dispatch({ type: SET_LAYER_PERCENT_OFFSET, payload: { id: layerId, value } })
+            firebase.updateLayer(roundId, layerId, { percentOffset: value }).catch(error => console.error('Could not save offset', error))
         } else {
-            setSliderValue(selectedLayer.timeOffset)
+            dispatch({ type: SET_LAYER_TIME_OFFSET, payload: { id: layerId, value } })
+            firebase.updateLayer(roundId, layerId, { timeOffset: value }).catch(error => console.error('Could not save offset', error))
         }
-    }, [type, selectedLayer])
+    }, 500), [])
 
-    const updateLayerPercentOffsetState = (percent, selectedLayerId) => {
-        dispatch({ type: SET_LAYER_PERCENT_OFFSET, payload: { id: selectedLayerId, value: percent } })
-        firebase.updateLayer(roundId, selectedLayer.id, { percentOffset: percent })
-    }
+    useEffect(() => () => persistOffset.cancel(), [persistOffset])
 
-    const updateLayerTimeOffsetState = (ms, selectedLayerId) => {
-        dispatch({ type: SET_LAYER_TIME_OFFSET, payload: { id: selectedLayerId, value: ms } })
-        firebase.updateLayer(roundId, selectedLayer.id, { timeOffset: ms })
-    }
-
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    const updateLayerPercentOffsetStateThrottled = useCallback(_.throttle(function (percent, selectedLayerId) {
-        updateLayerPercentOffsetState(percent, selectedLayerId)
-    }, 1000), []);
-
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    const updateLayerTimeOffsetStateThrottled = useCallback(_.throttle(function (ms, selectedLayerId) {
-        updateLayerTimeOffsetState(ms, selectedLayerId)
-    }, 1000), []);
-
-    const onSliderTimeChange = (e, ms) => {
-        setSliderValue(ms)
-        updateLayerTimeOffsetStateThrottled(ms, selectedLayer.id)
-        // Update UI directly for performance reasons (instead of going via redux)
-        playUIRef.adjustLayerOffset(selectedLayer.id, selectedLayer.percentOffset, ms)
-    }
-
-    const onSliderPercChange = (e, percent) => {
-        setSliderValue(percent)
-        updateLayerPercentOffsetStateThrottled(percent, selectedLayer.id)
-        // Update UI directly for performance reasons (instead of going via redux)
-        playUIRef.adjustLayerOffset(selectedLayer.id, percent, selectedLayer.timeOffset)
-    }
-
+    // Follow the layer's stored value when the layer or the mode changes, or when the value
+    // changes underneath us (loading a preset), but never while the user is dragging.
     useEffect(() => {
-        setSliderValue(selectedLayer.percentOffset || 0)
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [selectedLayer.id])
+        if (isDragging.current) {
+            return
+        }
+        setSliderValue((type === 'perc' ? selectedLayer.percentOffset : selectedLayer.timeOffset) || 0)
+    }, [type, selectedLayer.id, selectedLayer.percentOffset, selectedLayer.timeOffset])
 
-    const _onChange = (e, v) => {
-        if (type === 'perc') onSliderPercChange(e, v)
-        else if (type === 'ms') onSliderTimeChange(e, v)
+    const _onChange = (e, value) => {
+        isDragging.current = true
+        setSliderValue(value)
+        persistOffset(type, value, selectedLayer.id)
+        // Update UI directly for performance reasons (instead of going via redux)
+        if (playUIRef && playUIRef.adjustLayerOffset) {
+            if (type === 'perc') {
+                playUIRef.adjustLayerOffset(selectedLayer.id, value, selectedLayer.timeOffset)
+            } else {
+                playUIRef.adjustLayerOffset(selectedLayer.id, selectedLayer.percentOffset, value)
+            }
+        }
     }
+
+    const _onChangeCommitted = () => {
+        isDragging.current = false
+        persistOffset.flush()
+    }
+
     return (
         <Box className={classes.root} display="flex" flexDirection="column">
             <FormControl className={classes.formControl}>
-                <Typography style={{ marginBottom: 5, fontSize: 14 }} id="continuous-slider" variant="caption" gutterBottom>
+                <Typography style={{ marginBottom: 5, fontSize: 14 }} id="layer-offset-label" variant="caption" gutterBottom>
                     Time Offset
                 </Typography>
                 {horizontal &&
                     <Box className={classes.offsetDisplay}>
-                        <IconButton ref={percentageButtonRef} onClick={() => updateType('perc')} className={classes.switchButton} style={type === 'perc' ? { backgroundColor: 'rgba(255,255,255,0.1)', } : {}}>
+                        <IconButton ref={percentageButtonRef} aria-label="Offset as a percentage of a step" aria-pressed={type === 'perc'} onClick={() => updateType('perc')} className={classes.switchButton} style={type === 'perc' ? { backgroundColor: 'rgba(255,255,255,0.1)', } : {}}>
                             <img style={{ width: 13, height: 18 }} alt='percentage' src={Percentage} />
                         </IconButton>
-                        <IconButton ref={msButtonRef} onClick={() => updateType('ms')} className={classes.switchButton} style={type === 'ms' ? { backgroundColor: 'rgba(255,255,255,0.1)' } : {}}>
+                        <IconButton ref={msButtonRef} aria-label="Offset in milliseconds" aria-pressed={type === 'ms'} onClick={() => updateType('ms')} className={classes.switchButton} style={type === 'ms' ? { backgroundColor: 'rgba(255,255,255,0.1)' } : {}}>
                             <Typography style={{ fontWeight: '600', lineHeight: 1.5 }}>ms</Typography>
                         </IconButton>
                     </Box >
                 }
-                <Slider ref={offsetSliderRef} value={sliderValue} min={-100} max={100} valueLabelDisplay="off" onChange={_onChange} aria-labelledby="continuous-slider" />
+                <Slider ref={offsetSliderRef} value={sliderValue} min={-100} max={100} valueLabelDisplay="off" onChange={_onChange} onChangeCommitted={_onChangeCommitted} aria-labelledby="layer-offset-label" />
             </FormControl >
         </Box >
     )

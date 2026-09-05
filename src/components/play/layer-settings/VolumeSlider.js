@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useEffect, useContext } from 'react'
+import React, { useState, useEffect, useContext, useMemo, useRef } from 'react'
 import { useDispatch } from "react-redux";
 import Slider from '@material-ui/core/Slider';
 import _ from 'lodash'
@@ -30,31 +30,50 @@ export default function VolumeSlider({ selectedLayer, sliderRef, user, roundId, 
     const dispatch = useDispatch();
     const firebase = useContext(FirebaseContext);
     const [sliderValue, setSliderValue] = useState(80)
-    const updateVolumeState = (dB, selectedLayerId) => {
-        dispatch({ type: SET_LAYER_GAIN, payload: { id: selectedLayerId, value: dB, user: user.id } })
-        firebase.updateLayer(roundId, selectedLayer.id, { gain: dB })
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    const updateVolumeStateThrottled = useCallback(_.throttle(function (dB, selectedLayerId) {
-        updateVolumeState(dB, selectedLayerId)
-    }, 2000), []);
+    const isDragging = useRef(false)
+
+    // The throttled writer is created once, so it reads everything that can change through a ref
+    // and takes the layer id as an argument. Before this it closed over the first layer ever
+    // selected and saved later changes to that layer's document.
+    const latest = useRef({})
+    latest.current = { dispatch, firebase, roundId, userId: user ? user.id : null }
+
+    const persistGain = useMemo(() => _.throttle((dB, layerId) => {
+        const { dispatch, firebase, roundId, userId } = latest.current
+        dispatch({ type: SET_LAYER_GAIN, payload: { id: layerId, value: dB, user: userId } })
+        firebase.updateLayer(roundId, layerId, { gain: dB }).catch(error => console.error('Could not save volume', error))
+    }, 500), [])
+
+    useEffect(() => () => persistGain.cancel(), [persistGain])
+
     const onSliderChange = (e, percent) => {
         e.preventDefault()
         e.stopPropagation()
+        isDragging.current = true
         setSliderValue(percent)
         const dB = convertPercentToDB(percent)
-        AudioEngine.tracksById[selectedLayer.id].setVolume(dB)
-        updateVolumeStateThrottled(dB, selectedLayer.id)
+        const track = AudioEngine.tracksById[selectedLayer.id]
+        if (!_.isNil(track)) {
+            track.setVolume(dB)
+        }
+        persistGain(dB, selectedLayer.id)
+    }
+
+    const onSliderChangeCommitted = () => {
+        isDragging.current = false
+        persistGain.flush()
     }
 
     useEffect(() => {
-        setSliderValue(convertDBToPercent(selectedLayer.gain))
+        if (!isDragging.current) {
+            setSliderValue(convertDBToPercent(selectedLayer.gain))
+        }
     }, [selectedLayer.id, selectedLayer.gain])
 
     const classes = styles()
     return (
         <Box className={classes.root}>
-            {!hideText && <Typography variant="caption">Volume</Typography>}
+            {!hideText && <Typography id={`volume-slider-${selectedLayer.id}`} variant="caption">Volume</Typography>}
             <Slider
                 ref={sliderRef}
                 className={classes.slider}
@@ -62,10 +81,11 @@ export default function VolumeSlider({ selectedLayer, sliderRef, user, roundId, 
                 value={selectedLayer.isMuted ? 0 : Math.floor(sliderValue)}
                 min={0}
                 max={100}
-                aria-labelledby="vertical-slider"
-                //marks={verticalSliderMarks}
+                aria-label={hideText ? 'Volume' : undefined}
+                aria-labelledby={hideText ? undefined : `volume-slider-${selectedLayer.id}`}
                 valueLabelDisplay="auto"
                 onChange={onSliderChange}
+                onChangeCommitted={onSliderChangeCommitted}
             />
         </Box>
     )

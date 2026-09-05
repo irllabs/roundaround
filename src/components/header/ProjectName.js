@@ -10,8 +10,9 @@ import MenuList from '@material-ui/core/MenuList';
 import ExpandMoreIcon from '@material-ui/icons/ExpandMore';
 import { makeStyles } from '@material-ui/core/styles';
 import _ from 'lodash'
-import { uuid } from '../../utils/index';
-import { setRound, setIsShowingRenameDialog, setIsShowingDeleteRoundDialog, setSelectedRoundId } from '../../redux/actions';
+import { useHistory } from 'react-router-dom';
+import { duplicateRound } from '../../utils/index';
+import { setRounds, setIsShowingRenameDialog, setIsShowingDeleteRoundDialog, setSelectedRoundId } from '../../redux/actions';
 import { FirebaseContext } from '../../firebase';
 import { Box } from '@material-ui/core';
 
@@ -32,8 +33,9 @@ const useStyles = makeStyles((theme) => ({
     }
 }));
 
-function ProjectName({ name, setIsShowingRenameDialog, setIsShowingDeleteRoundDialog, setRound, round, setSelectedRoundId }) {
+function ProjectName({ name, setIsShowingRenameDialog, setIsShowingDeleteRoundDialog, round, rounds, user, setRounds, setSelectedRoundId }) {
     const classes = useStyles();
+    const history = useHistory();
     const [open, setOpen] = React.useState(false);
     const anchorRef = React.useRef(null);
     const firebase = useContext(FirebaseContext);
@@ -63,12 +65,19 @@ function ProjectName({ name, setIsShowingRenameDialog, setIsShowingDeleteRoundDi
         setIsShowingDeleteRoundDialog(true)
     }
     const onDuplicateClick = async () => {
-        let clonedRound = _.cloneDeep(round)
-        clonedRound.id = uuid()
-        clonedRound.name += ' (duplicate)'
-        await firebase.createRound(clonedRound)
-        setRound(clonedRound)
         setOpen(false)
+        if (_.isNil(round) || _.isNil(user)) {
+            return
+        }
+        try {
+            const clonedRound = duplicateRound(round, user.id)
+            await firebase.createRound(clonedRound)
+            setRounds([clonedRound, ...rounds])
+            // open the copy; the original keeps its listeners until PlayRoute unmounts
+            history.push('/play/' + clonedRound.id)
+        } catch (error) {
+            console.error('Could not duplicate round', error)
+        }
     }
 
     function handleListKeyDown(event) {
@@ -93,7 +102,7 @@ function ProjectName({ name, setIsShowingRenameDialog, setIsShowingDeleteRoundDi
             <Box style={{ display: 'flex', flexDirection: 'column' }}>
                 <Button
                     ref={anchorRef}
-                    aria-controls={open ? 'menu-list-grow' : undefined}
+                    aria-controls={open ? 'project-name-menu' : undefined}
                     aria-haspopup="true"
                     endIcon={<ExpandMoreIcon />}
                     onClick={handleToggle}
@@ -108,7 +117,7 @@ function ProjectName({ name, setIsShowingRenameDialog, setIsShowingDeleteRoundDi
                         >
                             <Paper className={classes.paper}>
                                 <ClickAwayListener onClickAway={handleClose}>
-                                    <MenuList style={{ width: '100%' }} autoFocusItem={open} id="menu-list-grow" onKeyDown={handleListKeyDown}>
+                                    <MenuList style={{ width: '100%' }} autoFocusItem={open} id="project-name-menu" onKeyDown={handleListKeyDown}>
                                         <MenuItem onClick={onDuplicateClick}>Duplicate</MenuItem>
                                         <MenuItem onClick={onRenameClick}>Rename</MenuItem>
                                         <MenuItem onClick={onDeleteClick}>Delete</MenuItem>
@@ -124,14 +133,16 @@ function ProjectName({ name, setIsShowingRenameDialog, setIsShowingDeleteRoundDi
 }
 const mapStateToProps = state => {
     return {
-        round: state.round
+        round: state.round,
+        rounds: state.rounds,
+        user: state.user
     };
 };
 
 export default connect(
     mapStateToProps,
     {
-        setRound,
+        setRounds,
         setIsShowingDeleteRoundDialog,
         setIsShowingRenameDialog,
         setSelectedRoundId

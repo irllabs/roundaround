@@ -152,7 +152,7 @@ class Header extends Component {
 				{isPlayMode &&
 					<>
 						<Box style={{ display: 'flex', flexDirection: 'row', alignItems: 'center' }}>
-							<IconButton data-test="button-back-to-rounds" to="/rounds" component={Link}>
+							<IconButton data-test="button-back-to-rounds" aria-label="Back to my rounds" to="/rounds" component={Link}>
 								<BackButton />
 							</IconButton>
 							<Box style={{ marginLeft: 8 }}>
@@ -177,13 +177,17 @@ class Header extends Component {
 									))
 								}
 							</Box>
-							{users.length > 1 && <JitsiComponent />}
-							<Box>
-								<IconButton className={classes.shareButton} onClick={this.onShareClick}><ShareIcon /></IconButton>
-							</Box>
-							<Box>
-								<HeaderMenu />
-							</Box>
+							{round && users.length > 1 && <JitsiComponent />}
+							{round &&
+								<Box>
+									<IconButton aria-label="Share this round" className={classes.shareButton} onClick={this.onShareClick}><ShareIcon /></IconButton>
+								</Box>
+							}
+							{round &&
+								<Box>
+									<HeaderMenu />
+								</Box>
+							}
 						</Box>
 					</>
 				}

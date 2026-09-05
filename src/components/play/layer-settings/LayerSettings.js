@@ -809,6 +809,7 @@ class LayerSettings extends Component {
                         <Box style={{ display: 'flex', flex: 1, flexDirection: 'row' }}>
                             <Box className={classes.actionButtonContainer}>
                                 <LayerInstrument
+                                    key={selectedLayer.id}
                                     showInstrumentsPopup={showInstrumentsPopup}
                                     instrumentsListRef={this.instrumentsListButton}
                                     articulationsListRef={this.articulationsListButton}
@@ -852,6 +853,7 @@ class LayerSettings extends Component {
                             </Box>
                             <Box className={classes.actionButtonContainer}>
                                 <LayerPopup
+                                    key={selectedLayer.id}
                                     addStepsButtonRef={this.addStepsButton}
                                     subtractStepsButtonRef={this.subtractStepsButton}
                                     percentageButtonRef={this.percentageButton}
@@ -879,6 +881,7 @@ class LayerSettings extends Component {
                             </Box>
                             <Box className={classes.actionButtonContainer}>
                                 <VolumePopup
+                                    key={selectedLayer.id}
                                     onMute={this.onMuteClick}
                                     onSolo={this.onSoloClick}
                                     muteRef={this.muteToggle}

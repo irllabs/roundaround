@@ -136,6 +136,7 @@ const ShareDialog = ({ round, isShowingShareDialog, setIsShowingShareDialog, set
                 </Box>
                 <Box className={classes.linkContainer}>
                     <TextField
+                        id="share-link"
                         inputRef={inputRef}
                         value={link}
                         label="Link"

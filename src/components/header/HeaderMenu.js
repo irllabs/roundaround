@@ -59,7 +59,8 @@ export default function HeaderMenu({ name }) {
 
     const onFullscreenClick = () => {
         var element = document.documentElement;
-        if (_.isNil(document.fullscreenElement)) {
+        const fullscreenElement = document.fullscreenElement || document.webkitFullscreenElement || document.msFullscreenElement
+        if (_.isNil(fullscreenElement)) {
             if (element.requestFullscreen) {
                 element.requestFullscreen();
             } else if (element.webkitRequestFullscreen) { /* Safari */
@@ -93,7 +94,8 @@ export default function HeaderMenu({ name }) {
             <Box>
                 <IconButton
                     ref={anchorRef}
-                    aria-controls={open ? 'menu-list-grow' : undefined}
+                    aria-label="More options"
+                    aria-controls={open ? 'header-menu-list' : undefined}
                     aria-haspopup="true"
                     onClick={handleToggle}>
                     <MoreHorizIcon />
@@ -107,7 +109,7 @@ export default function HeaderMenu({ name }) {
                             <Paper className={classes.paper} size="md">
                                 <ClickAwayListener onClickAway={handleClose}>
                                     <Box>
-                                        <MenuList autoFocusItem={open} id="menu-list-grow" onKeyDown={handleListKeyDown}>
+                                        <MenuList autoFocusItem={open} id="header-menu-list" onKeyDown={handleListKeyDown}>
                                             <MenuItem onClick={onFullscreenClick} className={classes.menuListItem}><ListItemIcon>
                                                 <FullscreenIcon fontSize="small" />
                                             </ListItemIcon>Fullscreen</MenuItem>

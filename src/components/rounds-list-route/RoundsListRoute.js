@@ -28,7 +28,7 @@ import Paper from '@material-ui/core/Paper';
 import Popper from '@material-ui/core/Popper';
 import MenuItem from '@material-ui/core/MenuItem';
 import MenuList from '@material-ui/core/MenuList';
-import { uuid } from '../../utils/index'
+import { duplicateRound } from '../../utils/index'
 
 const styles = theme => ({
     root: {
@@ -107,18 +107,20 @@ class RoundsListRoute extends Component {
         this.props.setIsShowingRenameDialog(true)
     }
     onDuplicateClick = async () => {
-        let selectedRound = await this.context.getRound(this.props.selectedRoundId)
-        let clonedRound = _.cloneDeep(selectedRound)
-        clonedRound.id = uuid()
-        clonedRound.name += ' (duplicate)'
-        clonedRound.createdAt = Date.now()
-        await this.context.createRound(clonedRound)
-        let clonedRounds = _.cloneDeep(this.props.rounds)
-        clonedRounds.push(clonedRound)
-        this.props.setRounds(clonedRounds)
         this.setState({
             menuIsOpen: false
         })
+        try {
+            const selectedRound = await this.context.getRound(this.props.selectedRoundId)
+            if (_.isNil(selectedRound)) {
+                return
+            }
+            const clonedRound = duplicateRound(selectedRound, this.props.user.id)
+            await this.context.createRound(clonedRound)
+            this.props.setRounds([clonedRound, ...this.props.rounds])
+        } catch (error) {
+            console.error('Could not duplicate round', error)
+        }
     }
     onDeleteClick = () => {
         this.setState({

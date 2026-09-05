@@ -237,7 +237,7 @@ const SignInDialog = ({ isShowingSignInDialog, setIsShowingSignInDialog, setSign
                         <ArrowBackIcon />
                     </IconButton>Sign in with email</DialogTitle>
                     <Box className={classes.body}>
-                        <form className={classes.emailForm} noValidate autoComplete="off">
+                        <form className={classes.emailForm} noValidate autoComplete="off" onSubmit={(e) => { e.preventDefault(); onEmailSigninClick() }}>
                             <TextField
                                 type="email"
                                 ref={emailAddressInput}
@@ -286,7 +286,7 @@ const SignInDialog = ({ isShowingSignInDialog, setIsShowingSignInDialog, setSign
                         <ArrowBackIcon />
                     </IconButton>Continue as guest</DialogTitle>
                     <Box className={classes.body}>
-                        <form className={classes.emailForm} noValidate autoComplete="off">
+                        <form className={classes.emailForm} noValidate autoComplete="off" onSubmit={(e) => { e.preventDefault(); onContinueAsGuestClick() }}>
                             <TextField
                                 ref={displayNameGuestInput}
                                 className={classes.emailFormItem}
@@ -324,7 +324,7 @@ const SignInDialog = ({ isShowingSignInDialog, setIsShowingSignInDialog, setSign
                         <ArrowBackIcon />
                     </IconButton>Sign up with email</DialogTitle>
                     <Box className={classes.body}>
-                        <form className={classes.emailForm} noValidate autoComplete="off">
+                        <form className={classes.emailForm} noValidate autoComplete="off" onSubmit={(e) => { e.preventDefault(); onEmailSignupClick() }}>
                             <TextField ref={displayNameSignupInput} className={classes.emailFormItem} label="Name" variant="outlined" InputProps={{
                                 className: classes.input
                             }} />

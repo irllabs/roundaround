@@ -8,6 +8,7 @@ import IconButton from '@material-ui/core/IconButton'
 import { SET_LAYER_STEPS } from '../../../redux/actionTypes'
 import { FirebaseContext } from '../../../firebase';
 import { changeLayerLength } from '../../../utils/index'
+import { Limits } from '../../../utils/constants'
 
 import Minus from './resources/svg/minus.svg'
 import Plus from './resources/svg/plus.svg'
@@ -87,27 +88,32 @@ const StepsDisplay = ({
     const onNumberOfStepsChange = (steps) => {
         const newSteps = changeLayerLength(selectedLayer, steps)
         dispatch({ type: SET_LAYER_STEPS, payload: { id: selectedLayer.id, steps: newSteps, user: user.id } })
-        firebase.updateLayer(round.id, selectedLayer.id, selectedLayer)
+        // Save what was just dispatched. Saving the stale `selectedLayer` object here used to write
+        // the old steps back, so the new step count never reached Firestore.
+        firebase.updateLayer(round.id, selectedLayer.id, { steps: newSteps }).catch(error => console.error('Could not save steps', error))
     }
 
-    const increaseSteps = () => onNumberOfStepsChange(steps + 1)
+    const increaseSteps = () => {
+        if (steps < Limits.stepsPerLayer.max)
+            onNumberOfStepsChange(steps + 1)
+    }
 
     const decreaseSteps = () => {
-        if (steps > 1)
+        if (steps > Limits.stepsPerLayer.min)
             onNumberOfStepsChange(steps - 1)
     }
     return (
         <Box style={{ borderBottom: 'thin solid rgba(255, 255, 255, 0.1)', padding: 20 }}>
             <Typography style={{ fontSize: 14 }} id="step-count" variant="caption" gutterBottom>Steps</Typography>
             <Box className={classes.stepControls}>
-                <IconButton ref={subtractStepsButtonRef} onClick={decreaseSteps} className={classes.stepButtons}>
-                    <img alt='less' src={Minus} />
+                <IconButton ref={subtractStepsButtonRef} aria-label="Fewer steps" onClick={decreaseSteps} className={classes.stepButtons}>
+                    <img alt='' src={Minus} />
                 </IconButton>
                 <Box className={classes.stepCount}>
-                    <input disabled className={classes.stepsInput} value={steps || 0} />
+                    <input readOnly aria-label="Number of steps" className={classes.stepsInput} value={steps || 0} />
                 </Box>
-                <IconButton ref={addStepsButtonRef} onClick={increaseSteps} className={classes.stepButtons}>
-                    <img alt='more' src={Plus} />
+                <IconButton ref={addStepsButtonRef} aria-label="More steps" onClick={increaseSteps} className={classes.stepButtons}>
+                    <img alt='' src={Plus} />
                 </IconButton>
             </Box>
         </Box>
