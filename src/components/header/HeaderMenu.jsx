@@ -12,7 +12,6 @@ import IconButton from '@material-ui/core/IconButton';
 import MoreHorizIcon from '@material-ui/icons/MoreHoriz';
 import FullscreenIcon from '@material-ui/icons/Fullscreen';
 import TempoSlider from './TempoSlider'
-//import SwingSlider from './SwingSlider'
 import ListItemIcon from '@material-ui/core/ListItemIcon';
 import _ from 'lodash'
 
