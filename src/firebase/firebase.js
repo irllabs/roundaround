@@ -53,10 +53,11 @@ class Firebase {
         return userSnapshot.exists ? { id: userSnapshot.id, ...userSnapshot.data() } : null
     }
 
+    /** Creates or completes a user profile. Merges so two writers (sign-up dialog and the auth observer) cannot wipe each other's fields. */
     createUser = async (userData) => {
         const user = _.cloneDeep(userData)
         delete user.id
-        await this.db.collection('users').doc(userData.id).set(user)
+        await this.db.collection('users').doc(userData.id).set(user, { merge: true })
     }
 
     updateUser = async (id, userData) => {

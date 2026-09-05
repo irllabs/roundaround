@@ -175,7 +175,6 @@ JitsiComponent.propTypes = {
 };
 
 const mapStateToProps = state => {
-    //console.log('mapStateToProps', state);
     return {
         round: state.round,
         display: state.display,

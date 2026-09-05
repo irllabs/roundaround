@@ -40,7 +40,6 @@ export default class Track {
             // todo fix this better, for some reason fx are not bypassing correctly to start with
             setTimeout(() => {
                 // bypass all effects
-                // console.log('fx hack todo: fix this');
                 for (const effect of _this.sortedFx) {
                     effect.setBypass(true)
                 }
@@ -85,7 +84,6 @@ export default class Track {
         })
     }
     buildAudioChain () {
-        // console.log('Track::buildAudioChain()', this.type, this.id, this.instrument);
         if (this.type === Track.TRACK_TYPE_MASTER) {
             this.channel.toDestination()
         } else if (this.type !== Track.TRACK_TYPE_AUTOMATION) {
@@ -98,7 +96,6 @@ export default class Track {
                 //channel.toDestination()
                 // this.instrument.instrument.connect(channel)
 
-                // console.log('instrument channels', this.instrument.instrument.numberOfOutputs, 'channel numberOfInputs', this.channel.numberOfInputs, 'channel numberOfOutputs', this.channel.numberOfOutputs);
             }
             let onFx = _.filter(this.sortedFx, {
                 isOn: true
@@ -108,13 +105,11 @@ export default class Track {
                     let fx = onFx[i]
                     // connect channel to first fx
                     if (i === 0) {
-                        //   console.log('connecting channel to first fx', this.channel, 'to', fx);
                         this.channel.connect(fx.fx)
                     }
 
                     // connect previous fx to this one
                     if (i > 0) {
-                        //  console.log('connecting previous fx', onFx[i - 1], 'to', fx);
                         onFx[i - 1].fx.connect(fx.fx)
                     }
 
@@ -123,7 +118,6 @@ export default class Track {
                         if (this.type === Track.TRACK_TYPE_LAYER) {
                             fx.fx.connect(AudioEngine.busesByUser[this.userId].channel)
                         } else if (this.type === Track.TRACK_TYPE_USER) {
-                            //  console.log('connect last fx to master', fx, 'to', AudioEngine.master.channel);
                             fx.fx.connect(AudioEngine.master.channel)
                         } else {
                             fx.fx.toDestination()
@@ -132,13 +126,10 @@ export default class Track {
                 }
             } else {
                 if (this.type === Track.TRACK_TYPE_LAYER) {
-                    // console.log('track connecting to ', AudioEngine.busesByUser[this.userId]);
                     this.channel.connect(AudioEngine.busesByUser[this.userId].channel)
                 } else if (this.type === Track.TRACK_TYPE_USER) {
-                    // console.log('track connecting to master');
                     this.channel.connect(AudioEngine.master.channel)
                 } else {
-                    //  console.log('track connecting to destination',);
                     this.channel.toDestination()
                 }
             }
@@ -176,12 +167,10 @@ export default class Track {
             try {
                 this.channel.dispose()
             } catch (e) {
-                console.log('caught channel dispose error', e)
             }
         }
     }
     calculatePart (layer, userPatterns) {
-        //console.log('Track::calculatePart()', layer, userPatterns);
         this.trackParameters = layer
         if (!_.isNil(userPatterns)) {
             // if (!userPatterns.isPlayingSequence) {
@@ -200,7 +189,6 @@ export default class Track {
                 }
             }
             /*   } else {
-                   console.log('calculatePart sequence');
                }*/
         }
     }
@@ -213,7 +201,6 @@ export default class Track {
         }
         const percentOffsetTicks = Math.round((percentOffset / 100) * ticksPerStep)
         const timeOffsetTicks = this.msToTicks(timeOffset)
-        //console.log('convertStepsToNotes()', 'percentOffsetTicks', percentOffsetTicks, 'timeOffsetTicks', timeOffsetTicks);
         let notes = []
         let previousNote = null;
         for (let i = 0; i < steps.length; i++) {
@@ -237,7 +224,6 @@ export default class Track {
                 previousNote.duration += ticksPerStep
             }
         }
-        // console.log('notes', notes);
         return notes
     }
     msToTicks (ms) {
@@ -289,7 +275,6 @@ export default class Track {
         this.automation = new Automation(fxId, userId)
     }
     setVolume (value) {
-        //console.log('Track::setVolume()', value);
         const _this = this
         // temporary hack, todo investigate why this is necessary (when loading a preset the volume sometimes doesn't update)
         setTimeout(() => {
@@ -300,7 +285,6 @@ export default class Track {
         this.channel.solo = value
     }
     setMute (value) {
-        // console.log('Track::setMute()', value);
         const _this = this
         // temporary hack, todo investigate why this is necessary (when loading a preset the mute sometimes doesn't work)
         setTimeout(() => {
@@ -321,7 +305,6 @@ export default class Track {
         })
     }
     async setFXIsOn (fxId, value) {
-        // console.log('setFXIsOn', fxId, value);
         this.disconnectAudioChain()
         this.fx[fxId].isOn = value
         this.buildAudioChain()

@@ -24,13 +24,11 @@ export const changeLayerLength = (layer, newLength) => {
         if (newLength % oldLength === 0) {
             // new length fits neatly in to old length
             let multiple = newLength / oldLength
-            // console.log('new length is multiple of old', multiple);
             for (let i = 0; i < oldLength; i++) {
                 newSteps[i * multiple].isOn = layer.steps[i].isOn
             }
         } else {
             // new length doesn't fit neatly
-            //console.log('new length is not multiple of old');
             for (let i = 0; i < oldLength; i++) {
                 newSteps[i].isOn = layer.steps[i].isOn
             }
@@ -39,13 +37,11 @@ export const changeLayerLength = (layer, newLength) => {
         if (oldLength % newLength === 0) {
             // new length fits neatly in to old length
             let multiple = oldLength / newLength
-            // console.log('new length is multiple of old', multiple);
             for (let i = 0; i < newLength; i++) {
                 newSteps[i].isOn = layer.steps[i * multiple].isOn
             }
         } else {
             // new length doesn't fit neatly
-            // console.log('new length is not multiple of old');
             for (let i = 0; i < newLength; i++) {
                 newSteps[i].isOn = layer.steps[i].isOn
             }
@@ -124,4 +120,28 @@ export const duplicateRound = (round, userId) => {
     delete clone.shortLink
     delete clone.isPlaying
     return clone
+}
+
+/**
+ * Effective mute state per layer when `soloedLayerId` is soloed for this listener only
+ * (null means no solo): a layer plays if it is not muted and is the soloed one, or nothing is soloed.
+ */
+export const soloMuteStates = (layers, soloedLayerId) => {
+    const states = {}
+    for (const layer of layers || []) {
+        states[layer.id] = Boolean(layer.isMuted) || (!_.isNil(soloedLayerId) && layer.id !== soloedLayerId)
+    }
+    return states
+}
+
+/**
+ * The profile fields an auth user contributes to their users/{uid} document. Null fields are
+ * left out so a merge write never overwrites a display name chosen in the sign-up dialog.
+ */
+export const profileFromAuthUser = (authUser) => {
+    const profile = { id: authUser.uid, isGuest: Boolean(authUser.isAnonymous) }
+    if (authUser.displayName) profile.displayName = authUser.displayName
+    if (authUser.email) profile.email = authUser.email
+    if (authUser.photoURL) profile.avatar = authUser.photoURL
+    return profile
 }

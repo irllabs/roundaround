@@ -21,6 +21,7 @@ import LayerInstrument from './LayerInstrument'
 import LayerPopup from './LayerPopup'
 import VolumePopup from './VolumePopup'
 import { getDefaultLayerData } from '../../../utils/defaultData';
+import { soloMuteStates } from '../../../utils/index';
 import LayerListPopup from './LayerListPopup';
 import HamburgerPopup from './HamburgerPopup';
 import DeleteClearPopup from './DeleteClearPopup';
@@ -449,7 +450,8 @@ class LayerSettings extends Component {
             showDeleteClearPopup: false,
             windowWidth: 340,
             instrumentOptions: Instruments.getInstrumentOptions(false),
-            selectedInstrument: ''
+            selectedInstrument: '',
+            soloedLayerId: null
         }
         this.addLayerButton = React.createRef()
         this.mixerPopupButton = React.createRef()
@@ -492,9 +494,19 @@ class LayerSettings extends Component {
     }
 
     componentDidUpdate(prevProps) {
+        const { soloedLayerId } = this.state
+        if (!_.isNil(soloedLayerId) && this.props.round && prevProps.round !== this.props.round) {
+            if (_.isNil(_.find(this.props.round.layers, { id: soloedLayerId }))) {
+                // the soloed layer is gone
+                this.applySolo(null)
+                this.setState({ soloedLayerId: null })
+            } else {
+                // layers or mute flags changed underneath the solo: re-apply it
+                this.applySolo(soloedLayerId)
+            }
+        }
         if (this.props.round && this.props.selectedLayerId) {
             const selectedLayer = _.find(this.props.round.layers, { id: this.props.selectedLayerId })
-            //console.log('instrument in sampler', !selectedLayer.instrument.sampler.indexOf(this.state.selectedInstrument) > -1)
             if (selectedLayer &&
                 (
                     (prevProps.selectedLayerId !== this.props.selectedLayerId) ||
@@ -513,6 +525,9 @@ class LayerSettings extends Component {
     }
 
     componentWillUnmount() {
+        if (!_.isNil(this.state.soloedLayerId)) {
+            this.applySolo(null)
+        }
         window.removeEventListener('click', this.onClick)
         window.removeEventListener('resize', this.updateWindowWidth)
         window.removeEventListener('resize', this.resizeHeight)
@@ -540,8 +555,8 @@ class LayerSettings extends Component {
     }
 
     onClick = (e) => {
-        e.preventDefault()
-        e.stopPropagation()
+        // Click-away for the popups only; it must not cancel the click's default action or
+        // stop it reaching anything else (it used to preventDefault every click in the play view).
         const target = e.target;
         if ((
             (!this.instrumentPopupButton.current || (this.instrumentPopupButton.current && !this.instrumentPopupButton.current.contains(target)))
@@ -597,18 +612,28 @@ class LayerSettings extends Component {
         // TODO: only audible to this user (mute for all others)
     }
 
-    onSoloClick = async (selectedLayer) => {
-        const layers = this.props.round.layers
-        if (selectedLayer) {
-            await layers.forEach(layer => {
-                const id = layer.id;
-                const isMuted = !layer.isMuted;
-                if (selectedLayer.id !== id) {
-                    AudioEngine.tracksById[id].setMute(isMuted)
-                    this.props.dispatch({ type: SET_LAYER_MUTE, payload: { id, value: isMuted, user: this.props.user.id } })
-                    this.context.updateLayer(this.props.round.id, id, { isMuted })
-                }
-            });
+    // Solo is local to this listener: it silences the other layers in this browser's audio graph
+    // and never writes anyone's mute state. (The previous version inverted every other layer's
+    // saved mute flag, including collaborators' layers, for everyone in the round.)
+    onSoloClick = (selectedLayer) => {
+        if (!selectedLayer) {
+            return
+        }
+        const soloedLayerId = this.state.soloedLayerId === selectedLayer.id ? null : selectedLayer.id
+        this.applySolo(soloedLayerId)
+        this.setState({ soloedLayerId })
+    }
+
+    applySolo(soloedLayerId) {
+        if (_.isNil(this.props.round)) {
+            return
+        }
+        const muteStates = soloMuteStates(this.props.round.layers, soloedLayerId)
+        for (const [layerId, isMuted] of Object.entries(muteStates)) {
+            const track = AudioEngine.tracksById[layerId]
+            if (!_.isNil(track)) {
+                track.setMute(isMuted)
+            }
         }
     }
 
@@ -711,7 +736,6 @@ class LayerSettings extends Component {
     }
 
     render() {
-        // console.log('Layer settings render()', this.props.user);
         const {
             showMixerPopup,
             showInstrumentsPopup,
@@ -884,6 +908,7 @@ class LayerSettings extends Component {
                                     key={selectedLayer.id}
                                     onMute={this.onMuteClick}
                                     onSolo={this.onSoloClick}
+                                    isSoloed={this.state.soloedLayerId === selectedLayer.id}
                                     muteRef={this.muteToggle}
                                     soloRef={this.soloButton}
                                     volumeSliderRef={this.volumeSlider}
@@ -944,7 +969,6 @@ class LayerSettings extends Component {
 }
 
 const mapStateToProps = state => {
-    //  console.log('mapStateToProps', state);
     let selectedLayer = null;
     if (!_.isNil(state.display.selectedLayerId) && !_.isNil(state.round) && !_.isNil(state.round.layers)) {
         selectedLayer = _.find(state.round.layers, { id: state.display.selectedLayerId })

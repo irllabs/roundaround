@@ -100,7 +100,6 @@ export default class InstrumentBaseClass {
         notes, numberOfBars
     ) {
         let _this = this
-        // console.log('instrument loading notes', notes);
         this.clearPart()
         this.notes = _.cloneDeep(notes)
         this.beforeLoadPart(this.notes)
@@ -130,7 +129,6 @@ export default class InstrumentBaseClass {
             }
         }, this.notes)
         this.afterPartLoaded()
-        // console.log('this.part', this.part);
         this.part.loop = true
         this.part.loopEnd = numberOfBars + ":0:0"
         this.part.start(0)
@@ -155,7 +153,6 @@ export default class InstrumentBaseClass {
         }
     }
     getSampleMap (articulation) {
-        // console.log('getSampleMap', articulation);
         let map = {}
         let sampleIndex = 0
         for (let sample of articulation.samples) {
@@ -168,7 +165,6 @@ export default class InstrumentBaseClass {
         return map
     }
     /* getSampleMap () {
-         // console.log('getSampleMap', this.name, this.folder, this.articulations, this.parameters.articulation);
          let map = {
              'C4': '/samples/' + this.folder + '/' + this.parameters.articulation
          }
@@ -178,7 +174,6 @@ export default class InstrumentBaseClass {
         // based on this.parameters.articulation.samples calculate midi note that coresponds with velocity
         //return 12 // default 'C0' as midi note 12 ?
         let midiVelocity = numberRange(velocity, 0, 1, 0, 127)
-        //console.log('calculateMidiNoteFromVelocity', velocity, midiVelocity, this.articulations);
 
         const articulation = this.articulations[this.parameters.articulation]
         let sampleIndex = _.findIndex(articulation.samples, (articulation) => {

@@ -2,7 +2,7 @@ import React, { Component } from 'react';
 import _ from 'lodash';
 import { SVG } from '@svgdotjs/svg.js'
 import '@svgdotjs/svg.panzoom.js'
-import { HTML_UI_Params, PRESET_LETTERS } from '../../utils/constants'
+import { HTML_UI_Params, PRESET_LETTERS, KEY_MAPPINGS } from '../../utils/constants'
 import { connect } from "react-redux";
 import AudioEngine from '../../audio-engine/AudioEngine'
 import { getDefaultLayerData } from '../../utils/defaultData';
@@ -87,7 +87,7 @@ class PlayUI extends Component {
         this.isPlayingSequence = round.userPatterns[user.id].isPlayingSequence
         window.addEventListener('click', this.interfaceClicked)
         window.addEventListener('resize', this.onWindowResizeThrottled)
-        window.addEventListener('keypress', this.onKeypress)
+        window.addEventListener('keydown', this.onKeypress)
         this.addBackgroundEventListeners()
         this.checkOrientation()
         // load sequence if enabled
@@ -100,7 +100,7 @@ class PlayUI extends Component {
     async componentWillUnmount() {
         window.removeEventListener('click', this.interfaceClicked)
         window.removeEventListener('resize', this.onWindowResizeThrottled)
-        window.removeEventListener('keypress', this.onKeypress)
+        window.removeEventListener('keydown', this.onKeypress)
         this.removeBackgroundEventListeners()
         this.clear()
         this.disposeToneEvents()
@@ -344,6 +344,15 @@ class PlayUI extends Component {
         this.playbackToggle.y((this.containerHeight / 2) - (HTML_UI_Params.addNewLayerButtonDiameter / 2))
         this.playbackToggle.click(this.onPlaybackToggle)
         this.playbackToggle.addClass(this.props.classes.button)
+        // keyboard and screen-reader access to the only control that starts the round
+        this.playbackToggle.attr({ role: 'button', tabindex: 0, 'aria-label': isPlaying ? 'Stop' : 'Play' })
+        this.playbackToggle.on('keydown', (e) => {
+            if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault()
+                e.stopPropagation()
+                this.onPlaybackToggle()
+            }
+        })
         this.playbackToggleIcon = this.container.nested()
         if (!isPlaying)
             this.playbackToggleIcon.svg(`<svg width="36" height="39" viewBox="0 0 36 39" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -1306,6 +1315,18 @@ class PlayUI extends Component {
     }
 
     onKeypress(e) {
+        if (this.props.disableKeyListener) {
+            return
+        }
+        const target = e.target
+        const tag = target && target.tagName ? target.tagName.toLowerCase() : ''
+        if (tag === 'input' || tag === 'textarea' || tag === 'select' || (target && target.isContentEditable)) {
+            return
+        }
+        if (e.key === KEY_MAPPINGS.playToggle) {
+            e.preventDefault()
+            this.onPlaybackToggle()
+        }
     }
 
     showOrientationDialog() {

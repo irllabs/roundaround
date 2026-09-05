@@ -63,6 +63,7 @@ class EffectThumbControl extends Component {
     componentDidMount() {
         const element = this.thumbControlRef.current;
         const isOn = this.props.isOn && this.props.isOverride;
+        this.isOn = isOn
         this.container = SVG()
             .addTo(element)
             .size(thumbWidth + 46, thumbHeight)
@@ -77,15 +78,38 @@ class EffectThumbControl extends Component {
         this.label.y((thumbHeight / 2) - (this.label.node.getBBox().height / 2))
         this.addEventListeners()
 
-        if (isOn)
-            this.setSwitchIsOn()
-        else this.setSwitchIsOff()
+        // Show the saved state without reporting it back: mounting used to call the switch
+        // handlers, which wrote every effect's state to Firestore on each round load.
+        this.renderSwitchState(isOn)
+    }
+
+    componentDidUpdate(prevProps) {
+        const wasOn = prevProps.isOn && prevProps.isOverride
+        const isOn = this.props.isOn && this.props.isOverride
+        if (wasOn !== isOn && !this.isDragging) {
+            this.isOn = isOn
+            this.renderSwitchState(isOn)
+        }
+    }
+
+    componentWillUnmount() {
+        document.removeEventListener('mousemove', this.onMouseMove)
+        document.removeEventListener('mouseup', this.onMouseUp)
+    }
+
+    /** Positions and colours the thumb for a state; no side effects. */
+    renderSwitchState(isOn) {
+        if (!this.thumb) {
+            return
+        }
+        this.thumb.x(isOn ? 0 : containerWidth - thumbWidth)
+        this.thumbBackground.fill(isOn ? '#686868' : '#555555')
     }
 
     addEventListeners() {
         this.thumb.on('touchstart', (e) => {
             e.preventDefault()
-            this.switchOn()
+            this.isDragging = true
             this.touchIndex = e.touches.length - 1
             this.dragStart = e.touches[this.touchIndex].pageX
             this.thumbBackground.fill('#EAEAEA')
@@ -105,6 +129,7 @@ class EffectThumbControl extends Component {
         })
         this.thumb.on('touchend', (e) => {
             e.preventDefault()
+            this.isDragging = false
             const threshold = (containerWidth - thumbWidth) / 2
             let x = this.thumb.x()
             if (x > threshold) {
@@ -120,7 +145,7 @@ class EffectThumbControl extends Component {
         })
         this.thumb.on('mousedown', (e) => {
             e.preventDefault()
-            this.switchOn()
+            this.isDragging = true
             this.dragStart = e.pageX
             this.thumbBackground.fill('#EAEAEA')
             document.addEventListener('mousemove', this.onMouseMove)
@@ -143,19 +168,18 @@ class EffectThumbControl extends Component {
             this.thumb.x(x)
         }
     }
+    // User gestures end here: show the state and report it once.
     setSwitchIsOn = () => {
-        this.thumb.x(0)
-        this.thumbBackground.fill('#686868')
+        this.renderSwitchState(true)
         this.switchOn()
     }
     setSwitchIsOff = () => {
-        const x = containerWidth - thumbWidth
-        this.thumb.x(x)
-        this.thumbBackground.fill('#555555')
+        this.renderSwitchState(false)
         this.switchOff();
     }
     onMouseUp(e) {
         e.preventDefault()
+        this.isDragging = false
         document.removeEventListener('mouseup', this.onMouseUp)
         document.removeEventListener('mousemove', this.onMouseMove)
 

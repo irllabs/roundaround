@@ -92,7 +92,8 @@ const VolumePopup = ({
     soloRef,
     selectedLayer,
     onMute,
-    onSolo
+    onSolo,
+    isSoloed
 }) => {
     return (
         <Box className={showVolumePopup ? classes.root : classes.hidden}>
@@ -106,10 +107,10 @@ const VolumePopup = ({
                 />
             </Box>
             <Box className={classes.containerSoloMute}>
-                <IconButton ref={soloRef} onClick={() => onSolo(selectedLayer)} className={classes.mixerButton}>
+                <IconButton ref={soloRef} aria-label="Solo (only you hear this layer)" aria-pressed={Boolean(isSoloed)} onClick={() => onSolo(selectedLayer)} className={classes.mixerButton} style={isSoloed ? { backgroundColor: 'rgba(255, 255, 255, 0.35)' } : {}}>
                     <Typography style={{ fontWeight: 'bold' }}>S</Typography>
                 </IconButton>
-                <IconButton ref={muteRef} onClick={() => onMute(selectedLayer)} className={classes.mixerButton}>
+                <IconButton ref={muteRef} aria-label="Mute" aria-pressed={Boolean(selectedLayer.isMuted)} onClick={() => onMute(selectedLayer)} className={classes.mixerButton} style={selectedLayer.isMuted ? { backgroundColor: 'rgba(255, 255, 255, 0.35)' } : {}}>
                     <Typography style={{ fontWeight: 'bold' }}>M</Typography>
                 </IconButton>
             </Box>

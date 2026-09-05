@@ -79,7 +79,6 @@ class LayerCustomSounds extends Component {
         window.addEventListener('drop', this.onDropFile);
     }*/
     async onRecordClick() {
-        // console.log('onRecordClick', this.state.mode)
         if (_.isNil(this.state.mode)) {
             if (!AudioEngine.isOn()) {
                 AudioEngine.play()
@@ -99,7 +98,6 @@ class LayerCustomSounds extends Component {
         } else if (this.state.mode === 'recording') {
             AudioRecorder.stop()
         } else {
-            // console.log('ignoring click');
         }
     }
     onCountDown(value) {
@@ -114,7 +112,6 @@ class LayerCustomSounds extends Component {
         this.setState({ mode: 'recording', recordButtonText: 'Recording' })
     }
     async onRecordingFinished(blob) {
-        // console.log('recording finsished');
         this.setState({ mode: 'upload' })
 
         let sample = getDefaultSample(this.props.user.id)
@@ -125,7 +122,6 @@ class LayerCustomSounds extends Component {
         // add to local custom sample cache
         CustomSamples.add(_.cloneDeep(sample))
 
-        // console.log('added sample', sample, CustomSamples.samples);
 
         // upload blob to firebase
         const metadata = {
@@ -136,7 +132,6 @@ class LayerCustomSounds extends Component {
         let snapshot = await fileRef.put(blob, metadata)
 
         let downloadURL = await snapshot.ref.getDownloadURL()
-        // console.log('Uploaded blob!', downloadURL);
         sample.remoteURL = downloadURL
         await _this.context.createSample(sample)
 
@@ -155,12 +150,10 @@ class LayerCustomSounds extends Component {
     }
 
     async onDropFile(files) {
-        // console.log('onDropFile', files);
         const file = files?.[0]
         if (!file) {
             return
         }
-        // console.log(file);
         this.setState({
             mode: 'fileUpload'
         })
@@ -181,7 +174,6 @@ class LayerCustomSounds extends Component {
             let snapshot = await fileRef.put(blob, metadata)
 
             let downloadURL = await snapshot.ref.getDownloadURL()
-            //  console.log('Uploaded blob!', downloadURL);
             sample.remoteURL = downloadURL
             await _this.context.createSample(sample)
 
@@ -193,12 +185,10 @@ class LayerCustomSounds extends Component {
             this.context.updateLayer(this.props.roundId, this.props.selectedLayer.id, { instrument: { sampler: 'custom', sample: sample.id } })
 
         } catch (e) {
-            console.log(e)
         }
     }
 
     render() {
-        //console.log('########### render()', this.state.mode);
         const { classes } = this.props;
         let uploadStartIcon = this.state.mode === 'fileUpload' ? '' : <UploadIcon />
         return (

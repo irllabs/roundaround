@@ -10,17 +10,17 @@ export default class Automation {
         this.setFx(fxId)
     }
     setFx (fxId) {
-        //console.log('Automation::setFx()', fxId, this.userId, AudioEngine.busesByUser);
         this.dispose()
         if (!_.isNil(fxId)) {
             this.fxId = fxId
             this.fx = _.find(AudioEngine.busesByUser[this.userId].sortedFx, { id: this.fxId })
-            //console.log('automation fx', this.fx);
         }
     }
     loadSteps (steps) {
-        // console.log('automation loading steps', steps, this.fx);
         this.clearPart()
+        if (_.isNil(this.fx)) {
+            return
+        }
         let notes = this.convertStepsToNotes(steps)
 
         const toneNotes = _.cloneDeep(notes)
@@ -42,6 +42,9 @@ export default class Automation {
             }
 
         }, toneNotes)
+        // instrument parts loop one bar and the transport does not loop, so this must loop too
+        this.part.loop = true
+        this.part.loopEnd = '1:0:0'
         this.part.start(0)
     }
     convertStepsToNotes (steps) {
@@ -102,11 +105,9 @@ export default class Automation {
         }
     }
     dispose () {
-        // console.log('automation dispose()');
         if (!_.isNil(this.fx)) {
             this.clearPart()
             // restore fx back to default (bypassed) state
-            // console.log('bypassing old fx');
             const fx = this.fx
             const automationOptions = fx.getAutomationOptions()
             const enabledOption = _.find(automationOptions, { name: 'enabled' })

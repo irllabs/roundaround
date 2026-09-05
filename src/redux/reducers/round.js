@@ -240,7 +240,6 @@ export default function (state = initialState, action) {
         case SET_USER_BUS_FX_OVERRIDE: {
             const { userId, fxId, value } = action.payload;
             const fxIndex = _.findIndex(state.userBuses[userId].fx, { id: fxId })
-            //console.log('SET_USER_BUS_FX_OVERRIDE', userId, fxId, value, state);
             return update(state, {
                 userBuses: {
                     [userId]: {
@@ -257,7 +256,6 @@ export default function (state = initialState, action) {
         }
         case SET_USER_BUS_FX: {
             const { userId, data } = action.payload;
-            // console.log('SET_USER_BUS_FX', userId, data, state);
             return update(state, {
                 userBuses: {
                     [userId]: {

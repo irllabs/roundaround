@@ -17,7 +17,7 @@ import JitsiComponent from '../play/JitsiComponent';
 import ProjectName from './ProjectName'
 import HeaderMenu from './HeaderMenu';
 import { FirebaseContext } from '../../firebase';
-import { getRandomColor } from '../../utils/index'
+import { getRandomColor, profileFromAuthUser } from '../../utils/index'
 import CustomSamples from '../../audio-engine/CustomSamples'
 import { createRound } from '../../utils/index'
 import { Typography } from '@material-ui/core';
@@ -73,43 +73,32 @@ class Header extends Component {
 		const _this = this
 		_this.context.onUserUpdatedObservers.push(async (authUser) => {
 			if (!_.isNil(authUser)) {
-				// see if this user exists in users collection, if not then we're probably in the middle of signing up so ignore
-				let user = await _this.context.loadUser(authUser.uid)
-				if (!_.isNil(user)) {
-					_this.props.setUser(user)
-					//if (!user.emailVerified) {
-					//   console.log('need to verify email');
-					//  } else {
-					const rounds = await _this.context.getRoundsList(user.id, 1.5)
-					_this.props.setRounds(rounds)
-					const samples = await _this.context.getSamples(user.id)
-					for (let sample of samples) {
-						CustomSamples.add(sample)
+				try {
+					let user = await _this.context.loadUser(authUser.uid)
+					if (!_.isNil(user)) {
+						_this.props.setUser(user)
+						const rounds = await _this.context.getRoundsList(user.id, 1.5)
+						_this.props.setRounds(rounds)
+						const samples = await _this.context.getSamples(user.id)
+						for (let sample of samples) {
+							CustomSamples.add(sample)
+						}
+					} else {
+						// No profile yet: a first Google sign-in, or a sign-up whose dialog is writing the
+						// profile right now. Merge only the fields the auth user provides (never a null
+						// name) and then read back whatever both writers produced.
+						const profile = { ...profileFromAuthUser(authUser), color: getRandomColor() }
+						await _this.context.createUser(profile)
+						user = await _this.context.loadUser(authUser.uid)
+						_this.props.setUser(user || profile)
 					}
-					//console.log('CustomSamples', CustomSamples.samples);
-
-					// }
-				} else {
-					///console.log('ignoring auth change, probably signing up');
-					//new user, create user document
-					user = {
-						displayName: authUser.displayName,
-						email: authUser.email,
-						avatar: authUser.photoURL,
-						id: authUser.uid,
-						color: getRandomColor(),
-						isGuest: false,
+					if (!_.isNil(_this.props.redirectAfterSignIn)) {
+						_this.redirect(authUser)
 					}
-					//console.log('creating user', user);
-					await _this.context.createUser(user)
-					_this.props.setUser(user)
-				}
-				// console.log('redirectAfterSignIn', _this.props.redirectAfterSignIn);
-				if (!_.isNil(_this.props.redirectAfterSignIn)) {
-					_this.redirect(authUser)
+				} catch (error) {
+					console.error('Could not load the signed-in user', error)
 				}
 			} else {
-				// console.log('signed out', _this.props.location.pathname);
 				if (_this.props.location.pathname !== '/') {
 					// _this.props.history.push('/')
 					_this.props.setIsShowingSignInDialog(true)
@@ -119,7 +108,6 @@ class Header extends Component {
 	}
 
 	redirect = async (authUser) => {
-		//console.log('redirect', this.props.redirectAfterSignIn, authUser);
 		if (!authUser.isAnonymous) {
 			// if not guest user go to rounds list
 			this.props.history.push(this.props.redirectAfterSignIn)

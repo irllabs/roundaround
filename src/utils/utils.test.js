@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { changeLayerLength, convertPercentToDB, convertDBToPercent, duplicateRound, uuid, arraymove } from './index'
+import { changeLayerLength, convertPercentToDB, convertDBToPercent, duplicateRound, uuid, arraymove, soloMuteStates, profileFromAuthUser } from './index'
 
 const layerWithSteps = (pattern) => ({
     id: 'layer',
@@ -71,5 +71,31 @@ describe('arraymove', () => {
         const items = ['a', 'b', 'c', 'd']
         arraymove(items, 0, 2)
         expect(items).toEqual(['b', 'c', 'a', 'd'])
+    })
+})
+
+describe('soloMuteStates', () => {
+    const layers = [{ id: 'a', isMuted: false }, { id: 'b', isMuted: true }, { id: 'c', isMuted: false }]
+    it('keeps the saved mute state when nothing is soloed', () => {
+        expect(soloMuteStates(layers, null)).toEqual({ a: false, b: true, c: false })
+    })
+    it('silences every other layer while one is soloed, without touching saved state', () => {
+        expect(soloMuteStates(layers, 'c')).toEqual({ a: true, b: true, c: false })
+        expect(layers[0].isMuted).toBe(false)
+    })
+    it('a soloed layer that is itself muted stays muted', () => {
+        expect(soloMuteStates(layers, 'b')).toEqual({ a: true, b: true, c: true })
+    })
+})
+
+describe('profileFromAuthUser', () => {
+    it('copies only the fields the auth provider actually has', () => {
+        expect(profileFromAuthUser({ uid: 'u1', isAnonymous: false, displayName: 'Ada', email: 'ada@example.test', photoURL: null }))
+            .toEqual({ id: 'u1', isGuest: false, displayName: 'Ada', email: 'ada@example.test' })
+    })
+    it('marks anonymous users as guests and never writes null names', () => {
+        const profile = profileFromAuthUser({ uid: 'anon', isAnonymous: true, displayName: null, email: null, photoURL: null })
+        expect(profile).toEqual({ id: 'anon', isGuest: true })
+        expect(Object.keys(profile)).not.toContain('displayName')
     })
 })
