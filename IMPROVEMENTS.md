@@ -36,6 +36,7 @@ Legend: `[ ]` open · `[~]` partly done · `[x]` done · `[!]` needs a human (cr
   - [x] `ubuntu-latest`, `actions/checkout@v4`, `actions/setup-node@v4` (reads `.nvmrc`), `cypress-io/github-action@v6`. (`a9b3a6e`)
   - [x] Set `CYPRESS_BASE_URL` through `env:` (the `run: VAR=...` steps never set anything).
   - [x] Run Cypress against a preview server, not the live dev site.
+  - [!] GitHub Actions is disabled on `mericda/roundaround` (the API lists no workflows and no runs), so none of the workflows execute and PR #1 shows no checks. Enable Actions under Settings → Actions → General, then re-run on the PR.
 - [~] **8. Firebase SDK v8, imported whole** (SDK on 12.18 via compat, `f93b5fc` + `cdd83c1`; bundle 593 KB gzip, up from 534 KB, until the modular migration) (`src/firebase/firebase.js:1-6`)
   - [x] Step 1: whole-SDK import gone (`7f7ed7a`); firebase 12.18 through `firebase/compat/*` (`f93b5fc`, lockfile in `cdd83c1`).
   - [ ] Step 2: full modular API migration.
@@ -124,7 +125,7 @@ Legend: `[ ]` open · `[~]` partly done · `[x]` done · `[!]` needs a human (cr
 
 - `yarn lint` clean; `yarn test` 31 tests in 8 files; `cd functions && yarn test` 4 tests.
 - `yarn build` (Vite) 12 s; the built landing page renders in headless Chromium with no error-boundary output.
-- `yarn install --frozen-lockfile` passes (what CI runs).
+- `yarn install --frozen-lockfile` passes (what CI will run once Actions is enabled; it is currently disabled on the repo, so the workflows have never executed).
 - `yarn audit`: 125 advisories total (was 674); on production dependency paths 2 critical / 5 high / 15 moderate (was 55 critical overall). What remains: `websocket-driver` under `@firebase/database` (unused product, Node-only code path, no upstream fix), `path-to-regexp` under react-router 5, `lodash` under react-color, `@babel/runtime` under MUI 4, `deep-object-diff`.
 - Build folder 21 MB (was 61 MB). Bundle 593 KB gzip.
 - Not verified here: deploys (needs Firebase credentials), the Cypress smoke test (no binary in the sandbox), live Firestore rules comparison, and every [!] item.
