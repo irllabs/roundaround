@@ -13,6 +13,8 @@ jobs:
           node-version-file: .nvmrc
           cache: yarn
       - run: yarn install --frozen-lockfile
+        env:
+          CYPRESS_INSTALL_BINARY: 0
       - run: yarn build
       - uses: FirebaseExtended/action-hosting-deploy@v0
         with:

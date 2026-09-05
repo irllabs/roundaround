@@ -25,7 +25,7 @@
 		"@tonaljs/note": "^4.12.1",
 		"array-move": "^3.0.1",
 		"deep-object-diff": "^1.1.0",
-		"firebase": "^8.2.5",
+		"firebase": "^12.18.0",
 		"immutability-helper": "^3.1.1",
 		"lodash": "^4.17.20",
 		"opus-media-recorder": "^0.8.0",

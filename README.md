@@ -32,6 +32,8 @@ node -v
 ```
 yarn install --frozen-lockfile
 ```
+If the Cypress binary download is blocked on your network, set `CYPRESS_INSTALL_BINARY=0` for the install;
+yarn 1 does not write `yarn.lock` when a postinstall script fails.
 
 ## Local development
 - `yarn` - To install packages that may have changed since your last branch
