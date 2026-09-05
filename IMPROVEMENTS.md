@@ -36,8 +36,8 @@ Legend: `[ ]` open · `[~]` partly done · `[x]` done · `[!]` needs a human (cr
   - [x] `ubuntu-latest`, `actions/checkout@v4`, `actions/setup-node@v4` (reads `.nvmrc`), `cypress-io/github-action@v6`. (`a9b3a6e`)
   - [x] Set `CYPRESS_BASE_URL` through `env:` (the `run: VAR=...` steps never set anything).
   - [x] Run Cypress against a preview server, not the live dev site.
-- [~] **8. Firebase SDK v8, imported whole** (`src/firebase/firebase.js:1-6`)
-  - [~] Step 1: the whole-SDK `import firebase from 'firebase'` is gone (per-product imports, `7f7ed7a`); the package upgrade itself is still open.
+- [~] **8. Firebase SDK v8, imported whole** (SDK on 12.18 via compat, `f93b5fc` + `cdd83c1`; bundle 593 KB gzip, up from 534 KB, until the modular migration) (`src/firebase/firebase.js:1-6`)
+  - [x] Step 1: whole-SDK import gone (`7f7ed7a`); firebase 12.18 through `firebase/compat/*` (`f93b5fc`, lockfile in `cdd83c1`).
   - [ ] Step 2: full modular API migration.
 
 ### Broken features and correctness
@@ -81,12 +81,12 @@ Legend: `[ ]` open · `[~]` partly done · `[x]` done · `[!]` needs a human (cr
 
 ## P2: cleanup
 
-- [ ] **35.** Dead code: `HeaderOld`, `PlayButton`, `SwingSlider`, `OrientationDialog`, `PatternsSidebar` + `PatternThumbControl` + `PatternSequencer`, `LayerAutomation`, `LayerCustomSounds` (+ `VUMeter`, `AudioRecorder`), `LayerName`, `LayerNumberOfSteps`, `LayerTimeOffset`, `LayerType`, `instruments/Metal` + `samples/Metal`, 14 unused SVG icons, `public/distortion.svg`, `.babelrc`, hammer.js leftovers (`PlayUI.js:1184-1188`), `layerGrahpics` typo (`PlayUI.js:550`).
+- [~] **35.** (`6966cd6`) Dead code removed: `HeaderOld`, `PlayButton`, `SwingSlider`, `PatternsSidebar` + `PatternThumbControl` + `PatternSequencer`, `LayerAutomation`, `LayerName`, `LayerNumberOfSteps`, `LayerTimeOffset`, `LayerType`, `instruments/Metal` + `samples/Metal`, `public/distortion.svg`, `.babelrc`. `OrientationDialog` is now mounted. Still open: `LayerCustomSounds` (+ `VUMeter`, `AudioRecorder`, `opus-media-recorder`, `react-dropzone`) pending item 9, 14 unused SVG icons, hammer.js leftovers (`PlayUI.jsx`), `layerGrahpics` typo.
 - [x] **36.** (`d004a35`) `public/samples-old` (43 MB, unreferenced) is uploaded on every deploy; the build folder is 61 MB.
 - [ ] **37.** 129 `console.log` calls including `console.time` on the hot path (`AudioEngine.js:76-88`).
 - [x] **38.** (`0b5e701`) `package.json` drift: unused `react-sortable-hoc`, `sfz-parser`, `copy-webpack-plugin`, `@tonaljs/tonal`; undeclared `prop-types`, `@tonaljs/note`; testing-library in `dependencies`.
 - [~] **39.** Loose ends: `manifest.json` says "Create React App Sample" (fixed, `d004a35`); landing copy promises a native iOS app; `getRoundsList` calls `limitToLast()` with no argument; `document.execCommand('copy')`; marketing video served with Storage download tokens.
-- [ ] **40.** Cache policy for `/samples/**` (18 MB of WAV, default one-hour cache) in `firebase.json`.
+- [x] **40.** (`6966cd6`) Cache policy for `/samples/**` and `/assets/**` in `firebase.json`.
 - [ ] **41.** Eight near-identical FX classes and five identical instrument classes; `AutoWah.Q` / `Freeverb.roomSize` setters assign to read-only signals.
 
 ## Upgrade map
@@ -98,7 +98,7 @@ Legend: `[ ]` open · `[~]` partly done · `[x]` done · `[!]` needs a human (cr
 | react / react-dom | 17.0.2 | 19 | after MUI |
 | @material-ui/core, icons | 4.12.4 | @mui/material 7 | largest UI diff (38 files) |
 | react-router-dom | 5.3.4 | 7 | `Switch` → `Routes`; fixes path-to-regexp advisory |
-| firebase | 8.10.1 | 12 (compat first, then modular) | see item 8 |
+| firebase | 8.10.1 | 12 (compat first, then modular) | on 12.18 via compat; modular migration open |
 | firebase-functions / admin | 3.13 / 9.4 | 6 / 13 | required for Node 22 runtime |
 | jsonwebtoken | 8.5.1 | 9 | advisories fixed in 9.0 |
 | tone | 14.7.77 | 15 | `getTransport()`, `getDraw()` |
@@ -120,6 +120,15 @@ Legend: `[ ]` open · `[~]` partly done · `[x]` done · `[!]` needs a human (cr
 5. Items 9-10: decide on recording and voice chat; fix or remove. One day.
 6. Items 14-19 (small bugs), then the rest of P1, then MUI 7 / React 19 / Redux Toolkit last.
 
+## Verification status (5 Sep 2026, branch `claude/app-review-improvements-icaihx`)
+
+- `yarn lint` clean; `yarn test` 31 tests in 8 files; `cd functions && yarn test` 4 tests.
+- `yarn build` (Vite) 12 s; the built landing page renders in headless Chromium with no error-boundary output.
+- `yarn install --frozen-lockfile` passes (what CI runs).
+- `yarn audit`: 125 advisories total (was 674); on production dependency paths 2 critical / 5 high / 15 moderate (was 55 critical overall). What remains: `websocket-driver` under `@firebase/database` (unused product, Node-only code path, no upstream fix), `path-to-regexp` under react-router 5, `lodash` under react-color, `@babel/runtime` under MUI 4, `deep-object-diff`.
+- Build folder 21 MB (was 61 MB). Bundle 593 KB gzip.
+- Not verified here: deploys (needs Firebase credentials), the Cypress smoke test (no binary in the sandbox), live Firestore rules comparison, and every [!] item.
+
 ## Change log
 
 | Date | Commit | Items | Notes |
@@ -134,3 +143,6 @@ Legend: `[ ]` open · `[~]` partly done · `[x]` done · `[!]` needs a human (cr
 | 2026-09-05 | `7fc2168` | — | Restored `arraymove` after the helpers move (caught by the build). |
 | 2026-09-05 | `0b5e701` | 5, 38 | Vite 7 build, Vitest, eslint 8; .jsx renames; unused packages removed; CI without the OpenSSL workaround. |
 | 2026-09-05 | `d004a35` | 36, 39 (part) | Removed `public/samples-old` and `distortion.svg`; manifest named. |
+| 2026-09-05 | `f93b5fc` | 8 | Firebase SDK 12 through compat entry points. |
+| 2026-09-05 | `cdd83c1` | — | Lockfile repaired (vite, vitest, eslint 8, firebase 12 resolved); CI installs skip the Cypress binary. |
+| 2026-09-05 | `6966cd6` | 35 (part), 40 | Superseded duplicate components and the unregistered Metal instrument removed; hosting cache headers. |
