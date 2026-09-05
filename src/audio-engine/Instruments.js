@@ -6,7 +6,7 @@ import Snares from './instruments/Snares'
 import Perc from './instruments/Perc'
 import Custom from './instruments/Custom'
 import CustomSamples from './CustomSamples'
-import { randomInt } from "../utils";
+import { randomInt } from "../utils/helpers";
 
 const Instruments = {
     instrumentClasses: {},
@@ -52,17 +52,21 @@ const Instruments = {
         return inst;
     },
 
-    create(instrumentName, articulation) {
-        if (!_.isNil(instrumentName)) {
-            let _this = this;
-            return new Promise(async function (resolve, reject) {
-                let InstrumentClass = _this.instrumentClasses[instrumentName];
-                let instrument = new InstrumentClass();
-                await instrument.load(articulation);
-                _this.instruments.push(instrument);
-                resolve(instrument);
-            });
+    /** Rejects when the instrument is unknown or its samples fail to load. */
+    async create(instrumentName, articulation) {
+        const InstrumentClass = this.instrumentClasses[instrumentName];
+        if (_.isNil(InstrumentClass)) {
+            throw new Error(`Unknown instrument "${instrumentName}"`);
         }
+        const instrument = new InstrumentClass();
+        try {
+            await instrument.load(articulation);
+        } catch (error) {
+            instrument.dispose();
+            throw error;
+        }
+        this.instruments.push(instrument);
+        return instrument;
     },
     dispose(id) {
         let instrument = _.find(this.instruments, {

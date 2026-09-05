@@ -13,6 +13,7 @@ jobs:
           cache: yarn
       - run: yarn install --frozen-lockfile
       - run: yarn lint
+      - run: yarn test --watchAll=false
       - run: yarn build
         env:
           # react-scripts 4 (webpack 4) needs this on Node 17+; remove once the build runs on Vite.

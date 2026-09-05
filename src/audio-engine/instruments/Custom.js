@@ -22,20 +22,14 @@ export default class Custom extends InstrumentBaseClass {
         }
         return map
     }
-    load (sampleId) {
-        //  console.log('custom::load()', sampleId);
-        const _this = this
-        return new Promise(async function (resolve, reject) {
-            let sample = await CustomSamples.get(sampleId)
-            let sampleMap = _this.getSampleMap(sample)
-            _this.sampleMap = _.cloneDeep(sampleMap)
-            //   console.log('instrument load()', sampleMap)
-            if (!_.isNil(sampleMap)) {
-                await _this.loadSamples(sampleMap)
-            }
-            // console.log('instrument finished loading');
-            resolve()
-        })
+    async load (sampleId) {
+        const sample = await CustomSamples.get(sampleId)
+        if (_.isNil(sample)) {
+            throw new Error(`Custom sample ${sampleId} was not found`)
+        }
+        const sampleMap = this.getSampleMap(sample)
+        this.sampleMap = _.cloneDeep(sampleMap)
+        await this.loadSamples(sampleMap)
     }
     calculateMidiNoteFromVelocity (velocity) {
         return 60

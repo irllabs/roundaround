@@ -247,36 +247,35 @@ export default class Track {
         const msPerTick = msPerBeat / PPQ
         return Math.round(ms / msPerTick)
     }
+    /**
+     * Swaps the layer's instrument. If the samples cannot be loaded the layer stays silent and
+     * the error is logged; the rest of the round keeps loading.
+     */
     async setInstrument (instrument) {
-        // console.time('setInstrument', instrument)
-        const instrumentName = instrument.sampler
-        const articulation = instrument.sample
-        let _this = this
-        return new Promise(async function (resolve, reject) {
-            if (!_.isNil(_this.instrument)) {
-                Instruments.dispose(_this.instrument.id)
-            }
-            if (_.isNil(articulation)) {
-                _this.clearInstrument()
-                resolve()
-            }
-            _this.instrument = await Instruments.create(
-                instrumentName,
-                articulation
-            )
-            // console.log('instrument created')
-            _this.buildAudioChain()
-            if (!_.isNil(_this.notes)) {
-                _this.instrument.loadPart(_this.notes, 1)
-            }
-            // _this.calculatePart()
-            //_this.instrument.setVolume(_this.channel.volume.value)
-
-            resolve(_this.instrument)
-        })
+        const instrumentName = instrument ? instrument.sampler : null
+        const articulation = instrument ? instrument.sample : null
+        this.clearInstrument()
+        if (_.isNil(instrumentName) || _.isNil(articulation)) {
+            return null
+        }
+        try {
+            this.instrument = await Instruments.create(instrumentName, articulation)
+        } catch (error) {
+            console.error(`Layer ${this.id}: could not load ${instrumentName}/${articulation}`, error)
+            this.instrument = null
+            return null
+        }
+        this.buildAudioChain()
+        if (!_.isNil(this.notes)) {
+            this.instrument.loadPart(this.notes, 1)
+        }
+        return this.instrument
     }
     clearInstrument () {
-        Instruments.dispose(this.instrument.id)
+        if (!_.isNil(this.instrument)) {
+            Instruments.dispose(this.instrument.id)
+            this.instrument = null
+        }
     }
     setAutomatedFx (fxId) {
         if (!_.isNil(this.automation)) {
@@ -338,13 +337,13 @@ export default class Track {
         }
     }
     triggerNote (note) {
-        this.instrument.triggerNote(note)
+        if (!_.isNil(this.instrument)) this.instrument.triggerNote(note)
     }
     triggerAttack (pitch, velocity) {
-        this.instrument.triggerAttack(pitch, velocity)
+        if (!_.isNil(this.instrument)) this.instrument.triggerAttack(pitch, velocity)
     }
     triggerRelease (pitch) {
-        this.instrument.triggerRelease(pitch)
+        if (!_.isNil(this.instrument)) this.instrument.triggerRelease(pitch)
     }
     getNotes () {
         return this.notes

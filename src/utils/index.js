@@ -1,45 +1,14 @@
 /* eslint-disable eqeqeq */
 import { getDefaultRoundData, getDefaultStepData } from './defaultData'
-import { Colors } from './constants'
+import _ from 'lodash'
+import { randomInt, uuid, numberRange, randomBool, randomItem, getRandomColor } from './helpers'
+
+export { randomInt, uuid, numberRange, randomBool, randomItem, getRandomColor }
 
 export const createRound = async (userId) => {
     return await getDefaultRoundData(userId)
 }
 
-export const randomInt = (min, max) => {
-    return Math.floor(Math.random() * (max - min)) + min;
-}
-
-export const arraymove = async (arr, fromIndex, toIndex) => {
-    var element = arr[fromIndex];
-    arr.splice(fromIndex, 1);
-    arr.splice(toIndex, 0, element);
-}
-
-export const uuid = () => {
-    return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, c => {
-        // eslint-disable-next-line no-mixed-operators
-        const r = Math.random() * 16 | 0, v = c == 'x' ? r : (r & 0x3 | 0x8);
-        return v.toString(16);
-    });
-}
-
-export const numberRange = (value, inMin, inMax, outMin, outMax) => {
-    return ((value - inMin) * (outMax - outMin)) / (inMax - inMin) + outMin
-}
-
-export const randomBool = (probability = 0.5) => {
-    return Math.random() < probability
-}
-
-export const randomItem = (items) => {
-    return items[Math.floor(Math.random() * items.length)]
-}
-
-export const getRandomColor = () => {
-    return randomItem(Colors)
-    // return '#' + Math.floor(Math.random() * 16777215).toString(16);
-}
 export const changeLayerLength = (layer, newLength) => {
     const oldLength = layer.steps.length;
     //let difference = newLength - oldLength;
@@ -138,4 +107,21 @@ export const convertDBToPercent = (dB) => {
         percent = numberRange(dB, -48, -6, 0, 60)
     }
     return percent;
+}
+
+/**
+ * Copies a round for `userId`: new id, fresh timestamps, the copier as creator and only member,
+ * and no short link (a link to the original would otherwise be copied along).
+ * Layers keep their original creators.
+ */
+export const duplicateRound = (round, userId) => {
+    const clone = _.cloneDeep(round)
+    clone.id = uuid()
+    clone.name = (round.name || 'Round') + ' (duplicate)'
+    clone.createdAt = Date.now()
+    clone.createdBy = userId
+    clone.currentUsers = [userId]
+    delete clone.shortLink
+    delete clone.isPlaying
+    return clone
 }

@@ -16,6 +16,7 @@ import SignInDialog from './components/dialogs/SignInDialog'
 import { setUser, setRounds, setIsShowingSignInDialog } from './redux/actions'
 import RenameDialog from './components/dialogs/RenameDialog';
 import DeleteRoundDialog from './components/dialogs/DeleteRoundDialog';
+import ErrorBoundary from './components/ErrorBoundary';
 
 
 
@@ -70,15 +71,17 @@ function App({ setUser, setRounds, setIsShowingSignInDialog }) {
       <ThemeProvider theme={theme}>
         <CssBaseline />
         <Router>
-          <Header />
-          <Switch>
-            <Route path="/rounds" component={RoundsListRoute} />
-            <Route path="/play" component={PlayRoute} />
-            <Route path="/" component={LandingPageRoute} />
-          </Switch>
-          <SignInDialog />
-          <RenameDialog />
-          <DeleteRoundDialog />
+          <ErrorBoundary>
+            <Header />
+            <Switch>
+              <Route path="/rounds" component={RoundsListRoute} />
+              <Route path="/play" component={PlayRoute} />
+              <Route path="/" component={LandingPageRoute} />
+            </Switch>
+            <SignInDialog />
+            <RenameDialog />
+            <DeleteRoundDialog />
+          </ErrorBoundary>
         </Router>
       </ThemeProvider>
     </div>
