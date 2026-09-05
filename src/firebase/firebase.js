@@ -99,10 +99,18 @@ class Firebase {
 
     signOut = () => this.auth.signOut();
 
-    // *** Jitsi As A Service ***
-    getJitsiToken = async (userId, name, email, avatar) => {
-        let getJaasToken = this.functions.httpsCallable('getJaasToken');
-        return getJaasToken(userId, name, email, avatar)
+    // *** Cloud Functions ***
+    // Both callables take a single { roundId } object; identity comes from the auth token server-side.
+    getJitsiToken = async (roundId) => {
+        const getJaasToken = this.functions.httpsCallable('getJaasToken');
+        const result = await getJaasToken({ roundId })
+        return result.data // { token, appId, room }
+    }
+
+    createShortLink = async (roundId) => {
+        const createShortLink = this.functions.httpsCallable('createShortLink');
+        const result = await createShortLink({ roundId })
+        return result.data // { link }
     }
 
     // *** Firebase API ***

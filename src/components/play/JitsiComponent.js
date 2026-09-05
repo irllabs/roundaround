@@ -1,6 +1,7 @@
 import React, { Component } from 'react'
 import { connect } from "react-redux";
 import { FirebaseContext } from '../../firebase';
+import _ from 'lodash';
 import PropTypes from 'prop-types';
 import { withStyles } from '@material-ui/styles';
 import IconButton from '@material-ui/core/IconButton';
@@ -50,19 +51,27 @@ class JitsiComponent extends Component {
             micIsEnabled: true
         })
 
-        const roomName = this.props.roomName
-        const tokenResult = await this.context.getJitsiToken(this.props.user.id, '', '', '')
-        console.log('jitsi token', tokenResult);
-        const jwt = tokenResult.data.token;
+        if (typeof window.JitsiMeetExternalAPI === 'undefined' || _.isNil(this.props.round)) {
+            this.setState({ isEnabled: false, isConnecting: false })
+            return
+        }
+        let tokenResult
+        try {
+            // The backend decides the tenant and the room; the client only says which round it is in.
+            tokenResult = await this.context.getJitsiToken(this.props.round.id)
+        } catch (e) {
+            console.error('Could not get a voice chat token', e)
+            this.setState({ isEnabled: false, isConnecting: false })
+            return
+        }
+        const { token: jwt, appId, room } = tokenResult
 
-        // eslint-disable-next-line no-undef
-        this.api = new JitsiMeetExternalAPI("8x8.vc", {
-            roomName: "vpaas-magic-cookie-ed842ad0fbe8446fbfeb14c7580a7f71/" + roomName,
+        this.api = new window.JitsiMeetExternalAPI("8x8.vc", {
+            roomName: appId + "/" + room,
             width: 600,
             height: 400,
             userInfo: {
-                email: 'john.doe@company.com',
-                displayName: 'Qwe'
+                displayName: this.props.user && this.props.user.displayName ? this.props.user.displayName : 'Guest'
             },
             configOverwrite: {
                 prejoinPageEnabled: false,
@@ -74,9 +83,7 @@ class JitsiComponent extends Component {
         });
         const _this = this
         this.api.on('videoConferenceJoined', async (e) => {
-            console.log('videoConferenceJoined', e);
             let isVideoMuted = await _this.api.isVideoMuted()
-            console.log('isVideoMuted', isVideoMuted);
             if (!isVideoMuted) {
                 _this.api.executeCommand('toggleVideo');
 
@@ -93,11 +100,22 @@ class JitsiComponent extends Component {
             isEnabled: false,
             isConnecting: false
         })
-        this.api.executeCommand('hangup');
-        this.api.dispose()
+        if (this.api) {
+            this.api.executeCommand('hangup');
+            this.api.dispose()
+            this.api = null
+        }
+    }
+
+    componentWillUnmount () {
+        if (this.api) {
+            this.api.dispose()
+            this.api = null
+        }
     }
 
     async onMicClick () {
+        if (!this.api) return
         let audioIsMuted = await this.api.isAudioMuted()
         this.api.executeCommand('toggleAudio');
         audioIsMuted = !audioIsMuted
