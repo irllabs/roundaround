@@ -36,8 +36,8 @@ Legend: `[ ]` open · `[~]` partly done · `[x]` done · `[!]` needs a human (cr
   - [x] `ubuntu-latest`, `actions/checkout@v4`, `actions/setup-node@v4` (reads `.nvmrc`), `cypress-io/github-action@v6`. (`a9b3a6e`)
   - [x] Set `CYPRESS_BASE_URL` through `env:` (the `run: VAR=...` steps never set anything).
   - [x] Run Cypress against a preview server, not the live dev site.
-- [ ] **8. Firebase SDK v8, imported whole** (`src/firebase/firebase.js:1-6`)
-  - [ ] Step 1: current `firebase` package with per-product `firebase/compat/*` imports (removes the protobufjs/grpc advisories and the full-SDK import).
+- [~] **8. Firebase SDK v8, imported whole** (`src/firebase/firebase.js:1-6`)
+  - [~] Step 1: the whole-SDK `import firebase from 'firebase'` is gone (per-product imports, `7f7ed7a`); the package upgrade itself is still open.
   - [ ] Step 2: full modular API migration.
 
 ### Broken features and correctness
@@ -47,36 +47,37 @@ Legend: `[ ]` open · `[~]` partly done · `[x]` done · `[!]` needs a human (cr
 - [~] **10. Voice chat cannot connect** (`JitsiComponent.js:59-66` tenant `ed842ad0…` vs `functions/index.js:14,37` tenant `6e18748a…`; `firebase.js:103-106` passes four positional args to `httpsCallable`)
   - [x] Single source of truth for the tenant (function returns it), pass `{ roundId }`, real display name. (`3422b56`)
   - [!] Confirm which JaaS tenant is the live one and set it as the function parameter.
-- [ ] **11. Round and userPatterns listeners are never unsubscribed** (`PlayRoute.js:131,193` vs `221-229`)
-  - [ ] Keep every unsubscribe function; call all of them on unmount; honour `isDisposing` everywhere.
-- [ ] **12. A missing sample or a Firestore error leaves an endless spinner** (`InstrumentBaseClass.js:57-77`, `firebase.js` promise wrappers, no error boundary)
-  - [ ] `onerror` + timeout on sample load; wrappers that throw; visible error state; error boundary around the router.
-- [ ] **13. Joining a round is a read-modify-write race; nobody ever leaves** (`PlayRoute.js:89-103`)
-  - [ ] `arrayUnion` on join, `arrayRemove` on unmount.
+- [x] **11. Round and userPatterns listeners are never unsubscribed** (`PlayRoute.js:131,193` vs `221-229`)
+  - [x] Keep every unsubscribe function; call all of them on unmount; honour `isDisposing` everywhere. (`7f7ed7a`, tested in `PlayRoute.test.js`)
+- [x] **12. A missing sample or a Firestore error leaves an endless spinner** (`InstrumentBaseClass.js:57-77`, `firebase.js` promise wrappers, no error boundary)
+  - [x] `onerror` + timeout on sample load; wrappers that throw; visible error state; error boundary around the router. (`7f7ed7a`)
+- [~] **13. Joining a round is a read-modify-write race; nobody ever leaves** (`PlayRoute.js:89-103`)
+  - [x] `arrayUnion` on join (`7f7ed7a`).
+  - [ ] Leaving is deliberately not implemented yet: `currentUsers` doubles as the list of contributors whose colours the layers need, so removing a user on leave would break their layers' colours. Needs a separate contributors list first.
 
 ## P1: should do next
 
-- [ ] **14.** Sliders can write gain/offset to the wrong layer (stale `useCallback(_.throttle)` closures; `VolumeSlider.js:33-40`, `LayerPercentOffset.js:84-102`). Key `VolumePopup`/`LayerPopup` by `selectedLayer.id` or pass ids.
-- [ ] **15.** Changing the step count is not persisted; the old layer object is written (`LayerPopup.js:87-91`).
-- [ ] **16.** Enter in the guest name field submits the form natively and reloads the page (`SignInDialog.js:289-299`).
-- [ ] **17.** Renaming a round you did not create throws (`RenameDialog.js:23-25`).
-- [ ] **18.** "Duplicate" from the title menu leaves the app pointed at two rounds; deleting the open round strands the user (`ProjectName.js:65-72`, `DeleteRoundDialog.js:24-26`).
-- [ ] **19.** Header "More" menu crashes when no round is loaded (`Header.js:172-187`, `TempoSlider.js:31`); tempo slider ignores remote changes.
+- [x] **14.** (`5d43802`) Sliders can write gain/offset to the wrong layer (stale `useCallback(_.throttle)` closures; `VolumeSlider.js:33-40`, `LayerPercentOffset.js:84-102`). Key `VolumePopup`/`LayerPopup` by `selectedLayer.id` or pass ids.
+- [x] **15.** (`5d43802`) Changing the step count is not persisted; the old layer object is written (`LayerPopup.js:87-91`).
+- [x] **16.** (`5d43802`) Enter in the guest name field submits the form natively and reloads the page (`SignInDialog.js:289-299`).
+- [x] **17.** (`5d43802`) Renaming a round you did not create throws (`RenameDialog.js:23-25`).
+- [x] **18.** (`5d43802`) "Duplicate" from the title menu leaves the app pointed at two rounds; deleting the open round strands the user (`ProjectName.js:65-72`, `DeleteRoundDialog.js:24-26`).
+- [x] **19.** (`5d43802`) Header "More" menu crashes when no round is loaded (`Header.js:172-187`, `TempoSlider.js:31`); tempo slider ignores remote changes.
 - [ ] **20.** Every step toggle = 2 full document writes + full SVG redraw + full round refetch on each collaborator (`PlayUI.js:1205-1218`, `PlayRoute.js:284-304`). Apply `docChanges()` payloads, save presets only when changed, redraw the touched layer.
 - [ ] **21.** Redux store objects mutated in place (`PlayUI.js:1429,1505,1633,1732-1739`). Redux Toolkit + Immer.
 - [ ] **22.** Effects sidebar writes all six effects back to Firestore on mount; thumbs ignore remote changes (`EffectThumbControl.js:63-83`).
 - [ ] **23.** "Solo" inverts each other layer's mute instead of muting the others, and writes other users' layers (`LayerSettings.js:600-613`).
-- [ ] **24.** `deleteRound` orphans `userBuses` and `userPatterns` (`firebase.js:242-250`).
+- [x] **24.** (`7f7ed7a`) `deleteRound` orphans `userBuses` and `userPatterns` (`firebase.js:242-250`).
 - [ ] **25.** Two code paths create the user document with different shapes (`Header.js:95-105`, `SignInDialog.js:129-187`); emails copied into a collection all collaborators read.
 - [ ] **26.** Window-level click handler calls `preventDefault` on every click in the play view (`LayerSettings.js:542-544`).
-- [ ] **27.** Audio-context unlock listens for `touchstart` only (`PlayRoute.js:307-316`).
+- [x] **27.** (`7f7ed7a`) Audio-context unlock listens for `touchstart` only (`PlayRoute.js:307-316`).
 - [ ] **28.** No keyboard path or ARIA on the sequencer (`PlayUI.js:1303`, unused `KEY_MAPPINGS`); icon-only buttons and hidden-but-focusable popups across the widgets.
 - [ ] **29.** Automation layers play one bar and stop (`Automation.js:35-45`); `FX.create` never settles on an unknown name and the FX registry leaks (`FX.js:13-36`).
-- [ ] **30.** Fullscreen cannot be exited on Safari (`HeaderMenu.js:60-79`); Google sign-in uses `signInWithPopup` (`SignInDialog.js:84-112`).
-- [ ] **31.** Orientation detection uses `window.orientation`; `OrientationDialog` is never mounted and could not close (`PlayUI.js:1284`, `OrientationDialog.js:7-10`).
+- [~] **30.** Fullscreen cannot be exited on Safari (fixed, `5d43802`); Google sign-in still uses `signInWithPopup` (`SignInDialog.js:84-112`).
+- [x] **31.** (`5d43802`) Orientation detection uses `window.orientation`; `OrientationDialog` is never mounted and could not close (`PlayUI.js:1284`, `OrientationDialog.js:7-10`).
 - [ ] **32.** Timing hacks in the audio graph: 3 s effect bypass, 300 ms volume/mute (`Track.js:40-47,292-310`).
 - [ ] **33.** No error reporting; analytics `measurementId` configured but never started.
-- [ ] **34.** Zero unit tests; the only Cypress test runs on pre-push against localhost and in CI against the live dev site.
+- [~] **34.** Zero unit tests: now 30 Jest/Testing Library tests (`yarn test`) covering the data layer, sample loading, PlayRoute subscriptions, the dialogs and the slider regression; CI runs them. The Cypress smoke test now runs against a local build in CI. Coverage of PlayUI and the audio graph is still zero.
 
 ## P2: cleanup
 
@@ -128,3 +129,5 @@ Legend: `[ ]` open · `[~]` partly done · `[x]` done · `[!]` needs a human (cr
 | 2026-09-05 | `3422b56` | 3, 6, 10 | Cloud Functions on Node 22 / firebase-functions 7; auth-checked, round-scoped JaaS tokens; server-side shortener; tests. |
 | 2026-09-05 | `a9b3a6e` | 7 | CI workflows repaired; Node 22 pinned via `.nvmrc` and `engines`; `yarn lint` script. |
 | 2026-09-05 | `ee61d71` | 4 | Firestore and Storage rules, index, emulator config in the repo (compare with live rules before deploying). |
+| 2026-09-05 | `7f7ed7a` | 8 (part), 11, 12, 13 (part), 24, 27 | Data layer rejects instead of hanging; sample-load errors and timeout; listener cleanup; error boundary; arrayUnion join; tests. |
+| 2026-09-05 | `5d43802` | 14-19, 30 (part), 31 | Slider/step-count persistence, form submission, rename/delete/duplicate flows, header null-round guards, orientation dialog; dialog tests. |
