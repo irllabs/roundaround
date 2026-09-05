@@ -26,9 +26,9 @@ Legend: `[ ]` open · `[~]` partly done · `[x]` done · `[!]` needs a human (cr
 
 ### A toolchain that no longer runs
 
-- [ ] **5. Build only works on end-of-life Node** (`package.json`, react-scripts 4 / webpack 4, `ERR_OSSL_EVP_UNSUPPORTED` on Node 17+)
-  - [ ] Migrate to Vite + `@vitejs/plugin-react`; add `.nvmrc` (22) and `engines`.
-  - [ ] Keep lint working without react-scripts (eslint 8 + eslint-config-react-app).
+- [x] **5. Build only works on end-of-life Node** (`package.json`, react-scripts 4 / webpack 4, `ERR_OSSL_EVP_UNSUPPORTED` on Node 17+)
+  - [x] Migrate to Vite + `@vitejs/plugin-react` (`0b5e701`); `.nvmrc` (22) and `engines` (`a9b3a6e`).
+  - [x] Keep lint working without react-scripts (eslint 8 + eslint-config-react-app). (`0b5e701`)
 - [x] **6. Cloud Function targets the decommissioned Node 10 runtime** (`functions/package.json`)
   - [x] Node 22, `firebase-functions` 7, `firebase-admin` 14, `jsonwebtoken` 9. (`3422b56`)
   - [x] Load the JaaS private key from Secret Manager instead of a file copied by hand. [!] Run `firebase functions:secrets:set JAAS_PRIVATE_KEY` and `BITLY_TOKEN`, then deploy.
@@ -82,10 +82,10 @@ Legend: `[ ]` open · `[~]` partly done · `[x]` done · `[!]` needs a human (cr
 ## P2: cleanup
 
 - [ ] **35.** Dead code: `HeaderOld`, `PlayButton`, `SwingSlider`, `OrientationDialog`, `PatternsSidebar` + `PatternThumbControl` + `PatternSequencer`, `LayerAutomation`, `LayerCustomSounds` (+ `VUMeter`, `AudioRecorder`), `LayerName`, `LayerNumberOfSteps`, `LayerTimeOffset`, `LayerType`, `instruments/Metal` + `samples/Metal`, 14 unused SVG icons, `public/distortion.svg`, `.babelrc`, hammer.js leftovers (`PlayUI.js:1184-1188`), `layerGrahpics` typo (`PlayUI.js:550`).
-- [ ] **36.** `public/samples-old` (43 MB, unreferenced) is uploaded on every deploy; the build folder is 61 MB.
+- [x] **36.** (`d004a35`) `public/samples-old` (43 MB, unreferenced) is uploaded on every deploy; the build folder is 61 MB.
 - [ ] **37.** 129 `console.log` calls including `console.time` on the hot path (`AudioEngine.js:76-88`).
-- [ ] **38.** `package.json` drift: unused `react-sortable-hoc`, `sfz-parser`, `copy-webpack-plugin`, `@tonaljs/tonal`; undeclared `prop-types`, `@tonaljs/note`; testing-library in `dependencies`.
-- [ ] **39.** Loose ends: `manifest.json` says "Create React App Sample"; landing copy promises a native iOS app; `getRoundsList` calls `limitToLast()` with no argument; `document.execCommand('copy')`; marketing video served with Storage download tokens.
+- [x] **38.** (`0b5e701`) `package.json` drift: unused `react-sortable-hoc`, `sfz-parser`, `copy-webpack-plugin`, `@tonaljs/tonal`; undeclared `prop-types`, `@tonaljs/note`; testing-library in `dependencies`.
+- [~] **39.** Loose ends: `manifest.json` says "Create React App Sample" (fixed, `d004a35`); landing copy promises a native iOS app; `getRoundsList` calls `limitToLast()` with no argument; `document.execCommand('copy')`; marketing video served with Storage download tokens.
 - [ ] **40.** Cache policy for `/samples/**` (18 MB of WAV, default one-hour cache) in `firebase.json`.
 - [ ] **41.** Eight near-identical FX classes and five identical instrument classes; `AutoWah.Q` / `Freeverb.roomSize` setters assign to read-only signals.
 
@@ -94,7 +94,7 @@ Legend: `[ ]` open · `[~]` partly done · `[x]` done · `[!]` needs a human (cr
 | Package | Installed | Target | Notes |
 | --- | --- | --- | --- |
 | Node | 14.17 | 22 LTS | `.nvmrc` + `engines` |
-| react-scripts | 4.0.1 | Vite 7 + plugin-react | CRA is sunset; webpack 4 fails on Node 17+ |
+| react-scripts | 4.0.1 | Vite 7 + plugin-react | done: Vite 7.3, plugin-react 5.2, Vitest 3.2 |
 | react / react-dom | 17.0.2 | 19 | after MUI |
 | @material-ui/core, icons | 4.12.4 | @mui/material 7 | largest UI diff (38 files) |
 | react-router-dom | 5.3.4 | 7 | `Switch` → `Routes`; fixes path-to-regexp advisory |
@@ -103,7 +103,7 @@ Legend: `[ ]` open · `[~]` partly done · `[x]` done · `[!]` needs a human (cr
 | jsonwebtoken | 8.5.1 | 9 | advisories fixed in 9.0 |
 | tone | 14.7.77 | 15 | `getTransport()`, `getDraw()` |
 | redux + immutability-helper | 4.0.5 / 3.1.1 | @reduxjs/toolkit 2 | fixes in-place mutation |
-| react-sortable-hoc | 1.11.0 | remove | unused; React 16 peer dep |
+| react-sortable-hoc | 1.11.0 | remove | done |
 | opus-media-recorder | 0.8.0 | native MediaRecorder or remove | see item 9 |
 | react-loader-spinner | 4.0.0 | 6 or CSS | one usage |
 | web-vitals | 0.2.4 | 5 | `getFID` no longer exists |
@@ -131,3 +131,6 @@ Legend: `[ ]` open · `[~]` partly done · `[x]` done · `[!]` needs a human (cr
 | 2026-09-05 | `ee61d71` | 4 | Firestore and Storage rules, index, emulator config in the repo (compare with live rules before deploying). |
 | 2026-09-05 | `7f7ed7a` | 8 (part), 11, 12, 13 (part), 24, 27 | Data layer rejects instead of hanging; sample-load errors and timeout; listener cleanup; error boundary; arrayUnion join; tests. |
 | 2026-09-05 | `5d43802` | 14-19, 30 (part), 31 | Slider/step-count persistence, form submission, rename/delete/duplicate flows, header null-round guards, orientation dialog; dialog tests. |
+| 2026-09-05 | `7fc2168` | — | Restored `arraymove` after the helpers move (caught by the build). |
+| 2026-09-05 | `0b5e701` | 5, 38 | Vite 7 build, Vitest, eslint 8; .jsx renames; unused packages removed; CI without the OpenSSL workaround. |
+| 2026-09-05 | `d004a35` | 36, 39 (part) | Removed `public/samples-old` and `distortion.svg`; manifest named. |
