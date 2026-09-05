@@ -1,8 +1,10 @@
-import app from 'firebase/app';
-import 'firebase/auth';
-import 'firebase/firestore';
-import 'firebase/functions';
-import 'firebase/storage';
+// The compat entry points keep the namespaced (v8-style) API this wrapper was written against
+// while running on the current SDK. Moving each product to the modular API is the next step.
+import app from 'firebase/compat/app';
+import 'firebase/compat/auth';
+import 'firebase/compat/firestore';
+import 'firebase/compat/functions';
+import 'firebase/compat/storage';
 import _ from 'lodash'
 
 var firebaseConfig = {

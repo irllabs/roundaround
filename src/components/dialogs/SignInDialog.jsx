@@ -9,7 +9,7 @@ import Button from '@material-ui/core/Button';
 import { makeStyles } from '@material-ui/core/styles';
 import { setIsShowingSignInDialog, setSignUpDisplayName, setUser, setRounds, setRedirectAfterSignIn } from '../../redux/actions'
 import { FirebaseContext } from '../../firebase';
-import firebase from "firebase/app";
+import firebase from "firebase/compat/app";
 import ArrowBackIcon from '@material-ui/icons/ArrowBack';
 import { getRandomColor } from '../../utils/index'
 
