@@ -11,17 +11,17 @@ Legend: `[ ]` open · `[~]` partly done · `[x]` done · `[!]` needs a human (cr
 
 ### Credentials and access
 
-- [ ] **1. Bitly API token in the client bundle** (`src/components/dialogs/ShareDialog.js:86-87`)
+- [~] **1. Bitly API token in the client bundle** (`src/components/dialogs/ShareDialog.js:86-87`)
   - [!] Revoke the token in the Bitly account (it has been public since Feb 2021).
-  - [ ] Remove it from the client; shorten via an authenticated Cloud Function or drop shortening.
+  - [x] Remove it from the client; shorten via an authenticated Cloud Function or drop shortening. (`b1ba1f2`, `3422b56`)
   - [!] Purge from git history (`git filter-repo --replace-text`) before sharing the repo further.
-- [ ] **2. Test account password committed** (`cypress/support/users.js:3-6`)
+- [~] **2. Test account password committed** (`cypress/support/users.js:3-6`)
   - [!] Change the password for `roundabout-test@protonmail.com`.
-  - [ ] Read credentials from `CYPRESS_TEST_EMAIL` / `CYPRESS_TEST_PASSWORD`; add them as GitHub Actions secrets.
-- [ ] **3. `getJaasToken` mints moderator tokens for anyone** (`functions/index.js:7-45`)
-  - [ ] Require `request.auth`, derive identity server-side, scope `room` to the round id, moderator only for the round owner, 1 h expiry.
-- [ ] **4. Firestore and Storage rules are not in the repo** (`firebase.json`)
-  - [ ] Add `firestore.rules` + `storage.rules`, wire them in `firebase.json`.
+  - [x] Read credentials from `CYPRESS_TEST_EMAIL` / `CYPRESS_TEST_PASSWORD` (`b1ba1f2`). [!] Add them as GitHub Actions secrets.
+- [x] **3. `getJaasToken` mints moderator tokens for anyone** (`functions/index.js:7-45`)
+  - [x] Require `request.auth`, derive identity server-side, scope `room` to the round id, moderator only for the round owner, 1 h expiry. (`3422b56`)
+- [~] **4. Firestore and Storage rules are not in the repo** (`firebase.json`)
+  - [x] Add `firestore.rules` + `storage.rules`, wire them in `firebase.json`. (`ee61d71`)
   - [!] Compare with the live rules in the Firebase console before deploying; run the emulator tests.
 
 ### A toolchain that no longer runs
@@ -29,13 +29,13 @@ Legend: `[ ]` open · `[~]` partly done · `[x]` done · `[!]` needs a human (cr
 - [ ] **5. Build only works on end-of-life Node** (`package.json`, react-scripts 4 / webpack 4, `ERR_OSSL_EVP_UNSUPPORTED` on Node 17+)
   - [ ] Migrate to Vite + `@vitejs/plugin-react`; add `.nvmrc` (22) and `engines`.
   - [ ] Keep lint working without react-scripts (eslint 8 + eslint-config-react-app).
-- [ ] **6. Cloud Function targets the decommissioned Node 10 runtime** (`functions/package.json`)
-  - [ ] Node 22, `firebase-functions` 6, `firebase-admin` current, `jsonwebtoken` 9.
-  - [ ] Load the JaaS private key from Secret Manager instead of a file copied by hand.
-- [ ] **7. CI cannot run** (`.github/workflows/*.yml`)
-  - [ ] `ubuntu-latest`, `actions/checkout@v4`, `actions/setup-node@v4` (reads `.nvmrc`), `cypress-io/github-action@v6`.
-  - [ ] Set `CYPRESS_BASE_URL` through `env:` (the `run: VAR=...` steps never set anything).
-  - [ ] Run Cypress against a preview server, not the live dev site.
+- [x] **6. Cloud Function targets the decommissioned Node 10 runtime** (`functions/package.json`)
+  - [x] Node 22, `firebase-functions` 7, `firebase-admin` 14, `jsonwebtoken` 9. (`3422b56`)
+  - [x] Load the JaaS private key from Secret Manager instead of a file copied by hand. [!] Run `firebase functions:secrets:set JAAS_PRIVATE_KEY` and `BITLY_TOKEN`, then deploy.
+- [x] **7. CI cannot run** (`.github/workflows/*.yml`)
+  - [x] `ubuntu-latest`, `actions/checkout@v4`, `actions/setup-node@v4` (reads `.nvmrc`), `cypress-io/github-action@v6`. (`a9b3a6e`)
+  - [x] Set `CYPRESS_BASE_URL` through `env:` (the `run: VAR=...` steps never set anything).
+  - [x] Run Cypress against a preview server, not the live dev site.
 - [ ] **8. Firebase SDK v8, imported whole** (`src/firebase/firebase.js:1-6`)
   - [ ] Step 1: current `firebase` package with per-product `firebase/compat/*` imports (removes the protobufjs/grpc advisories and the full-SDK import).
   - [ ] Step 2: full modular API migration.
@@ -44,8 +44,8 @@ Legend: `[ ]` open · `[~]` partly done · `[x]` done · `[!]` needs a human (cr
 
 - [ ] **9. Custom-sound recorder is unreachable dead code with missing assets** (`LayerCustomSounds.js`, `AudioRecorder.js:8-14`, `public/opus-media-recorder` removed in `46ae7f3`)
   - [ ] Decide: restore with native `MediaRecorder`, or delete the six dead files and `opus-media-recorder`, `react-dropzone`, `array-move`, and `public/samples/Metal` (its instrument is never registered).
-- [ ] **10. Voice chat cannot connect** (`JitsiComponent.js:59-66` tenant `ed842ad0…` vs `functions/index.js:14,37` tenant `6e18748a…`; `firebase.js:103-106` passes four positional args to `httpsCallable`)
-  - [ ] Single source of truth for the tenant (function returns it), pass `{ roundId }`, real display name.
+- [~] **10. Voice chat cannot connect** (`JitsiComponent.js:59-66` tenant `ed842ad0…` vs `functions/index.js:14,37` tenant `6e18748a…`; `firebase.js:103-106` passes four positional args to `httpsCallable`)
+  - [x] Single source of truth for the tenant (function returns it), pass `{ roundId }`, real display name. (`3422b56`)
   - [!] Confirm which JaaS tenant is the live one and set it as the function parameter.
 - [ ] **11. Round and userPatterns listeners are never unsubscribed** (`PlayRoute.js:131,193` vs `221-229`)
   - [ ] Keep every unsubscribe function; call all of them on unmount; honour `isDisposing` everywhere.
@@ -123,4 +123,8 @@ Legend: `[ ]` open · `[~]` partly done · `[x]` done · `[!]` needs a human (cr
 
 | Date | Commit | Items | Notes |
 | --- | --- | --- | --- |
-| 2026-09-05 | (this commit) | — | Checklist created from the review. |
+| 2026-09-05 | `fbfed63` | — | Checklist created from the review. |
+| 2026-09-05 | `b1ba1f2` | 1, 2 | Bitly token and test password removed from code; share dialog uses a callable with full-URL fallback. |
+| 2026-09-05 | `3422b56` | 3, 6, 10 | Cloud Functions on Node 22 / firebase-functions 7; auth-checked, round-scoped JaaS tokens; server-side shortener; tests. |
+| 2026-09-05 | `a9b3a6e` | 7 | CI workflows repaired; Node 22 pinned via `.nvmrc` and `engines`; `yarn lint` script. |
+| 2026-09-05 | `ee61d71` | 4 | Firestore and Storage rules, index, emulator config in the repo (compare with live rules before deploying). |
