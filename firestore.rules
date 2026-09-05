@@ -1,0 +1,94 @@
+rules_version = '2';
+
+// Data model (see src/firebase/firebase.js):
+//   users/{uid}                          profile: displayName, color, avatar, email, isGuest
+//   rounds/{roundId}                     createdBy, currentUsers[], bpm, swing, name, shortLink, ...
+//   rounds/{roundId}/layers/{layerId}    createdBy + steps; only the creator edits a layer
+//   rounds/{roundId}/userBuses/{uid}     one effects bus per user
+//   rounds/{roundId}/userPatterns/{uid}  one preset/sequence document per user
+//   samples/{sampleId}                   custom sample metadata, createdBy
+//
+// Anyone with a round's link can open it once signed in (guests sign in anonymously), which is
+// the product's sharing model, so reads are gated on authentication rather than membership.
+// Writes are always scoped to the caller's own documents, plus a round creator's right to
+// manage everything inside their round (duplicate, delete).
+//
+// Test with the emulator before deploying: firebase emulators:start --only firestore
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function signedIn() {
+      return request.auth != null;
+    }
+
+    function isUser(uid) {
+      return signedIn() && request.auth.uid == uid;
+    }
+
+    function roundCreator(roundId) {
+      return get(/databases/$(database)/documents/rounds/$(roundId)).data.createdBy;
+    }
+
+    function isRoundCreator(roundId) {
+      return signedIn() && roundCreator(roundId) == request.auth.uid;
+    }
+
+    function changedKeys() {
+      return request.resource.data.diff(resource.data).affectedKeys();
+    }
+
+    match /users/{uid} {
+      allow read: if signedIn();
+      allow create, update: if isUser(uid);
+      allow delete: if false;
+    }
+
+    match /rounds/{roundId} {
+      allow read: if signedIn();
+      allow create: if signedIn() && request.resource.data.createdBy == request.auth.uid;
+      // Members edit the round; anyone signed in may add themselves to currentUsers when joining.
+      allow update: if signedIn() && (
+        resource.data.createdBy == request.auth.uid ||
+        request.auth.uid in resource.data.get('currentUsers', []) ||
+        (changedKeys().hasOnly(['currentUsers']) &&
+          request.auth.uid in request.resource.data.currentUsers)
+      );
+      allow delete: if signedIn() && resource.data.createdBy == request.auth.uid;
+
+      match /layers/{layerId} {
+        allow read: if signedIn();
+        // A layer belongs to whoever created it; the round creator may also create layers
+        // (duplicating a round) and delete them (deleting a round).
+        allow create: if signedIn() && (
+          request.resource.data.createdBy == request.auth.uid || isRoundCreator(roundId)
+        );
+        allow update: if signedIn() && resource.data.createdBy == request.auth.uid;
+        allow delete: if signedIn() && (
+          resource.data.createdBy == request.auth.uid || isRoundCreator(roundId)
+        );
+      }
+
+      match /userBuses/{uid} {
+        allow read: if signedIn();
+        allow write: if isUser(uid) || isRoundCreator(roundId);
+      }
+
+      match /userPatterns/{uid} {
+        allow read: if signedIn();
+        allow write: if isUser(uid) || isRoundCreator(roundId);
+      }
+    }
+
+    match /samples/{sampleId} {
+      allow read: if signedIn();
+      allow create: if signedIn() && request.resource.data.createdBy == request.auth.uid;
+      allow update, delete: if signedIn() && resource.data.createdBy == request.auth.uid;
+    }
+
+    // Everything else (including the unused `collaborations` collection) is closed.
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}
