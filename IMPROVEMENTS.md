@@ -65,14 +65,14 @@ Legend: `[ ]` open · `[~]` partly done · `[x]` done · `[!]` needs a human (cr
 - [x] **19.** (`5d43802`) Header "More" menu crashes when no round is loaded (`Header.js:172-187`, `TempoSlider.js:31`); tempo slider ignores remote changes.
 - [ ] **20.** Every step toggle = 2 full document writes + full SVG redraw + full round refetch on each collaborator (`PlayUI.js:1205-1218`, `PlayRoute.js:284-304`). Apply `docChanges()` payloads, save presets only when changed, redraw the touched layer.
 - [ ] **21.** Redux store objects mutated in place (`PlayUI.js:1429,1505,1633,1732-1739`). Redux Toolkit + Immer.
-- [ ] **22.** Effects sidebar writes all six effects back to Firestore on mount; thumbs ignore remote changes (`EffectThumbControl.js:63-83`).
-- [ ] **23.** "Solo" inverts each other layer's mute instead of muting the others, and writes other users' layers (`LayerSettings.js:600-613`).
+- [x] **22.** (`ca4226c`) Effects sidebar writes all six effects back to Firestore on mount; thumbs ignore remote changes.
+- [x] **23.** (`ca4226c`) "Solo" inverts each other layer's mute and writes other users' layers. Now a local, per-listener solo that persists nothing.
 - [x] **24.** (`7f7ed7a`) `deleteRound` orphans `userBuses` and `userPatterns` (`firebase.js:242-250`).
-- [ ] **25.** Two code paths create the user document with different shapes (`Header.js:95-105`, `SignInDialog.js:129-187`); emails copied into a collection all collaborators read.
-- [ ] **26.** Window-level click handler calls `preventDefault` on every click in the play view (`LayerSettings.js:542-544`).
+- [~] **25.** (`ca4226c`) Two code paths create the user document: both now merge non-null fields and the observer reads the result back. Emails are still stored in the shared `users` collection.
+- [x] **26.** (`ca4226c`) Window-level click handler calls `preventDefault` on every click in the play view.
 - [x] **27.** (`7f7ed7a`) Audio-context unlock listens for `touchstart` only (`PlayRoute.js:307-316`).
-- [ ] **28.** No keyboard path or ARIA on the sequencer (`PlayUI.js:1303`, unused `KEY_MAPPINGS`); icon-only buttons and hidden-but-focusable popups across the widgets.
-- [ ] **29.** Automation layers play one bar and stop (`Automation.js:35-45`); `FX.create` never settles on an unknown name and the FX registry leaks (`FX.js:13-36`).
+- [~] **28.** (`ca4226c`) Space toggles playback and the play circle is a focusable, labelled button; the S/M/step/offset buttons are labelled. Still open: keyboard access to steps and layers, hidden-but-focusable popups.
+- [~] **29.** (`ca4226c`) Automation parts loop. `FX.create` and the FX registry leak are still open.
 - [~] **30.** Fullscreen cannot be exited on Safari (fixed, `5d43802`); Google sign-in still uses `signInWithPopup` (`SignInDialog.js:84-112`).
 - [x] **31.** (`5d43802`) Orientation detection uses `window.orientation`; `OrientationDialog` is never mounted and could not close (`PlayUI.js:1284`, `OrientationDialog.js:7-10`).
 - [ ] **32.** Timing hacks in the audio graph: 3 s effect bypass, 300 ms volume/mute (`Track.js:40-47,292-310`).
@@ -83,7 +83,7 @@ Legend: `[ ]` open · `[~]` partly done · `[x]` done · `[!]` needs a human (cr
 
 - [~] **35.** (`6966cd6`) Dead code removed: `HeaderOld`, `PlayButton`, `SwingSlider`, `PatternsSidebar` + `PatternThumbControl` + `PatternSequencer`, `LayerAutomation`, `LayerName`, `LayerNumberOfSteps`, `LayerTimeOffset`, `LayerType`, `instruments/Metal` + `samples/Metal`, `public/distortion.svg`, `.babelrc`. `OrientationDialog` is now mounted. Still open: `LayerCustomSounds` (+ `VUMeter`, `AudioRecorder`, `opus-media-recorder`, `react-dropzone`) pending item 9, 14 unused SVG icons, hammer.js leftovers (`PlayUI.jsx`), `layerGrahpics` typo.
 - [x] **36.** (`d004a35`) `public/samples-old` (43 MB, unreferenced) is uploaded on every deploy; the build folder is 61 MB.
-- [ ] **37.** 129 `console.log` calls including `console.time` on the hot path (`AudioEngine.js:76-88`).
+- [x] **37.** (`ca4226c`) Leftover `console.log`/`console.time` calls removed from live code (errors still go to `console.error`).
 - [x] **38.** (`0b5e701`) `package.json` drift: unused `react-sortable-hoc`, `sfz-parser`, `copy-webpack-plugin`, `@tonaljs/tonal`; undeclared `prop-types`, `@tonaljs/note`; testing-library in `dependencies`.
 - [~] **39.** Loose ends: `manifest.json` says "Create React App Sample" (fixed, `d004a35`); landing copy promises a native iOS app; `getRoundsList` calls `limitToLast()` with no argument; `document.execCommand('copy')`; marketing video served with Storage download tokens.
 - [x] **40.** (`6966cd6`) Cache policy for `/samples/**` and `/assets/**` in `firebase.json`.
@@ -146,3 +146,4 @@ Legend: `[ ]` open · `[~]` partly done · `[x]` done · `[!]` needs a human (cr
 | 2026-09-05 | `f93b5fc` | 8 | Firebase SDK 12 through compat entry points. |
 | 2026-09-05 | `cdd83c1` | — | Lockfile repaired (vite, vitest, eslint 8, firebase 12 resolved); CI installs skip the Cypress binary. |
 | 2026-09-05 | `6966cd6` | 35 (part), 40 | Superseded duplicate components and the unregistered Metal instrument removed; hosting cache headers. |
+| 2026-09-05 | `ca4226c` | 22, 23, 25 (part), 26, 28 (part), 29 (part), 37 | Local solo; effects sidebar stops writing on mount; merged profile writes; keyboard play toggle; automation loop; console noise removed. |
