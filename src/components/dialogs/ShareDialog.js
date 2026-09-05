@@ -43,104 +43,108 @@ const styles = makeStyles({
     }
 })
 
+const getFullUrl = (roundId) => window.location.origin + '/play/' + roundId
+
 const ShareDialog = ({ round, isShowingShareDialog, setIsShowingShareDialog, setRoundShortLink }) => {
     const firebase = useContext(FirebaseContext);
-    const textField = useRef(null)
-    const [shortLink, setShortLink] = useState(round ? round.shortLink : '')
+    const inputRef = useRef(null)
+    const canvasRef = useRef(null)
+    const [link, setLink] = useState('')
+    const [copied, setCopied] = useState(false)
 
+    const roundId = round ? round.id : null
+    const storedShortLink = round ? round.shortLink : null
+
+    // Resolve the link to show: the stored short link, otherwise ask the backend for one,
+    // otherwise fall back to the full URL. The full URL always works, so a shortener
+    // failure is never fatal.
     useEffect(() => {
-        if (isShowingShareDialog) {
-            draw()
+        if (!isShowingShareDialog || _.isNil(roundId)) {
+            return undefined
         }
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [isShowingShareDialog])
+        let cancelled = false
+        const fullUrl = getFullUrl(roundId)
+        setLink(_.isEmpty(storedShortLink) ? fullUrl : storedShortLink)
+        setCopied(false)
 
-    const draw = async () => {
-        let fullUrl = window.location.origin + '/play/' + round.id;
-        //if (window.location.hostname === 'localhost') return null
-        if (window.location.hostname === 'localhost') {
-            fullUrl = 'http://192.168.136.154:3000/play/' + round.id;
-        }
-
-        if (_.isEmpty(round.shortLink)) {
-            const result = await generateShortLink(fullUrl)
-            setShortLink(result.link)
-            firebase.updateRound(round.id, { shortLink: result.link })
-            setRoundShortLink(result.link)
-        } else {
-            setShortLink(round.shortLink)
-        }
-
-        setTimeout(() => {
-            //console.log('rendering QR code');
-            QRCode.toCanvas(document.getElementById('QRCanvas'), fullUrl, function (error) {
-                if (error) console.error(error)
-                // console.log('success!');
-            })
-
-        }, 100)
-    }
-
-    const generateShortLink = async (fullUrl) => {
-        return new Promise(async (resolve, reject) => {
-            const bitlyToken = 'c48cf8ef04cb1e9bf0c8f320418b5b3bde599764';
-            const bitlyGroupGuid = 'Bk8q4epOSuG';
-            const requestOptions = {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${bitlyToken}`
-                },
-                body: JSON.stringify(
-                    {
-                        "group_guid": bitlyGroupGuid,
-                        "domain": "bit.ly",
-                        "long_url": fullUrl
+        if (_.isEmpty(storedShortLink)) {
+            firebase.createShortLink(roundId)
+                .then((result) => {
+                    if (cancelled || _.isNil(result) || _.isEmpty(result.link)) {
+                        return
                     }
-                )
-            };
+                    setLink(result.link)
+                    setRoundShortLink(result.link)
+                })
+                .catch((error) => {
+                    // Not fatal: the full URL is already shown.
+                    console.warn('Could not create a short link', error)
+                })
+        }
 
-            const shortenedLink = await fetch('https://api-ssl.bitly.com/v4/shorten', requestOptions)
-                .then(response => response.json())
-            console.log('shortenedLink', shortenedLink)
-            resolve(shortenedLink);
-        })
-    }
+        return () => {
+            cancelled = true
+        }
+    }, [isShowingShareDialog, roundId, storedShortLink, firebase, setRoundShortLink])
+
+    // The QR code always encodes the full URL so it keeps working if the shortener does not.
+    useEffect(() => {
+        if (!isShowingShareDialog || _.isNil(roundId)) {
+            return undefined
+        }
+        const timer = setTimeout(() => {
+            if (canvasRef.current) {
+                QRCode.toCanvas(canvasRef.current, getFullUrl(roundId), (error) => {
+                    if (error) {
+                        console.error(error)
+                    }
+                })
+            }
+        }, 100)
+        return () => clearTimeout(timer)
+    }, [isShowingShareDialog, roundId])
 
     const handleClose = () => {
         setIsShowingShareDialog(false)
     }
 
-    const onCopyClick = () => {
-        const textFieldComponent = textField.current;
-        const inputElement = textFieldComponent.querySelectorAll("input")[0]
-        inputElement.focus();
-        inputElement.select();
-        document.execCommand('copy');
-        inputElement.blur();
+    const onCopyClick = async () => {
+        try {
+            if (navigator.clipboard && navigator.clipboard.writeText) {
+                await navigator.clipboard.writeText(link)
+            } else if (inputRef.current) {
+                inputRef.current.focus()
+                inputRef.current.select()
+                document.execCommand('copy')
+                inputRef.current.blur()
+            }
+            setCopied(true)
+        } catch (error) {
+            console.warn('Could not copy the link', error)
+        }
     }
-
-
 
     const classes = styles();
 
     return (
-        <Dialog classes={{ paper: classes.paper }} onClose={handleClose} aria-labelledby="simple-dialog-title" open={isShowingShareDialog}>
-            <DialogTitle className={classes.title} id="simple-dialog-title">Share project</DialogTitle>
+        <Dialog classes={{ paper: classes.paper }} onClose={handleClose} aria-labelledby="share-dialog-title" open={isShowingShareDialog}>
+            <DialogTitle className={classes.title} id="share-dialog-title">Share project</DialogTitle>
             <Box className={classes.body}>
                 <p>Use the QR code or link to join the collaboration.</p>
                 <Box className={classes.QRCodeContainer}>
-                    <canvas id="QRCanvas" className={classes.QRCode}></canvas>
+                    <canvas ref={canvasRef} id="QRCanvas" aria-label="QR code for this round's link" role="img"></canvas>
                 </Box>
                 <Box className={classes.linkContainer}>
                     <TextField
-                        ref={textField}
-                        value={shortLink}
+                        inputRef={inputRef}
+                        value={link}
+                        label="Link"
                         variant="outlined"
                         fullWidth
+                        InputProps={{ readOnly: true }}
                         className={classes.textField}
                     />
-                    <Button className={classes.copyButton} color="secondary" variant="contained" disableElevation onClick={onCopyClick}>Copy</Button>
+                    <Button className={classes.copyButton} color="secondary" variant="contained" disableElevation onClick={onCopyClick}>{copied ? 'Copied' : 'Copy'}</Button>
                 </Box>
             </Box>
         </Dialog>

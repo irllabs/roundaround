@@ -27,3 +27,6 @@ cypress/screenshots
 cypress/videos
 cypress/results
 cypress/fixtures/example.json
+
+# Cypress local credentials
+cypress.env.json

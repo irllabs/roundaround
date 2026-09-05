@@ -29,7 +29,11 @@ describe("Can see a round", () => {
 		cy.get("[data-test=app]").should("be.visible");
 	});
 
-	it("As a registered user", () => {
+	it("As a registered user", function () {
+		if (!Cypress.env("TEST_EMAIL") || !Cypress.env("TEST_PASSWORD")) {
+			// No test account configured (see cypress/support/users.js); the guest test above still runs.
+			this.skip();
+		}
 		cy.login();
 
 		cy.get('html').then(($html) => {

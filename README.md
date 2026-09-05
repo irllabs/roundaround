@@ -82,6 +82,9 @@ Summary - we never make a branch off master, only stage, and we only ever merge 
 ## Testing
 - As of now there's a git hook to make sure any code committed is linted and doesn't add malformed js
 - As of now there's a smoke test that runs locally to make sure the site still loads when pushing
+- The smoke test signs in with a persistent test account. Its credentials are **not** in the repo: put them in
+  `CYPRESS_TEST_EMAIL` / `CYPRESS_TEST_PASSWORD` (CI reads them from GitHub Actions secrets) or in an untracked
+  `cypress.env.json` with `TEST_EMAIL` / `TEST_PASSWORD`.
 
 If the smoke test fails you can debug it with:
 `yarn run cypress:open`
@@ -97,6 +100,9 @@ make sure the site is running locally.
 -  `firebase deploy --only hosting:dev`
     Should update `https://roundaround-dev.web.app/`, this can be any branch off develop, it's fine if it's buggy
     
-## Deploy functions (generates Jitsi tokens)
-- Make sure you have the jaasauth.pk private key file in the root of the functions folder (not kept in git)
+## Deploy functions (Jitsi tokens and share links)
+- Secrets live in Secret Manager, not in files: run `firebase functions:secrets:set JAAS_PRIVATE_KEY` (paste the
+  contents of the JaaS private key) and `firebase functions:secrets:set BITLY_TOKEN` once per project.
+- Non-secret settings (JaaS app id and key id, Bitly group, public origin) are parameters; see `functions/.env.example`.
+- `cd functions && yarn install && yarn test`
 - `firebase deploy --only functions`
