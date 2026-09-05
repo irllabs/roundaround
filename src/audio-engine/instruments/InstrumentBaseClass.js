@@ -2,7 +2,7 @@
 import * as Tone from 'tone';
 import _ from 'lodash'
 import { randomBool, numberRange } from '../../utils/helpers'
-const Note = require('@tonaljs/note')
+import * as Note from '@tonaljs/note'
 
 const SAMPLE_LOAD_TIMEOUT_MS = 20000
 

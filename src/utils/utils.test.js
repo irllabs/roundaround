@@ -1,4 +1,5 @@
-import { changeLayerLength, convertPercentToDB, convertDBToPercent, duplicateRound, uuid } from './index'
+import { describe, it, expect } from 'vitest'
+import { changeLayerLength, convertPercentToDB, convertDBToPercent, duplicateRound, uuid, arraymove } from './index'
 
 const layerWithSteps = (pattern) => ({
     id: 'layer',
@@ -62,5 +63,13 @@ describe('duplicateRound', () => {
 describe('uuid', () => {
     it('produces v4-shaped ids', () => {
         expect(uuid()).toMatch(/^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/)
+    })
+})
+
+describe('arraymove', () => {
+    it('moves an element in place', () => {
+        const items = ['a', 'b', 'c', 'd']
+        arraymove(items, 0, 2)
+        expect(items).toEqual(['b', 'c', 'a', 'd'])
     })
 })

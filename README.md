@@ -21,31 +21,25 @@ Reference:
 # Development
 
 ## Set Node Version
-Please use node v14.17.6 - the latest stable version of node, [nvm](https://tecadmin.net/install-nvm-macos-with-homebrew/) is an easy way to do this
-
-On OX, install Homebrew if you don't have it:
+Use the Node version in `.nvmrc` (currently 22). With [nvm](https://github.com/nvm-sh/nvm):
 ```
-ruby -e "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install)"
-```
-
-Install and select said version of Node:
-```
-nvm install 14.17.6
-nvm use v14.17.6
-node -v // should be 14.17.6
+nvm install
+nvm use
+node -v
 ```
 
 ### (Optional) Clean Install Modules
 ```
-yarn install --frozen-lockfile`
+yarn install --frozen-lockfile
 ```
 
 ## Local development
-- Go to your local branch
 - `yarn` - To install packages that may have changed since your last branch
-- `yarn build` - To do a clean build of js
-- `yarn start` - To start the local server
-- navigate to [http://localhost:3000](http://localhost:3000)
+- `yarn start` - Vite dev server with hot reload on [http://localhost:3000](http://localhost:3000)
+- `yarn build` - Production build into `build/`
+- `yarn preview` - Serve the production build locally on port 3000
+- `yarn lint` - ESLint (also runs on commit)
+- `yarn test` - Unit and component tests (Vitest + Testing Library); `yarn test:watch` while developing
 
 ## Dev workflow
 We use [git flow](https://www.atlassian.com/git/tutorials/comparing-workflows/gitflow-workflow#:~:text=The%20overall%20flow%20of%20Gitflow,branch%20is%20created%20from%20main&text=When%20a%20feature%20is%20complete%20it%20is%20merged%20into%20the,branch%20is%20created%20from%20main)

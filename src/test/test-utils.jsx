@@ -12,7 +12,7 @@ export function makeStore() {
 
 /** Shows the current router location so tests can assert on navigation. */
 export function LocationProbe() {
-    return <Route path="*" render={({ location }) => <div data-testid="location">{location.pathname}</div>} />
+    return <Route path="*" render={({ location }) => <div data-test="location">{location.pathname}</div>} />
 }
 
 /**

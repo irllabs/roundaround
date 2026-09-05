@@ -1,7 +1,9 @@
+import { vi, describe, it, expect, beforeEach, afterEach } from 'vitest'
+import * as ToneMock from 'tone'
 import InstrumentBaseClass from './InstrumentBaseClass'
 import Instruments from '../Instruments'
 
-jest.mock('tone', () => {
+vi.mock('tone', () => {
     class Sampler {
         constructor(urls, options) {
             this.urls = urls
@@ -21,7 +23,7 @@ jest.mock('tone', () => {
     }
 })
 
-const { Sampler } = jest.requireMock('tone')
+const { Sampler } = ToneMock
 
 class TestInstrument extends InstrumentBaseClass {
     constructor() {
@@ -32,9 +34,9 @@ class TestInstrument extends InstrumentBaseClass {
 describe('InstrumentBaseClass.load', () => {
     beforeEach(() => {
         Sampler.instances.length = 0
-        jest.useFakeTimers()
+        vi.useFakeTimers()
     })
-    afterEach(() => jest.useRealTimers())
+    afterEach(() => vi.useRealTimers())
 
     it('resolves once the sampler reports its buffers loaded', async () => {
         const instrument = new TestInstrument()
@@ -55,7 +57,7 @@ describe('InstrumentBaseClass.load', () => {
     it('rejects after the timeout when the sampler never reports back', async () => {
         const instrument = new TestInstrument()
         const loading = instrument.load('hit')
-        jest.advanceTimersByTime(20000)
+        vi.advanceTimersByTime(20000)
         await expect(loading).rejects.toThrow(/Timed out/)
     })
 

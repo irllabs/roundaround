@@ -1,3 +1,4 @@
+import { vi, describe, it, expect, beforeEach, afterEach } from 'vitest'
 import React from 'react'
 import { screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
@@ -17,11 +18,11 @@ function setup({ round = null, deleteRound, route = '/rounds' }) {
 }
 
 describe('DeleteRoundDialog', () => {
-    beforeEach(() => jest.spyOn(console, 'error').mockImplementation(() => {}))
+    beforeEach(() => vi.spyOn(console, 'error').mockImplementation(() => {}))
     afterEach(() => console.error.mockRestore())
 
     it('removes the round from the list and closes', async () => {
-        const { store, firebase } = setup({ deleteRound: jest.fn().mockResolvedValue() })
+        const { store, firebase } = setup({ deleteRound: vi.fn().mockResolvedValue() })
         userEvent.click(screen.getByRole('button', { name: 'Delete' }))
         await waitFor(() => expect(store.getState().display.isShowingDeleteRoundDialog).toBe(false))
         expect(firebase.deleteRound).toHaveBeenCalledWith({ id: 'r1' })
@@ -29,7 +30,7 @@ describe('DeleteRoundDialog', () => {
     })
 
     it('shows the error and stays open when deletion fails', async () => {
-        const { store } = setup({ deleteRound: jest.fn().mockRejectedValue(new Error('permission denied')) })
+        const { store } = setup({ deleteRound: vi.fn().mockRejectedValue(new Error('permission denied')) })
         userEvent.click(screen.getByRole('button', { name: 'Delete' }))
         expect(await screen.findByRole('alert')).toHaveTextContent('permission denied')
         expect(store.getState().display.isShowingDeleteRoundDialog).toBe(true)
@@ -39,7 +40,7 @@ describe('DeleteRoundDialog', () => {
     it('leaves the round when the open round is deleted', async () => {
         setup({
             round: { id: 'r1', name: 'One', layers: [], currentUsers: [] },
-            deleteRound: jest.fn().mockResolvedValue(),
+            deleteRound: vi.fn().mockResolvedValue(),
             route: '/play/r1'
         })
         userEvent.click(screen.getByRole('button', { name: 'Delete' }))

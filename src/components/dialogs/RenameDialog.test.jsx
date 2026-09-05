@@ -1,3 +1,4 @@
+import { vi, describe, it, expect } from 'vitest'
 import React from 'react'
 import { screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
@@ -11,7 +12,7 @@ function setup({ round, rounds, selectedRoundId }) {
     store.dispatch(setRound(round))
     store.dispatch(setSelectedRoundId(selectedRoundId))
     store.dispatch(setIsShowingRenameDialog(true))
-    const firebase = { updateRound: jest.fn().mockResolvedValue() }
+    const firebase = { updateRound: vi.fn().mockResolvedValue() }
     return { store, firebase, ...renderWithProviders(<RenameDialog />, { store, firebase }) }
 }
 

@@ -1,3 +1,4 @@
+import { vi, describe, it, expect, beforeEach, afterEach } from 'vitest'
 import React from 'react'
 import { screen, waitFor } from '@testing-library/react'
 import { Route } from 'react-router-dom'
@@ -5,44 +6,46 @@ import PlayRoute from './PlayRoute'
 import { renderWithProviders, makeStore, LocationProbe } from '../../test/test-utils'
 import { setUser } from '../../redux/actions'
 
-jest.mock('../../audio-engine/AudioEngine', () => ({
-    init: jest.fn().mockResolvedValue(),
-    load: jest.fn().mockResolvedValue(),
-    stop: jest.fn(),
-    startAudioContext: jest.fn(),
-    setTempo: jest.fn(),
-    setSwing: jest.fn(),
-    addUser: jest.fn(),
-    busesByUser: {}
+vi.mock('../../audio-engine/AudioEngine', () => ({
+    default: {
+        init: vi.fn().mockResolvedValue(),
+        load: vi.fn().mockResolvedValue(),
+        stop: vi.fn(),
+        startAudioContext: vi.fn(),
+        setTempo: vi.fn(),
+        setSwing: vi.fn(),
+        addUser: vi.fn(),
+        busesByUser: {}
+    }
 }))
-jest.mock('../../audio-engine/Instruments', () => ({ init: jest.fn() }))
-jest.mock('../../audio-engine/FX', () => ({ init: jest.fn() }))
-jest.mock('../../audio-engine/CustomSamples', () => ({ init: jest.fn() }))
-jest.mock('./PlayUI', () => () => null)
-jest.mock('./EffectsSidebar', () => () => null)
-jest.mock('./layer-settings/LayerSettings', () => () => null)
-jest.mock('../dialogs/ShareDialog', () => () => null)
-jest.mock('../dialogs/OrientationDialog', () => () => null)
+vi.mock('../../audio-engine/Instruments', () => ({ default: { init: vi.fn() } }))
+vi.mock('../../audio-engine/FX', () => ({ default: { init: vi.fn() } }))
+vi.mock('../../audio-engine/CustomSamples', () => ({ default: { init: vi.fn() } }))
+vi.mock('./PlayUI', () => ({ default: () => null }))
+vi.mock('./EffectsSidebar', () => ({ default: () => null }))
+vi.mock('./layer-settings/LayerSettings', () => ({ default: () => null }))
+vi.mock('../dialogs/ShareDialog', () => ({ default: () => null }))
+vi.mock('../dialogs/OrientationDialog', () => ({ default: () => null }))
 
 const me = { id: 'me', displayName: 'Me', color: '#fff' }
 
 function makeFirebase({ round }) {
-    const unsubs = { round: jest.fn(), layers: jest.fn(), userBuses: jest.fn(), userPatterns: jest.fn(), user: jest.fn() }
+    const unsubs = { round: vi.fn(), layers: vi.fn(), userBuses: vi.fn(), userPatterns: vi.fn(), user: vi.fn() }
     const subCollections = {
-        layers: { onSnapshot: jest.fn(() => unsubs.layers) },
-        userBuses: { onSnapshot: jest.fn(() => unsubs.userBuses) },
-        userPatterns: { onSnapshot: jest.fn(() => unsubs.userPatterns) }
+        layers: { onSnapshot: vi.fn(() => unsubs.layers) },
+        userBuses: { onSnapshot: vi.fn(() => unsubs.userBuses) },
+        userPatterns: { onSnapshot: vi.fn(() => unsubs.userPatterns) }
     }
-    const roundDoc = { onSnapshot: jest.fn(() => unsubs.round), collection: jest.fn(name => subCollections[name]) }
-    const userDoc = { onSnapshot: jest.fn(() => unsubs.user) }
-    const db = { collection: jest.fn(name => ({ doc: jest.fn(() => (name === 'rounds' ? roundDoc : userDoc)) })) }
+    const roundDoc = { onSnapshot: vi.fn(() => unsubs.round), collection: vi.fn(name => subCollections[name]) }
+    const userDoc = { onSnapshot: vi.fn(() => unsubs.user) }
+    const db = { collection: vi.fn(name => ({ doc: vi.fn(() => (name === 'rounds' ? roundDoc : userDoc)) })) }
     const firebase = {
         db,
-        getRound: typeof round === 'function' ? jest.fn(round) : jest.fn().mockResolvedValue(round),
-        loadUser: jest.fn().mockResolvedValue(me),
-        createUserBus: jest.fn().mockResolvedValue(),
-        saveUserPatterns: jest.fn().mockResolvedValue(),
-        joinRound: jest.fn().mockResolvedValue()
+        getRound: typeof round === 'function' ? vi.fn(round) : vi.fn().mockResolvedValue(round),
+        loadUser: vi.fn().mockResolvedValue(me),
+        createUserBus: vi.fn().mockResolvedValue(),
+        saveUserPatterns: vi.fn().mockResolvedValue(),
+        joinRound: vi.fn().mockResolvedValue()
     }
     return { firebase, unsubs, roundDoc, subCollections }
 }
@@ -62,7 +65,7 @@ function renderRoute(firebase) {
 }
 
 describe('PlayRoute', () => {
-    beforeEach(() => jest.spyOn(console, 'error').mockImplementation(() => {}))
+    beforeEach(() => vi.spyOn(console, 'error').mockImplementation(() => {}))
     afterEach(() => console.error.mockRestore())
 
     it('subscribes to the round, its sub-collections and its users, and unsubscribes from all of them on unmount', async () => {

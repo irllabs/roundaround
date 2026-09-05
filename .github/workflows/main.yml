@@ -13,11 +13,8 @@ jobs:
           cache: yarn
       - run: yarn install --frozen-lockfile
       - run: yarn lint
-      - run: yarn test --watchAll=false
+      - run: yarn test
       - run: yarn build
-        env:
-          # react-scripts 4 (webpack 4) needs this on Node 17+; remove once the build runs on Vite.
-          NODE_OPTIONS: --openssl-legacy-provider
       - name: Cloud Functions tests
         working-directory: functions
         run: |
@@ -41,7 +38,6 @@ jobs:
           wait-on-timeout: 120
           browser: chrome
         env:
-          NODE_OPTIONS: --openssl-legacy-provider
           CYPRESS_BASE_URL: http://localhost:3000
           # Set these two repository secrets to run the signed-in test; without them it is skipped.
           CYPRESS_TEST_EMAIL: ${{ secrets.CYPRESS_TEST_EMAIL }}
