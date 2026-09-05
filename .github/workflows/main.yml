@@ -1,26 +1,53 @@
-name: End-to-end tests
+name: Checks
 on: [push, pull_request]
+
 jobs:
-  cypress-eslint-run:
-    runs-on: ubuntu-20.04
-    # env:
-    #   CYPRESS_BASE_URL: https://roundaround-stage.web.app/
+  lint-build:
+    name: Lint and build
+    runs-on: ubuntu-latest
     steps:
-      - name: Checkout
-        uses: actions/checkout@v2
-      # Install NPM dependencies, cache them correctlyand run all Cypress tests
-      - name: set master url
-        if: github.ref == 'refs/heads/master'
-        run: CYPRESS_BASE_URL=http://rounds.studio
-      - name: set stage url
-        if: github.ref == 'refs/heads/stage'
-        run: CYPRESS_BASE_URL=https://roundaround-stage.web.app/
-      - name: set dev url
-        if: github.ref != 'refs/heads/stage' && github.ref != 'refs/heads/master'
-        run: CYPRESS_BASE_URL=https://roundaround-dev.web.app/
-      - name: Cypress run
-        uses: cypress-io/github-action@v2
-        #uses: actions/download-artifact@v2
-      # Run Eslint checks
-      - name: Eslint run
-        run: ./node_modules/.bin/eslint --ext js,jsx src
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: yarn
+      - run: yarn install --frozen-lockfile
+      - run: yarn lint
+      - run: yarn build
+        env:
+          # react-scripts 4 (webpack 4) needs this on Node 17+; remove once the build runs on Vite.
+          NODE_OPTIONS: --openssl-legacy-provider
+      - name: Cloud Functions tests
+        working-directory: functions
+        run: |
+          yarn install --frozen-lockfile
+          yarn test
+
+  e2e:
+    name: Cypress smoke test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: yarn
+      - uses: cypress-io/github-action@v6
+        with:
+          build: yarn build
+          start: npx serve -s build -l 3000
+          wait-on: http://localhost:3000
+          wait-on-timeout: 120
+          browser: chrome
+        env:
+          NODE_OPTIONS: --openssl-legacy-provider
+          CYPRESS_BASE_URL: http://localhost:3000
+          # Set these two repository secrets to run the signed-in test; without them it is skipped.
+          CYPRESS_TEST_EMAIL: ${{ secrets.CYPRESS_TEST_EMAIL }}
+          CYPRESS_TEST_PASSWORD: ${{ secrets.CYPRESS_TEST_PASSWORD }}
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: cypress-screenshots
+          path: cypress/screenshots
+          if-no-files-found: ignore

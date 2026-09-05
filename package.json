@@ -2,6 +2,9 @@
 	"name": "roundaround",
 	"version": "0.1.0",
 	"private": true,
+	"engines": {
+		"node": ">=22"
+	},
 	"dependencies": {
 		"@material-ui/core": "^4.11.3",
 		"@material-ui/icons": "^4.11.2",
@@ -37,6 +40,7 @@
 		"start": "react-scripts start",
 		"build": "react-scripts build",
 		"test": "react-scripts test",
+		"lint": "eslint --ext js,jsx src",
 		"eject": "react-scripts eject",
 		"prepare": "husky install",
 		"cypress:open": "CYPRESS_BASE_URL=http://localhost:3000/ cypress open",

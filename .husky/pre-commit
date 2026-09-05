@@ -1,2 +1,2 @@
 #!/bin/sh
-./node_modules/.bin/eslint --ext js,jsx src
+yarn lint
