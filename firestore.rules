@@ -55,7 +55,8 @@ service cloud.firestore {
     }
 
     match /rounds/{roundId} {
-      // Joining a round (adding yourself to both lists) and leaving one (taking yourself out of
+      // Joining a round (adding yourself to both lists, or only to currentUsers, which is what a
+      // client from before `contributors` writes) and leaving one (taking yourself out of
       // currentUsers), condition by condition:
       //   * nothing but the two membership lists may change: no editing the round in passing;
       //   * currentUsers may only gain the caller: nobody is dragged into a round by somebody else;
@@ -82,13 +83,13 @@ service cloud.firestore {
       // been in it. Nobody is ever taken out of `contributors`, because a layer is drawn in its
       // author's colour long after the author has left.
       //
-      // Members edit the round; anyone signed in may add themselves to currentUsers when joining;
-      // and, whether or not they are a member, anyone signed in may join or leave (last clause).
+      // The creator and the members edit the round. Everybody else may only join it or leave it,
+      // and selfJoinOrLeave() says precisely what that means: an earlier rule let anyone signed in
+      // write any `currentUsers` that had themselves in it, which was enough to throw every other
+      // member out of somebody else's round.
       allow update: if signedIn() && (
         resource.data.createdBy == request.auth.uid ||
         request.auth.uid in resource.data.get('currentUsers', []) ||
-        (changedKeys().hasOnly(['currentUsers']) &&
-          request.auth.uid in request.resource.data.currentUsers) ||
         selfJoinOrLeave()
       );
       allow delete: if signedIn() && resource.data.createdBy == request.auth.uid;
