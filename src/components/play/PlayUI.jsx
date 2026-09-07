@@ -3,7 +3,7 @@ import _ from 'lodash';
 import { SVG } from '@svgdotjs/svg.js'
 import '@svgdotjs/svg.panzoom.js'
 import { HTML_UI_Params, PRESET_LETTERS, KEY_MAPPINGS } from '../../utils/constants'
-import { connect } from "react-redux";
+import { connect, batch } from "react-redux";
 import AudioEngine from '../../audio-engine/AudioEngine'
 import { getDefaultLayerData } from '../../utils/defaultData';
 import { SET_LAYER_MUTE, TOGGLE_STEP, ADD_LAYER, SET_SELECTED_LAYER_ID, SET_IS_SHOWING_LAYER_SETTINGS, UPDATE_STEP, SET_IS_SHOWING_ORIENTATION_DIALOG, UPDATE_LAYERS, SET_CURRENT_SEQUENCE_PATTERN } from '../../redux/actionTypes'
@@ -11,10 +11,10 @@ import { FirebaseContext } from '../../firebase/'
 import * as Tone from 'tone';
 import { withStyles } from '@material-ui/styles';
 import PropTypes from 'prop-types';
-import { numberRange } from '../../utils/index'
+import { numberRange, layerWithStepsOff, patternLayersForRound } from '../../utils/index'
 import Instruments from '../../audio-engine/Instruments'
 import { getDefaultUserPatternSequence } from '../../utils/defaultData'
-import { detailedDiff } from 'deep-object-diff';
+import { classifyRoundChange } from './roundDiff'
 import {
     setIsPlaying,
     setIsRecordingSequence,
@@ -24,6 +24,9 @@ import {
     setCurrentSequencePattern,
     saveUserPattern
 } from "../../redux/actions";
+// How long after the last step edit the active pattern is saved. A run of toggles is one write.
+const PATTERN_SAVE_DEBOUNCE_MS = 1000
+
 const styles = theme => ({
     button: {
         cursor: 'pointer'
@@ -43,7 +46,7 @@ const styles = theme => ({
     }
 })
 
-class PlayUI extends Component {
+export class PlayUI extends Component {
     static contextType = FirebaseContext
     constructor(props) {
         super(props)
@@ -77,6 +80,7 @@ class PlayUI extends Component {
         this.onKeypress = this.onKeypress.bind(this)
         this.onOutsideClick = this.onOutsideClick.bind(this)
         this.stepModalStepUpdateThrottled = _.throttle(this.stepModalStepUpdate.bind(this), 300)
+        this.savePatternDebounced = _.debounce(this.saveActivePatternIfChanged.bind(this), PATTERN_SAVE_DEBOUNCE_MS)
         this.sequencerParts = {}
     }
 
@@ -98,6 +102,8 @@ class PlayUI extends Component {
     }
 
     async componentWillUnmount() {
+        // a toggle made in the last second is still waiting to be saved into the pattern
+        this.savePatternDebounced.flush()
         window.removeEventListener('click', this.interfaceClicked)
         window.removeEventListener('resize', this.onWindowResizeThrottled)
         window.removeEventListener('keydown', this.onKeypress)
@@ -109,8 +115,20 @@ class PlayUI extends Component {
     setDefaultPattern = async () => {
         const { user, round } = this.props
         const defaultPattern = round.userPatterns[user.id].patterns[0]
-        this.activePatternId = defaultPattern.id
+        this.setActivePattern(defaultPattern.id)
         this.onLoadPattern(defaultPattern.id)
+    }
+
+    /**
+     * Makes pattern `id` the active one, the only way the active pattern may change. A toggle made
+     * in the last second is still waiting to be saved, and the debounced save reads the active
+     * pattern when it fires, so it is flushed first: after the switch it would compare the new
+     * pattern with the layers just loaded from it, find them equal, and the toggle would be lost
+     * from the pattern it was made in.
+     */
+    setActivePattern(id) {
+        this.savePatternDebounced.flush()
+        this.activePatternId = id
     }
 
     interfaceClicked = (e) => {
@@ -142,27 +160,13 @@ class PlayUI extends Component {
         this.draw()
     }
 
-    async componentDidUpdate(prevProps) {
+    componentDidUpdate(prevProps) {
         const { round, user, display, setIsRecordingSequence } = this.props
-        const oldRound = prevProps.round
-        let redraw = false
-        let shouldRecalculateParts = false
-        const _this = this
-        const sameLayerLength = prevProps.round.layers.length === round.layers.length
 
         this.isPlayingSequence = round.userPatterns[user.id].isPlayingSequence
 
         !this.activePatternId &&
             this.setDefaultPattern()
-
-        let diff = detailedDiff(this.round, this.props.round)
-        if (!_.isEqual(round.userPatterns[user.id].isPlayingSequence, oldRound.userPatterns[user.id].isPlayingSequence)) {
-            redraw = true
-        }
-
-        if (!_.isEqual(display.isRecordingSequence, prevProps.display.isRecordingSequence)) {
-            redraw = true
-        }
 
         if (!_.isEqual(this.isRecordingSequence, display.isRecordingSequence)) {
             /** update props to match state */
@@ -170,39 +174,14 @@ class PlayUI extends Component {
         }
 
         // whole round has changed
-        if (this.round.id !== this.props.round.id) {
-            this.round = _.cloneDeep(this.props.round)
-            AudioEngine.load(this.props.round)
+        if (this.round.id !== round.id) {
+            this.syncRound()
+            AudioEngine.load(round)
             this.draw()
             return
         }
 
-        if (!sameLayerLength) {
-            await this.onSavePattern(this.activePatternId)
-        }
-
-        //layer removal
-        for (let layer of this.round.layers) {
-            let newLayer = _.find(this.props.round.layers, { id: layer.id })
-            if (_.isNil(newLayer)) {
-                AudioEngine.removeTrack(layer.id)
-                redraw = true
-            }
-        }
-
-        // sequence update
-        if (!_.isNil(diff.updated.userPatterns)) {
-            this.loadSequence(diff.updated.userPatterns)
-            redraw = true
-        }
-
-        //  tempo changed
-        if (this.round.bpm !== this.props.round.bpm) {
-            this.round.bpm = this.props.round.bpm
-            AudioEngine.setTempo(this.round.bpm)
-            this.reclaculateIndicatorAnimation()
-            this.adjustAllLayerOffsets()
-        }
+        let redraw = !_.isEqual(display.isRecordingSequence, prevProps.display.isRecordingSequence)
 
         // User profile color changed
         const userColors = this.getUserColors()
@@ -211,80 +190,110 @@ class PlayUI extends Component {
             redraw = true
         }
 
-        // add layer or step
-        if (!_.isNil(diff.added.layers)) {
-            for (let [, layer] of Object.entries(diff.added.layers)) {
-                AudioEngine.createTrack(layer)
-            }
-            shouldRecalculateParts = true
-            redraw = true
-        }
-
-        // add remove layer or step
-        if (!_.isNil(diff.deleted.layers)) {
-            for (let [, layer] of Object.entries(diff.deleted.layers)) {
-                AudioEngine.createTrack(layer)
-            }
-            shouldRecalculateParts = true
-            redraw = true
-        }
-
-        // Check for layer type or instrument changes
-        for (let layer of this.round.layers) {
-            let newLayer = _.find(this.props.round.layers, { id: layer.id })
-            if (!_.isNil(newLayer) && !_.isEqual(layer.instrument, newLayer.instrument)) {
-                // instrument has changed
-                AudioEngine.tracksById[newLayer.id].setInstrument(newLayer.instrument)
-                this.updateLayerLabelText(layer.id, newLayer.instrument.sampler)
-            }
-            if (!_.isNil(newLayer) && !_.isEqual(layer.type, newLayer.type)) {
-                // type has changed
-                AudioEngine.tracksById[newLayer.id].setType(newLayer.type, newLayer.automationFxId)
-            }
-            if (!_.isNil(newLayer) && !_.isEqual(layer.automationFxId, newLayer.automationFxId)) {
-                // automation has changed
-                AudioEngine.tracksById[newLayer.id].setAutomatedFx(newLayer.automationFxId)
-            }
-        }
-        // Check for gain changes
-        for (let layer of this.round.layers) {
-            let newLayer = _.find(this.props.round.layers, { id: layer.id })
-            if (!_.isNil(newLayer) && !_.isEqual(layer.gain, newLayer.gain)) {
-                AudioEngine.tracksById[newLayer.id].setVolume(newLayer.gain)
-            }
-        }
-
-        // Check for mute changes
-        for (let layer of this.round.layers) {
-            let newLayer = _.find(this.props.round.layers, { id: layer.id })
-            if (!_.isNil(newLayer) && !_.isEqual(layer.isMuted, newLayer.isMuted)) {
-                AudioEngine.tracksById[newLayer.id]?.setMute(newLayer.isMuted)
-                redraw = true
-            }
-        }
-
-        // Check for layer time offset changes
-        for (let layer of this.round.layers) {
-            let newLayer = _.find(this.props.round.layers, { id: layer.id })
-            if (!_.isNil(newLayer) && !_.isEqual(layer.timeOffset, newLayer.timeOffset)) {
-                AudioEngine.recalculateParts(this.props.round)
-                this.adjustLayerOffset(newLayer.id, newLayer.percentOffset, newLayer.timeOffset)
-            }
-            if (!_.isNil(newLayer) && !_.isEqual(layer.percentOffset, newLayer.percentOffset)) {
-                AudioEngine.recalculateParts(this.props.round)
-                this.adjustLayerOffset(newLayer.id, newLayer.percentOffset, newLayer.timeOffset)
-            }
-        }
-
-        if (shouldRecalculateParts) {
-            AudioEngine.recalculateParts(this.props.round)
+        // The round in the store is compared with this component's copy of it, which has every
+        // change made through this component already (that is why this user's own toggle, coming
+        // back from the store, is no change at all).
+        const change = round === prevProps.round ? null : classifyRoundChange(this.round, round)
+        if (!_.isNil(change)) {
+            redraw = this.applyRoundChange(change) || redraw
+            this.syncRound()
         }
         if (redraw) {
-            this.clear()
-            this.round = _.cloneDeep(this.props.round)
-            _this.draw(false)
+            this.draw(false)
         }
+        if (!_.isNil(change) && (change.addedLayers.length > 0 || change.removedLayerIds.length > 0)) {
+            // the active pattern holds the user's layers, so it follows them
+            this.saveActivePatternIfChanged()
+        }
+    }
+
+    /**
+     * Brings the audio engine and the drawing in line with a change to the round, as
+     * classifyRoundChange sorted it. Returns whether the round has to be redrawn. A change to steps
+     * alone never needs that: the steps are repainted where they are and their layers' parts
+     * recalculated, whether the steps are this user's or a collaborator's.
+     */
+    applyRoundChange(change) {
+        const { round } = this.props
+        if (!_.isNil(change.stepsOnly)) {
+            for (const [layerId, stepIds] of Object.entries(change.stepsOnly)) {
+                const layer = _.find(round.layers, { id: layerId })
+                for (const stepId of stepIds) {
+                    this.updateStep(_.find(layer.steps, { id: stepId }))
+                }
+                AudioEngine.recalculateParts(round, layerId)
+            }
+            return false
+        }
+
+        let redraw = false
+        for (const layerId of change.removedLayerIds) {
+            AudioEngine.removeTrack(layerId)
+            redraw = true
+        }
+        for (const layer of change.addedLayers) {
+            // a collaborator's layer has its track already: the route makes it before the layer
+            // reaches the store
+            if (_.isNil(AudioEngine.tracksById[layer.id])) {
+                AudioEngine.createTrack(layer)
+            }
+            redraw = true
+        }
+        if (change.changedSequencePlayback.length > 0) {
+            this.loadSequence(_.pick(round.userPatterns, change.changedSequencePlayback))
+        }
+        if (change.changedUserPatterns.length > 0) {
+            // the pattern previews and the sequence are drawn from the patterns documents
+            redraw = true
+        }
+        if (change.tempoChanged) {
+            AudioEngine.setTempo(round.bpm)
+            this.adjustAllLayerOffsets()
+        }
+        const layersToRecalculate = new Set(Object.keys(change.changedSteps))
+        for (const [layerId, fields] of Object.entries(change.changedLayerFields)) {
+            const layer = _.find(round.layers, { id: layerId })
+            const track = AudioEngine.tracksById[layerId]
+            if (fields.includes('instrument')) {
+                track.setInstrument(layer.instrument)
+                this.updateLayerLabelText(layerId, layer.instrument.sampler)
+            }
+            if (fields.includes('type')) {
+                track.setType(layer.type, layer.automationFxId)
+            }
+            if (fields.includes('automationFxId')) {
+                track.setAutomatedFx(layer.automationFxId)
+            }
+            if (fields.includes('gain')) {
+                track.setVolume(layer.gain)
+            }
+            if (fields.includes('isMuted')) {
+                track?.setMute(layer.isMuted)
+                redraw = true
+            }
+            if (fields.includes('offset')) {
+                this.adjustLayerOffset(layerId, layer.percentOffset, layer.timeOffset)
+                layersToRecalculate.add(layerId)
+            }
+            if (fields.includes('steps')) {
+                redraw = true
+                layersToRecalculate.add(layerId)
+            }
+        }
+        if (change.addedLayers.length > 0) {
+            AudioEngine.recalculateParts(round)
+        } else {
+            for (const layerId of layersToRecalculate) {
+                AudioEngine.recalculateParts(round, layerId)
+            }
+        }
+        return redraw
+    }
+
+    /** Takes a fresh copy of the round from the store, with the layers in the order they are drawn in. */
+    syncRound() {
         this.round = _.cloneDeep(this.props.round)
+        this.orderLayers()
     }
 
     loadSequence = (patterns) => {
@@ -334,10 +343,6 @@ class PlayUI extends Component {
             // add order parameter so we can calculate offsets (todo: add this when we create a layer?)
             this.addLayer(layer, i++, shouldAnimate)
         }
-        // Create activity line
-        this.drawAvatars()
-        this.activityIndicator = this.container.circle(HTML_UI_Params.activityIndicatorDiameter).fill({ color: '#fff', opacity: 0 })
-
         // add layer button
         this.playbackToggle = this.container.circle(HTML_UI_Params.addNewLayerButtonDiameter).stroke({ width: 1, color: 'rgba(0,0,0,0)' }).fill('white').opacity('0.1')
         this.playbackToggle.x((this.containerWidth / 2) - (HTML_UI_Params.addNewLayerButtonDiameter / 2))
@@ -507,38 +512,21 @@ class PlayUI extends Component {
     }
 
     async loadPatternPriority(userId, id, order) {
-        //this.props.dispatch({ type: SET_CURRENT_SEQUENCE_PATTERN, payload: { value: order } })
+        // A toggle made in the last second is still waiting to be saved into the pattern it was
+        // made in, and the debounced save reads the layers when it fires. The layers below are
+        // about to be replaced with the next pattern's, so, as when the user switches patterns by
+        // hand, the pending save goes first: otherwise the next pattern's steps would be written
+        // over the pattern that is active now.
+        this.savePatternDebounced.flush()
         const pattern = _.find(this.props.round.userPatterns[userId].patterns, { id })
         if (!_.isEmpty(pattern.state)) {
-            // check if we have layers in the round not referenced in the pattern then set all steps in that layer to off
-            for (const existingLayer of this.props.round.layers) {
-                if (_.isNil(_.find(pattern.state.layers, { id: existingLayer.id })) && existingLayer.createdBy === userId) {
-                    let existingLayerClone = _.cloneDeep(existingLayer)
-                    for (const step of existingLayerClone.steps) {
-                        step.isOn = false
-                    }
-                    pattern.state.layers.push(existingLayerClone)
-                }
-            }
-
-            // check we haven't deleted the layer that is referenced in the pattern
-            let layersToDelete = []
-            for (const layer of pattern.state.layers) {
-                const layerExists = _.find(this.props.round.layers, { id: layer.id })
-                if (_.isNil(layerExists)) {
-                    layersToDelete.push(layer)
-                }
-            }
-
-            _.remove(pattern.state.layers, function (n) {
-                return layersToDelete.indexOf(n) > -1
-            })
-            //this.props.updateLayers(pattern.state.layers)
-
+            // the same lining up onLoadPattern does, but this runs from a Tone.Part callback on every
+            // bar of a sequence, so it stays inside this component's own copy of the round
+            const patternLayers = patternLayersForRound(pattern.state.layers, this.props.round.layers, userId)
             for (let layer of this.round.layers) {
-                let patternLayer = _.find(pattern.state.layers, { id: layer.id })
+                const patternLayer = _.find(patternLayers, { id: layer.id })
                 if (!_.isNil(patternLayer)) {
-                    layer.steps = patternLayer.steps
+                    layer.steps = _.cloneDeep(patternLayer.steps)
                 }
             }
 
@@ -547,7 +535,9 @@ class PlayUI extends Component {
     }
 
     loadPattern(userId, id, order) {
-        this.props.dispatch({ type: UPDATE_LAYERS, payload: { layers: this.round.layers } })
+        // a copy: whatever goes into the store is frozen there, and these layers are this
+        // component's own working copy of the round, which it keeps writing to as steps are edited
+        this.props.dispatch({ type: UPDATE_LAYERS, payload: { layers: _.cloneDeep(this.round.layers) } })
         this.props.dispatch({ type: SET_CURRENT_SEQUENCE_PATTERN, payload: { value: order } })
         this.clear()
         this.draw(false)
@@ -556,11 +546,12 @@ class PlayUI extends Component {
     clear() {
         this.removeAllStepEventListeners()
         this.removeAllLayerEventListeners()
-        if (!_.isNil(this.layerGrahpics)) {
-            for (let layerGrahpic of this.layerGrahpics) {
-                layerGrahpic.clear()
+        if (!_.isNil(this.layerGraphics)) {
+            for (let layerGraphic of this.layerGraphics) {
+                layerGraphic.clear()
             }
         }
+        this.layerGraphics = []
 
         if (!_.isNil(this.stepGraphics)) {
             for (let stepGraphic of this.stepGraphics) {
@@ -574,19 +565,6 @@ class PlayUI extends Component {
         if (!_.isNil(this.playbackToggle)) {
             this.playbackToggle.click(null)
         }
-    }
-
-    reclaculateIndicatorAnimation() {
-        /* if (!_.isNil(this.positionLineAnimation)) {
-             this.positionLineAnimation.unschedule()
-         }
-         const positionLineTime = (60 / this.round.bpm) * 4000
-         this.positionLineAnimation = this.positionLine.animate({ duration: positionLineTime }).ease('-').transform({ rotate: 360, relative: true, origin: 'bottom center' }).loop()
-         if (!this.isOn) {
-             this.positionLine.timeline().pause()
-         } else {
-             this.positionLine.timeline().seek(AudioEngine.getPositionMilliseconds())
-         }*/
     }
 
     addLayer(layer, order, shouldAnimate = true) {
@@ -707,42 +685,22 @@ class PlayUI extends Component {
         this.updateLayerLabel(layerGraphic)
     }
 
-    updateStep(step, showActivityIndicator = false) {
-        if (!_.isEmpty(this.stepGraphics) && !_.isNil(step)) {
-            const layer = this.stepLayerDictionary[step.id]
-            const stepGraphic = _.find(this.stepGraphics, { id: step.id })
-            const _this = this
-            if (showActivityIndicator) {
-                // add delay so that graphic updates after activity indicator hits it
-                _.delay(() => {
-                    if (step.isOn) {
-                        stepGraphic.animate(HTML_UI_Params.stepAnimationUpdateTime).attr({
-                            fill: layer.isMuted ? 'rgba(255,255,255, 0.1)' : _this.userColors[layer.createdBy],
-                            stroke: layer.isMuted ? 'rgba(255,255,255, 0.1)' : _this.userColors[layer.createdBy],
-                            'fill-opacity': step.probability
-                        })
-                        stepGraphic.animate(HTML_UI_Params.stepAnimationUpdateTime).transform({
-                            scale: numberRange(step.velocity, 0, 1, 0.5, 1)
-                        })
-                    } else {
-                        stepGraphic.animate(HTML_UI_Params.stepAnimationUpdateTime).attr({ fill: '#101114' })
-                    }
-                }, HTML_UI_Params.activityAnimationTime)
-                this.animateActivityIndicator(layer.createdBy, stepGraphic.x() + (HTML_UI_Params.stepDiameter / 2), stepGraphic.y() + (HTML_UI_Params.stepDiameter / 2))
-            } else {
-                if (step.isOn) {
-                    stepGraphic.attr({
-                        fill: layer.isMuted ? 'rgba(255,255,255, 0.1)' : _this.userColors[layer.createdBy],
-                        stroke: layer.isMuted ? 'rgba(255,255,255, 0.1)' : _this.userColors[layer.createdBy],
-                        'fill-opacity': step.probability
-                    })
-                    stepGraphic.transform({
-                        scale: numberRange(step.velocity, 0, 1, 0.5, 1)
-                    })
-                } else {
-                    stepGraphic.attr({ fill: '#101114', 'fill-opacity': 1 })
-                }
-            }
+    /** Paints a step's graphic the way the step is: its layer's colour when on, dark when off. */
+    updateStep(step) {
+        if (_.isNil(step) || _.isEmpty(this.stepGraphics)) {
+            return
+        }
+        const layer = this.stepLayerDictionary[step.id]
+        const stepGraphic = _.find(this.stepGraphics, { id: step.id })
+        if (_.isNil(layer) || _.isNil(stepGraphic)) {
+            return
+        }
+        if (step.isOn) {
+            const color = layer.isMuted ? 'rgba(255,255,255, 0.1)' : this.userColors[layer.createdBy]
+            stepGraphic.attr({ fill: color, stroke: color, 'fill-opacity': step.probability })
+            stepGraphic.transform({ scale: numberRange(step.velocity, 0, 1, 0.5, 1) })
+        } else {
+            stepGraphic.attr({ fill: '#101114', 'fill-opacity': 1 })
         }
     }
 
@@ -780,7 +738,8 @@ class PlayUI extends Component {
         const layer = _.find(this.round.layers, { id })
         let stepGraphics = _.filter(this.stepGraphics, { layerId: id })
         const layerGraphic = _.find(this.layerGraphics, { id })
-        const layerDiameter = this.getLayerDiameter(order)
+        // the ring the layer was drawn on; without it the steps would be laid out on the innermost ring
+        const layerDiameter = this.getLayerDiameter(_.isNil(order) ? layerGraphic.order : order)
         const xOffset = (this.containerWidth / 2) - (layerDiameter / 2)
         const yOffset = (this.containerHeight / 2) - (layerDiameter / 2)
         const stepSize = (2 * Math.PI) / layer.steps.length;
@@ -824,50 +783,6 @@ class PlayUI extends Component {
         const msPerBeat = 60000 / BPM
         const msPerTick = msPerBeat / PPQ
         return Math.round(ms / msPerTick)
-    }
-
-    drawAvatars() {
-        if (!_.isNil(this.props.collaboration)) {
-            this.avatarGraphics = []
-            const numberOfContributors = Object.entries(this.props.collaboration.contributors).length
-            const totalAvatarHeight = (HTML_UI_Params.avatarDiameter * numberOfContributors) + (HTML_UI_Params.avatarPadding * (numberOfContributors - 1))
-            const offsetY = (this.containerHeight / 2) - (totalAvatarHeight / 2)
-            let x = (this.containerWidth / 2) + (HTML_UI_Params.addNewLayerButtonDiameter / 2) + (HTML_UI_Params.initialLayerPadding / 2) + ((HTML_UI_Params.stepDiameter + HTML_UI_Params.layerPadding) * (this.round.layers.length)) + HTML_UI_Params.avatarRoundPadding
-            let y = 0
-            for (let [id, contributor] of Object.entries(this.props.collaboration.contributors)) {
-                let avatarGraphic = this.container.circle(HTML_UI_Params.avatarDiameter).attr({ fill: contributor.color })
-                avatarGraphic.x(x)
-                avatarGraphic.y(y + offsetY)
-                avatarGraphic.id = id
-                this.avatarGraphics.push(avatarGraphic)
-                y += HTML_UI_Params.avatarDiameter + HTML_UI_Params.avatarPadding
-            }
-        }
-    }
-
-    updateAvatarPositions(numberOfLayers) {
-        if (!_.isEmpty(this.avatarGraphics)) {
-            let x = (this.containerWidth / 2) + (HTML_UI_Params.addNewLayerButtonDiameter / 2) + (HTML_UI_Params.initialLayerPadding / 2) + ((HTML_UI_Params.stepDiameter + HTML_UI_Params.layerPadding) * numberOfLayers) + HTML_UI_Params.avatarRoundPadding
-            for (let avatarGraphic of this.avatarGraphics) {
-                avatarGraphic.x(x)
-            }
-        }
-    }
-
-    animateActivityIndicator(userId, toX, toY) {
-        const avatarGraphic = _.find(this.avatarGraphics, { id: userId })
-        if (!_.isNil(this.activityIndicator) && !_.isNil(avatarGraphic)) {
-            this.activityIndicator.fill({ color: this.userColors[userId], opacity: 1 })
-            const fromX = avatarGraphic.x() + (HTML_UI_Params.avatarDiameter / 2)
-            const fromY = avatarGraphic.y() + (HTML_UI_Params.avatarDiameter / 2)
-            toX -= HTML_UI_Params.activityIndicatorDiameter / 2
-            toY -= HTML_UI_Params.activityIndicatorDiameter / 2
-            this.activityIndicator.move(fromX, fromY)
-            const animation = this.activityIndicator.animate(HTML_UI_Params.activityAnimationTime).move(toX, toY)//.animate(HTML_UI_Params.activityAnimationTime * 1.3).fill({ opacity: 0 })
-            animation.after(() => {
-                this.activityIndicator.animate().fill({ opacity: 0 })
-            })
-        }
     }
 
     addLayerEventListeners(layerGraphic) {
@@ -1154,7 +1069,7 @@ class PlayUI extends Component {
         let step = this.getStep(stepGraphic.id)
         step.probability = _.round(stepGraphic.probability, 1)
         step.velocity = _.round(stepGraphic.velocity, 1)
-        this.saveLayer(stepGraphic.layerId)
+        this.saveLayerSteps(stepGraphic.layerId)
         AudioEngine.recalculateParts(this.props.round)
     }
 
@@ -1163,8 +1078,9 @@ class PlayUI extends Component {
             const step = this.getStep(stepGraphic.id)
             step.probability = _.round(stepGraphic.probability, 1)
             step.velocity = _.round(stepGraphic.velocity, 1)
-            this.props.dispatch({ type: UPDATE_STEP, payload: { step: step, layerId: stepGraphic.layerId } })
-            this.saveLayer(stepGraphic.layerId)
+            // a copy, for the same reason as loadPattern: the step belongs to this.round
+            this.props.dispatch({ type: UPDATE_STEP, payload: { step: _.cloneDeep(step), layerId: stepGraphic.layerId } })
+            this.saveLayerSteps(stepGraphic.layerId)
         }
         AudioEngine.recalculateParts(this.props.round)
     }
@@ -1182,19 +1098,19 @@ class PlayUI extends Component {
         }
     }
 
-    async saveLayer(id, round) {
-        const currentRound = round || this.props.round
-        await this.context.updateLayer(this.round.id, id, _.find(currentRound.layers, { id }))
+    /**
+     * Writes a layer's steps, which is all a step edit changes; the wrapper merges them into the
+     * layer document. The steps come from this component's copy of the round, which is the one
+     * the edit was made to.
+     */
+    saveLayerSteps(layerId) {
+        const { steps } = _.find(this.round.layers, { id: layerId })
+        this.context.updateLayer(this.round.id, layerId, { steps }).catch(error => console.error('Could not save steps', error))
     }
 
     removeAllStepEventListeners() {
         for (let stepGraphic of this.stepGraphics) {
             stepGraphic.click(null)
-            if (!_.isNil(stepGraphic.hammertime)) {
-                stepGraphic.hammertime.off('pan')
-                stepGraphic.hammertime.off('panstart')
-                stepGraphic.hammertime.off('panend')
-            }
         }
     }
 
@@ -1211,19 +1127,20 @@ class PlayUI extends Component {
         this.stepModalThumb.y((1 - stepGraphic.velocity) * (HTML_UI_Params.stepModalDimensions - HTML_UI_Params.stepModalThumbDiameter))
     }
 
-    async onStepClick(stepGraphic) {
-        //const { user } = this.props
-        let step = this.getStep(stepGraphic.id)
+    /**
+     * A toggle repaints its own step graphic, recalculates its layer's part, and writes the layer's
+     * steps. The active pattern follows a second later, once the run of toggles it belongs to is
+     * over. Nothing else on screen depends on one step, so the round is not redrawn.
+     */
+    onStepClick(stepGraphic) {
+        const step = this.getStep(stepGraphic.id)
         // update internal round so that it doesn't trigger another update when we receive a change after the dispatch
         step.isOn = !step.isOn
-        this.updateStep(step, false)
+        this.updateStep(step)
         this.props.dispatch({ type: TOGGLE_STEP, payload: { layerId: stepGraphic.layerId, stepId: stepGraphic.id, lastUpdated: new Date().getTime(), isOn: step.isOn, user: null } })
-        AudioEngine.recalculateParts(this.round)
-        await this.saveLayer(stepGraphic.layerId)
-        if (this.activePatternId) {
-            await this.onSavePattern(this.activePatternId)
-        }
-        this.draw()
+        AudioEngine.recalculateParts(this.round, stepGraphic.layerId)
+        this.saveLayerSteps(stepGraphic.layerId)
+        this.savePatternDebounced()
     }
 
     async onAddLayerClick() {
@@ -1445,31 +1362,15 @@ class PlayUI extends Component {
                 this.setState({ selectedPattern: pattern.id })
                 this.selectedPatternNeedsSaving = false
 
-                // check if we have layers in the round not referenced in the pattern then set all steps in that layer to off
-                for (const existingLayer of this.props.round.layers) {
-                    if (_.isNil(_.find(pattern.state.layers, { id: existingLayer.id })) && existingLayer.createdBy === this.props.user.id) {
-                        let existingLayerClone = _.cloneDeep(existingLayer)
-                        for (const step of existingLayerClone.steps) {
-                            step.isOn = false
-                        }
-                        pattern.state.layers.push(existingLayerClone)
-                    }
-                }
-
-                // check we haven't deleted the layer that is referenced in the pattern
-                let layersToDelete = []
-                for (const layer of pattern.state.layers) {
-                    const layerExists = _.find(this.props.round.layers, { id: layer.id })
-                    if (_.isNil(layerExists)) {
-                        layersToDelete.push(layer)
-                    }
-                }
-
-                _.remove(pattern.state.layers, function (n) {
-                    return layersToDelete.indexOf(n) > -1
+                // the pattern may have been saved before layers were added to or deleted from the
+                // round, so line it up with the round as it stands and put the result back through
+                // the store. Both dispatches go in one batch so the round is redrawn once.
+                const patternLayers = patternLayersForRound(pattern.state.layers, this.props.round.layers, this.props.user.id)
+                batch(() => {
+                    this.props.saveUserPattern(this.props.user.id, id, { ...pattern.state, layers: patternLayers })
+                    this.props.updateLayers(this.layersInRoundOrder(patternLayers))
                 })
-
-                await this.patternLayersToRound(pattern)
+                this.savePatternLayers(patternLayers)
             }
         } else {
             let seq = _.cloneDeep(this.props.round.userPatterns[this.props.user.id].sequence)
@@ -1493,23 +1394,19 @@ class PlayUI extends Component {
         }
     }
 
-    patternLayersToRound = async (pattern) => {
-        // make sure layers are ordered the same
-        let orderedLayers = []
-
-        // this.props.updateLayers(pattern.state.layers)
-        for (const layer of pattern.state.layers) {
-            let index = _.findIndex(this.props.round.layers, { id: layer.id })
-            orderedLayers[index] = layer
+    /** The layers at the positions they hold in the round, which is what UPDATE_LAYERS merges by. */
+    layersInRoundOrder = (layers) => {
+        const orderedLayers = []
+        for (const layer of layers) {
+            orderedLayers[_.findIndex(this.props.round.layers, { id: layer.id })] = layer
         }
-        await this.props.updateLayers(orderedLayers)
-        // now save to firebase
-        for (const layer of pattern.state.layers) {
-            // todo handle edge cases - eg layer been deleted
-            const layerExists = _.find(this.props.round.layers, { id: layer.id })
-            if (!_.isNil(layerExists)) {
-                this.context.updateLayer(this.props.round.id, layer.id, layer)
-            }
+        return orderedLayers
+    }
+
+    /** Writes the layers a pattern brought back to the round's layer documents. */
+    savePatternLayers = (layers) => {
+        for (const layer of layers) {
+            this.context.updateLayer(this.props.round.id, layer.id, layer)
         }
     }
 
@@ -1527,9 +1424,7 @@ class PlayUI extends Component {
             const isPlayingSequence = true
             this.isPlayingSequence = isPlayingSequence
             setIsPlayingSequence(user.id, isPlayingSequence)
-            const newRound = { ...round }
-            newRound.userPatterns[user.id].isPlayingSequence = isPlayingSequence
-            this.context.saveUserPatterns(round.id, user.id, newRound.userPatterns[user.id])
+            this.context.saveUserPatterns(round.id, user.id, { ...round.userPatterns[user.id], isPlayingSequence })
             this.props.setIsPlayingSequence(this.props.user.id, true)
         }
         this.props.setIsRecordingSequence(!this.props.display.isRecordingSequence)
@@ -1538,9 +1433,38 @@ class PlayUI extends Component {
     onSavePattern = async (id) => {
         this.setState({ selectedPattern: id })
         this.selectedPatternNeedsSaving = false
-        const state = this.getCurrentState(this.props.user.id)
-        this.props.saveUserPattern(this.props.user.id, id, state)
-        await this.context.saveUserPatterns(this.props.round.id, this.props.user.id, this.props.round.userPatterns[this.props.user.id])
+        await this.savePattern(id, this.getCurrentState(this.props.user.id))
+    }
+
+    /**
+     * Stores `state` as pattern `id` in the store and writes the user's patterns document. The
+     * document is put together here rather than read back from the props, because a save that runs
+     * while the component is unmounting never sees the props the dispatch would have produced.
+     */
+    savePattern(id, state) {
+        const { round, user } = this.props
+        this.props.saveUserPattern(user.id, id, state)
+        const userPatterns = round.userPatterns[user.id]
+        const patterns = userPatterns.patterns.map(pattern => pattern.id === id ? { ...pattern, state } : pattern)
+        return this.context.saveUserPatterns(round.id, user.id, { ...userPatterns, patterns })
+    }
+
+    /**
+     * Saves the active pattern, unless it already holds what the user's layers hold now. Step
+     * edits reach this through `savePatternDebounced`, so a run of edits costs one write.
+     */
+    saveActivePatternIfChanged() {
+        const { round, user } = this.props
+        const id = this.activePatternId
+        if (_.isNil(round) || _.isNil(id)) {
+            return
+        }
+        const pattern = _.find(round.userPatterns[user.id].patterns, { id })
+        const state = this.getCurrentState(user.id)
+        if (_.isNil(pattern) || _.isEqual(pattern.state, state)) {
+            return
+        }
+        this.savePattern(id, state).catch(error => console.error('Could not save pattern', error))
     }
 
     getCurrentState = (userId) => {
@@ -1655,9 +1579,7 @@ class PlayUI extends Component {
         setCurrentSequencePattern(0)
         const isPlayingSequence = !this.isPlayingSequence
         setIsPlayingSequence(user.id, isPlayingSequence)
-        const newRound = { ...round }
-        newRound.userPatterns[user.id].isPlayingSequence = isPlayingSequence
-        this.context.saveUserPatterns(round.id, user.id, newRound.userPatterns[user.id])
+        this.context.saveUserPatterns(round.id, user.id, { ...round.userPatterns[user.id], isPlayingSequence })
         this.isPlayingSequence = isPlayingSequence
     }
 
@@ -1751,20 +1673,13 @@ class PlayUI extends Component {
                 const patterns = round.userPatterns[user.id].patterns
                 if (this.isPlayingSequence && isPlaying) return
                 if (!this.isRecordingSequence) {
-                    this.activePatternId = id
+                    this.setActivePattern(id)
                     const pattern = _.find(patterns, { id })
                     const patternLayers = pattern.state.layers
                     if (!patternLayers) {
-                        pattern.state.layers = []
                         /** clear out steps from existing layers */
-                        for (const existingLayer of round.layers) {
-                            let existingLayerClone = _.cloneDeep(existingLayer)
-                            for (const step of existingLayerClone.steps) {
-                                step.isOn = false
-                            }
-                            pattern.state.layers.push(existingLayerClone)
-                        }
-                        this.props.dispatch({ type: UPDATE_LAYERS, payload: { layers: pattern.state.layers } })
+                        const silencedLayers = round.layers.map(layer => layerWithStepsOff(layer))
+                        this.props.dispatch({ type: UPDATE_LAYERS, payload: { layers: silencedLayers } })
                         await this.onSavePattern(id)
                     }
 
@@ -1775,7 +1690,7 @@ class PlayUI extends Component {
                     this.draw()
                 }
                 if (layers && layers.length > 0 && this.isRecordingSequence) {
-                    this.activePatternId = id
+                    this.setActivePattern(id)
                     this.onLoadPattern(id)
                     this.draw()
                 }

@@ -20,6 +20,7 @@ import {
     SET_LAYER_STEPS,
     ADD_USERBUS,
     SET_ROUND_CURRENT_USERS,
+    SET_ROUND_CONTRIBUTORS,
     SET_DISABLE_KEY_LISTENER,
     SET_USER_COLOR,
     SET_ROUND_BPM,
@@ -29,6 +30,8 @@ import {
     SET_IS_SHOWING_ORIENTATION_DIALOG,
     UPDATE_LAYER,
     UPDATE_LAYERS,
+    ADD_LAYER,
+    REMOVE_LAYER,
     SET_IS_RECORDING_SEQUENCE,
     SET_USER_PATTERN_SEQUENCE,
     SET_IS_PLAYING_SEQUENCE,
@@ -156,6 +159,10 @@ export const setRoundCurrentUsers = (value) => ({
     type: SET_ROUND_CURRENT_USERS,
     payload: { value }
 })
+export const setRoundContributors = (value) => ({
+    type: SET_ROUND_CONTRIBUTORS,
+    payload: { value }
+})
 export const setRoundBpm = (bpm) => ({
     type: SET_ROUND_BPM,
     payload: { bpm }
@@ -185,4 +192,12 @@ export const setLayerSteps = (id, steps) => ({
 export const updateLayer = (id, data) => ({
     type: UPDATE_LAYER,
     payload: { id, data }
+})
+export const addLayer = (layer) => ({
+    type: ADD_LAYER,
+    payload: { layer }
+})
+export const removeLayer = (id) => ({
+    type: REMOVE_LAYER,
+    payload: { id }
 })

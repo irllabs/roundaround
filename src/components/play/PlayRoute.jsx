@@ -10,13 +10,14 @@ import _ from 'lodash';
 import Loader from 'react-loader-spinner';
 import { connect } from "react-redux";
 import { FirebaseContext } from '../../firebase';
-import { setRound, setUsers, setIsPlaying, setUserBusFxOverride, addUserBus, setRoundCurrentUsers, setRoundBpm, setRoundSwing, setIsPlayingSequence } from '../../redux/actions'
+import { setRound, setUsers, setIsPlaying, setUserBusFxOverride, addUserBus, setRoundCurrentUsers, setRoundContributors, setRoundBpm, setRoundSwing, setIsPlayingSequence, updateLayer, addLayer, removeLayer } from '../../redux/actions'
 import AudioEngine from '../../audio-engine/AudioEngine'
 import Instruments from '../../audio-engine/Instruments'
 import FX from '../../audio-engine/FX'
 import ShareDialog from '../dialogs/ShareDialog'
 import OrientationDialog from '../dialogs/OrientationDialog'
 import { getDefaultUserBus, getDefaultUserPatterns } from '../../utils/defaultData'
+import { derivedContributors, normalizeLegacyFxOrder } from '../../utils/index'
 import LayerSettings from './layer-settings/LayerSettings';
 import CustomSamples from '../../audio-engine/CustomSamples';
 
@@ -64,16 +65,19 @@ class PlayRoute extends Component {
         this.isLoadingRound = false;
         this.hasLoadedRound = false;
         this.isDisposing = false;
-        this.reloadCollaborationLayers = this.reloadCollaborationLayers.bind(this)
+        this.joinedRoundId = null;
+        this.joinedUserId = null;
         this.startAudioContext = this.startAudioContext.bind(this)
+        this.onPageHide = this.onPageHide.bind(this)
+        this.onPageShow = this.onPageShow.bind(this)
         this.handleUserPatternsChange = this.handleUserPatternsChange.bind(this)
-        this.reloadCollaborationLayersThrottled = _.debounce(this.reloadCollaborationLayers, 1000)
         this.playUIRef = null;
         this.unsubscribers = []
         this.usersChangeListenersUnsubscribe = []
     }
     componentDidMount() {
         this.addStartAudioContextListener()
+        this.addPageTransitionListeners()
         if (this.shouldLoadRound()) {
             this.loadRound()
         }
@@ -91,9 +95,10 @@ class PlayRoute extends Component {
 
     componentWillUnmount() {
         this.isDisposing = true;
-        this.reloadCollaborationLayersThrottled.cancel()
         this.removeStartAudioContextListener()
+        this.removePageTransitionListeners()
         this.removeFirebaseListeners()
+        this.leaveRound()
         AudioEngine.stop()
         if (!_.isNil(this.props.round) && !_.isNil(this.props.round.currentUsers)) {
             this.props.setIsPlaying(false)
@@ -112,7 +117,7 @@ class PlayRoute extends Component {
         this.isLoadingRound = true;
         const roundId = this.getRoundIdFromPath()
         try {
-            const round = await this.context.getRound(roundId)
+            const round = normalizeLegacyFxOrder(await this.context.getRound(roundId))
             if (this.isDisposing) {
                 return
             }
@@ -123,9 +128,13 @@ class PlayRoute extends Component {
             }
 
             const userId = this.props.user.id
-            if (!round.currentUsers.includes(userId)) {
-                // first visit: give the user a bus and a patterns document, then add them to the
-                // round's members atomically so two people joining at once cannot drop each other
+            const isMember = round.currentUsers.includes(userId)
+            // A member can still be missing from `contributors`: they joined through a client that
+            // did not know about the field, or the round is a duplicate that inherited the list
+            // from the round it was copied from.
+            const isMissingFromContributors = !_.isNil(round.contributors) && !round.contributors.includes(userId)
+            if (!isMember) {
+                // first visit: give the user a bus and a patterns document
                 round.currentUsers.push(userId)
                 if (_.isNil(round.userBuses[userId])) {
                     round.userBuses[userId] = getDefaultUserBus(userId)
@@ -135,11 +144,48 @@ class PlayRoute extends Component {
                     round.userPatterns[userId] = getDefaultUserPatterns(userId)
                     await this.context.saveUserPatterns(roundId, userId, round.userPatterns[userId])
                 }
-                await this.context.joinRound(roundId, userId)
+            }
+            if (!isMember || isMissingFromContributors) {
+                // The join unions the user into both lists, so it settles either case without a
+                // read-modify-write: two people joining at once cannot drop each other, and the
+                // user is in the stored list the round listener reloads profiles from. Under rules
+                // that predate `contributors` it takes two writes, and the second can be refused;
+                // the local list only gains the user when the stored one did.
+                const isInContributors = await this.joinRoundOrLegacy(roundId, userId)
+                if (isMissingFromContributors && isInContributors) {
+                    round.contributors.push(userId)
+                }
+            }
+            // From here on the user is one of the round's members and has to be taken out again on
+            // the way out, even if they leave before the rest of the load has finished. Their id is
+            // kept with the round's: signing out clears the user from the store before this route
+            // unmounts, and the leave still has to name whoever joined.
+            this.joinedRoundId = roundId
+            this.joinedUserId = userId
+            if (this.isDisposing) {
+                this.leaveRound()
+                return
             }
 
-            // load other current users (to get colors, avatar etc)
-            const currentUsers = await this.loadUsersById(round.currentUsers)
+            // Everyone who has ever been in the round: the stored list, or, for a round saved
+            // before rounds had contributors, who the rest of the document says has been in it.
+            const contributors = round.contributors || derivedContributors(round)
+            if (_.isNil(round.contributors)) {
+                try {
+                    // write the derived list back, once, as a union
+                    await this.context.backfillContributors(roundId, contributors)
+                    round.contributors = contributors
+                } catch (error) {
+                    // Best effort: a round whose rules do not allow this write yet is still worth
+                    // playing. The round keeps the contributors the server has (none), so the store
+                    // matches the document, and the next open tries the backfill again.
+                    console.error('Could not backfill contributors', roundId, error)
+                }
+            }
+
+            // load a profile for every contributor, present or not (colors, avatar etc), so that a
+            // layer keeps its author's colour after the author has left
+            const users = await this.loadUsersById(contributors)
 
             // load audio
             CustomSamples.init(this.context)
@@ -151,7 +197,7 @@ class PlayRoute extends Component {
                 return
             }
 
-            this.props.setUsers(currentUsers)
+            this.props.setUsers(users)
             this.props.setRound(round)
             this.hasLoadedRound = true
             this.removeFirebaseListeners()
@@ -167,6 +213,42 @@ class PlayRoute extends Component {
         }
     }
 
+    /**
+     * Adds the user to the round's members and to its contributors. Answers whether they ended up
+     * in the stored `contributors`, so the caller does not put them in its copy of a list the
+     * server does not have them in.
+     *
+     * `joinRound` writes both fields together, which the rules deployed with this branch allow but
+     * the ones before them do not: they let a visitor add themselves only when `currentUsers` is
+     * the single field that changes. Rules are deployed by hand, so this client cannot assume the
+     * new ones are live, and a round that rejects the one write is joined with two instead: the
+     * one-field join those rules do accept, and then, now that the user is a member and the same
+     * rules let a member write, a contributors-only union for them. Both writes are what the new
+     * rules allow as well, so the fallback is safe either way. Any failure other than the rules is
+     * the caller's to handle.
+     */
+    async joinRoundOrLegacy(roundId, userId) {
+        try {
+            await this.context.joinRound(roundId, userId)
+            return true
+        } catch (error) {
+            if (_.get(error, 'code') !== 'permission-denied') {
+                throw error
+            }
+            console.warn('This round\'s rules predate contributors; joining without it', roundId)
+            await this.context.joinRoundLegacy(roundId, userId)
+            try {
+                await this.context.backfillContributors(roundId, [userId])
+                return true
+            } catch (contributorsError) {
+                // The user is in the round either way. Their contributors entry is picked up on a
+                // later open, by the "member missing from contributors" path above.
+                console.error('Could not add the user to contributors', roundId, contributorsError)
+                return false
+            }
+        }
+    }
+
     async loadUsersById(userIds) {
         const users = await Promise.all(userIds.map(userId => this.context.loadUser(userId)))
         return users.filter(user => !_.isNil(user))
@@ -174,27 +256,32 @@ class PlayRoute extends Component {
 
     addFirebaseListeners() {
         const _this = this
-        const roundRef = this.context.db.collection('rounds').doc(this.props.round.id)
+        const roundId = this.props.round.id
 
         // Round
-        this.unsubscribers.push(roundRef.onSnapshot(async (doc) => {
+        this.unsubscribers.push(this.context.subscribeToRound(roundId, async ({ exists, data: updatedRound }) => {
             if (_this.isDisposing) {
                 return
             }
-            if (!doc.exists || _.isNil(_this.props.round)) {
+            if (!exists || _.isNil(_this.props.round)) {
                 // deleted round
                 _this.props.history.push('/rounds')
                 return
             }
-            const updatedRound = doc.data()
-            if (!_.isEqual(_this.props.round.currentUsers, updatedRound.currentUsers)) {
-                const users = await _this.loadUsersById(updatedRound.currentUsers || [])
+            if (!_.isEqual(_this.props.round.contributors, updatedRound.contributors)) {
+                // somebody has contributed for the first time, or an old round has just been given
+                // its contributors: every one of them needs a profile
+                const users = await _this.loadUsersById(updatedRound.contributors || [])
                 if (_this.isDisposing) {
                     return
                 }
                 _this.props.setUsers(users)
-                _this.props.setRoundCurrentUsers(updatedRound.currentUsers)
+                _this.props.setRoundContributors(updatedRound.contributors || [])
                 _this.addUsersListeners()
+            }
+            if (!_.isEqual(_this.props.round.currentUsers, updatedRound.currentUsers)) {
+                // somebody has arrived or left: the avatars and voice chat follow who is here now
+                _this.props.setRoundCurrentUsers(updatedRound.currentUsers)
             }
             if (!_.isEqual(_this.props.round.bpm, updatedRound.bpm)) {
                 AudioEngine.setTempo(updatedRound.bpm)
@@ -206,32 +293,43 @@ class PlayRoute extends Component {
             }
         }, (error) => console.error('Round listener failed', error)))
 
-        // Layers
-        this.unsubscribers.push(roundRef.collection('layers').onSnapshot((layerCollectionSnapshot) => {
-            if (_this.isDisposing) {
-                return
-            }
-            layerCollectionSnapshot.docChanges().forEach(change => {
-                if (change.type === 'modified') {
-                    const layer = change.doc.data()
-                    if (layer.createdBy !== _this.props.user.id) {
-                        _this.reloadCollaborationLayersThrottled()
-                    }
-                }
-                if (change.type === 'added' || change.type === 'removed') {
-                    _this.reloadCollaborationLayersThrottled()
-                }
-            });
-        }, (error) => console.error('Layers listener failed', error)))
-
-        // Userbus (FX)
-        this.unsubscribers.push(roundRef.collection('userBuses').onSnapshot((userBusesCollectionSnapshot) => {
+        // Layers: what a collaborator changed goes straight into the store. This client's own
+        // writes come back through here as well and are already in the store, so the user's own
+        // layers are left alone, and a layer that is already there, or already gone, is not added
+        // or removed twice.
+        this.unsubscribers.push(this.context.subscribeToLayers(roundId, (changes) => {
             if (_this.isDisposing || _.isNil(_this.props.round)) {
                 return
             }
-            userBusesCollectionSnapshot.docChanges().forEach(change => {
-                const userBus = change.doc.data()
-                userBus.id = change.doc.id
+            for (const change of changes) {
+                const layer = { ...change.data, id: change.id }
+                const current = _.find(_this.props.round.layers, { id: change.id })
+                if (change.type === 'modified') {
+                    if (!_.isNil(current) && layer.createdBy !== _this.props.user.id && !_.isEqual(current, layer)) {
+                        _this.props.updateLayer(change.id, change.data)
+                    }
+                } else if (change.type === 'added') {
+                    if (_.isNil(current)) {
+                        // the track first, so it is there when the layer reaches the round UI
+                        AudioEngine.createTrack(layer)
+                        _this.props.addLayer(layer)
+                    }
+                } else if (change.type === 'removed') {
+                    if (!_.isNil(current)) {
+                        AudioEngine.removeTrack(change.id)
+                        _this.props.removeLayer(change.id)
+                    }
+                }
+            }
+        }, (error) => console.error('Layers listener failed', error)))
+
+        // Userbus (FX)
+        this.unsubscribers.push(this.context.subscribeToUserBuses(roundId, (changes) => {
+            if (_this.isDisposing || _.isNil(_this.props.round)) {
+                return
+            }
+            changes.forEach(change => {
+                const userBus = { ...change.data, id: change.id }
                 if (change.type === 'modified') {
                     _this.handleUserBusChange(userBus)
                 }
@@ -245,13 +343,13 @@ class PlayRoute extends Component {
         }, (error) => console.error('User buses listener failed', error)))
 
         // UserPatterns
-        this.unsubscribers.push(roundRef.collection('userPatterns').onSnapshot((userPatternsCollectionSnapshot) => {
+        this.unsubscribers.push(this.context.subscribeToUserPatterns(roundId, (changes) => {
             if (_this.isDisposing || _.isNil(_this.props.round)) {
                 return
             }
-            userPatternsCollectionSnapshot.docChanges().forEach(async change => {
-                const data = change.doc.data();
-                const userId = change.doc.id;
+            changes.forEach(async change => {
+                const data = change.data;
+                const userId = change.id;
                 if (change.type === 'modified') {
                     const userPatterns = { ...data, id: userId }
                     _this.handleUserPatternsChange(userPatterns)
@@ -266,6 +364,10 @@ class PlayRoute extends Component {
                         newRound.userPatterns[userId] = data
                         if (!newRound.currentUsers.includes(userId)) {
                             newRound.currentUsers.push(userId)
+                        }
+                        newRound.contributors = newRound.contributors || []
+                        if (!newRound.contributors.includes(userId)) {
+                            newRound.contributors.push(userId)
                         }
                         const newUsers = _.cloneDeep(_this.props.users)
                         if (!_.isNil(newUser) && _.isNil(_.find(newUsers, { id: userId }))) {
@@ -292,7 +394,7 @@ class PlayRoute extends Component {
         this.removeUsersListeners()
         const _this = this;
         for (const user of this.props.users) {
-            const userListenerUnsubscribe = this.context.db.collection('users').doc(user.id).onSnapshot(() => {
+            const userListenerUnsubscribe = this.context.subscribeToUser(user.id, () => {
                 if (!_this.isDisposing) {
                     _this.loadUsers()
                 }
@@ -306,12 +408,11 @@ class PlayRoute extends Component {
             return
         }
         try {
-            const users = await this.loadUsersById(this.props.round.currentUsers)
+            const users = await this.loadUsersById(this.props.round.contributors || [])
             if (this.isDisposing || _.isNil(this.props.round)) {
                 return
             }
             this.props.setUsers(users)
-            this.props.setRoundCurrentUsers(this.props.round.currentUsers)
         } catch (error) {
             console.error('Could not reload users', error)
         }
@@ -355,38 +456,6 @@ class PlayRoute extends Component {
         this.props.setIsPlayingSequence(userPatterns.id, userPatterns.isPlayingSequence)
     }
 
-    // if any of the subcollections for a collaboration user change, trigger a (throttled) reload of all collaboration layers as there could be multiple changes
-    // to do: maybe add an id to the query to make sure we don't overwrite the local round with an await result that comes in late
-    async reloadCollaborationLayers() {
-        const _this = this;
-        if (_.isNil(this.props.round)) {
-            return
-        }
-        try {
-            const newRound = await this.context.getRound(this.props.round.id)
-            if (this.isDisposing || _.isNil(newRound) || _.isNil(this.props.round)) {
-                return
-            }
-            const newLayers = _.filter(newRound.layers, (layer) => {
-                return layer.createdBy !== _this.props.user.id
-            })
-            const oldLayers = _.filter(this.props.round.layers, (layer) => {
-                return layer.createdBy !== _this.props.user.id
-            })
-            if (!_.isEqual(newLayers, oldLayers)) {
-                const userLayers = _.filter(this.props.round.layers, (layer) => {
-                    return layer.createdBy === _this.props.user.id
-                })
-                const layers = [...userLayers, ...newLayers]
-                const round = _.cloneDeep(this.props.round)
-                round.layers = layers
-                this.props.setRound(round)
-            }
-        } catch (error) {
-            console.error('Could not reload collaborators\' layers', error)
-        }
-    }
-
     // Browsers only start audio after a user gesture. The person who presses play gets one for free;
     // a collaborator who only listens needs their first touch, click or key press to unlock audio.
     addStartAudioContextListener() {
@@ -401,6 +470,66 @@ class PlayRoute extends Component {
     removeStartAudioContextListener() {
         for (const eventName of AUDIO_UNLOCK_EVENTS) {
             window.removeEventListener(eventName, this.startAudioContext)
+        }
+    }
+
+    // A browser does not unmount a component when the tab is closed or the page is replaced, so
+    // the round is left from `pagehide` as well as from componentWillUnmount. `pagehide` also fires
+    // when the page is put in the back/forward cache with everything still mounted, so `pageshow`
+    // puts a restored page's user back in the round they are looking at again.
+    addPageTransitionListeners() {
+        window.addEventListener('pagehide', this.onPageHide)
+        window.addEventListener('pageshow', this.onPageShow)
+    }
+    removePageTransitionListeners() {
+        window.removeEventListener('pagehide', this.onPageHide)
+        window.removeEventListener('pageshow', this.onPageShow)
+    }
+    onPageHide() {
+        this.leaveRound()
+    }
+    onPageShow(event) {
+        const hasLeft = _.isNil(this.joinedRoundId)
+        if (!event.persisted || !hasLeft || _.isNil(this.props.round) || _.isNil(this.props.user)) {
+            // not a restore from the cache, or the user was never taken out of the round
+            return
+        }
+        this.rejoinRound()
+    }
+
+    /**
+     * Puts the user back among the round's members after `pagehide` took them out for a page that
+     * turned out to be cached rather than gone. Best effort, like leaving: the write is sent and
+     * its failure logged. `joinedRoundId` is restored either way, so the next leave still happens.
+     */
+    rejoinRound() {
+        const roundId = this.props.round.id
+        const onError = (error) => console.error('Could not rejoin round', roundId, error)
+        this.joinedRoundId = roundId
+        this.joinedUserId = this.props.user.id
+        this.joinRoundOrLegacy(roundId, this.props.user.id).catch(onError)
+    }
+
+    /**
+     * Takes the user out of the round's members, once. They stay among its contributors, so their
+     * layers keep their colour. Best effort: the write is fired off and its failure logged, never
+     * waited on, because nothing may hold up an unmount or a page unload.
+     */
+    leaveRound() {
+        const roundId = this.joinedRoundId
+        const userId = this.joinedUserId
+        if (_.isNil(roundId) || _.isNil(userId)) {
+            return
+        }
+        this.joinedRoundId = null
+        this.joinedUserId = null
+        const onError = (error) => console.error('Could not leave round', roundId, error)
+        try {
+            // sent straight away and never waited on, so an unload has the best chance of carrying
+            // the write out while nothing holds the page up
+            this.context.leaveRound(roundId, userId).catch(onError)
+        } catch (error) {
+            onError(error)
         }
     }
 
@@ -473,8 +602,12 @@ export default connect(
         setUserBusFxOverride,
         addUserBus,
         setRoundCurrentUsers,
+        setRoundContributors,
         setRoundBpm,
         setRoundSwing,
-        setIsPlayingSequence
+        setIsPlayingSequence,
+        updateLayer,
+        addLayer,
+        removeLayer
     }
 )(withStyles(styles)(PlayRoute));

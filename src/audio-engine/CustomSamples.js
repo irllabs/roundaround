@@ -32,8 +32,7 @@ const CustomSamples = {
     delete (sampleId, userId) {
         return new Promise(async (resolve, reject) => {
             await this.firebase.deleteSample(sampleId)
-            const fileRef = this.firebase.storage.ref().child(userId + '/' + sampleId + '.wav')
-            await fileRef.delete()
+            await this.firebase.deleteSampleFile(userId, sampleId)
             delete this.samples[sampleId]
             resolve()
         })

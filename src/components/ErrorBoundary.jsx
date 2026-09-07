@@ -2,12 +2,15 @@ import React from 'react'
 import Box from '@material-ui/core/Box'
 import Button from '@material-ui/core/Button'
 import Typography from '@material-ui/core/Typography'
+import { FirebaseContext } from '../firebase'
 
 /**
  * Last line of defence: a render-time exception anywhere below shows a message with a way out
  * instead of a blank page.
  */
 export default class ErrorBoundary extends React.Component {
+    static contextType = FirebaseContext;
+
     constructor(props) {
         super(props)
         this.state = { error: null }
@@ -18,7 +21,14 @@ export default class ErrorBoundary extends React.Component {
     }
 
     componentDidCatch(error, info) {
-        console.error('Unhandled error in the UI', error, info)
+        if (this.context && this.context.reportError) {
+            // reportError logs to the console as well as to analytics.
+            this.context.reportError(error, { fatal: true, context: 'render' })
+        } else {
+            console.error('Unhandled error in the UI', error)
+        }
+        // The component stack is local detail: it stays in the console, out of the analytics event.
+        console.error(info.componentStack)
     }
 
     render() {

@@ -1,5 +1,10 @@
-import { describe, it, expect } from 'vitest'
-import { changeLayerLength, convertPercentToDB, convertDBToPercent, duplicateRound, uuid, arraymove, soloMuteStates, profileFromAuthUser } from './index'
+import { vi, describe, it, expect } from 'vitest'
+import { changeLayerLength, convertPercentToDB, convertDBToPercent, derivedContributors, duplicateRound, uuid, arraymove, presentUsers, soloMuteStates, profileFromAuthUser, layerWithStepsOff, patternLayersForRound, normalizeLegacyFxOrder } from './index'
+import { deepFreeze } from '../test/deep-freeze'
+
+// These helpers reach Tone.js through defaultData's instruments. None of them touch audio, and
+// loading Tone only buys a banner on stdout.
+vi.mock('tone', () => ({}))
 
 const layerWithSteps = (pattern) => ({
     id: 'layer',
@@ -41,6 +46,7 @@ describe('volume conversion', () => {
 describe('duplicateRound', () => {
     const original = {
         id: 'r1', name: 'Jam', createdBy: 'alice', createdAt: 1, currentUsers: ['alice', 'bob'],
+        contributors: ['alice', 'bob'],
         shortLink: 'https://bit.ly/x', isPlaying: true, bpm: 100,
         layers: [{ id: 'l1', createdBy: 'bob', steps: [] }],
         userBuses: { alice: { fx: [] } }, userPatterns: { alice: { patterns: [] } }
@@ -57,6 +63,16 @@ describe('duplicateRound', () => {
         expect(copy.layers).toEqual(original.layers)
         expect(copy.layers).not.toBe(original.layers)
         expect(original.currentUsers).toEqual(['alice', 'bob'])
+        expect(original.contributors).toEqual(['alice', 'bob'])
+    })
+
+    it('keeps the original contributors and adds the copier, so copied layers keep their colour', () => {
+        expect(duplicateRound(original, 'carol').contributors).toEqual(['alice', 'bob', 'carol'])
+    })
+
+    it('does not list the copier twice, or trip over a round saved without contributors', () => {
+        expect(duplicateRound(original, 'bob').contributors).toEqual(['alice', 'bob'])
+        expect(duplicateRound({ ...original, contributors: undefined }, 'carol').contributors).toEqual(['carol'])
     })
 })
 
@@ -97,5 +113,146 @@ describe('profileFromAuthUser', () => {
         const profile = profileFromAuthUser({ uid: 'anon', isAnonymous: true, displayName: null, email: null, photoURL: null })
         expect(profile).toEqual({ id: 'anon', isGuest: true })
         expect(Object.keys(profile)).not.toContain('displayName')
+    })
+})
+
+describe('patternLayersForRound', () => {
+    const layer = (id, createdBy, pattern) => ({
+        id,
+        createdBy,
+        steps: pattern.split('').map((c, i) => ({ id: id + '-' + i, order: i, isOn: c === 'x' }))
+    })
+    const me = 'user-1'
+    const them = 'user-2'
+
+    it('keeps the layers the pattern and the round both have, in the order the pattern saved them', () => {
+        const saved = [layer('a', me, 'x...'), layer('b', me, '..x.')]
+        const round = [layer('b', me, 'xxxx'), layer('a', me, 'xxxx')]
+        const layers = patternLayersForRound(saved, round, me)
+        expect(layers.map(l => l.id)).toEqual(['a', 'b'])
+        expect(layers.map(l => asPattern(l.steps))).toEqual(['x...', '..x.'])
+    })
+
+    it('brings back a layer added since the pattern was saved, with every step off', () => {
+        const saved = [layer('a', me, 'x...')]
+        const round = [layer('a', me, 'x...'), layer('new', me, 'xxxx')]
+        const layers = patternLayersForRound(saved, round, me)
+        expect(layers.map(l => l.id)).toEqual(['a', 'new'])
+        expect(asPattern(layers[1].steps)).toBe('....')
+    })
+
+    it('leaves collaborators layers out of the pattern', () => {
+        const saved = [layer('a', me, 'x...')]
+        const round = [layer('a', me, 'x...'), layer('theirs', them, 'xxxx')]
+        expect(patternLayersForRound(saved, round, me).map(l => l.id)).toEqual(['a'])
+    })
+
+    it('drops a layer that has been deleted from the round', () => {
+        const saved = [layer('a', me, 'x...'), layer('gone', me, 'xx..')]
+        const round = [layer('a', me, 'x...')]
+        expect(patternLayersForRound(saved, round, me).map(l => l.id)).toEqual(['a'])
+    })
+
+    it('leaves the pattern and the round it was given untouched', () => {
+        const saved = deepFreeze([layer('a', me, 'x...')])
+        const round = deepFreeze([layer('a', me, 'x...'), layer('new', me, 'xxxx')])
+        const layers = patternLayersForRound(saved, round, me)
+        expect(layers).not.toBe(saved)
+        expect(saved).toHaveLength(1)
+        expect(asPattern(round[1].steps)).toBe('xxxx')
+    })
+})
+
+describe('layerWithStepsOff', () => {
+    it('copies the layer with every step off and leaves the original alone', () => {
+        const original = deepFreeze({ id: 'a', gain: -3, steps: [{ id: 's0', isOn: true }, { id: 's1', isOn: false }] })
+        const silenced = layerWithStepsOff(original)
+        expect(silenced.steps.map(s => s.isOn)).toEqual([false, false])
+        expect(silenced.gain).toBe(-3)
+        expect(original.steps[0].isOn).toBe(true)
+    })
+})
+
+describe('presentUsers', () => {
+    const users = [{ id: 'a' }, { id: 'b' }, { id: 'c' }]
+
+    it('keeps the contributors who are in the round now, in the order they are listed', () => {
+        expect(presentUsers(users, { currentUsers: ['c', 'a'] })).toEqual([{ id: 'a' }, { id: 'c' }])
+    })
+
+    it('leaves out a contributor who has left', () => {
+        expect(presentUsers(users, { currentUsers: ['b'] })).toEqual([{ id: 'b' }])
+    })
+
+    it('finds nobody without a round, or in a round nobody is in', () => {
+        expect(presentUsers(users, null)).toEqual([])
+        expect(presentUsers(users, {})).toEqual([])
+        expect(presentUsers(users, { currentUsers: [] })).toEqual([])
+        expect(presentUsers([], { currentUsers: ['a'] })).toEqual([])
+    })
+
+    it('leaves the list it was given alone', () => {
+        deepFreeze(users)
+        expect(() => presentUsers(users, { currentUsers: ['a'] })).not.toThrow()
+    })
+})
+
+describe('derivedContributors', () => {
+    it('is whoever made the round, whoever is in it and whoever made a layer, without repeats', () => {
+        const round = {
+            createdBy: 'owner',
+            currentUsers: ['owner', 'here'],
+            layers: [{ createdBy: 'owner' }, { createdBy: 'gone' }]
+        }
+        expect(derivedContributors(round)).toEqual(['owner', 'here', 'gone'])
+    })
+
+    it('copes with a round that is missing the parts it derives from', () => {
+        expect(derivedContributors({ createdBy: 'owner' })).toEqual(['owner'])
+        expect(derivedContributors({ currentUsers: ['here'], layers: [{}] })).toEqual(['here'])
+        expect(derivedContributors(null)).toEqual([])
+    })
+})
+
+describe('normalizeLegacyFxOrder', () => {
+    const fx = (names) => names.map((name, order) => ({ id: 'fx-' + name, name, order, isOn: true, isOverride: false }))
+    const roundWith = (buses) => ({ id: 'round-1', layers: [], userBuses: buses })
+    const names = (bus) => bus.fx.map(f => f.name)
+    const legacy = ['pingpong', 'lowpass', 'highpass', 'autowah', 'delay', 'distortion']
+    const current = ['pingpong', 'autowah', 'delay', 'distortion', 'lowpass', 'highpass']
+
+    it('moves lowpass and highpass to fourth and fifth in an old bus', () => {
+        const round = roundWith({ 'user-1': { id: 'user-1', fx: fx(legacy) } })
+        expect(names(normalizeLegacyFxOrder(round).userBuses['user-1'])).toEqual(['pingpong', 'autowah', 'delay', 'lowpass', 'highpass', 'distortion'])
+    })
+
+    it('puts every old bus in the round right and leaves the others as they are', () => {
+        const theirs = { id: 'user-2', fx: fx(current) }
+        const round = roundWith({ 'user-1': { id: 'user-1', fx: fx(legacy) }, 'user-2': theirs })
+        const normalized = normalizeLegacyFxOrder(round)
+        expect(names(normalized.userBuses['user-1'])[3]).toBe('lowpass')
+        expect(normalized.userBuses['user-2']).toBe(theirs)
+    })
+
+    it('hands back the same round when there is nothing to put right', () => {
+        const round = roundWith({ 'user-1': { id: 'user-1', fx: fx(current) } })
+        expect(normalizeLegacyFxOrder(round)).toBe(round)
+    })
+
+    it('never writes to the round it was given', () => {
+        const round = deepFreeze(roundWith({ 'user-1': { id: 'user-1', fx: fx(legacy) } }))
+        expect(names(normalizeLegacyFxOrder(round).userBuses['user-1'])[1]).toBe('autowah')
+        expect(names(round.userBuses['user-1'])).toEqual(legacy)
+    })
+
+    it('leaves a round with no user buses, or none at all, alone', () => {
+        const round = { id: 'round-1', layers: [] }
+        expect(normalizeLegacyFxOrder(round)).toBe(round)
+        expect(normalizeLegacyFxOrder(null)).toBeNull()
+    })
+
+    it('leaves a bus with too few effects to reorder alone', () => {
+        const round = roundWith({ 'user-1': { id: 'user-1', fx: fx(['lowpass']) } })
+        expect(normalizeLegacyFxOrder(round)).toBe(round)
     })
 })

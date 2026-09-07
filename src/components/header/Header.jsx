@@ -17,7 +17,7 @@ import JitsiComponent from '../play/JitsiComponent';
 import ProjectName from './ProjectName'
 import HeaderMenu from './HeaderMenu';
 import { FirebaseContext } from '../../firebase';
-import { getRandomColor, profileFromAuthUser } from '../../utils/index'
+import { getRandomColor, presentUsers, profileFromAuthUser } from '../../utils/index'
 import CustomSamples from '../../audio-engine/CustomSamples'
 import { createRound } from '../../utils/index'
 import { Typography } from '@material-ui/core';
@@ -65,13 +65,14 @@ class Header extends Component {
 	static contextType = FirebaseContext;
 	constructor(props) {
 		super(props);
+		this.unsubscribeFromAuth = null
 		this.onSignInClick = this.onSignInClick.bind(this)
 		this.onShareClick = this.onShareClick.bind(this)
 	}
 
 	componentDidMount() {
 		const _this = this
-		_this.context.onUserUpdatedObservers.push(async (authUser) => {
+		this.unsubscribeFromAuth = this.context.onAuthStateChanged(async (authUser) => {
 			if (!_.isNil(authUser)) {
 				try {
 					let user = await _this.context.loadUser(authUser.uid)
@@ -107,6 +108,13 @@ class Header extends Component {
 		})
 	}
 
+	componentWillUnmount() {
+		if (!_.isNil(this.unsubscribeFromAuth)) {
+			this.unsubscribeFromAuth()
+			this.unsubscribeFromAuth = null
+		}
+	}
+
 	redirect = async (authUser) => {
 		if (!authUser.isAnonymous) {
 			// if not guest user go to rounds list
@@ -135,6 +143,9 @@ class Header extends Component {
 	render() {
 		const { classes, location, round, users, user } = this.props;
 		const isPlayMode = location.pathname.includes('/play/') ? true : false
+		// `users` holds a profile for every contributor so that layers keep their colour; only the
+		// people who are in the round right now get an avatar, and voice chat only opens for them.
+		const usersPresent = presentUsers(users, round)
 		return (
 			<Box className={classes.root} bgcolor={"background.default"}>
 				{isPlayMode &&
@@ -160,12 +171,12 @@ class Header extends Component {
 						<Box className={classes.rightSide} >
 							<Box className={classes.avatars}>
 								{
-									users.map((currentUser) => (
+									usersPresent.map((currentUser) => (
 										<HeaderAvatar className={classes.avatar} key={currentUser.id} user={currentUser} users={users} shouldShowMenu={!_.isNil(user) && (currentUser.id === user.id)} />
 									))
 								}
 							</Box>
-							{round && users.length > 1 && <JitsiComponent />}
+							{round && usersPresent.length > 1 && <JitsiComponent />}
 							{round &&
 								<Box>
 									<IconButton aria-label="Share this round" className={classes.shareButton} onClick={this.onShareClick}><ShareIcon /></IconButton>

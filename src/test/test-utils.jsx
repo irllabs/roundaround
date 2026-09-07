@@ -1,13 +1,13 @@
 import React from 'react'
 import { render } from '@testing-library/react'
 import { Provider } from 'react-redux'
-import { createStore } from 'redux'
+import { configureStore } from '@reduxjs/toolkit'
 import { MemoryRouter, Route } from 'react-router-dom'
 import rootReducer from '../redux/reducers'
 import { FirebaseContext } from '../firebase'
 
 export function makeStore() {
-    return createStore(rootReducer)
+    return configureStore({ reducer: rootReducer })
 }
 
 /** Shows the current router location so tests can assert on navigation. */

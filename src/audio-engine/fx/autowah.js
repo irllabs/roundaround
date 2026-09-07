@@ -1,5 +1,4 @@
 import FXBaseClass from './fx-base-class';
-import _ from 'lodash';
 import * as Tone from 'tone';
 
 export default class Autowah extends FXBaseClass {
@@ -11,60 +10,23 @@ export default class Autowah extends FXBaseClass {
             <path opacity="0.5" fill-rule="evenodd" clip-rule="evenodd" d="M16.7434 19.1969C17.0809 19.4976 17.5045 19.6666 18.0007 19.6666C18.9445 19.6666 19.5834 19.1721 20.0264 18.5557C20.4136 18.0171 20.6928 17.3268 20.9379 16.7212C20.9566 16.675 20.9751 16.6293 20.9934 16.5842C21.2704 15.9023 21.5189 15.3286 21.8489 14.917C22.1502 14.5414 22.4922 14.3333 23.0008 14.3333C23.369 14.3333 23.6675 14.0348 23.6675 13.6666C23.6675 13.2984 23.369 12.9999 23.0008 12.9999C22.0093 12.9999 21.3097 13.4584 20.8088 14.0828C20.3368 14.6713 20.0228 15.4308 19.7581 16.0823C19.7467 16.1103 19.7354 16.1381 19.7242 16.1657C19.4565 16.8253 19.2337 17.374 18.9437 17.7775C18.668 18.1611 18.3902 18.3333 18.0007 18.3333C17.8302 18.3333 17.7225 18.2835 17.6303 18.2014C17.5221 18.1049 17.4068 17.936 17.2974 17.6603C17.0724 17.0933 16.9561 16.3069 16.8273 15.4056C16.8248 15.3884 16.8224 15.3711 16.8199 15.3537C16.7005 14.5178 16.5664 13.5781 16.2766 12.8478C16.1256 12.4673 15.9127 12.0893 15.5912 11.8029C15.2537 11.5023 14.8301 11.3333 14.3339 11.3333C13.4973 11.3333 12.8373 11.6271 12.3417 12.0814C11.8607 12.5223 11.5623 13.0875 11.374 13.6054C11.1844 14.1267 11.0925 14.6385 11.047 15.0134C11.0241 15.2026 11.0125 15.3613 11.0066 15.4744C11.0037 15.5311 11.0022 15.5767 11.0014 15.6093C11.001 15.6255 11.0008 15.6386 11.0007 15.6482L11.0005 15.6601L11.0005 15.664L11.0005 15.6655L11.0005 15.6666C11.0005 16.0348 11.299 16.3333 11.6672 16.3333C12.035 16.3333 12.3333 16.0354 12.3339 15.6677L12.3339 15.667L12.3339 15.6639L12.3343 15.6416C12.3349 15.6204 12.3359 15.5872 12.3382 15.5436C12.3427 15.4563 12.352 15.3284 12.3707 15.1739C12.4086 14.8613 12.4833 14.4565 12.6271 14.0611C12.7721 13.6623 12.9737 13.3109 13.2427 13.0643C13.4972 12.8311 13.8372 12.6666 14.3339 12.6666C14.5045 12.6666 14.6121 12.7163 14.7043 12.7985C14.8125 12.8949 14.9278 13.0638 15.0372 13.3396C15.2622 13.9065 15.3786 14.6929 15.5073 15.5942C15.5098 15.6115 15.5123 15.6288 15.5147 15.6461C15.6341 16.482 15.7682 17.4217 16.0581 18.1521C16.2091 18.5326 16.4219 18.9105 16.7434 19.1969Z" fill="white" fill-opacity="0.9"/>
         </svg>`
 
+    static defaultMix = 1
+
     constructor(fxParameters) {
         super(fxParameters)
         this._q = 4
-        this._mix = 1
-        this._mixBeforeBypass = this._mix
         this.label = 'Autowah'
         this.isOn = fxParameters.isOn
+    }
+
+    createNode() {
+        return new Tone.AutoWah(50, 6, -30)
     }
 
     setQ(value, time) {
         this._q = value
         if (this.isOn) {
-            this.fx.Q = value
+            this.setSignalValue(this.fx.Q, value, time)
         }
-    }
-    setMix(value, time) {
-        this._mix = value
-        if (this.isOn) {
-            if (!_.isNil(time)) {
-                this.fx.wet.setValueAtTime(value, time)
-            } else {
-                this.fx.wet.value = value
-            }
-        }
-    }
-    setBypass(value, time) {
-        if (value === true && !this._override) {
-            // set mix to 0 rather than turn off so that we can do this rapidly without needing to rebuild the audio chain
-            if (this._mix > 0) {
-                this._mixBeforeBypass = this._mix
-            }
-            this.setMix(0, time)
-        } else {
-            this.setMix(this._mixBeforeBypass, time)
-        }
-    }
-
-
-    enable() {
-        this.fx = new Tone.AutoWah(50, 6, -30)
-        this.fx.wet.value = this._mix
-        this.setBypass(true)
-    }
-
-    getAutomationOptions() {
-        return [
-            {
-                label: 'Enabled',
-                name: 'enabled',
-                setParameter: this.setBypass.bind(this),
-                calculateValue: function (value) {
-                    return value === false ? true : false
-                }
-            }
-        ]
     }
 }

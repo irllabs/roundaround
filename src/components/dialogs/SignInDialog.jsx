@@ -9,7 +9,6 @@ import Button from '@material-ui/core/Button';
 import { makeStyles } from '@material-ui/core/styles';
 import { setIsShowingSignInDialog, setSignUpDisplayName, setUser, setRounds, setRedirectAfterSignIn } from '../../redux/actions'
 import { FirebaseContext } from '../../firebase';
-import firebase from "firebase/compat/app";
 import ArrowBackIcon from '@material-ui/icons/ArrowBack';
 import { getRandomColor } from '../../utils/index'
 
@@ -83,9 +82,8 @@ const SignInDialog = ({ isShowingSignInDialog, setIsShowingSignInDialog, setSign
 
     const onGoogleSigninClick = async () => {
         onClose()
-        let provider = new firebase.auth.GoogleAuthProvider();
         try {
-            await firebaseContext.auth.signInWithPopup(provider)
+            await firebaseContext.signInWithGoogle()
             // const authUser = authResult.user
             /*let user = await firebaseContext.loadUser(authUser.uid)
             if (_.isNil(user)) {
@@ -117,7 +115,7 @@ const SignInDialog = ({ isShowingSignInDialog, setIsShowingSignInDialog, setSign
         const email = emailAddressInput.current.querySelectorAll("input")[0].value
         const password = passwordInput.current.querySelectorAll("input")[0].value
         try {
-            await firebaseContext.auth.signInWithEmailAndPassword(email, password)
+            await firebaseContext.signInWithEmail(email, password)
             onClose()
         } catch (e) {
             setErrorMessage(e.message)
@@ -130,8 +128,7 @@ const SignInDialog = ({ isShowingSignInDialog, setIsShowingSignInDialog, setSign
         const displayName = displayNameSignupInput.current.querySelectorAll("input")[0].value
         if (!_.isEmpty(displayName)) {
             try {
-                const authResult = await firebaseContext.auth.createUserWithEmailAndPassword(email, password)
-                const authUser = authResult.user
+                const authUser = await firebaseContext.signUpWithEmail(email, password)
                 let user = {
                     displayName,
                     email: email,
@@ -165,8 +162,7 @@ const SignInDialog = ({ isShowingSignInDialog, setIsShowingSignInDialog, setSign
         const displayName = displayNameGuestInput.current.querySelectorAll("input")[0].value
         if (!_.isEmpty(displayName)) {
             try {
-                const authResult = await firebaseContext.auth.signInAnonymously()
-                const authUser = authResult.user
+                const authUser = await firebaseContext.signInAnonymously()
                 let user = {
                     isGuest: true,
                     displayName,

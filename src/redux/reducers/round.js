@@ -1,4 +1,4 @@
-/* eslint-disable import/no-anonymous-default-export */
+import { createReducer } from "@reduxjs/toolkit";
 import {
     SET_ROUND,
     UPDATE_LAYERS,
@@ -32,456 +32,179 @@ import {
     SET_IS_PLAYING,
     SET_ROUND_SHORTLINK,
     SET_ROUND_CURRENT_USERS,
+    SET_ROUND_CONTRIBUTORS,
     SET_LAYER_TIME_OFFSET,
     SET_LAYER_PERCENT_OFFSET,
     UPDATE_LAYER,
     SET_USER_PATTERN_SEQUENCE,
     SET_IS_PLAYING_SEQUENCE
 } from "../actionTypes";
-import update from 'immutability-helper';
 import _ from 'lodash'
 
 const initialState = null;
+
+const layerById = (state, id) => _.find(state.layers, { id })
+
+/**
+ * Writes one property of one step and stamps when it changed. Only TOGGLE_STEP knows the time, so
+ * for the others lastUpdated is cleared, which is what the collaboration listeners expect.
+ */
 const updateStepProperty = (state, name, value, layerId, stepId, lastUpdated) => {
-    const layerIndex = _.findIndex(state.layers, { id: layerId })
-    const layer = _.find(state.layers, { id: layerId })
-    const stepIndex = _.findIndex(layer.steps, { id: stepId })
-
-    return update(state, {
-        layers: {
-            [layerIndex]: {
-                steps: {
-                    [stepIndex]: {
-                        [name]: {
-                            $set: value
-                        },
-                        lastUpdated: {
-                            $set: lastUpdated
-                        }
-                    }
-                }
-            }
-        }
-    });
+    const step = _.find(layerById(state, layerId).steps, { id: stepId })
+    step[name] = value
+    step.lastUpdated = lastUpdated
 }
 
-export default function (state = initialState, action) {
-    switch (action.type) {
-        case SET_ROUND: {
-            return update(state, {
-                $set: action.payload.value
-            }
-            )
-
-        }
-
-        case UPDATE_LAYERS: {
+export default createReducer(initialState, (builder) => {
+    builder
+        .addCase(SET_ROUND, (state, action) => action.payload.value)
+        .addCase(UPDATE_LAYERS, (state, action) => {
             const { layers } = action.payload;
-            let layersUpdate = {}
             for (let i = 0; i < layers.length; i++) {
-                layersUpdate[i] = {
-                    $merge: layers[i]
-                }
+                Object.assign(state.layers[i], layers[i])
             }
-            return update(state, {
-                layers: layersUpdate
-            });
-        }
-        case UPDATE_STEP: {
+        })
+        .addCase(UPDATE_STEP, (state, action) => {
             const { step, layerId } = action.payload;
-            const layerIndex = _.findIndex(state.layers, { id: layerId })
-            const layer = _.find(state.layers, { id: layerId })
-            const stepIndex = _.findIndex(layer.steps, { id: step.id })
-            return update(state, {
-                layers: {
-                    [layerIndex]: {
-                        steps: {
-                            [stepIndex]: {
-                                $merge: step
-                            }
-                        }
-                    }
-                }
-            });
-        }
-        case ADD_STEP: {
+            Object.assign(_.find(layerById(state, layerId).steps, { id: step.id }), step)
+        })
+        .addCase(ADD_STEP, (state, action) => {
             const { layerId, step } = action.payload;
-            const layerIndex = _.findIndex(state.layers, { id: layerId })
-            return update(state, {
-                layers: {
-                    [layerIndex]: {
-                        steps: {
-                            $push: [step]
-                        }
-                    }
-                }
-            })
-        }
-        case REMOVE_STEP: {
+            layerById(state, layerId).steps.push(step)
+        })
+        .addCase(REMOVE_STEP, (state, action) => {
             const { layerId, stepId } = action.payload;
-            const layerIndex = _.findIndex(state.layers, { id: layerId })
-            const layer = _.find(state.layers, { id: layerId })
-            const stepIndex = _.findIndex(layer.steps, { id: stepId })
-            return update(state, {
-                layers: {
-                    [layerIndex]: {
-                        steps: {
-                            $splice: [[stepIndex, 1]]
-                        }
-                    }
-                }
-            })
-        }
-        case TOGGLE_STEP: {
+            const layer = layerById(state, layerId)
+            // findIndex answers -1 for a step that is not there, and splice(-1, 1) would take the
+            // last one out instead: a step nobody asked to remove
+            const index = _.findIndex(layer.steps, { id: stepId })
+            if (index >= 0) {
+                layer.steps.splice(index, 1)
+            }
+        })
+        .addCase(TOGGLE_STEP, (state, action) => {
             const { layerId, stepId, isOn, lastUpdated } = action.payload;
-            return updateStepProperty(state, 'isOn', isOn, layerId, stepId, lastUpdated);
-        }
-        case SET_STEP_VELOCITY: {
+            updateStepProperty(state, 'isOn', isOn, layerId, stepId, lastUpdated)
+        })
+        .addCase(SET_STEP_VELOCITY, (state, action) => {
             const { layerId, stepId, velocity } = action.payload;
-            return updateStepProperty(state, 'velocity', velocity, layerId, stepId);
-        }
-        case SET_STEP_PROBABILITY: {
+            updateStepProperty(state, 'velocity', velocity, layerId, stepId)
+        })
+        .addCase(SET_STEP_PROBABILITY, (state, action) => {
             const { layerId, stepId, probability } = action.payload;
-            return updateStepProperty(state, 'probability', probability, layerId, stepId);
-        }
-        case SET_STEP_NOTE: {
+            updateStepProperty(state, 'probability', probability, layerId, stepId)
+        })
+        .addCase(SET_STEP_NOTE, (state, action) => {
             const { layerId, stepId, note } = action.payload;
-            return updateStepProperty(state, 'note', note, layerId, stepId);
-        }
-        case TOGGLE_LAYER: {
+            updateStepProperty(state, 'note', note, layerId, stepId)
+        })
+        .addCase(TOGGLE_LAYER, (state, action) => {
             const { isActive, id } = action.payload;
-            const layerIndex = _.findIndex(state.layers, { id })
-            return update(state, {
-                layers: {
-                    [layerIndex]: {
-                        isActive: {
-                            $set: isActive
-                        }
-                    }
-                }
-            })
-        }
-        case SET_LAYER_STEPS: {
+            layerById(state, id).isActive = isActive
+        })
+        .addCase(SET_LAYER_STEPS, (state, action) => {
             const { id, steps } = action.payload;
-            const layerIndex = _.findIndex(state.layers, { id })
-            return update(state, {
-                layers: {
-                    [layerIndex]: {
-                        steps: {
-                            $set: steps
-                        }
-                    }
-                }
-            })
-        }
-        case SET_LAYER_NAME: {
+            layerById(state, id).steps = steps
+        })
+        .addCase(SET_LAYER_NAME, (state, action) => {
             const { id, name } = action.payload;
-            const layerIndex = _.findIndex(state.layers, { id })
-            return update(state, {
-                layers: {
-                    [layerIndex]: {
-                        name: {
-                            $set: name
-                        }
-                    }
-                }
-            })
-        }
-        case SET_LAYER_TYPE: {
+            layerById(state, id).name = name
+        })
+        .addCase(SET_LAYER_TYPE, (state, action) => {
             const { id, value } = action.payload;
-            const layerIndex = _.findIndex(state.layers, { id })
-            return update(state, {
-                layers: {
-                    [layerIndex]: {
-                        type: {
-                            $set: value
-                        }
-                    }
-                }
-            })
-        }
-        case SET_LAYER_TIME_OFFSET: {
+            layerById(state, id).type = value
+        })
+        .addCase(SET_LAYER_TIME_OFFSET, (state, action) => {
             const { id, value } = action.payload;
-            const layerIndex = _.findIndex(state.layers, { id })
-            return update(state, {
-                layers: {
-                    [layerIndex]: {
-                        timeOffset: {
-                            $set: value
-                        }
-                    }
-                }
-            })
-        }
-        case SET_LAYER_PERCENT_OFFSET: {
+            layerById(state, id).timeOffset = value
+        })
+        .addCase(SET_LAYER_PERCENT_OFFSET, (state, action) => {
             const { id, value } = action.payload;
-            const layerIndex = _.findIndex(state.layers, { id })
-            return update(state, {
-                layers: {
-                    [layerIndex]: {
-                        percentOffset: {
-                            $set: value
-                        }
-                    }
-                }
-            })
-        }
-
-        case ADD_USERBUS: {
-            const { userId, userBus } = action.payload;
-            return update(state, {
-                userBuses: {
-                    [userId]: {
-                        $set: userBus
-                    }
-                }
-            })
-        }
-        case SET_USER_BUS_FX_OVERRIDE: {
-            const { userId, fxId, value } = action.payload;
-            const fxIndex = _.findIndex(state.userBuses[userId].fx, { id: fxId })
-            return update(state, {
-                userBuses: {
-                    [userId]: {
-                        fx: {
-                            [fxIndex]: {
-                                isOverride: {
-                                    $set: value
-                                }
-                            }
-                        }
-                    }
-                }
-            })
-        }
-        case SET_USER_BUS_FX: {
-            const { userId, data } = action.payload;
-            return update(state, {
-                userBuses: {
-                    [userId]: {
-                        fx: {
-
-                            $set: data
-
-
-                        }
-                    }
-                }
-            })
-        }
-        case UPDATE_LAYER_AUTOMATION_FX_ID: {
+            layerById(state, id).percentOffset = value
+        })
+        .addCase(SET_LAYER_GAIN, (state, action) => {
             const { id, value } = action.payload;
-            const layerIndex = _.findIndex(state.layers, { id })
-            return update(state, {
-                layers: {
-                    [layerIndex]: {
-                        automationFxId: {
-                            $set: value
-                        }
-                    }
-                }
-            })
-        }
-        case SAVE_USER_PATTERN: {
-            const { userId, patternId, data } = action.payload;
-            const patternIndex = _.findIndex(state.userPatterns[userId].patterns, { id: patternId })
-            return update(state, {
-                userPatterns: {
-                    [userId]: {
-                        patterns: {
-                            [patternIndex]: {
-                                state: {
-                                    $set: data
-                                }
-                            }
-                        }
-                    }
-                }
-            })
-        }
-        case SET_USER_PATTERN_SEQUENCE: {
-            const { userId, data } = action.payload;
-            return update(state, {
-                userPatterns: {
-                    [userId]: {
-                        sequence: {
-                            $set: data
-                        }
-                    }
-                }
-            })
-        }
-        case SET_LAYER_GAIN: {
+            layerById(state, id).gain = value
+        })
+        .addCase(SET_LAYER_MUTE, (state, action) => {
             const { id, value } = action.payload;
-            const layerIndex = _.findIndex(state.layers, { id })
-            return update(state, {
-                layers: {
-                    [layerIndex]: {
-                        gain: {
-                            $set: value
-                        }
-                    }
-                }
-            })
-        }
-        case SET_LAYER_PREVIEW: {
+            layerById(state, id).isMuted = value
+        })
+        .addCase(SET_LAYER_PREVIEW, (state, action) => {
             const { id, value } = action.payload;
-            const layerIndex = _.findIndex(state.layers, { id })
-            return update(state, {
-                layers: {
-                    [layerIndex]: {
-                        instrument: {
-                            isPreviewed: {
-                                $set: value
-                            }
-                        }
-                    }
-                }
-            })
-        }
-        case SET_LAYER_MUTE: {
-            const { id, value } = action.payload;
-            const layerIndex = _.findIndex(state.layers, { id })
-            return update(state, {
-                layers: {
-                    [layerIndex]: {
-
-                        isMuted: {
-                            $set: value
-                        }
-
-                    }
-                }
-            })
-        }
-        case UPDATE_LAYER_INSTRUMENT: {
+            layerById(state, id).instrument.isPreviewed = value
+        })
+        .addCase(UPDATE_LAYER_INSTRUMENT, (state, action) => {
             const { id, instrument } = action.payload;
-            const layerIndex = _.findIndex(state.layers, { id })
-            return update(state, {
-                layers: {
-                    [layerIndex]: {
-                        instrument: {
-                            $merge: instrument
-                        }
-                    }
-                }
-            })
-        }
-        case UPDATE_LAYER: {
+            Object.assign(layerById(state, id).instrument, instrument)
+        })
+        .addCase(UPDATE_LAYER_AUTOMATION_FX_ID, (state, action) => {
+            const { id, value } = action.payload;
+            layerById(state, id).automationFxId = value
+        })
+        .addCase(UPDATE_LAYER, (state, action) => {
             const { id, data } = action.payload;
-            const layerIndex = _.findIndex(state.layers, { id })
-            return update(state, {
-                layers: {
-                    [layerIndex]: {
-                        $merge: data
-                    }
-                }
-            })
-        }
-
-        case ADD_LAYER: {
-            const { layer } = action.payload;
-            return update(state, {
-                layers: {
-                    $push: [layer]
-                }
-            })
-        }
-        case REMOVE_LAYER: {
-            const { id } = action.payload;
-            const layerIndex = _.findIndex(state.layers, { id })
-            return update(state, {
-                layers: {
-                    $splice: [[layerIndex, 1]]
-                }
-            })
-        }
-        case ADD_ROUND_LAYERS: {
-            const { layers } = action.payload;
-            return update(state, {
-                layers: {
-                    $push: layers
-                }
-            })
-        }
-        case SET_ROUND_NAME: {
-            const { value } = action.payload;
-            return update(state, {
-                name: {
-                    $set: value
-                }
-            })
-        }
-        case SET_ROUND_BPM: {
-            const { bpm } = action.payload;
-            return update(state, {
-                bpm: {
-                    $set: bpm
-                }
-            })
-        }
-        case SET_ROUND_SWING: {
-            const { swing } = action.payload;
-            return update(state, {
-                swing: {
-                    $set: swing
-                }
-            })
-        }
-        case SET_ROUND_ID: {
-            const { id } = action.payload;
-            return update(state, {
-                id: {
-                    $set: id
-                }
-            })
-        }
-        case SET_IS_PLAYING: {
-            const { value } = action.payload;
-            return update(state, {
-                isPlaying: {
-                    $set: value
-                }
-            })
-        }
-        case SET_ROUND_SHORTLINK: {
-            const { value } = action.payload;
-            return update(state, {
-                shortLink: {
-                    $set: value
-                }
-            })
-        }
-        case SET_ROUND_CURRENT_USERS: {
-            const { value } = action.payload;
-            return update(state, {
-                currentUsers: {
-                    $set: value
-                }
-            })
-        }
-        case SET_IS_PLAYING_SEQUENCE: {
+            Object.assign(layerById(state, id), data)
+        })
+        .addCase(ADD_LAYER, (state, action) => {
+            state.layers.push(action.payload.layer)
+        })
+        .addCase(ADD_ROUND_LAYERS, (state, action) => {
+            state.layers.push(...action.payload.layers)
+        })
+        .addCase(REMOVE_LAYER, (state, action) => {
+            // as in REMOVE_STEP: an id that is not in the round must remove nothing, not the last layer
+            const index = _.findIndex(state.layers, { id: action.payload.id })
+            if (index >= 0) {
+                state.layers.splice(index, 1)
+            }
+        })
+        .addCase(ADD_USERBUS, (state, action) => {
+            const { userId, userBus } = action.payload;
+            state.userBuses[userId] = userBus
+        })
+        .addCase(SET_USER_BUS_FX_OVERRIDE, (state, action) => {
+            const { userId, fxId, value } = action.payload;
+            _.find(state.userBuses[userId].fx, { id: fxId }).isOverride = value
+        })
+        .addCase(SET_USER_BUS_FX, (state, action) => {
+            const { userId, data } = action.payload;
+            state.userBuses[userId].fx = data
+        })
+        .addCase(SAVE_USER_PATTERN, (state, action) => {
+            const { userId, patternId, data } = action.payload;
+            _.find(state.userPatterns[userId].patterns, { id: patternId }).state = data
+        })
+        .addCase(SET_USER_PATTERN_SEQUENCE, (state, action) => {
+            const { userId, data } = action.payload;
+            state.userPatterns[userId].sequence = data
+        })
+        .addCase(SET_IS_PLAYING_SEQUENCE, (state, action) => {
             const { userId, value } = action.payload;
-            /*console.log('SET_IS_PLAYING_SEQUENCE', userId, value, update(state, {
-                userPatterns: {
-                    [userId]: {
-                        isPlayingSequence: {
-                            $set: value
-                        }
-                    }
-                }
-            }));*/
-            return update(state, {
-                userPatterns: {
-                    [userId]: {
-                        isPlayingSequence: {
-                            $set: value
-                        }
-                    }
-                }
-            })
-        }
-        default:
-            return state;
-    }
-}
+            state.userPatterns[userId].isPlayingSequence = value
+        })
+        .addCase(SET_ROUND_NAME, (state, action) => {
+            state.name = action.payload.value
+        })
+        .addCase(SET_ROUND_BPM, (state, action) => {
+            state.bpm = action.payload.bpm
+        })
+        .addCase(SET_ROUND_SWING, (state, action) => {
+            state.swing = action.payload.swing
+        })
+        .addCase(SET_ROUND_ID, (state, action) => {
+            state.id = action.payload.id
+        })
+        .addCase(SET_IS_PLAYING, (state, action) => {
+            state.isPlaying = action.payload.value
+        })
+        .addCase(SET_ROUND_SHORTLINK, (state, action) => {
+            state.shortLink = action.payload.value
+        })
+        .addCase(SET_ROUND_CURRENT_USERS, (state, action) => {
+            state.currentUsers = action.payload.value
+        })
+        .addCase(SET_ROUND_CONTRIBUTORS, (state, action) => {
+            state.contributors = action.payload.value
+        })
+});
