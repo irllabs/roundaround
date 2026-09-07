@@ -29,6 +29,21 @@ describe('OutlinedField', () => {
         expect(screen.getByLabelText('Email')).toHaveClass('aria-invalid:ring-0', 'border-destructive')
     })
 
+    it('keeps MUI\'s 16px text at desktop widths', () => {
+        // the generated Input drops to 14px from the md breakpoint up; MUI's InputBase never does
+        render(<OutlinedField id="link" label="Link" value="" onChange={() => {}} />)
+        const input = screen.getByLabelText('Link')
+        expect(input).toHaveClass('text-base', 'md:text-base')
+        expect(input).not.toHaveClass('md:text-sm')
+    })
+
+    it('keeps a focused field that is wrong red, rather than letting it light up', () => {
+        render(<OutlinedField id="email" label="Email" value="x" onChange={() => {}} error />)
+        const input = screen.getByLabelText('Email')
+        expect(input).toHaveClass('focus-visible:border-destructive')
+        expect(input).not.toHaveClass('focus-visible:border-ring')
+    })
+
     it('lets its own id and classes win over inputProps overrides', () => {
         render(<OutlinedField id="name" label="Name" value="" onChange={() => {}} inputProps={{ id: 'wrong', className: 'extra' }} />)
         const input = screen.getByLabelText('Name')
