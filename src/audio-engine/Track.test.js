@@ -2,6 +2,7 @@ import { vi, describe, it, expect, beforeEach } from 'vitest'
 import Track from './Track'
 import AudioEngine from './AudioEngine'
 import FX from './FX'
+import { deepFreeze } from '../test/deep-freeze'
 
 vi.mock('tone', () => {
     class Signal {
@@ -131,5 +132,42 @@ describe('Track effects after a load', () => {
         const bus = new Track({ id: 'user-1', fx: busFx }, Track.TRACK_TYPE_USER, 'user-1')
         await flush()
         expect(bus.sortedFx.map(fx => fx.id)).toEqual(['fx-lowpass', 'fx-delay'])
+    })
+})
+
+describe('Track and the layer it is given', () => {
+    beforeEach(() => {
+        AudioEngine.busesByUser = { 'user-1': { channel: {} } }
+        AudioEngine.master = { channel: {} }
+    })
+
+    // The layer comes straight out of the Redux store, which is frozen: writing to it would throw.
+    const storeLayer = () => deepFreeze({
+        id: 'layer-1',
+        createdBy: 'user-1',
+        type: Track.TRACK_TYPE_LAYER,
+        gain: -6,
+        isMuted: false,
+        percentOffset: 0,
+        timeOffset: 0,
+        steps: [{ id: 's0', isOn: true, velocity: 1, probability: 1 }]
+    })
+
+    it('never writes to the layer, on load or when the type changes', () => {
+        const layer = storeLayer()
+        const track = new Track(layer, Track.TRACK_TYPE_LAYER, 'user-1')
+        track.load(layer, { isPlayingSequence: false })
+        track.setType(Track.TRACK_TYPE_LAYER)
+        expect(layer).not.toHaveProperty('fx')
+        expect(track.trackParameters).not.toBe(layer)
+        expect(track.trackParameters.fx).toEqual({})
+    })
+
+    it('takes the automated effect from the layer it is given', () => {
+        const layer = deepFreeze({ ...storeLayer(), type: Track.TRACK_TYPE_AUTOMATION, automationFxId: 'fx-lowpass' })
+        const track = new Track(layer, Track.TRACK_TYPE_AUTOMATION, 'user-1')
+        track.setType(Track.TRACK_TYPE_AUTOMATION, 'fx-delay')
+        expect(track.trackParameters.automationFxId).toBe('fx-delay')
+        expect(layer.automationFxId).toBe('fx-lowpass')
     })
 })

@@ -122,6 +122,30 @@ export const duplicateRound = (round, userId) => {
     return clone
 }
 
+/** A copy of `layer` with every step switched off. */
+export const layerWithStepsOff = (layer) => {
+    const silenced = _.cloneDeep(layer)
+    for (const step of silenced.steps) {
+        step.isOn = false
+    }
+    return silenced
+}
+
+/**
+ * A saved pattern's layers lined up with the round as it stands now: a layer the user has added
+ * since the pattern was saved comes back with every step off, a layer that has been deleted from
+ * the round drops out. Returns a new array and leaves the pattern it was given alone.
+ */
+export const patternLayersForRound = (patternLayers, roundLayers, userId) => {
+    const layers = patternLayers.filter(layer => !_.isNil(_.find(roundLayers, { id: layer.id })))
+    for (const roundLayer of roundLayers) {
+        if (roundLayer.createdBy === userId && _.isNil(_.find(patternLayers, { id: roundLayer.id }))) {
+            layers.push(layerWithStepsOff(roundLayer))
+        }
+    }
+    return layers
+}
+
 /**
  * Effective mute state per layer when `soloedLayerId` is soloed for this listener only
  * (null means no solo): a layer plays if it is not muted and is the soloed one, or nothing is soloed.

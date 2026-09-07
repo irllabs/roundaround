@@ -6,13 +6,19 @@ import FX from './FX';
 import AudioEngine from './AudioEngine';
 import Automation from './Automation';
 
+/**
+ * The track's own copy of the layer or user bus it plays. What is handed in comes from the Redux
+ * store, which the track must not write to, so setType() stamps its bookkeeping onto the copy.
+ */
+const ownCopy = (trackParameters) => _.isNil(trackParameters) ? trackParameters : { ...trackParameters }
+
 export default class Track {
     static TRACK_TYPE_LAYER = 'TRACK_TYPE_LAYER' // Each layer is routed to a user bus
     static TRACK_TYPE_USER = 'TRACK_TYPE_USER' // User busses are routed to master
     static TRACK_TYPE_MASTER = 'TRACK_TYPE_MASTER'
     static TRACK_TYPE_AUTOMATION = 'TRACK_TYPE_AUTOMATION' // Each layer is routed to a user bus
     constructor (trackParameters, type, userId) {
-        this.trackParameters = trackParameters
+        this.trackParameters = ownCopy(trackParameters)
         this.id = trackParameters.id
         this.userId = userId
         this.type = type
@@ -59,10 +65,9 @@ export default class Track {
          this.buildAudioChain()*/
     }
     load (trackParameters, userPatterns) {
-        this.trackParameters = trackParameters
         this.userPatterns = userPatterns
+        // calculatePart takes the track's own copy of the parameters
         this.calculatePart(trackParameters, userPatterns)
-
     }
     async createFX (fxList) {
         if (_.isNil(fxList)) {
@@ -167,7 +172,7 @@ export default class Track {
         }
     }
     calculatePart (layer, userPatterns) {
-        this.trackParameters = layer
+        this.trackParameters = ownCopy(layer)
         if (!_.isNil(userPatterns)) {
             // if (!userPatterns.isPlayingSequence) {
             if (!_.isNil(layer)) {

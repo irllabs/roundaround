@@ -3,7 +3,7 @@ import _ from 'lodash';
 import { SVG } from '@svgdotjs/svg.js'
 import '@svgdotjs/svg.panzoom.js'
 import { HTML_UI_Params, PRESET_LETTERS, KEY_MAPPINGS } from '../../utils/constants'
-import { connect } from "react-redux";
+import { connect, batch } from "react-redux";
 import AudioEngine from '../../audio-engine/AudioEngine'
 import { getDefaultLayerData } from '../../utils/defaultData';
 import { SET_LAYER_MUTE, TOGGLE_STEP, ADD_LAYER, SET_SELECTED_LAYER_ID, SET_IS_SHOWING_LAYER_SETTINGS, UPDATE_STEP, SET_IS_SHOWING_ORIENTATION_DIALOG, UPDATE_LAYERS, SET_CURRENT_SEQUENCE_PATTERN } from '../../redux/actionTypes'
@@ -11,7 +11,7 @@ import { FirebaseContext } from '../../firebase/'
 import * as Tone from 'tone';
 import { withStyles } from '@material-ui/styles';
 import PropTypes from 'prop-types';
-import { numberRange } from '../../utils/index'
+import { numberRange, layerWithStepsOff, patternLayersForRound } from '../../utils/index'
 import Instruments from '../../audio-engine/Instruments'
 import { getDefaultUserPatternSequence } from '../../utils/defaultData'
 import { detailedDiff } from 'deep-object-diff';
@@ -507,38 +507,15 @@ class PlayUI extends Component {
     }
 
     async loadPatternPriority(userId, id, order) {
-        //this.props.dispatch({ type: SET_CURRENT_SEQUENCE_PATTERN, payload: { value: order } })
         const pattern = _.find(this.props.round.userPatterns[userId].patterns, { id })
         if (!_.isEmpty(pattern.state)) {
-            // check if we have layers in the round not referenced in the pattern then set all steps in that layer to off
-            for (const existingLayer of this.props.round.layers) {
-                if (_.isNil(_.find(pattern.state.layers, { id: existingLayer.id })) && existingLayer.createdBy === userId) {
-                    let existingLayerClone = _.cloneDeep(existingLayer)
-                    for (const step of existingLayerClone.steps) {
-                        step.isOn = false
-                    }
-                    pattern.state.layers.push(existingLayerClone)
-                }
-            }
-
-            // check we haven't deleted the layer that is referenced in the pattern
-            let layersToDelete = []
-            for (const layer of pattern.state.layers) {
-                const layerExists = _.find(this.props.round.layers, { id: layer.id })
-                if (_.isNil(layerExists)) {
-                    layersToDelete.push(layer)
-                }
-            }
-
-            _.remove(pattern.state.layers, function (n) {
-                return layersToDelete.indexOf(n) > -1
-            })
-            //this.props.updateLayers(pattern.state.layers)
-
+            // the same lining up onLoadPattern does, but this runs from a Tone.Part callback on every
+            // bar of a sequence, so it stays inside this component's own copy of the round
+            const patternLayers = patternLayersForRound(pattern.state.layers, this.props.round.layers, userId)
             for (let layer of this.round.layers) {
-                let patternLayer = _.find(pattern.state.layers, { id: layer.id })
+                const patternLayer = _.find(patternLayers, { id: layer.id })
                 if (!_.isNil(patternLayer)) {
-                    layer.steps = patternLayer.steps
+                    layer.steps = _.cloneDeep(patternLayer.steps)
                 }
             }
 
@@ -1441,31 +1418,15 @@ class PlayUI extends Component {
                 this.setState({ selectedPattern: pattern.id })
                 this.selectedPatternNeedsSaving = false
 
-                // check if we have layers in the round not referenced in the pattern then set all steps in that layer to off
-                for (const existingLayer of this.props.round.layers) {
-                    if (_.isNil(_.find(pattern.state.layers, { id: existingLayer.id })) && existingLayer.createdBy === this.props.user.id) {
-                        let existingLayerClone = _.cloneDeep(existingLayer)
-                        for (const step of existingLayerClone.steps) {
-                            step.isOn = false
-                        }
-                        pattern.state.layers.push(existingLayerClone)
-                    }
-                }
-
-                // check we haven't deleted the layer that is referenced in the pattern
-                let layersToDelete = []
-                for (const layer of pattern.state.layers) {
-                    const layerExists = _.find(this.props.round.layers, { id: layer.id })
-                    if (_.isNil(layerExists)) {
-                        layersToDelete.push(layer)
-                    }
-                }
-
-                _.remove(pattern.state.layers, function (n) {
-                    return layersToDelete.indexOf(n) > -1
+                // the pattern may have been saved before layers were added to or deleted from the
+                // round, so line it up with the round as it stands and put the result back through
+                // the store. Both dispatches go in one batch so the round is redrawn once.
+                const patternLayers = patternLayersForRound(pattern.state.layers, this.props.round.layers, this.props.user.id)
+                batch(() => {
+                    this.props.saveUserPattern(this.props.user.id, id, { ...pattern.state, layers: patternLayers })
+                    this.props.updateLayers(this.layersInRoundOrder(patternLayers))
                 })
-
-                await this.patternLayersToRound(pattern)
+                this.savePatternLayers(patternLayers)
             }
         } else {
             let seq = _.cloneDeep(this.props.round.userPatterns[this.props.user.id].sequence)
@@ -1489,23 +1450,19 @@ class PlayUI extends Component {
         }
     }
 
-    patternLayersToRound = async (pattern) => {
-        // make sure layers are ordered the same
-        let orderedLayers = []
-
-        // this.props.updateLayers(pattern.state.layers)
-        for (const layer of pattern.state.layers) {
-            let index = _.findIndex(this.props.round.layers, { id: layer.id })
-            orderedLayers[index] = layer
+    /** The layers at the positions they hold in the round, which is what UPDATE_LAYERS merges by. */
+    layersInRoundOrder = (layers) => {
+        const orderedLayers = []
+        for (const layer of layers) {
+            orderedLayers[_.findIndex(this.props.round.layers, { id: layer.id })] = layer
         }
-        await this.props.updateLayers(orderedLayers)
-        // now save to firebase
-        for (const layer of pattern.state.layers) {
-            // todo handle edge cases - eg layer been deleted
-            const layerExists = _.find(this.props.round.layers, { id: layer.id })
-            if (!_.isNil(layerExists)) {
-                this.context.updateLayer(this.props.round.id, layer.id, layer)
-            }
+        return orderedLayers
+    }
+
+    /** Writes the layers a pattern brought back to the round's layer documents. */
+    savePatternLayers = (layers) => {
+        for (const layer of layers) {
+            this.context.updateLayer(this.props.round.id, layer.id, layer)
         }
     }
 
@@ -1523,9 +1480,7 @@ class PlayUI extends Component {
             const isPlayingSequence = true
             this.isPlayingSequence = isPlayingSequence
             setIsPlayingSequence(user.id, isPlayingSequence)
-            const newRound = { ...round }
-            newRound.userPatterns[user.id].isPlayingSequence = isPlayingSequence
-            this.context.saveUserPatterns(round.id, user.id, newRound.userPatterns[user.id])
+            this.context.saveUserPatterns(round.id, user.id, { ...round.userPatterns[user.id], isPlayingSequence })
             this.props.setIsPlayingSequence(this.props.user.id, true)
         }
         this.props.setIsRecordingSequence(!this.props.display.isRecordingSequence)
@@ -1651,9 +1606,7 @@ class PlayUI extends Component {
         setCurrentSequencePattern(0)
         const isPlayingSequence = !this.isPlayingSequence
         setIsPlayingSequence(user.id, isPlayingSequence)
-        const newRound = { ...round }
-        newRound.userPatterns[user.id].isPlayingSequence = isPlayingSequence
-        this.context.saveUserPatterns(round.id, user.id, newRound.userPatterns[user.id])
+        this.context.saveUserPatterns(round.id, user.id, { ...round.userPatterns[user.id], isPlayingSequence })
         this.isPlayingSequence = isPlayingSequence
     }
 
@@ -1751,16 +1704,9 @@ class PlayUI extends Component {
                     const pattern = _.find(patterns, { id })
                     const patternLayers = pattern.state.layers
                     if (!patternLayers) {
-                        pattern.state.layers = []
                         /** clear out steps from existing layers */
-                        for (const existingLayer of round.layers) {
-                            let existingLayerClone = _.cloneDeep(existingLayer)
-                            for (const step of existingLayerClone.steps) {
-                                step.isOn = false
-                            }
-                            pattern.state.layers.push(existingLayerClone)
-                        }
-                        this.props.dispatch({ type: UPDATE_LAYERS, payload: { layers: pattern.state.layers } })
+                        const silencedLayers = round.layers.map(layer => layerWithStepsOff(layer))
+                        this.props.dispatch({ type: UPDATE_LAYERS, payload: { layers: silencedLayers } })
                         await this.onSavePattern(id)
                     }
 

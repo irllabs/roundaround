@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest'
-import { changeLayerLength, convertPercentToDB, convertDBToPercent, duplicateRound, uuid, arraymove, soloMuteStates, profileFromAuthUser } from './index'
+import { changeLayerLength, convertPercentToDB, convertDBToPercent, duplicateRound, uuid, arraymove, soloMuteStates, profileFromAuthUser, layerWithStepsOff, patternLayersForRound } from './index'
+import { deepFreeze } from '../test/deep-freeze'
 
 const layerWithSteps = (pattern) => ({
     id: 'layer',
@@ -97,5 +98,62 @@ describe('profileFromAuthUser', () => {
         const profile = profileFromAuthUser({ uid: 'anon', isAnonymous: true, displayName: null, email: null, photoURL: null })
         expect(profile).toEqual({ id: 'anon', isGuest: true })
         expect(Object.keys(profile)).not.toContain('displayName')
+    })
+})
+
+describe('patternLayersForRound', () => {
+    const layer = (id, createdBy, pattern) => ({
+        id,
+        createdBy,
+        steps: pattern.split('').map((c, i) => ({ id: id + '-' + i, order: i, isOn: c === 'x' }))
+    })
+    const me = 'user-1'
+    const them = 'user-2'
+
+    it('keeps the layers the pattern and the round both have, in the order the pattern saved them', () => {
+        const saved = [layer('a', me, 'x...'), layer('b', me, '..x.')]
+        const round = [layer('b', me, 'xxxx'), layer('a', me, 'xxxx')]
+        const layers = patternLayersForRound(saved, round, me)
+        expect(layers.map(l => l.id)).toEqual(['a', 'b'])
+        expect(layers.map(l => asPattern(l.steps))).toEqual(['x...', '..x.'])
+    })
+
+    it('brings back a layer added since the pattern was saved, with every step off', () => {
+        const saved = [layer('a', me, 'x...')]
+        const round = [layer('a', me, 'x...'), layer('new', me, 'xxxx')]
+        const layers = patternLayersForRound(saved, round, me)
+        expect(layers.map(l => l.id)).toEqual(['a', 'new'])
+        expect(asPattern(layers[1].steps)).toBe('....')
+    })
+
+    it('leaves collaborators layers out of the pattern', () => {
+        const saved = [layer('a', me, 'x...')]
+        const round = [layer('a', me, 'x...'), layer('theirs', them, 'xxxx')]
+        expect(patternLayersForRound(saved, round, me).map(l => l.id)).toEqual(['a'])
+    })
+
+    it('drops a layer that has been deleted from the round', () => {
+        const saved = [layer('a', me, 'x...'), layer('gone', me, 'xx..')]
+        const round = [layer('a', me, 'x...')]
+        expect(patternLayersForRound(saved, round, me).map(l => l.id)).toEqual(['a'])
+    })
+
+    it('leaves the pattern and the round it was given untouched', () => {
+        const saved = deepFreeze([layer('a', me, 'x...')])
+        const round = deepFreeze([layer('a', me, 'x...'), layer('new', me, 'xxxx')])
+        const layers = patternLayersForRound(saved, round, me)
+        expect(layers).not.toBe(saved)
+        expect(saved).toHaveLength(1)
+        expect(asPattern(round[1].steps)).toBe('xxxx')
+    })
+})
+
+describe('layerWithStepsOff', () => {
+    it('copies the layer with every step off and leaves the original alone', () => {
+        const original = deepFreeze({ id: 'a', gain: -3, steps: [{ id: 's0', isOn: true }, { id: 's1', isOn: false }] })
+        const silenced = layerWithStepsOff(original)
+        expect(silenced.steps.map(s => s.isOn)).toEqual([false, false])
+        expect(silenced.gain).toBe(-3)
+        expect(original.steps[0].isOn).toBe(true)
     })
 })
