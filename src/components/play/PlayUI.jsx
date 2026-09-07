@@ -1082,7 +1082,9 @@ export class PlayUI extends Component {
             this.props.dispatch({ type: UPDATE_STEP, payload: { step: _.cloneDeep(step), layerId: stepGraphic.layerId } })
             this.saveLayerSteps(stepGraphic.layerId)
         }
-        AudioEngine.recalculateParts(this.props.round)
+        // this.round holds the step that was just mutated; props do not until the dispatch above
+        // has been rendered, which React 18 schedules rather than doing here
+        AudioEngine.recalculateParts(this.round)
     }
 
     highlightStep(stepGraphic) {
@@ -1355,6 +1357,55 @@ export class PlayUI extends Component {
         }
     }
 
+    /**
+     * A pattern button. This runs from an SVG.js listener, outside React's event system, so React
+     * 18 batches the re-render its dispatches cause: `this.props.round` still holds the round from
+     * before them all the way down. What the audio engine is given is composed from the layers
+     * that were dispatched instead.
+     */
+    onPatternClick = async (id, layers) => {
+        const { round, user, isPlaying } = this.props
+        const patterns = round.userPatterns[user.id].patterns
+        if (this.isPlayingSequence && isPlaying) return
+        if (!this.isRecordingSequence) {
+            this.setActivePattern(id)
+            const pattern = _.find(patterns, { id })
+            const patternLayers = pattern.state.layers
+            let dispatchedLayers
+            if (!patternLayers) {
+                /** clear out steps from existing layers */
+                dispatchedLayers = round.layers.map(layer => layerWithStepsOff(layer))
+                this.props.dispatch({ type: UPDATE_LAYERS, payload: { layers: dispatchedLayers } })
+                // the pattern is saved from the layers just silenced, not from the props the
+                // dispatch has not produced yet
+                await this.onSavePattern(id, dispatchedLayers)
+            }
+
+            if (patternLayers) {
+                dispatchedLayers = await this.onLoadPattern(id)
+            }
+            AudioEngine.recalculateParts(this.roundWithLayers(round, dispatchedLayers))
+            this.draw()
+        }
+        if (layers && layers.length > 0 && this.isRecordingSequence) {
+            this.setActivePattern(id)
+            this.onLoadPattern(id)
+            this.draw()
+        }
+    }
+
+    /**
+     * The round as UPDATE_LAYERS leaves it: `layers` merged in by position, which is how the
+     * reducer merges them, and holes left alone. For the window between a dispatch and the
+     * re-render React 18 schedules for it.
+     */
+    roundWithLayers = (round, layers) => {
+        if (_.isNil(layers)) {
+            return round
+        }
+        return { ...round, layers: round.layers.map((layer, i) => (_.isNil(layers[i]) ? layer : { ...layer, ...layers[i] })) }
+    }
+
     onLoadPattern = async (id) => {
         if (!this.props.display.isRecordingSequence) {
             const pattern = _.find(this.props.round.userPatterns[this.props.user.id].patterns, { id })
@@ -1366,11 +1417,15 @@ export class PlayUI extends Component {
                 // round, so line it up with the round as it stands and put the result back through
                 // the store. Both dispatches go in one batch so the round is redrawn once.
                 const patternLayers = patternLayersForRound(pattern.state.layers, this.props.round.layers, this.props.user.id)
+                const orderedLayers = this.layersInRoundOrder(patternLayers)
                 batch(() => {
                     this.props.saveUserPattern(this.props.user.id, id, { ...pattern.state, layers: patternLayers })
-                    this.props.updateLayers(this.layersInRoundOrder(patternLayers))
+                    this.props.updateLayers(orderedLayers)
                 })
                 this.savePatternLayers(patternLayers)
+                // handed back so the caller can recalculate from them: the dispatch above has not
+                // reached props yet
+                return orderedLayers
             }
         } else {
             let seq = _.cloneDeep(this.props.round.userPatterns[this.props.user.id].sequence)
@@ -1433,10 +1488,10 @@ export class PlayUI extends Component {
         this.props.setIsRecordingSequence(!this.props.display.isRecordingSequence)
     }
 
-    onSavePattern = async (id) => {
+    onSavePattern = async (id, layers) => {
         this.setState({ selectedPattern: id })
         this.selectedPatternNeedsSaving = false
-        await this.savePattern(id, this.getCurrentState(this.props.user.id))
+        await this.savePattern(id, this.getCurrentState(this.props.user.id, layers))
     }
 
     /**
@@ -1470,9 +1525,9 @@ export class PlayUI extends Component {
         this.savePattern(id, state).catch(error => console.error('Could not save pattern', error))
     }
 
-    getCurrentState = (userId) => {
+    getCurrentState = (userId, layers = this.props.round.layers) => {
         /** Limit current state to current user layers **/
-        const userLayers = _.filter(this.props.round.layers, { createdBy: userId })
+        const userLayers = _.filter(layers, { createdBy: userId })
 
         //const layers = this.props.round.layers
         let state = {}
@@ -1671,33 +1726,7 @@ export class PlayUI extends Component {
             clickableButton.x(clickableButtonX)
             clickableButton.y(clickableButtonY)
             this.microLayerGraphics.push(clickableButton)
-            clickableButton.on('click', async () => {
-                const { round, isPlaying } = this.props
-                const patterns = round.userPatterns[user.id].patterns
-                if (this.isPlayingSequence && isPlaying) return
-                if (!this.isRecordingSequence) {
-                    this.setActivePattern(id)
-                    const pattern = _.find(patterns, { id })
-                    const patternLayers = pattern.state.layers
-                    if (!patternLayers) {
-                        /** clear out steps from existing layers */
-                        const silencedLayers = round.layers.map(layer => layerWithStepsOff(layer))
-                        this.props.dispatch({ type: UPDATE_LAYERS, payload: { layers: silencedLayers } })
-                        await this.onSavePattern(id)
-                    }
-
-                    if (patternLayers) {
-                        this.onLoadPattern(id)
-                    }
-                    AudioEngine.recalculateParts(this.props.round)
-                    this.draw()
-                }
-                if (layers && layers.length > 0 && this.isRecordingSequence) {
-                    this.setActivePattern(id)
-                    this.onLoadPattern(id)
-                    this.draw()
-                }
-            })
+            clickableButton.on('click', () => this.onPatternClick(id, layers))
             i++
         }
     }

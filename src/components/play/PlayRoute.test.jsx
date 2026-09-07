@@ -121,6 +121,23 @@ describe('PlayRoute', () => {
         expect(store.getState().round).toBeNull()
     })
 
+    it('stays in the round when the first snapshot arrives before the round has been rendered', async () => {
+        const round = roundWithMembers(['me'])
+        const { firebase } = makeFirebase({ round })
+        // React 18 schedules the re-render `setRound` asks for, so a snapshot delivered the moment
+        // the listener is made arrives while `props.round` is still null. That is not a deleted
+        // round, and the user has to stay where they are.
+        firebase.subscribeToRound = vi.fn((id, onNext) => {
+            onNext({ exists: true, data: round })
+            return vi.fn()
+        })
+        const { store } = renderRoute(firebase)
+
+        await waitFor(() => expect(store.getState().round).not.toBeNull())
+        expect(firebase.subscribeToRound).toHaveBeenCalledTimes(1)
+        expect(screen.getByTestId('location')).toHaveTextContent('/play/r1')
+    })
+
     it('applies a tempo change delivered by the round subscription', async () => {
         const { firebase, listeners } = makeFirebase({ round: roundWithMembers(['me']) })
         const { store } = renderRoute(firebase)

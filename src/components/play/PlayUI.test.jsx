@@ -3,7 +3,7 @@ import _ from 'lodash'
 import { PlayUI } from './PlayUI'
 import AudioEngine from '../../audio-engine/AudioEngine'
 import roundReducer from '../../redux/reducers/round'
-import { TOGGLE_STEP } from '../../redux/actionTypes'
+import { TOGGLE_STEP, UPDATE_LAYERS } from '../../redux/actionTypes'
 
 // PlayUI draws with SVG.js and cannot be mounted here (the pan/zoom plugin wants a global SVG), so
 // these tests build the component with `new` and exercise the saving it does around a toggle,
@@ -136,5 +136,69 @@ describe('PlayUI saving a step toggle', () => {
 
         expect(ui.context.saveUserPatterns).toHaveBeenCalledTimes(1)
         expect(writtenState(ui, 'p1').layers[0].steps[1].isOn).toBe(true)
+    })
+})
+
+describe('PlayUI loading a pattern from its button', () => {
+    /**
+     * The pattern buttons are SVG.js listeners, outside React's event system, so React 18 leaves
+     * props as they were until it re-renders. This dispatch does the same: it records the action
+     * without touching `ui.props`, which is what the handler has to cope with.
+     */
+    function makeBatchedUI(round) {
+        const dispatched = []
+        const ui = new PlayUI({
+            round,
+            user,
+            classes: {},
+            display: { isRecordingSequence: false },
+            dispatch: action => dispatched.push(action),
+            saveUserPattern: vi.fn(),
+            updateLayers: vi.fn(layers => dispatched.push({ type: UPDATE_LAYERS, payload: { layers } }))
+        })
+        ui.context = { updateLayer: vi.fn().mockResolvedValue(), saveUserPatterns: vi.fn().mockResolvedValue() }
+        ui.round = _.cloneDeep(round)
+        ui.activePatternId = 'p1'
+        ui.setState = () => {} // never mounted, so there is no updater to enqueue into
+        ui.draw = vi.fn()
+        return { ui, dispatched }
+    }
+
+    /** A round whose P2 holds the layer with its first step on; the round's own layers are off. */
+    function roundWithPatternToLoad() {
+        const round = makeRound()
+        const loaded = _.cloneDeep(round.layers[0])
+        loaded.steps[0].isOn = true
+        round.userPatterns.me.patterns[1].state = patternState(loaded)
+        return round
+    }
+
+    beforeEach(() => AudioEngine.recalculateParts.mockClear())
+
+    it('recalculates the parts from the layers it dispatched, not the ones still in props', async () => {
+        const round = roundWithPatternToLoad()
+        const { ui } = makeBatchedUI(round)
+
+        await ui.onPatternClick('p2', round.userPatterns.me.patterns[1].state.layers)
+
+        // props are still the round from before the dispatch, as they are under React 18
+        expect(ui.props.round.layers[0].steps.map(step => step.isOn)).toEqual([false, false])
+        expect(AudioEngine.recalculateParts).toHaveBeenCalledTimes(1)
+        const [recalculated] = AudioEngine.recalculateParts.mock.calls[0]
+        expect(recalculated.layers[0].steps.map(step => step.isOn)).toEqual([true, false])
+    })
+
+    it('dispatches the pattern\'s layers, keeping the round\'s other fields', async () => {
+        const round = roundWithPatternToLoad()
+        const { ui } = makeBatchedUI(round)
+
+        await ui.onPatternClick('p2', round.userPatterns.me.patterns[1].state.layers)
+
+        expect(ui.props.updateLayers).toHaveBeenCalledTimes(1)
+        const [dispatchedLayers] = ui.props.updateLayers.mock.calls[0]
+        expect(dispatchedLayers[0].steps.map(step => step.isOn)).toEqual([true, false])
+        const [recalculated] = AudioEngine.recalculateParts.mock.calls[0]
+        expect(recalculated.id).toBe('r1')
+        expect(recalculated.bpm).toBe(120)
     })
 })

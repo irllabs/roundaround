@@ -265,12 +265,17 @@ class PlayRoute extends Component {
             if (_this.isDisposing) {
                 return
             }
-            if (!exists || _.isNil(_this.props.round)) {
+            if (!exists) {
                 // deleted round
                 _this.props.history.push('/rounds')
                 return
             }
-            if (!_.isEqual(_this.props.round.contributors, updatedRound.contributors)) {
+            // The round as the store has it, falling back to the one this listener was made with:
+            // React 18 schedules the re-render `setRound` asks for rather than doing it there and
+            // then, so the first snapshot can arrive before props have the round in them. A missing
+            // round is no longer read as a deleted one; `exists` above is what says that.
+            const currentRound = _this.props.round || round
+            if (!_.isEqual(currentRound.contributors, updatedRound.contributors)) {
                 // somebody has contributed for the first time, or an old round has just been given
                 // its contributors: every one of them needs a profile
                 const users = await _this.loadUsersById(updatedRound.contributors || [])
@@ -281,15 +286,15 @@ class PlayRoute extends Component {
                 _this.props.setRoundContributors(updatedRound.contributors || [])
                 _this.addUsersListeners(users)
             }
-            if (!_.isEqual(_this.props.round.currentUsers, updatedRound.currentUsers)) {
+            if (!_.isEqual(currentRound.currentUsers, updatedRound.currentUsers)) {
                 // somebody has arrived or left: the avatars and voice chat follow who is here now
                 _this.props.setRoundCurrentUsers(updatedRound.currentUsers)
             }
-            if (!_.isEqual(_this.props.round.bpm, updatedRound.bpm)) {
+            if (!_.isEqual(currentRound.bpm, updatedRound.bpm)) {
                 AudioEngine.setTempo(updatedRound.bpm)
                 _this.props.setRoundBpm(updatedRound.bpm)
             }
-            if (!_.isEqual(_this.props.round.swing, updatedRound.swing)) {
+            if (!_.isEqual(currentRound.swing, updatedRound.swing)) {
                 AudioEngine.setSwing(updatedRound.swing)
                 _this.props.setRoundSwing(updatedRound.swing)
             }
