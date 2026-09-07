@@ -11,7 +11,7 @@ import { setIsShowingSignInDialog } from '../../redux/actions'
 vi.mock('tone', () => ({}))
 
 describe('SignInDialog guest flow', () => {
-    function setup() {
+    async function setup() {
         const store = makeStore()
         store.dispatch(setIsShowingSignInDialog(true))
         const firebase = {
@@ -19,15 +19,15 @@ describe('SignInDialog guest flow', () => {
             createUser: vi.fn().mockResolvedValue()
         }
         const utils = renderWithProviders(<SignInDialog />, { store, firebase })
-        userEvent.click(screen.getByTestId('button-guest'))
+        await userEvent.click(screen.getByTestId('button-guest'))
         return { store, firebase, ...utils }
     }
 
     it('signs in as a guest when the name form is submitted with Enter', async () => {
-        const { store, firebase } = setup()
+        const { store, firebase } = await setup()
         const input = within(screen.getByTestId('input-name')).getByRole('textbox')
         // Enter in a single-field form is an implicit submission; the form's onSubmit must take it
-        userEvent.type(input, 'Ada{enter}')
+        await userEvent.type(input, 'Ada{enter}')
 
         await waitFor(() => expect(firebase.signInAnonymously).toHaveBeenCalled())
         await waitFor(() => expect(store.getState().user).toMatchObject({ id: 'anon-1', displayName: 'Ada', isGuest: true }))
@@ -36,8 +36,8 @@ describe('SignInDialog guest flow', () => {
     })
 
     it('asks for a name instead of signing in an anonymous user without one', async () => {
-        const { firebase } = setup()
-        userEvent.click(screen.getByTestId('button-name'))
+        const { firebase } = await setup()
+        await userEvent.click(screen.getByTestId('button-name'))
         expect(await screen.findByText('Please enter a name')).toBeInTheDocument()
         expect(firebase.signInAnonymously).not.toHaveBeenCalled()
     })

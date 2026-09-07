@@ -25,7 +25,7 @@ describe('DeleteRoundDialog', () => {
 
     it('removes the round from the list and closes', async () => {
         const { store, firebase } = setup({ deleteRound: vi.fn().mockResolvedValue() })
-        userEvent.click(screen.getByRole('button', { name: 'Delete' }))
+        await userEvent.click(screen.getByRole('button', { name: 'Delete' }))
         await waitFor(() => expect(store.getState().display.isShowingDeleteRoundDialog).toBe(false))
         expect(firebase.deleteRound).toHaveBeenCalledWith({ id: 'r1' })
         expect(store.getState().rounds.map(r => r.id)).toEqual(['r2'])
@@ -33,7 +33,7 @@ describe('DeleteRoundDialog', () => {
 
     it('shows the error and stays open when deletion fails', async () => {
         const { store } = setup({ deleteRound: vi.fn().mockRejectedValue(new Error('permission denied')) })
-        userEvent.click(screen.getByRole('button', { name: 'Delete' }))
+        await userEvent.click(screen.getByRole('button', { name: 'Delete' }))
         expect(await screen.findByRole('alert')).toHaveTextContent('permission denied')
         expect(store.getState().display.isShowingDeleteRoundDialog).toBe(true)
         expect(store.getState().rounds).toHaveLength(2)
@@ -45,7 +45,7 @@ describe('DeleteRoundDialog', () => {
             deleteRound: vi.fn().mockResolvedValue(),
             route: '/play/r1'
         })
-        userEvent.click(screen.getByRole('button', { name: 'Delete' }))
+        await userEvent.click(screen.getByRole('button', { name: 'Delete' }))
         await waitFor(() => expect(screen.getByTestId('location')).toHaveTextContent('/rounds'))
     })
 })

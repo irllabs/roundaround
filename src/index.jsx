@@ -1,5 +1,5 @@
 import React from 'react';
-import ReactDOM from 'react-dom';
+import { createRoot } from 'react-dom/client';
 import './index.css';
 import App from './App';
 import reportWebVitals from './reportWebVitals';
@@ -18,15 +18,14 @@ window.addEventListener('unhandledrejection', (event) => {
   firebase.reportError(reason instanceof Error ? reason : new Error(String(reason)), { fatal: false, context: 'promise' });
 });
 
-ReactDOM.render(
+createRoot(document.getElementById('root')).render(
   <React.StrictMode>
     <Provider store={store}>
       <FirebaseContext.Provider value={firebase}>
         <App />
       </FirebaseContext.Provider>
     </Provider>
-  </React.StrictMode>,
-  document.getElementById('root')
+  </React.StrictMode>
 );
 
 // If you want to start measuring performance in your app, pass a function

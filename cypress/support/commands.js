@@ -57,6 +57,13 @@ Cypress.Commands.add("login", () => {
 	cy.get("[data-test=input-email]").type(user.username);
 	cy.get("[data-test=input-password]").type(user.password, { log: false });
 	cy.get("[data-test=button-sign-in]").click();
-	cy.wait(1000);
+	// Signing in only starts the work: the header's auth listener then loads the profile, the
+	// rounds list and the samples before it dispatches the user, which under React 18 and a real
+	// network is regularly more than the second this used to wait. Get started reads that user,
+	// and reads a null one as "not signed in", so an early click reopens the sign-in dialog on
+	// top of the redirect the header is about to make and the test carries on from the wrong
+	// screen. The avatar button carries `signed-in` only once the store has the user, so this
+	// waits for exactly the state the click needs.
+	cy.get("[data-test=button-sign-in-out].signed-in", { timeout: 20000 }).should("exist");
 	cy.get("[data-test=button-get-started]").click();
 });

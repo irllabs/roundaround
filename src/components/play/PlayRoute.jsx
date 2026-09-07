@@ -76,6 +76,11 @@ class PlayRoute extends Component {
         this.usersChangeListenersUnsubscribe = []
     }
     componentDidMount() {
+        // A mount is a fresh start, whether or not this instance has been mounted before. React 18
+        // remounts class components in development under StrictMode, and everything componentWill-
+        // Unmount set is set back there except this flag: left true, every loadRound would bail at
+        // its first check and componentDidUpdate would start another one on every store change.
+        this.isDisposing = false;
         this.addStartAudioContextListener()
         this.addPageTransitionListeners()
         if (this.shouldLoadRound()) {
@@ -201,8 +206,8 @@ class PlayRoute extends Component {
             this.props.setRound(round)
             this.hasLoadedRound = true
             this.removeFirebaseListeners()
-            this.addFirebaseListeners()
-            this.addUsersListeners()
+            this.addFirebaseListeners(round)
+            this.addUsersListeners(users)
         } catch (error) {
             console.error('Could not load round', roundId, error)
             if (!this.isDisposing) {
@@ -254,21 +259,28 @@ class PlayRoute extends Component {
         return users.filter(user => !_.isNil(user))
     }
 
-    addFirebaseListeners() {
+    // Takes the round rather than reading `this.props.round`: React 18 batches the re-render that
+    // a dispatch causes, so a `setRound` on the line above has not reached props yet.
+    addFirebaseListeners(round) {
         const _this = this
-        const roundId = this.props.round.id
+        const roundId = round.id
 
         // Round
         this.unsubscribers.push(this.context.subscribeToRound(roundId, async ({ exists, data: updatedRound }) => {
             if (_this.isDisposing) {
                 return
             }
-            if (!exists || _.isNil(_this.props.round)) {
+            if (!exists) {
                 // deleted round
                 _this.props.history.push('/rounds')
                 return
             }
-            if (!_.isEqual(_this.props.round.contributors, updatedRound.contributors)) {
+            // The round as the store has it, falling back to the one this listener was made with:
+            // React 18 schedules the re-render `setRound` asks for rather than doing it there and
+            // then, so the first snapshot can arrive before props have the round in them. A missing
+            // round is no longer read as a deleted one; `exists` above is what says that.
+            const currentRound = _this.props.round || round
+            if (!_.isEqual(currentRound.contributors, updatedRound.contributors)) {
                 // somebody has contributed for the first time, or an old round has just been given
                 // its contributors: every one of them needs a profile
                 const users = await _this.loadUsersById(updatedRound.contributors || [])
@@ -277,17 +289,17 @@ class PlayRoute extends Component {
                 }
                 _this.props.setUsers(users)
                 _this.props.setRoundContributors(updatedRound.contributors || [])
-                _this.addUsersListeners()
+                _this.addUsersListeners(users)
             }
-            if (!_.isEqual(_this.props.round.currentUsers, updatedRound.currentUsers)) {
+            if (!_.isEqual(currentRound.currentUsers, updatedRound.currentUsers)) {
                 // somebody has arrived or left: the avatars and voice chat follow who is here now
                 _this.props.setRoundCurrentUsers(updatedRound.currentUsers)
             }
-            if (!_.isEqual(_this.props.round.bpm, updatedRound.bpm)) {
+            if (!_.isEqual(currentRound.bpm, updatedRound.bpm)) {
                 AudioEngine.setTempo(updatedRound.bpm)
                 _this.props.setRoundBpm(updatedRound.bpm)
             }
-            if (!_.isEqual(_this.props.round.swing, updatedRound.swing)) {
+            if (!_.isEqual(currentRound.swing, updatedRound.swing)) {
                 AudioEngine.setSwing(updatedRound.swing)
                 _this.props.setRoundSwing(updatedRound.swing)
             }
@@ -390,10 +402,12 @@ class PlayRoute extends Component {
         this.removeUsersListeners()
     }
 
-    addUsersListeners() {
+    // Takes the users for the same reason `addFirebaseListeners` takes the round: the `setUsers`
+    // that precedes every call has not reached props yet under React 18's batching.
+    addUsersListeners(users) {
         this.removeUsersListeners()
         const _this = this;
-        for (const user of this.props.users) {
+        for (const user of users) {
             const userListenerUnsubscribe = this.context.subscribeToUser(user.id, () => {
                 if (!_this.isDisposing) {
                     _this.loadUsers()

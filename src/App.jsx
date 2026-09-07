@@ -7,7 +7,6 @@ import {
 import { connect } from "react-redux";
 import { unstable_createMuiStrictModeTheme, ThemeProvider } from '@material-ui/core/styles';
 import CssBaseline from '@material-ui/core/CssBaseline';
-import './App.css'
 import PlayRoute from './components/play/PlayRoute';
 import LandingPageRoute from './components/landing-page/LandingPageRoute';
 import RoundsListRoute from './components/rounds-list-route/RoundsListRoute'

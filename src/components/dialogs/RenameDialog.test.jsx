@@ -25,8 +25,8 @@ describe('RenameDialog', () => {
         })
         const input = screen.getByLabelText('Round name')
         expect(input).toHaveValue('Their jam')
-        userEvent.clear(input)
-        userEvent.type(input, 'Our jam{enter}')
+        await userEvent.clear(input)
+        await userEvent.type(input, 'Our jam{enter}')
 
         await waitFor(() => expect(firebase.updateRound).toHaveBeenCalledWith('shared', { name: 'Our jam' }))
         expect(store.getState().round.name).toBe('Our jam')
@@ -41,18 +41,18 @@ describe('RenameDialog', () => {
         })
         const input = screen.getByLabelText('Round name')
         expect(input).toHaveValue('Old')
-        userEvent.clear(input)
-        userEvent.type(input, 'New')
-        userEvent.click(screen.getByRole('button', { name: 'Rename' }))
+        await userEvent.clear(input)
+        await userEvent.type(input, 'New')
+        await userEvent.click(screen.getByRole('button', { name: 'Rename' }))
 
         await waitFor(() => expect(firebase.updateRound).toHaveBeenCalledWith('mine', { name: 'New' }))
         expect(store.getState().rounds.map(r => r.name)).toEqual(['New', 'Other'])
     })
 
-    it('ignores an empty name', () => {
+    it('ignores an empty name', async () => {
         const { firebase } = setup({ round: null, rounds: [{ id: 'mine', name: 'Old' }], selectedRoundId: 'mine' })
-        userEvent.clear(screen.getByLabelText('Round name'))
-        userEvent.click(screen.getByRole('button', { name: 'Rename' }))
+        await userEvent.clear(screen.getByLabelText('Round name'))
+        await userEvent.click(screen.getByRole('button', { name: 'Rename' }))
         expect(firebase.updateRound).not.toHaveBeenCalled()
     })
 })

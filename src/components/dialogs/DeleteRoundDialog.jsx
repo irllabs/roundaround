@@ -54,7 +54,10 @@ function DeleteRoundDialog ({ isShowingDeleteRoundDialog, selectedRoundId, round
                 {errorMessage && <DialogContentText color="error" role="alert">{errorMessage}</DialogContentText>}
             </DialogContent>
             <DialogActions>
-                <Button onClick={handleClose} autoFocus disabled={isDeleting}>
+                {/* disableFocusRipple: MUI 4's ButtonBase pulsates the ripple from an effect, and
+                    under React 18 the autoFocus lands before the ripple has mounted, so the
+                    pulsate throws on a null ref. The focus ring is unaffected. Goes away with MUI. */}
+                <Button onClick={handleClose} autoFocus disableFocusRipple disabled={isDeleting}>
                     Cancel
                 </Button>
                 <Button color="primary" variant="contained" disableElevation onClick={onOkClick} disabled={isDeleting}>
