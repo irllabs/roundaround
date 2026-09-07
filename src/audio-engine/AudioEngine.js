@@ -1,21 +1,6 @@
 import * as Tone from 'tone';
 import Track from './Track';
 import _ from 'lodash';
-import { arraymove } from '../utils';
-
-/**
- * Old rounds were saved with lowpass and highpass second and third in the chain; they belong fourth
- * and fifth. Returns the corrected order as a new array, leaving the round's own list alone.
- */
-const orderedFx = (fx) => {
-    if (fx[1].name === 'lowpass' && fx[2].name === 'highpass') {
-        const corrected = [...fx]
-        arraymove(corrected, 1, 4)
-        arraymove(corrected, 1, 4)
-        return corrected
-    }
-    return fx
-}
 
 const AudioEngine = {
     tracks: [],
@@ -43,7 +28,7 @@ const AudioEngine = {
                 _this.setSwing(round.swing)
             }
             for (const userBus of Object.values(round.userBuses)) {
-                await _this.addUser(userBus.id, orderedFx(userBus.fx))
+                await _this.addUser(userBus.id, userBus.fx)
             }
             for (const layer of round.layers) {
                 const track = await _this.createTrack(layer)

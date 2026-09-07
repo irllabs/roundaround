@@ -115,6 +115,21 @@ describe('PlayRoute', () => {
         expect(AudioEngine.addUser).toHaveBeenCalledWith('them', [])
     })
 
+    it('puts an old round\'s effect order right before it reaches the store or the audio engine', async () => {
+        const legacy = ['pingpong', 'lowpass', 'highpass', 'autowah', 'delay', 'distortion']
+            .map((name, order) => ({ id: 'fx-' + name, name, order, isOn: true, isOverride: false }))
+        const round = roundWithMembers(['me'])
+        round.userBuses.me.fx = legacy
+        const { firebase } = makeFirebase({ round })
+        const { store } = renderRoute(firebase)
+
+        await waitFor(() => expect(store.getState().round).not.toBeNull())
+        const inStore = store.getState().round.userBuses.me.fx.map(fx => fx.name)
+        expect(inStore).toEqual(['pingpong', 'autowah', 'delay', 'lowpass', 'highpass', 'distortion'])
+        // the sidebar reads the store and the chain reads what load() was given: they must agree
+        expect(AudioEngine.load.mock.calls.at(-1)[0].userBuses.me.fx.map(fx => fx.name)).toEqual(inStore)
+    })
+
     it('goes back to the rounds list when the round is deleted while playing', async () => {
         const { firebase, listeners } = makeFirebase({ round: roundWithMembers(['me']) })
         const { store } = renderRoute(firebase)

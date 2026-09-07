@@ -122,6 +122,32 @@ export const duplicateRound = (round, userId) => {
     return clone
 }
 
+/**
+ * Old rounds were saved with lowpass and highpass second and third in a user bus's chain; they
+ * belong fourth and fifth. Returns a new round with those buses put right, or the round it was
+ * given when there is nothing to put right. Never writes to the round.
+ */
+export const normalizeLegacyFxOrder = (round) => {
+    if (_.isNil(round) || _.isNil(round.userBuses)) {
+        return round
+    }
+    const userBuses = {}
+    let corrected = false
+    for (const [userId, userBus] of Object.entries(round.userBuses)) {
+        const fx = userBus.fx
+        if (_.get(fx, '[1].name') === 'lowpass' && _.get(fx, '[2].name') === 'highpass') {
+            const reordered = [...fx]
+            arraymove(reordered, 1, 4)
+            arraymove(reordered, 1, 4)
+            userBuses[userId] = { ...userBus, fx: reordered }
+            corrected = true
+        } else {
+            userBuses[userId] = userBus
+        }
+    }
+    return corrected ? { ...round, userBuses } : round
+}
+
 /** A copy of `layer` with every step switched off. */
 export const layerWithStepsOff = (layer) => {
     const silenced = _.cloneDeep(layer)

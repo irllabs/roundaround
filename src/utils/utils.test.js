@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { changeLayerLength, convertPercentToDB, convertDBToPercent, duplicateRound, uuid, arraymove, soloMuteStates, profileFromAuthUser, layerWithStepsOff, patternLayersForRound } from './index'
+import { changeLayerLength, convertPercentToDB, convertDBToPercent, duplicateRound, uuid, arraymove, soloMuteStates, profileFromAuthUser, layerWithStepsOff, patternLayersForRound, normalizeLegacyFxOrder } from './index'
 import { deepFreeze } from '../test/deep-freeze'
 
 const layerWithSteps = (pattern) => ({
@@ -155,5 +155,48 @@ describe('layerWithStepsOff', () => {
         expect(silenced.steps.map(s => s.isOn)).toEqual([false, false])
         expect(silenced.gain).toBe(-3)
         expect(original.steps[0].isOn).toBe(true)
+    })
+})
+
+describe('normalizeLegacyFxOrder', () => {
+    const fx = (names) => names.map((name, order) => ({ id: 'fx-' + name, name, order, isOn: true, isOverride: false }))
+    const roundWith = (buses) => ({ id: 'round-1', layers: [], userBuses: buses })
+    const names = (bus) => bus.fx.map(f => f.name)
+    const legacy = ['pingpong', 'lowpass', 'highpass', 'autowah', 'delay', 'distortion']
+    const current = ['pingpong', 'autowah', 'delay', 'distortion', 'lowpass', 'highpass']
+
+    it('moves lowpass and highpass to fourth and fifth in an old bus', () => {
+        const round = roundWith({ 'user-1': { id: 'user-1', fx: fx(legacy) } })
+        expect(names(normalizeLegacyFxOrder(round).userBuses['user-1'])).toEqual(['pingpong', 'autowah', 'delay', 'lowpass', 'highpass', 'distortion'])
+    })
+
+    it('puts every old bus in the round right and leaves the others as they are', () => {
+        const theirs = { id: 'user-2', fx: fx(current) }
+        const round = roundWith({ 'user-1': { id: 'user-1', fx: fx(legacy) }, 'user-2': theirs })
+        const normalized = normalizeLegacyFxOrder(round)
+        expect(names(normalized.userBuses['user-1'])[3]).toBe('lowpass')
+        expect(normalized.userBuses['user-2']).toBe(theirs)
+    })
+
+    it('hands back the same round when there is nothing to put right', () => {
+        const round = roundWith({ 'user-1': { id: 'user-1', fx: fx(current) } })
+        expect(normalizeLegacyFxOrder(round)).toBe(round)
+    })
+
+    it('never writes to the round it was given', () => {
+        const round = deepFreeze(roundWith({ 'user-1': { id: 'user-1', fx: fx(legacy) } }))
+        expect(names(normalizeLegacyFxOrder(round).userBuses['user-1'])[1]).toBe('autowah')
+        expect(names(round.userBuses['user-1'])).toEqual(legacy)
+    })
+
+    it('leaves a round with no user buses, or none at all, alone', () => {
+        const round = { id: 'round-1', layers: [] }
+        expect(normalizeLegacyFxOrder(round)).toBe(round)
+        expect(normalizeLegacyFxOrder(null)).toBeNull()
+    })
+
+    it('leaves a bus with too few effects to reorder alone', () => {
+        const round = roundWith({ 'user-1': { id: 'user-1', fx: fx(['lowpass']) } })
+        expect(normalizeLegacyFxOrder(round)).toBe(round)
     })
 })

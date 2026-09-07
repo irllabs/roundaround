@@ -17,6 +17,7 @@ import FX from '../../audio-engine/FX'
 import ShareDialog from '../dialogs/ShareDialog'
 import OrientationDialog from '../dialogs/OrientationDialog'
 import { getDefaultUserBus, getDefaultUserPatterns } from '../../utils/defaultData'
+import { normalizeLegacyFxOrder } from '../../utils/index'
 import LayerSettings from './layer-settings/LayerSettings';
 import CustomSamples from '../../audio-engine/CustomSamples';
 
@@ -112,7 +113,7 @@ class PlayRoute extends Component {
         this.isLoadingRound = true;
         const roundId = this.getRoundIdFromPath()
         try {
-            const round = await this.context.getRound(roundId)
+            const round = normalizeLegacyFxOrder(await this.context.getRound(roundId))
             if (this.isDisposing) {
                 return
             }

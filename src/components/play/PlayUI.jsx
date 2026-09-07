@@ -524,7 +524,9 @@ class PlayUI extends Component {
     }
 
     loadPattern(userId, id, order) {
-        this.props.dispatch({ type: UPDATE_LAYERS, payload: { layers: this.round.layers } })
+        // a copy: whatever goes into the store is frozen there, and these layers are this
+        // component's own working copy of the round, which it keeps writing to as steps are edited
+        this.props.dispatch({ type: UPDATE_LAYERS, payload: { layers: _.cloneDeep(this.round.layers) } })
         this.props.dispatch({ type: SET_CURRENT_SEQUENCE_PATTERN, payload: { value: order } })
         this.clear()
         this.draw(false)
@@ -1141,7 +1143,8 @@ class PlayUI extends Component {
             const step = this.getStep(stepGraphic.id)
             step.probability = _.round(stepGraphic.probability, 1)
             step.velocity = _.round(stepGraphic.velocity, 1)
-            this.props.dispatch({ type: UPDATE_STEP, payload: { step: step, layerId: stepGraphic.layerId } })
+            // a copy, for the same reason as loadPattern: the step belongs to this.round
+            this.props.dispatch({ type: UPDATE_STEP, payload: { step: _.cloneDeep(step), layerId: stepGraphic.layerId } })
             this.saveLayer(stepGraphic.layerId)
         }
         AudioEngine.recalculateParts(this.props.round)
