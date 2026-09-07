@@ -1,5 +1,6 @@
 import { describe, it, expect, vi } from 'vitest'
-import { render, screen } from '@testing-library/react'
+import React from 'react'
+import { render, screen, fireEvent } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { OutlinedField } from '@/components/fields/OutlinedField'
 
@@ -49,5 +50,42 @@ describe('OutlinedField', () => {
         const input = screen.getByLabelText('Name')
         expect(input).toHaveAttribute('id', 'name')
         expect(input).toHaveClass('extra', 'h-14')
+    })
+
+    it('keeps the label inside the box until the field is filled or focused', async () => {
+        const user = userEvent.setup()
+        render(<OutlinedField id="email" label="Email address" />)
+        const label = screen.getByText('Email address')
+        expect(label).toHaveClass('translate-y-5', 'scale-100')
+        await user.click(screen.getByLabelText('Email address'))
+        expect(label).toHaveClass('-translate-y-1.5', 'scale-75')
+    })
+
+    it('floats the label straight away for a field that already has a value', () => {
+        render(<OutlinedField id="link" label="Link" value="https://rounds.studio/play/x" onChange={() => {}} />)
+        expect(screen.getByText('Link')).toHaveClass('-translate-y-1.5', 'scale-75')
+    })
+
+    it('floats the label when something types into an uncontrolled field from outside React', () => {
+        // capture.py fills the guest name with the native value setter plus an input event.
+        render(<OutlinedField id="name" label="Name" inputProps={{ 'data-test': 'input-name' }} />)
+        const input = screen.getByTestId('input-name')
+        Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, 'value').set.call(input, 'shots')
+        fireEvent.input(input, { target: { value: 'shots' } })
+        expect(screen.getByText('Name')).toHaveClass('-translate-y-1.5', 'scale-75')
+    })
+
+    it('hands its wrapper to a ref so callers can read the input out of the DOM', () => {
+        const ref = React.createRef()
+        render(<OutlinedField ref={ref} id="email" label="Email address" />)
+        // reading the input off the wrapper ref is the behaviour under test: it is what the
+        // callers of MUI's TextField do today
+        // eslint-disable-next-line testing-library/no-node-access
+        expect(ref.current.querySelectorAll('input')[0]).toBe(screen.getByLabelText('Email address'))
+    })
+
+    it('draws MUI\'s outline, not a lighter one', () => {
+        render(<OutlinedField id="link" label="Link" />)
+        expect(screen.getByLabelText('Link')).toHaveClass('border-white/23', 'px-[14px]')
     })
 })

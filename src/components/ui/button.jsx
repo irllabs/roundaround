@@ -18,6 +18,8 @@ const buttonVariants = cva(
         destructive:
           "bg-destructive/10 text-destructive hover:bg-destructive/20 focus-visible:border-destructive/40 focus-visible:ring-destructive/20 dark:bg-destructive/20 dark:hover:bg-destructive/30 dark:focus-visible:ring-destructive/40",
         link: "text-primary underline-offset-4 hover:underline",
+        // MUI's IconButton and text Button: no fill, foreground glyph, white-at-8% hover.
+        plain: "text-foreground hover:bg-white/8",
       },
       size: {
         default:
@@ -31,6 +33,8 @@ const buttonVariants = cva(
         "icon-sm":
           "size-7 rounded-[min(var(--radius-md),12px)] in-data-[slot=button-group]:rounded-lg",
         "icon-lg": "size-9",
+        // MUI's IconButton: 12px padding around a 24px glyph.
+        "icon-round": "size-12 rounded-full [&_svg:not([class*='size-'])]:size-6",
       },
     },
     defaultVariants: {
