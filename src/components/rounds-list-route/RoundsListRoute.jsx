@@ -1,61 +1,30 @@
 import React, { Component } from 'react'
-import PropTypes from 'prop-types';
-import { withStyles } from '@material-ui/styles';
-import Box from '@material-ui/core/Box';
-import Container from '@material-ui/core/Container';
-import Button from '@material-ui/core/Button';
-import IconButton from '@material-ui/core/IconButton';
-import List from '@material-ui/core/List';
-import ListItem from '@material-ui/core/ListItem';
-import ListItemText from '@material-ui/core/ListItemText';
-import ListItemSecondaryAction from '@material-ui/core/ListItemSecondaryAction';
-import ListItemAvatar from '@material-ui/core/ListItemAvatar';
-import Avatar from '@material-ui/core/Avatar';
-import ImageIcon from '@material-ui/icons/Image';
-import AddIcon from '@material-ui/icons/Add';
-import MoreHorizIcon from '@material-ui/icons/MoreHoriz';
 import { connect } from "react-redux";
 import _ from 'lodash';
 import {
     setIsShowingSignInDialog, setRedirectAfterSignIn, setRounds, setIsShowingDeleteRoundDialog, setIsShowingRenameDialog, setSelectedRoundId
 } from '../../redux/actions'
 import SignInDialog from '../dialogs/SignInDialog'
-import { createRound } from '../../utils/index'
+import { createRound, duplicateRound } from '../../utils/index'
 import { FirebaseContext } from '../../firebase';
-import ClickAwayListener from '@material-ui/core/ClickAwayListener';
-import Grow from '@material-ui/core/Grow';
-import Paper from '@material-ui/core/Paper';
-import Popper from '@material-ui/core/Popper';
-import MenuItem from '@material-ui/core/MenuItem';
-import MenuList from '@material-ui/core/MenuList';
-import { duplicateRound } from '../../utils/index'
-
-const styles = theme => ({
-    root: {
-        paddingTop: '64px'
-    },
-    paper: {
-        borderRadius: 8
-    },
-    header: {
-        display: 'flex',
-        width: '100%',
-        justifyContent: 'space-between',
-        alignItems: 'center'
-    }
-})
+import { AppMenu, AppMenuItem } from '../header/AppMenu'
+import { MUI_BUTTON } from '../dialogs/AppDialog'
+import { Button } from '@/components/ui/button'
+import { Avatar, AvatarFallback } from '@/components/ui/avatar'
+import { AddIcon, ImageIcon, MoreHorizIcon } from '@/components/icons'
+import { cn } from '@/lib/utils'
 
 class RoundsListRoute extends Component {
     static contextType = FirebaseContext;
     constructor(props) {
         super(props);
+        // One id, not an anchor element and a flag: each row owns an AppMenu, and the open one is
+        // the row whose id this holds. Radix anchors the popover on its own trigger.
         this.state = {
-            menuIsOpen: false,
-            anchorElement: null
+            openRoundId: null
         }
         this.onNewRoundClick = this.onNewRoundClick.bind(this)
         this.onLaunchRoundClick = this.onLaunchRoundClick.bind(this)
-        this.onMenuClick = this.onMenuClick.bind(this)
     }
 
     async onNewRoundClick() {
@@ -84,31 +53,15 @@ class RoundsListRoute extends Component {
         return dateString
     }
 
-    onMenuClick(roundId, e) {
-        let element = e.currentTarget
-        this.props.setSelectedRoundId(roundId)
+    onRenameClick = () => {
         this.setState({
-            anchorElement: element,
-            menuIsOpen: true
-        })
-    }
-
-    onMenuClose = (event) => {
-        this.setState({
-            menuIsOpen: false
-        })
-        this.props.setSelectedRoundId(null)
-    }
-
-    onRenameClick = (roundId) => {
-        this.setState({
-            menuIsOpen: false
+            openRoundId: null
         })
         this.props.setIsShowingRenameDialog(true)
     }
     onDuplicateClick = async () => {
         this.setState({
-            menuIsOpen: false
+            openRoundId: null
         })
         try {
             const selectedRound = await this.context.getRound(this.props.selectedRoundId)
@@ -124,79 +77,111 @@ class RoundsListRoute extends Component {
     }
     onDeleteClick = () => {
         this.setState({
-            menuIsOpen: false
+            openRoundId: null
         })
         this.props.setIsShowingDeleteRoundDialog(true)
     }
 
     render() {
-        const { classes } = this.props;
         const rounds = [...this.props.rounds];
         return (
             <>
-                <Container className={classes.root}>
-
-                    <Box className={classes.header}>
-                        <Box>
-                            <h1>My rounds</h1>
-                        </Box>
-                        <Box>
-                            <Button data-test="button-new-round" className={classes.getStartedButton} variant="contained" color="secondary" disableElevation onClick={this.onNewRoundClick} startIcon={<AddIcon />}>New round</Button>
-                        </Box>
-                    </Box>
-                    <Box>
-                        <List>
-                            {
-                                rounds.map((round) => (
-                                    <ListItem key={round.id} button onClick={this.onLaunchRoundClick.bind(this, round.id)} data-test="list-item-round">
-                                        <ListItemAvatar>
-                                            <Avatar>
-                                                <ImageIcon />
+                {/* MUI's Container at maxWidth="lg" (1200px in this theme) with the JSS root's
+                    64px of head room under the fixed header. `sm:px-6` is the theme's 500px
+                    breakpoint, which src/index.css already defines. */}
+                <div className="mx-auto w-full max-w-[1200px] px-4 pt-16 sm:px-6">
+                    <div className="flex w-full items-center justify-between">
+                        {/* The browser's own h1 over the 14px body font: 28px on 40px lines with
+                            an 18.76px margin. Spelled out so PR 3 can drop CssBaseline without
+                            moving the heading. */}
+                        <div><h1 className="my-[18.76px] text-[28px] font-bold leading-[1.43]">My rounds</h1></div>
+                        <div>
+                            {/* MUI's contained secondary with a startIcon: #474747 behind white,
+                                6px/16px of padding with the icon's -4px left margin folded into
+                                `pl-3` and its 8px right margin into `gap-2`. The 20px of a medium
+                                SvgIcon is spelled on the icon itself, not as `[&_svg]:size-5` on
+                                the button: the generated Button already carries
+                                `[&_svg:not([class*='size-'])]:size-4`, and :not() takes its
+                                argument's specificity, so that attribute selector outranks a bare
+                                `[&_svg]:` variant and the plus came out 16px -- which the shrink-
+                                to-fit pill then wore as a 4px-narrower left edge (x 1103 against
+                                the baseline's 1099). */}
+                            <Button data-test="button-new-round" onClick={this.onNewRoundClick} className={cn(MUI_BUTTON, 'gap-2 bg-secondary pl-3 pr-4 text-white hover:bg-secondary/90')}>
+                                <AddIcon className="size-5" />New round
+                            </Button>
+                        </div>
+                    </div>
+                    <div>
+                        {/* MUI's List: 8px of vertical padding and no bullets. */}
+                        <ul className="relative m-0 list-none px-0 py-2">
+                            {rounds.map((round) => (
+                                <li key={round.id} className="relative">
+                                    {/* MUI rendered the row as a ButtonBase div with role="button";
+                                        a real <button> is the same box and the same hover, and it
+                                        keeps `data-test=list-item-round` on the element Cypress and
+                                        capture.py click. ListItem is 8px/16px, plus the 48px of
+                                        right padding it takes on when it has a secondary action. */}
+                                    <button
+                                        type="button"
+                                        data-test="list-item-round"
+                                        onClick={this.onLaunchRoundClick.bind(this, round.id)}
+                                        className="flex w-full items-center justify-start px-4 py-2 pr-12 text-left hover:bg-white/8"
+                                    >
+                                        {/* ListItemAvatar: 56px of gutter around a 40px avatar. */}
+                                        <span className="w-14 shrink-0">
+                                            {/* `after:hidden` drops the generated Avatar's ring;
+                                                MUI's has none. The glyph is background.default
+                                                #303030, which the theme never overrides -- not
+                                                --background (#1b1b1b), which is the app's own body
+                                                colour and 21/255 away from what 12-rounds-list.png
+                                                photographs inside the circle. */}
+                                            <Avatar className="size-10 after:hidden">
+                                                <AvatarFallback className="bg-[#757575] text-[#303030]"><ImageIcon className="size-6" /></AvatarFallback>
                                             </Avatar>
-                                        </ListItemAvatar>
-                                        <ListItemText primary={round.name} secondary={this.getCreatedString(round)} />
-                                        <ListItemSecondaryAction>
-                                            <IconButton
-                                                aria-controls={this.state.menuIsOpen ? 'menu-list-grow' : undefined}
-                                                aria-haspopup="true"
-                                                onClick={this.onMenuClick.bind(this, round.id)}>
-                                                <MoreHorizIcon />
-                                            </IconButton>
-                                        </ListItemSecondaryAction>
-                                    </ListItem>
-                                ))
-                            }
-                        </List>
-                    </Box>
-                    <Popper open={this.state.menuIsOpen} anchorEl={this.state.anchorElement} role={undefined} transition disablePortal>
-                        {({ TransitionProps, placement }) => (
-                            <Grow
-                                {...TransitionProps}
-                                style={{ transformOrigin: placement === 'bottom' ? 'center top' : 'center bottom' }}
-                            >
-                                <Paper className={classes.paper} size="md">
-                                    <ClickAwayListener onClickAway={this.onMenuClose}>
-                                        <Box>
-                                            <MenuList autoFocusItem={this.state.menuIsOpen} id="menu-list-grow">
-                                                <MenuItem onClick={this.onRenameClick} className={classes.menuListItem}>Rename</MenuItem>
-                                                <MenuItem onClick={this.onDuplicateClick} className={classes.menuListItem}>Duplicate</MenuItem>
-                                                <MenuItem onClick={this.onDeleteClick} className={classes.menuListItem}>Delete</MenuItem>
-                                            </MenuList>
-                                        </Box>
-                                    </ClickAwayListener>
-                                </Paper>
-                            </Grow>
-                        )}
-                    </Popper>
-                </Container>
+                                        </span>
+                                        {/* ListItemText with both lines present: 6px of vertical
+                                            margin, body1 over body2 at 70% white. */}
+                                        <span className="my-1.5 min-w-0 flex-auto">
+                                            <span className="block text-base leading-6 tracking-[0.00938em]">{round.name}</span>
+                                            <span className="block text-sm leading-[1.43] tracking-[0.01071em] text-white/70">{this.getCreatedString(round)}</span>
+                                        </span>
+                                    </button>
+                                    {/* ListItemSecondaryAction. */}
+                                    <span className="absolute right-4 top-1/2 -translate-y-1/2">
+                                        {/* Opening the menu selects the round so the rename and
+                                            delete dialogs know which one they are about; closing it
+                                            by any route puts that back. No `alignOffset`: this
+                                            menu's JSS, unlike the three in the header, sets no
+                                            right margin on its paper, so MUI's default `bottom`
+                                            placement centred it on the trigger -- and floating-ui
+                                            ignores an offset on the alignment axis when there is
+                                            no alignment, which is what align="center" is. */}
+                                        <AppMenu
+                                            open={this.state.openRoundId === round.id}
+                                            onOpenChange={(next) => { this.setState({ openRoundId: next ? round.id : null }); this.props.setSelectedRoundId(next ? round.id : null) }}
+                                            listId="menu-list-grow"
+                                            label="Round options"
+                                            align="center"
+                                            trigger={<Button variant="plain" size="icon-round" aria-haspopup="menu" aria-label="Round options"><MoreHorizIcon /></Button>}
+                                        >
+                                            <AppMenuItem onClick={this.onRenameClick}>Rename</AppMenuItem>
+                                            <AppMenuItem onClick={this.onDuplicateClick}>Duplicate</AppMenuItem>
+                                            <AppMenuItem onClick={this.onDeleteClick}>Delete</AppMenuItem>
+                                        </AppMenu>
+                                    </span>
+                                </li>
+                            ))}
+                        </ul>
+                    </div>
+                </div>
+                {/* App.jsx renders a SignInDialog of its own, so /rounds has two mounted today.
+                    Dropping one is a behaviour change; it belongs in PR 3, not in a no-visible-
+                    change shell migration. */}
                 <SignInDialog />
             </>
         )
     }
 }
-RoundsListRoute.propTypes = {
-    classes: PropTypes.object.isRequired,
-};
 
 const mapStateToProps = state => {
     return {
@@ -216,4 +201,4 @@ export default connect(
         setIsShowingRenameDialog,
         setSelectedRoundId
     }
-)(withStyles(styles)(RoundsListRoute));
+)(RoundsListRoute);
