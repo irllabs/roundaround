@@ -1,6 +1,10 @@
-import { describe, it, expect } from 'vitest'
+import { vi, describe, it, expect } from 'vitest'
 import { changeLayerLength, convertPercentToDB, convertDBToPercent, derivedContributors, duplicateRound, uuid, arraymove, presentUsers, soloMuteStates, profileFromAuthUser, layerWithStepsOff, patternLayersForRound, normalizeLegacyFxOrder } from './index'
 import { deepFreeze } from '../test/deep-freeze'
+
+// These helpers reach Tone.js through defaultData's instruments. None of them touch audio, and
+// loading Tone only buys a banner on stdout.
+vi.mock('tone', () => ({}))
 
 const layerWithSteps = (pattern) => ({
     id: 'layer',

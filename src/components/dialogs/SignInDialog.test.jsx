@@ -6,6 +6,10 @@ import SignInDialog from './SignInDialog'
 import { renderWithProviders, makeStore } from '../../test/test-utils'
 import { setIsShowingSignInDialog } from '../../redux/actions'
 
+// The dialog reaches Tone.js through the default round data. Signing in has nothing to do with
+// audio, and loading Tone here only buys a banner on stdout.
+vi.mock('tone', () => ({}))
+
 describe('SignInDialog guest flow', () => {
     function setup() {
         const store = makeStore()

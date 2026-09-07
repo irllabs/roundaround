@@ -5,6 +5,9 @@ import VolumeSlider from './VolumeSlider'
 import { renderWithProviders, makeStore } from '../../../test/test-utils'
 import { setRound } from '../../../redux/actions'
 
+// The slider reaches Tone.js through the audio engine's imports. A gain write has nothing to do
+// with audio here (the engine itself is mocked), and loading Tone only buys a banner on stdout.
+vi.mock('tone', () => ({}))
 vi.mock('../../../audio-engine/AudioEngine', () => ({ default: { tracksById: {} } }))
 
 const layerA = { id: 'layer-a', createdBy: 'me', gain: 0, isMuted: false, steps: [] }
