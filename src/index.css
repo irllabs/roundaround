@@ -2,6 +2,13 @@
 @import "tw-animate-css";
 @import "shadcn/tailwind.css";
 
+/* What `dark:` means. Without this Tailwind 4 falls back to the OS setting, so a
+   `dark:` utility on a shadcn component would come and go with the visitor's system
+   theme; this app is dark whatever the OS says. Tying the variant to a `.dark`
+   ancestor, which nothing here has, makes those utilities inert and deterministic,
+   and it is the definition `shadcn add` writes the components against. */
+@custom-variant dark (&:where(.dark, .dark *));
+
 @theme {
   --breakpoint-sm: 500px;
   --breakpoint-md: 900px;
