@@ -118,6 +118,20 @@
   input:not([data-slot="input"]):not([class*="Mui"]) {
     font: revert;
   }
+  /* The play route's icons are bare <img> elements drawn at their file's own size,
+     inside MUI IconButtons whose content box is smaller than they are: the steps
+     counter's minus and plus in LayerPopup, the arrows and check in LayerInstrument,
+     the lock in EffectThumbControl. Preflight's `img,video{max-width:100%;height:auto}`
+     clamps them into that box, which took the 14x4 minus down to 6x1.7 and the 14x14
+     plus to 6x6. Give image sizing back to the browser. (LayerPercentOffset's
+     percentage icon writes its own inline width and height, so it was never affected
+     and is not affected now.) The shadcn AvatarImage, and any image a later PR
+     migrates, carries a data-slot and keeps preflight's behaviour; <video> is not
+     named here, so the landing page's player keeps it too. */
+  img:not([data-slot]) {
+    max-width: revert;
+    height: revert;
+  }
   code {
     font-family: var(--font-mono);
   }
