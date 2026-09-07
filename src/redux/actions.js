@@ -30,6 +30,8 @@ import {
     SET_IS_SHOWING_ORIENTATION_DIALOG,
     UPDATE_LAYER,
     UPDATE_LAYERS,
+    ADD_LAYER,
+    REMOVE_LAYER,
     SET_IS_RECORDING_SEQUENCE,
     SET_USER_PATTERN_SEQUENCE,
     SET_IS_PLAYING_SEQUENCE,
@@ -190,4 +192,12 @@ export const setLayerSteps = (id, steps) => ({
 export const updateLayer = (id, data) => ({
     type: UPDATE_LAYER,
     payload: { id, data }
+})
+export const addLayer = (layer) => ({
+    type: ADD_LAYER,
+    payload: { layer }
+})
+export const removeLayer = (id) => ({
+    type: REMOVE_LAYER,
+    payload: { id }
 })

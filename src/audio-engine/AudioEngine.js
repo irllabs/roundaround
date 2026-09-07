@@ -101,9 +101,17 @@ const AudioEngine = {
             resolve(track)
         })
     },
+    /** Disposes a track and forgets it, so removing the same id again does nothing. */
     removeTrack (id) {
-        if (!_.isNil(this.tracksById[id])) {
-            this.tracksById[id].dispose()
+        const track = this.tracksById[id]
+        if (_.isNil(track)) {
+            return
+        }
+        track.dispose()
+        delete this.tracksById[id]
+        _.pull(this.tracks, track)
+        for (const tracks of Object.values(this.tracksByType)) {
+            _.pull(tracks, track)
         }
     },
     reset () {

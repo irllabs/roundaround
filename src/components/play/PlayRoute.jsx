@@ -10,7 +10,7 @@ import _ from 'lodash';
 import Loader from 'react-loader-spinner';
 import { connect } from "react-redux";
 import { FirebaseContext } from '../../firebase';
-import { setRound, setUsers, setIsPlaying, setUserBusFxOverride, addUserBus, setRoundCurrentUsers, setRoundContributors, setRoundBpm, setRoundSwing, setIsPlayingSequence } from '../../redux/actions'
+import { setRound, setUsers, setIsPlaying, setUserBusFxOverride, addUserBus, setRoundCurrentUsers, setRoundContributors, setRoundBpm, setRoundSwing, setIsPlayingSequence, updateLayer, addLayer, removeLayer } from '../../redux/actions'
 import AudioEngine from '../../audio-engine/AudioEngine'
 import Instruments from '../../audio-engine/Instruments'
 import FX from '../../audio-engine/FX'
@@ -66,12 +66,10 @@ class PlayRoute extends Component {
         this.hasLoadedRound = false;
         this.isDisposing = false;
         this.joinedRoundId = null;
-        this.reloadCollaborationLayers = this.reloadCollaborationLayers.bind(this)
         this.startAudioContext = this.startAudioContext.bind(this)
         this.onPageHide = this.onPageHide.bind(this)
         this.onPageShow = this.onPageShow.bind(this)
         this.handleUserPatternsChange = this.handleUserPatternsChange.bind(this)
-        this.reloadCollaborationLayersThrottled = _.debounce(this.reloadCollaborationLayers, 1000)
         this.playUIRef = null;
         this.unsubscribers = []
         this.usersChangeListenersUnsubscribe = []
@@ -96,7 +94,6 @@ class PlayRoute extends Component {
 
     componentWillUnmount() {
         this.isDisposing = true;
-        this.reloadCollaborationLayersThrottled.cancel()
         this.removeStartAudioContextListener()
         this.removePageTransitionListeners()
         this.removeFirebaseListeners()
@@ -245,21 +242,34 @@ class PlayRoute extends Component {
             }
         }, (error) => console.error('Round listener failed', error)))
 
-        // Layers
+        // Layers: what a collaborator changed goes straight into the store. This client's own
+        // writes come back through here as well and are already in the store, so the user's own
+        // layers are left alone, and a layer that is already there, or already gone, is not added
+        // or removed twice.
         this.unsubscribers.push(this.context.subscribeToLayers(roundId, (changes) => {
-            if (_this.isDisposing) {
+            if (_this.isDisposing || _.isNil(_this.props.round)) {
                 return
             }
-            changes.forEach(change => {
+            for (const change of changes) {
+                const layer = { ...change.data, id: change.id }
+                const current = _.find(_this.props.round.layers, { id: change.id })
                 if (change.type === 'modified') {
-                    if (change.data.createdBy !== _this.props.user.id) {
-                        _this.reloadCollaborationLayersThrottled()
+                    if (!_.isNil(current) && layer.createdBy !== _this.props.user.id && !_.isEqual(current, layer)) {
+                        _this.props.updateLayer(change.id, change.data)
+                    }
+                } else if (change.type === 'added') {
+                    if (_.isNil(current)) {
+                        // the track first, so it is there when the layer reaches the round UI
+                        AudioEngine.createTrack(layer)
+                        _this.props.addLayer(layer)
+                    }
+                } else if (change.type === 'removed') {
+                    if (!_.isNil(current)) {
+                        AudioEngine.removeTrack(change.id)
+                        _this.props.removeLayer(change.id)
                     }
                 }
-                if (change.type === 'added' || change.type === 'removed') {
-                    _this.reloadCollaborationLayersThrottled()
-                }
-            });
+            }
         }, (error) => console.error('Layers listener failed', error)))
 
         // Userbus (FX)
@@ -393,38 +403,6 @@ class PlayRoute extends Component {
 
     handleUserPatternsChange(userPatterns) {
         this.props.setIsPlayingSequence(userPatterns.id, userPatterns.isPlayingSequence)
-    }
-
-    // if any of the subcollections for a collaboration user change, trigger a (throttled) reload of all collaboration layers as there could be multiple changes
-    // to do: maybe add an id to the query to make sure we don't overwrite the local round with an await result that comes in late
-    async reloadCollaborationLayers() {
-        const _this = this;
-        if (_.isNil(this.props.round)) {
-            return
-        }
-        try {
-            const newRound = await this.context.getRound(this.props.round.id)
-            if (this.isDisposing || _.isNil(newRound) || _.isNil(this.props.round)) {
-                return
-            }
-            const newLayers = _.filter(newRound.layers, (layer) => {
-                return layer.createdBy !== _this.props.user.id
-            })
-            const oldLayers = _.filter(this.props.round.layers, (layer) => {
-                return layer.createdBy !== _this.props.user.id
-            })
-            if (!_.isEqual(newLayers, oldLayers)) {
-                const userLayers = _.filter(this.props.round.layers, (layer) => {
-                    return layer.createdBy === _this.props.user.id
-                })
-                const layers = [...userLayers, ...newLayers]
-                const round = _.cloneDeep(this.props.round)
-                round.layers = layers
-                this.props.setRound(round)
-            }
-        } catch (error) {
-            console.error('Could not reload collaborators\' layers', error)
-        }
     }
 
     // Browsers only start audio after a user gesture. The person who presses play gets one for free;
@@ -577,6 +555,9 @@ export default connect(
         setRoundContributors,
         setRoundBpm,
         setRoundSwing,
-        setIsPlayingSequence
+        setIsPlayingSequence,
+        updateLayer,
+        addLayer,
+        removeLayer
     }
 )(withStyles(styles)(PlayRoute));

@@ -171,3 +171,24 @@ describe('Track and the layer it is given', () => {
         expect(layer.automationFxId).toBe('fx-lowpass')
     })
 })
+
+describe('AudioEngine and a removed track', () => {
+    beforeEach(() => {
+        AudioEngine.busesByUser = { 'user-1': { channel: {} } }
+        AudioEngine.master = { channel: {} }
+        AudioEngine.reset()
+    })
+
+    it('disposes the track once and forgets it, so a second removal does nothing', async () => {
+        const track = await AudioEngine.createTrack({ id: 'layer-1', createdBy: 'user-1', type: Track.TRACK_TYPE_LAYER, fx: {}, steps: [] })
+        const dispose = vi.spyOn(track, 'dispose')
+
+        AudioEngine.removeTrack('layer-1')
+        AudioEngine.removeTrack('layer-1')
+
+        expect(dispose).toHaveBeenCalledTimes(1)
+        expect(AudioEngine.tracksById['layer-1']).toBeUndefined()
+        expect(AudioEngine.tracks).toEqual([])
+        expect(AudioEngine.tracksByType[Track.TRACK_TYPE_LAYER]).toEqual([])
+    })
+})

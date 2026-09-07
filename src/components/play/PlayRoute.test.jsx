@@ -1,5 +1,6 @@
 import { vi, describe, it, expect, beforeEach, afterEach } from 'vitest'
 import React from 'react'
+import _ from 'lodash'
 import { act, screen, waitFor } from '@testing-library/react'
 import { Route } from 'react-router-dom'
 import PlayRoute from './PlayRoute'
@@ -16,6 +17,8 @@ vi.mock('../../audio-engine/AudioEngine', () => ({
         setTempo: vi.fn(),
         setSwing: vi.fn(),
         addUser: vi.fn(),
+        createTrack: vi.fn(),
+        removeTrack: vi.fn(),
         busesByUser: {}
     }
 }))
@@ -287,5 +290,98 @@ describe('PlayRoute', () => {
         const { firebase } = makeFirebase({ round: null })
         renderRoute(firebase)
         await waitFor(() => expect(screen.getByTestId('location')).toHaveTextContent('/rounds'))
+    })
+})
+
+/** A layer document the way the layers listener delivers it: the body of the document, without its id. */
+function layerData(createdBy, { isOn = false } = {}) {
+    return {
+        createdBy, createdAt: 1, name: 'Layer', type: 'TRACK_TYPE_LAYER', gain: 0, isMuted: false, timeOffset: 0, percentOffset: 0,
+        instrument: { sampler: 'Kick', sample: 'a' },
+        steps: [{ id: 's1', order: 0, isOn, probability: 1, velocity: 1, note: 'C4' }]
+    }
+}
+
+describe('PlayRoute: collaborators\' layers', () => {
+    beforeEach(() => {
+        vi.spyOn(console, 'error').mockImplementation(() => {})
+        AudioEngine.createTrack.mockClear()
+        AudioEngine.removeTrack.mockClear()
+    })
+    afterEach(() => {
+        vi.useRealTimers()
+        console.error.mockRestore()
+    })
+
+    /** Loads a round with one layer of the user's and one of a collaborator's. */
+    async function loadRound() {
+        const round = roundWithMembers(['me', 'them'])
+        round.layers = [{ id: 'mine', ...layerData('me') }, { id: 'theirs', ...layerData('them') }]
+        const { firebase, listeners } = makeFirebase({ round })
+        const { store } = renderRoute(firebase)
+        await waitFor(() => expect(store.getState().round).not.toBeNull())
+        return { firebase, listeners, store }
+    }
+
+    it('never fetches the round again once it is loaded', async () => {
+        const { firebase, listeners } = await loadRound()
+        // a deferred refetch would ride on a timer and on the clock
+        vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout', 'Date'] })
+
+        await act(async () => listeners.layers([
+            { type: 'modified', id: 'theirs', data: layerData('them', { isOn: true }) },
+            { type: 'added', id: 'l3', data: layerData('them') },
+            { type: 'removed', id: 'l3', data: layerData('them') }
+        ]))
+        await act(async () => { vi.advanceTimersByTime(5000) })
+
+        expect(firebase.getRound).toHaveBeenCalledTimes(1)
+    })
+
+    it('puts a collaborator\'s changed layer document straight into the store', async () => {
+        const { listeners, store } = await loadRound()
+
+        await act(async () => listeners.layers([{ type: 'modified', id: 'theirs', data: layerData('them', { isOn: true }) }]))
+
+        const theirs = _.find(store.getState().round.layers, { id: 'theirs' })
+        expect(theirs.steps[0].isOn).toBe(true)
+        expect(store.getState().round.layers.map(layer => layer.id)).toEqual(['mine', 'theirs'])
+    })
+
+    it('adds a collaborator\'s new layer and gives it a track', async () => {
+        const { listeners, store } = await loadRound()
+
+        await act(async () => listeners.layers([{ type: 'added', id: 'l3', data: layerData('them') }]))
+
+        expect(store.getState().round.layers.map(layer => layer.id)).toEqual(['mine', 'theirs', 'l3'])
+        expect(AudioEngine.createTrack).toHaveBeenCalledTimes(1)
+        expect(AudioEngine.createTrack).toHaveBeenCalledWith(expect.objectContaining({ id: 'l3', createdBy: 'them' }))
+    })
+
+    it('takes out a layer a collaborator deleted, and its track', async () => {
+        const { listeners, store } = await loadRound()
+
+        await act(async () => listeners.layers([{ type: 'removed', id: 'theirs', data: layerData('them') }]))
+
+        expect(store.getState().round.layers.map(layer => layer.id)).toEqual(['mine'])
+        expect(AudioEngine.removeTrack).toHaveBeenCalledTimes(1)
+        expect(AudioEngine.removeTrack).toHaveBeenCalledWith('theirs')
+    })
+
+    it('ignores the echoes of the user\'s own layer writes', async () => {
+        const { listeners, store } = await loadRound()
+        const before = store.getState().round
+
+        // this client wrote these itself: the store already has the toggle, the new layer, and no
+        // longer has the deleted one
+        await act(async () => listeners.layers([
+            { type: 'modified', id: 'mine', data: layerData('me', { isOn: true }) },
+            { type: 'added', id: 'mine', data: layerData('me') },
+            { type: 'removed', id: 'gone', data: layerData('me') }
+        ]))
+
+        expect(store.getState().round).toBe(before)
+        expect(AudioEngine.createTrack).not.toHaveBeenCalled()
+        expect(AudioEngine.removeTrack).not.toHaveBeenCalled()
     })
 })
