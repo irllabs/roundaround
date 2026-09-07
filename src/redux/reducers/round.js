@@ -75,7 +75,12 @@ export default createReducer(initialState, (builder) => {
         .addCase(REMOVE_STEP, (state, action) => {
             const { layerId, stepId } = action.payload;
             const layer = layerById(state, layerId)
-            layer.steps.splice(_.findIndex(layer.steps, { id: stepId }), 1)
+            // findIndex answers -1 for a step that is not there, and splice(-1, 1) would take the
+            // last one out instead: a step nobody asked to remove
+            const index = _.findIndex(layer.steps, { id: stepId })
+            if (index >= 0) {
+                layer.steps.splice(index, 1)
+            }
         })
         .addCase(TOGGLE_STEP, (state, action) => {
             const { layerId, stepId, isOn, lastUpdated } = action.payload;
@@ -148,7 +153,11 @@ export default createReducer(initialState, (builder) => {
             state.layers.push(...action.payload.layers)
         })
         .addCase(REMOVE_LAYER, (state, action) => {
-            state.layers.splice(_.findIndex(state.layers, { id: action.payload.id }), 1)
+            // as in REMOVE_STEP: an id that is not in the round must remove nothing, not the last layer
+            const index = _.findIndex(state.layers, { id: action.payload.id })
+            if (index >= 0) {
+                state.layers.splice(index, 1)
+            }
         })
         .addCase(ADD_USERBUS, (state, action) => {
             const { userId, userBus } = action.payload;

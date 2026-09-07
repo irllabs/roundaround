@@ -89,6 +89,11 @@ describe('the round reducer', () => {
             }
         },
         {
+            name: 'REMOVE_STEP with a step id the layer does not have takes nothing out',
+            action: () => ({ type: types.REMOVE_STEP, payload: { layerId: layer.id, stepId: 'no-such-step' } }),
+            assert: (next) => expect(next.layers[0].steps).toEqual(layer.steps)
+        },
+        {
             name: 'TOGGLE_STEP switches the step on and records when it changed',
             action: () => ({ type: types.TOGGLE_STEP, payload: { layerId: layer.id, stepId: step.id, isOn: true, lastUpdated: 1234 } }),
             assert: (next) => {
@@ -211,6 +216,11 @@ describe('the round reducer', () => {
                 expect(next.layers).toHaveLength(2)
                 expect(_.find(next.layers, { id: otherLayer.id })).toBeUndefined()
             }
+        },
+        {
+            name: 'REMOVE_LAYER with an id the round does not have takes nothing out',
+            action: () => ({ type: types.REMOVE_LAYER, payload: { id: 'no-such-layer' } }),
+            assert: (next) => expect(next.layers).toEqual(state.layers)
         },
         {
             name: 'ADD_USERBUS adds a bus for a user who did not have one',
