@@ -23,4 +23,16 @@ describe('OutlinedField', () => {
         render(<OutlinedField id="name" label="Name" value="" onChange={() => {}} inputProps={{ 'data-test': 'input-name', maxLength: 20 }} />)
         expect(screen.getByTestId('input-name')).toHaveAttribute('maxlength', '20')
     })
+
+    it('shows a plain red outline on error, not a red glow', () => {
+        render(<OutlinedField id="email" label="Email" value="x" onChange={() => {}} error />)
+        expect(screen.getByLabelText('Email')).toHaveClass('aria-invalid:ring-0', 'border-destructive')
+    })
+
+    it('lets its own id and classes win over inputProps overrides', () => {
+        render(<OutlinedField id="name" label="Name" value="" onChange={() => {}} inputProps={{ id: 'wrong', className: 'extra' }} />)
+        const input = screen.getByLabelText('Name')
+        expect(input).toHaveAttribute('id', 'name')
+        expect(input).toHaveClass('extra', 'h-14')
+    })
 })

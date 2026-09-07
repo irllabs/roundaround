@@ -12,6 +12,7 @@ export function OutlinedField({ id, label, value, onChange, type = 'text', place
         <div className={cn('relative w-full', className)}>
             <label htmlFor={id} className={cn('absolute -top-2 left-3 bg-input px-1 text-xs leading-4', error ? 'text-destructive' : 'text-muted-foreground')}>{label}</label>
             <Input
+                {...inputProps}
                 id={id}
                 type={type}
                 value={value}
@@ -21,8 +22,7 @@ export function OutlinedField({ id, label, value, onChange, type = 'text', place
                 disabled={disabled}
                 aria-invalid={error || undefined}
                 aria-describedby={helperId}
-                className={cn('h-14 rounded-lg border bg-input px-4 text-base text-foreground shadow-none', error ? 'border-destructive' : 'border-white/35 focus-visible:border-foreground', 'focus-visible:ring-0')}
-                {...inputProps}
+                className={cn('h-14 rounded-lg border bg-input px-4 text-base text-foreground shadow-none', error ? 'border-destructive' : 'border-white/35 focus-visible:border-foreground', 'focus-visible:ring-0 aria-invalid:ring-0', inputProps.className)}
             />
             {helperText && <p id={helperId} className={cn('mt-1 px-3 text-xs', error ? 'text-destructive' : 'text-muted-foreground')}>{helperText}</p>}
         </div>
