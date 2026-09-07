@@ -52,11 +52,12 @@ if (typeof window !== 'undefined') {
     // 0.5-1s *per call* here and multiplies across every ancestor and every collision-detection
     // middleware (shift, flip, size) on every open. That turned a single Popover click into a
     // 6-8s hang and timed out Radix.PopoverContent's own test. Confirmed by isolating
-    // floating-ui's computePosition() outside of React/Radix entirely (see task-3-report.md) and
-    // profiling it with `node --prof`, which pointed straight at Element.matches -> nwsapi's
-    // Resolver. Neither pseudo-class can ever legitimately match here (jsdom has no Popover API
-    // and no native <dialog> modal state), so short-circuiting them to `false` is correct, not
-    // just fast.
+    // floating-ui's computePosition() outside of React, Radix and Vitest entirely, where placing
+    // two bare elements took 1075ms and this shim brought it to 25ms, and by profiling that with
+    // `node --prof`, which pointed straight at Element.matches -> nwsapi's Resolver, reached from
+    // floating-ui's own isTopLayer(). Neither pseudo-class can ever match here (jsdom has no
+    // Popover API and no native <dialog> modal state), so short-circuiting them to `false` is
+    // correct, not just fast.
     if (!Element.prototype.__popoverOpenModalMatchShimmed) {
         const originalMatches = Element.prototype.matches
         Element.prototype.matches = function (selector) {

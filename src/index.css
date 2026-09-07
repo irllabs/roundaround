@@ -105,6 +105,19 @@
     font-weight: revert;
     margin: revert;
   }
+  /* The steps counter in the layer popup is the app's only bare <input>. Its JSS
+     sets no font, so it used to take the browser's control font (13.33px Arial at
+     normal line-height); preflight's
+     `button,input,select,optgroup,textarea{font:inherit}` hands it the body's 14px
+     Roboto/1.43 instead, which changes the typeface, the size and the input's own
+     box, 15px tall to 20px. Give the browser's default back to inputs that nothing
+     else styles. The shadcn Input is exempt by its data-slot: it is drawn in
+     Tailwind and means to inherit. MUI's inputs set `font: inherit` themselves,
+     unlayered, so this cannot reach them either way, and they are named so the
+     intent is on the page. */
+  input:not([data-slot="input"]):not([class*="Mui"]) {
+    font: revert;
+  }
   code {
     font-family: var(--font-mono);
   }
