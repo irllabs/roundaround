@@ -29,6 +29,7 @@ import shutil
 import subprocess
 import tempfile
 import time
+import urllib.parse
 import urllib.request
 
 import websocket
@@ -149,8 +150,19 @@ GUEST_NAME_TYPED = 'document.querySelector("[data-test=input-name] input").value
 # QR's rendered size and the comparison would see nothing. QR_SIZES is what stops
 # that: the laid-out size is read before the mask and anything other than the two
 # sizes the app produces today aborts the run.
+#
+# That check belongs to the production host and only to it. The encoder picks its
+# QR version from the length of the whole share URL, not just the round's id, so a
+# preview channel, whose host name is far longer than rounds.studio, legitimately
+# draws a bigger square: 212px on a `roundaround-dev--pr<n>-...web.app` channel.
+# The baseline is captured from production, so production is what the strict pair
+# guards; anywhere else the size is only sanity-checked for a square in a plausible
+# range and logged, and the mask normalises it to QR_SIZE either way, which is what
+# lets a preview capture be compared against the baseline at all.
 QR_SIZE = 180
+QR_HOST = 'rounds.studio'
 QR_SIZES = (164, 180)
+QR_LOOSE = (100, 400)
 QR_RECT = """(() => {
   const c = document.getElementById('QRCanvas');
   if (!c) return 'missing';
@@ -288,6 +300,37 @@ class Browser:
         discard(self.profile)
 
 
+def check_qr_size(base, laid_out):
+    """Guard the QR canvas's laid-out size before the mask writes over it.
+
+    On the production host the two sizes the app produces are known, and anything
+    else is a real change the mask must not hide. On any other host, a preview
+    channel above all, the encoded URL is longer and a bigger square is correct, so
+    all that can be asked is that it is still a square of a plausible size.
+    """
+    host = urllib.parse.urlparse(base).hostname
+    if host == QR_HOST:
+        allowed = ['%dx%d' % (n, n) for n in QR_SIZES]
+        if laid_out not in allowed:
+            raise Failed('the QR code is laid out at %s on %s, not one of %s. Masking it would '
+                         'hide that from the comparison instead of reporting it, so check what '
+                         'changed and update QR_SIZES only if the new size is intended.'
+                         % (laid_out, host, ' or '.join(allowed)))
+        return
+    low, high = QR_LOOSE
+    try:
+        width, height = (int(n) for n in laid_out.split('x'))
+    except ValueError:
+        raise Failed('the QR code reported its size as %r, which is not a size' % laid_out)
+    if width != height or not low <= width <= high:
+        raise Failed('the QR code is laid out at %s on %s, which is not a square between %dx%d '
+                     'and %dx%d. The size follows the length of the share URL, so a host other '
+                     'than %s draws a different square, but not one this far off.'
+                     % (laid_out, host, low, low, high, high, QR_HOST))
+    print('QR code is %s on %s; only %s is held to %s' % (laid_out, host, QR_HOST,
+                                                          ' or '.join('%dx%d' % (n, n) for n in QR_SIZES)))
+
+
 def capture(b, base, out):
     # 01: the landing page.
     b.send('Page.navigate', url=base)
@@ -368,13 +411,7 @@ def capture(b, base, out):
     b.must(has('#share-dialog-title'), 'the share dialog')
     b.must(SHARE_LINK_READY, 'the share link resolving')
     b.must(QR_HAS_INK, 'the QR code rendering')
-    allowed = ['%dx%d' % (n, n) for n in QR_SIZES]
-    laid_out = b.js(QR_RECT)
-    if laid_out not in allowed:
-        raise Failed('the QR code is laid out at %s, not one of %s. Masking it would hide '
-                     'that from the comparison instead of reporting it, so check what '
-                     'changed and update QR_SIZES only if the new size is intended.'
-                     % (laid_out, ' or '.join(allowed)))
+    check_qr_size(base, b.js(QR_RECT))
     b.run(MASK_SHARE, 'mask the QR code and the share link')
     b.shot(out, '10-share-dialog', verify=SHARE_MASKED)
     b.click('.MuiBackdrop-root', 'the share dialog backdrop')

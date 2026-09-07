@@ -88,6 +88,12 @@ own. `capture.py` pins all of it:
   164x164 or 180x180, the two sizes the app produces today. So a migration that resizes
   the QR through CSS stops the capture with a message instead of being normalised away by
   the mask. If a resize is ever intended, change `QR_SIZES` in `capture.py` deliberately.
+  The QR's version grows with the length of the whole share URL, so a preview channel,
+  whose host name is far longer than `rounds.studio`, legitimately draws a larger square
+  (212px on `roundaround-dev--pr<n>-….web.app`); only the production host is held to the
+  strict pair, and any other host only has to produce a square between 100px and 400px,
+  which is logged. The mask normalises it to 180px either way, which is what lets a
+  preview capture be compared against the baseline at all.
 
 Two things are deliberately left alone because they are small enough to live inside the
 threshold: the three random instrument names on the rings, in the mixer and in the bottom
