@@ -48,17 +48,20 @@ function makeFirebase({ round }) {
         subscribeToUserPatterns: subscribe('userPatterns'),
         subscribeToUser: subscribe('user'),
         getRound: typeof round === 'function' ? vi.fn(round) : vi.fn().mockResolvedValue(round),
-        loadUser: vi.fn().mockResolvedValue(me),
+        loadUser: vi.fn(async (id) => (id === me.id ? me : { id, displayName: id, color: '#0f0' })),
         createUserBus: vi.fn().mockResolvedValue(),
         saveUserPatterns: vi.fn().mockResolvedValue(),
-        joinRound: vi.fn().mockResolvedValue()
+        joinRound: vi.fn().mockResolvedValue(),
+        leaveRound: vi.fn().mockResolvedValue(),
+        backfillContributors: vi.fn().mockResolvedValue()
     }
     return { firebase, unsubs, listeners }
 }
 
-function roundWithMembers(members) {
+/** A round with `members` in it now, and `contributors` who have been in it at some point. */
+function roundWithMembers(members, contributors = members) {
     return {
-        id: 'r1', name: 'Jam', createdBy: 'owner', bpm: 120, swing: 0, currentUsers: members, layers: [],
+        id: 'r1', name: 'Jam', createdBy: 'owner', bpm: 120, swing: 0, currentUsers: members, contributors, layers: [],
         userBuses: Object.fromEntries(members.map(id => [id, { id, fx: [] }])),
         userPatterns: Object.fromEntries(members.map(id => [id, { id, patterns: [], sequence: [] }]))
     }
@@ -149,6 +152,81 @@ describe('PlayRoute', () => {
         expect(firebase.saveUserPatterns).toHaveBeenCalledWith('r1', 'me', expect.objectContaining({ id: 'me' }))
         expect(firebase.joinRound).toHaveBeenCalledWith('r1', 'me')
         expect(store.getState().round.currentUsers).toEqual(['owner', 'me'])
+        expect(store.getState().round.contributors).toEqual(['owner', 'me'])
+        expect(firebase.backfillContributors).not.toHaveBeenCalled() // the round already has the field
+    })
+
+    it('takes the user out of the round when the play route goes away', async () => {
+        const { firebase } = makeFirebase({ round: roundWithMembers(['owner', 'me']) })
+        const { store, unmount } = renderRoute(firebase)
+
+        await waitFor(() => expect(store.getState().round).not.toBeNull())
+        expect(firebase.leaveRound).not.toHaveBeenCalled()
+
+        unmount()
+        expect(firebase.leaveRound).toHaveBeenCalledWith('r1', 'me')
+    })
+
+    it('leaves the round when the page goes away, and only once', async () => {
+        const { firebase } = makeFirebase({ round: roundWithMembers(['owner', 'me']) })
+        const { store, unmount } = renderRoute(firebase)
+
+        await waitFor(() => expect(store.getState().round).not.toBeNull())
+        await act(async () => { window.dispatchEvent(new Event('pagehide')) })
+        expect(firebase.leaveRound).toHaveBeenCalledWith('r1', 'me')
+
+        unmount()
+        expect(firebase.leaveRound).toHaveBeenCalledTimes(1)
+    })
+
+    it('keeps a profile for every contributor, not only for the people in the round now', async () => {
+        const { firebase } = makeFirebase({ round: roundWithMembers(['me'], ['owner', 'me', 'gone']) })
+        const { store } = renderRoute(firebase)
+
+        await waitFor(() => expect(store.getState().round).not.toBeNull())
+        expect(store.getState().users.map(user => user.id)).toEqual(['owner', 'me', 'gone'])
+        expect(firebase.loadUser).toHaveBeenCalledWith('gone')
+        expect(firebase.subscribeToUser).toHaveBeenCalledWith('gone', expect.any(Function), expect.any(Function))
+    })
+
+    it('follows currentUsers when the round listener reports somebody leaving, and keeps their profile', async () => {
+        const { firebase, listeners } = makeFirebase({ round: roundWithMembers(['owner', 'me']) })
+        const { store } = renderRoute(firebase)
+
+        await waitFor(() => expect(store.getState().round).not.toBeNull())
+        await act(async () => listeners.round({ exists: true, data: { ...roundWithMembers(['owner', 'me']), currentUsers: ['me'] } }))
+
+        expect(store.getState().round.currentUsers).toEqual(['me'])
+        expect(store.getState().round.contributors).toEqual(['owner', 'me'])
+        expect(store.getState().users.map(user => user.id)).toEqual(['owner', 'me'])
+    })
+
+    it('loads a profile for a contributor the round listener has not seen before', async () => {
+        const { firebase, listeners } = makeFirebase({ round: roundWithMembers(['me']) })
+        const { store } = renderRoute(firebase)
+
+        await waitFor(() => expect(store.getState().round).not.toBeNull())
+        await act(async () => listeners.round({
+            exists: true,
+            data: { ...roundWithMembers(['me']), currentUsers: ['me', 'them'], contributors: ['me', 'them'] }
+        }))
+
+        expect(store.getState().users.map(user => user.id)).toEqual(['me', 'them'])
+        expect(store.getState().round.contributors).toEqual(['me', 'them'])
+        expect(store.getState().round.currentUsers).toEqual(['me', 'them'])
+    })
+
+    it('gives a round saved without contributors the list it should have had', async () => {
+        const round = roundWithMembers(['owner', 'me'])
+        delete round.contributors
+        round.layers = [{ id: 'l1', createdBy: 'gone', steps: [] }]
+        const { firebase } = makeFirebase({ round })
+        const { store } = renderRoute(firebase)
+
+        await waitFor(() => expect(store.getState().round).not.toBeNull())
+        expect(firebase.backfillContributors).toHaveBeenCalledWith('r1', ['owner', 'me', 'gone'])
+        expect(store.getState().round.contributors).toEqual(['owner', 'me', 'gone'])
+        expect(store.getState().users.map(user => user.id)).toEqual(['owner', 'me', 'gone'])
     })
 
     it('shows an error instead of spinning forever when loading fails', async () => {
