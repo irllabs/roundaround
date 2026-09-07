@@ -20,6 +20,7 @@
 	"dependencies": {
 		"@material-ui/core": "^4.11.3",
 		"@material-ui/icons": "^4.11.2",
+		"@reduxjs/toolkit": "^1.9.7",
 		"@svgdotjs/svg.js": "^3.0.16",
 		"@svgdotjs/svg.panzoom.js": "^2.1.1",
 		"@tonaljs/note": "^4.12.1",
