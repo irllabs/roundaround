@@ -24,7 +24,18 @@
 // -- This will overwrite an existing command --
 // Cypress.Commands.overwrite('visit', (originalFn, url, options) => { ... })
 
-import { users } from "./users";
+import { requireTestUser } from "./users";
+
+// Firebase Auth persists sessions in IndexedDB, which clearLocalStorage/clearCookies never touch.
+// Drop that database before the app boots so a previous test's session cannot be restored
+// mid-test (the restore swaps the "Sign in" button for the avatar button under Cypress' feet).
+Cypress.Commands.add("resetAuth", () => {
+	cy.visit("/", {
+		onBeforeLoad(win) {
+			win.indexedDB.deleteDatabase("firebaseLocalStorageDb");
+		}
+	});
+});
 
 Cypress.Commands.add("logout", () => {
 	cy.visit("/");
@@ -38,12 +49,13 @@ Cypress.Commands.add("logout", () => {
 });
 
 Cypress.Commands.add("login", () => {
+	const user = requireTestUser();
 	cy.logout();
 
 	cy.get("[data-test=button-sign-in-out]").click();
 	cy.get("[data-test=button-email]").click();
-	cy.get("[data-test=input-email]").type(users.EMAIL_USER.username);
-	cy.get("[data-test=input-password]").type(users.EMAIL_USER.password);
+	cy.get("[data-test=input-email]").type(user.username);
+	cy.get("[data-test=input-password]").type(user.password, { log: false });
 	cy.get("[data-test=button-sign-in]").click();
 	cy.wait(1000);
 	cy.get("[data-test=button-get-started]").click();

@@ -21,31 +21,27 @@ Reference:
 # Development
 
 ## Set Node Version
-Please use node v14.17.6 - the latest stable version of node, [nvm](https://tecadmin.net/install-nvm-macos-with-homebrew/) is an easy way to do this
-
-On OX, install Homebrew if you don't have it:
+Use the Node version in `.nvmrc` (currently 22). With [nvm](https://github.com/nvm-sh/nvm):
 ```
-ruby -e "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install)"
-```
-
-Install and select said version of Node:
-```
-nvm install 14.17.6
-nvm use v14.17.6
-node -v // should be 14.17.6
+nvm install
+nvm use
+node -v
 ```
 
 ### (Optional) Clean Install Modules
 ```
-yarn install --frozen-lockfile`
+yarn install --frozen-lockfile
 ```
+If the Cypress binary download is blocked on your network, set `CYPRESS_INSTALL_BINARY=0` for the install;
+yarn 1 does not write `yarn.lock` when a postinstall script fails.
 
 ## Local development
-- Go to your local branch
 - `yarn` - To install packages that may have changed since your last branch
-- `yarn build` - To do a clean build of js
-- `yarn start` - To start the local server
-- navigate to [http://localhost:3000](http://localhost:3000)
+- `yarn start` - Vite dev server with hot reload on [http://localhost:3000](http://localhost:3000)
+- `yarn build` - Production build into `build/`
+- `yarn preview` - Serve the production build locally on port 3000
+- `yarn lint` - ESLint (also runs on commit)
+- `yarn test` - Unit and component tests (Vitest + Testing Library); `yarn test:watch` while developing
 
 ## Dev workflow
 We use [git flow](https://www.atlassian.com/git/tutorials/comparing-workflows/gitflow-workflow#:~:text=The%20overall%20flow%20of%20Gitflow,branch%20is%20created%20from%20main&text=When%20a%20feature%20is%20complete%20it%20is%20merged%20into%20the,branch%20is%20created%20from%20main)
@@ -82,6 +78,9 @@ Summary - we never make a branch off master, only stage, and we only ever merge 
 ## Testing
 - As of now there's a git hook to make sure any code committed is linted and doesn't add malformed js
 - As of now there's a smoke test that runs locally to make sure the site still loads when pushing
+- The smoke test signs in with a persistent test account. Its credentials are **not** in the repo: put them in
+  `CYPRESS_TEST_EMAIL` / `CYPRESS_TEST_PASSWORD` (CI reads them from GitHub Actions secrets) or in an untracked
+  `cypress.env.json` with `TEST_EMAIL` / `TEST_PASSWORD`.
 
 If the smoke test fails you can debug it with:
 `yarn run cypress:open`
@@ -97,6 +96,9 @@ make sure the site is running locally.
 -  `firebase deploy --only hosting:dev`
     Should update `https://roundaround-dev.web.app/`, this can be any branch off develop, it's fine if it's buggy
     
-## Deploy functions (generates Jitsi tokens)
-- Make sure you have the jaasauth.pk private key file in the root of the functions folder (not kept in git)
+## Deploy functions (Jitsi tokens and share links)
+- Secrets live in Secret Manager, not in files: run `firebase functions:secrets:set JAAS_PRIVATE_KEY` (paste the
+  contents of the JaaS private key) and `firebase functions:secrets:set BITLY_TOKEN` once per project.
+- Non-secret settings (JaaS app id and key id, Bitly group, public origin) are parameters; see `functions/.env.example`.
+- `cd functions && yarn install && yarn test`
 - `firebase deploy --only functions`

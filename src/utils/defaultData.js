@@ -1,6 +1,5 @@
 import { Layer } from './constants';
-import { uuid } from './index';
-import { randomInt } from './index';
+import { uuid, randomInt } from './helpers';
 import Instruments from '../audio-engine/Instruments';
 //import Track from '../audio-engine/Track'
 import _ from 'lodash';

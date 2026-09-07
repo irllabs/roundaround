@@ -1,9 +1,11 @@
-import app from 'firebase/app';
-import 'firebase/auth';
-import 'firebase/firestore';
-import 'firebase/functions';
+// The compat entry points keep the namespaced (v8-style) API this wrapper was written against
+// while running on the current SDK. Moving each product to the modular API is the next step.
+import app from 'firebase/compat/app';
+import 'firebase/compat/auth';
+import 'firebase/compat/firestore';
+import 'firebase/compat/functions';
+import 'firebase/compat/storage';
 import _ from 'lodash'
-import firebase from 'firebase'
 
 var firebaseConfig = {
     apiKey: "AIzaSyAuU25cV2Asaz_eKpyQGo_8mfpp_QhzwLk",
@@ -16,9 +18,14 @@ var firebaseConfig = {
     measurementId: "G-BX73P1R2TB"
 };
 
+const DELETE_BATCH_SIZE = 64
+
+// Thin wrapper around the Firebase SDK. Every method is a plain async function: on failure it
+// rejects, so callers can catch and show something instead of waiting on a promise that never
+// settles. Access control lives in firestore.rules / storage.rules.
 class Firebase {
     constructor() {
-        if (!firebase.apps.length) {
+        if (!app.apps.length) {
             app.initializeApp(firebaseConfig);
         }
 
@@ -35,447 +42,252 @@ class Firebase {
         this.onUserUpdatedObservers = [];
 
         app.auth().onAuthStateChanged((user) => {
-            // console.log('onAuthStateChanged', user);
-            if (user) {
-                this.currentUser = user;
-                this.onUserUpdatedObservers.map(observer => observer(user));
-            } else {
-                // No user is signed in.
-                this.currentUser = null;
-                this.onUserUpdatedObservers.map(observer => observer(null));
-            }
+            this.currentUser = user || null;
+            this.onUserUpdatedObservers.forEach(observer => observer(this.currentUser));
         });
     }
 
-
-    // User
-    loadUser = (id) => {
-        // console.log('firebase::loadUser()', id);
-        return new Promise(async (resolve, reject) => {
-            try {
-                const userSnapshot = await this.db.collection('users').doc(id).get()
-                if (userSnapshot.exists) {
-                    resolve({ id: userSnapshot.id, ...userSnapshot.data() })
-                } else {
-                    resolve(null)
-                }
-            } catch (e) {
-                console.error(e)
-            }
-        })
+    // *** Users ***
+    loadUser = async (id) => {
+        const userSnapshot = await this.db.collection('users').doc(id).get()
+        return userSnapshot.exists ? { id: userSnapshot.id, ...userSnapshot.data() } : null
     }
 
-    createUser = (userData) => {
-        return new Promise(async (resolve, reject) => {
-            let user = _.cloneDeep(userData)
-            delete user.id
-            try {
-                await this.db.collection('users')
-                    .doc(userData.id)
-                    .set(user)
-                resolve()
-            } catch (e) {
-                console.error(e)
-            }
-        })
-
+    /** Creates or completes a user profile. Merges so two writers (sign-up dialog and the auth observer) cannot wipe each other's fields. */
+    createUser = async (userData) => {
+        const user = _.cloneDeep(userData)
+        delete user.id
+        await this.db.collection('users').doc(userData.id).set(user, { merge: true })
     }
 
-    updateUser = (id, userData) => {
-        return new Promise(async (resolve, reject) => {
-            let user = _.cloneDeep(userData)
-            delete user.id
-            try {
-                await this.db.collection('users')
-                    .doc(id)
-                    .set(user, { merge: true })
-                resolve()
-            } catch (e) {
-                console.error(e)
-            }
-        })
-
+    updateUser = async (id, userData) => {
+        const user = _.cloneDeep(userData)
+        delete user.id
+        await this.db.collection('users').doc(id).set(user, { merge: true })
     }
 
     signOut = () => this.auth.signOut();
 
-    // *** Jitsi As A Service ***
-    getJitsiToken = async (userId, name, email, avatar) => {
-        let getJaasToken = this.functions.httpsCallable('getJaasToken');
-        return getJaasToken(userId, name, email, avatar)
+    // *** Cloud Functions ***
+    // Both callables take a single { roundId } object; identity comes from the auth token server-side.
+    getJitsiToken = async (roundId) => {
+        const getJaasToken = this.functions.httpsCallable('getJaasToken');
+        const result = await getJaasToken({ roundId })
+        return result.data // { token, appId, room }
     }
 
-    // *** Firebase API ***
-    getRoundsList = (userId, minimumVersion = 1) => {
-        //   console.log('getRoundsList', userId, minimumVersion);
-        return new Promise(async (resolve, reject) => {
-            let rounds = []
-            try {
-                const roundsSnapshot = await this.db
-                    .collection("rounds")
-                    .where('createdBy', '==', userId)
-                    .orderBy('createdAt', 'desc')
-                    .limitToLast()
-                    .get();
-                roundsSnapshot.forEach(roundDoc => {
-                    let round = roundDoc.data();
-                    round.id = roundDoc.id;
-                    if (round.dataVersion >= minimumVersion) {
-                        rounds.push(round);
-                    }
-                })
+    createShortLink = async (roundId) => {
+        const createShortLink = this.functions.httpsCallable('createShortLink');
+        const result = await createShortLink({ roundId })
+        return result.data // { link }
+    }
 
-                resolve(rounds)
-            }
-            catch (e) {
-                console.error(e)
-                reject(e)
+    // *** Rounds ***
+    getRoundsList = async (userId, minimumVersion = 1) => {
+        const roundsSnapshot = await this.db
+            .collection("rounds")
+            .where('createdBy', '==', userId)
+            .orderBy('createdAt', 'desc')
+            .get();
+        const rounds = []
+        roundsSnapshot.forEach(roundDoc => {
+            const round = { ...roundDoc.data(), id: roundDoc.id }
+            if (round.dataVersion >= minimumVersion) {
+                rounds.push(round);
             }
         })
+        return rounds
     }
+
+    /** Resolves to null when the round does not exist. */
     getRound = async (roundId) => {
-        // console.log('getRound', roundId);
-        return new Promise(async (resolve, reject) => {
-            try {
-                const roundSnapshot = await this.db.collection('rounds').doc(roundId).get()
-                const round = { id: roundSnapshot.id, ...roundSnapshot.data(), layers: [] }
-                round.layers = await this.getLayers(roundId)
-                round.userBuses = await this.getUserBuses(roundId)
-                round.userPatterns = await this.getUserPatterns(roundId)
-                //  console.log('got round', round);
-                resolve(round)
-            } catch (e) {
-                console.error(e)
-            }
-        })
+        const roundSnapshot = await this.db.collection('rounds').doc(roundId).get()
+        if (!roundSnapshot.exists) {
+            return null
+        }
+        const [layers, userBuses, userPatterns] = await Promise.all([
+            this.getLayers(roundId),
+            this.getUserBuses(roundId),
+            this.getUserPatterns(roundId)
+        ])
+        return { id: roundSnapshot.id, ...roundSnapshot.data(), layers, userBuses, userPatterns }
     }
 
     getLayers = async (roundId) => {
-        return new Promise(async (resolve, reject) => {
-            let layers = []
-            try {
-                const layerSnapshot = await this.db
-                    .collection("rounds")
-                    .doc(roundId)
-                    .collection('layers')
-                    .get();
-                layerSnapshot.forEach(layerDoc => {
-                    let layer = layerDoc.data();
-                    layer.id = layerDoc.id;
-                    layers.push(layer);
-                })
-
-                resolve(layers)
-            }
-            catch (e) {
-                console.error(e)
-                reject(e)
-            }
+        const layerSnapshot = await this.db
+            .collection("rounds")
+            .doc(roundId)
+            .collection('layers')
+            .get();
+        const layers = []
+        layerSnapshot.forEach(layerDoc => {
+            layers.push({ ...layerDoc.data(), id: layerDoc.id });
         })
+        return layers
     }
 
     getUserBuses = async (roundId) => {
-        return new Promise(async (resolve, reject) => {
-            let userBuses = {}
-            try {
-                const userBusesSnapshot = await this.db
-                    .collection("rounds")
-                    .doc(roundId)
-                    .collection('userBuses')
-                    .get();
-                userBusesSnapshot.forEach(userBusDoc => {
-                    let userBus = userBusDoc.data();
-                    userBus.id = userBusDoc.id;
-                    userBuses[userBus.id] = userBus;
-                })
-                resolve(userBuses)
-            }
-            catch (e) {
-                console.error(e)
-                reject(e)
-            }
+        const userBusesSnapshot = await this.db
+            .collection("rounds")
+            .doc(roundId)
+            .collection('userBuses')
+            .get();
+        const userBuses = {}
+        userBusesSnapshot.forEach(userBusDoc => {
+            userBuses[userBusDoc.id] = { ...userBusDoc.data(), id: userBusDoc.id };
         })
+        return userBuses
     }
+
     getUserPatterns = async (roundId) => {
-        return new Promise(async (resolve, reject) => {
-            let allUserPatterns = {}
-            try {
-                const userPatternsSnapshot = await this.db
-                    .collection("rounds")
-                    .doc(roundId)
-                    .collection('userPatterns')
-                    .get();
-                userPatternsSnapshot.forEach(userPatternsDoc => {
-                    let userPatterns = userPatternsDoc.data();
-                    userPatterns.id = userPatternsDoc.id;
-                    allUserPatterns[userPatterns.id] = userPatterns;
-                })
-                resolve(allUserPatterns)
-            }
-            catch (e) {
-                console.error(e)
-                reject(e)
-            }
+        const userPatternsSnapshot = await this.db
+            .collection("rounds")
+            .doc(roundId)
+            .collection('userPatterns')
+            .get();
+        const allUserPatterns = {}
+        userPatternsSnapshot.forEach(userPatternsDoc => {
+            allUserPatterns[userPatternsDoc.id] = { ...userPatternsDoc.data(), id: userPatternsDoc.id };
         })
+        return allUserPatterns
     }
 
-
+    /** Deletes every document in a collection, in batches. */
     deleteCollection = async (collectionRef) => {
-        return this.deleteQueryBatch(this.db, collectionRef.limit(64));
-    }
-    deleteQueryBatch = async (db, query) => {
-        return new Promise(async (resolve, reject) => {
-            const snapshot = await query.get();
-            if (snapshot.size > 0) {
-                let batch = db.batch();
-                snapshot.docs.forEach(doc => {
-                    batch.delete(doc.ref);
-                });
-                await batch.commit();
-                resolve()
-            } else {
-                resolve()
+        let snapshot = await collectionRef.limit(DELETE_BATCH_SIZE).get();
+        while (snapshot.size > 0) {
+            const batch = this.db.batch();
+            snapshot.docs.forEach(doc => batch.delete(doc.ref));
+            await batch.commit();
+            if (snapshot.size < DELETE_BATCH_SIZE) {
+                break
             }
-        })
+            snapshot = await collectionRef.limit(DELETE_BATCH_SIZE).get();
+        }
     }
 
+    /** Deletes a round together with its layers, user buses and user patterns. */
     deleteRound = async (round) => {
-        return new Promise(async (resolve, reject) => {
-            for (const layer of round.layers) {
-                await this.deleteLayer(round.id, layer.id)
-            }
-            await this.db.collection('rounds').doc(round.id).delete()
-            resolve()
-        })
+        const roundRef = this.db.collection('rounds').doc(round.id)
+        await this.deleteCollection(roundRef.collection('layers'))
+        await this.deleteCollection(roundRef.collection('userBuses'))
+        await this.deleteCollection(roundRef.collection('userPatterns'))
+        await roundRef.delete()
     }
 
     deleteLayer = async (roundId, layerId) => {
-        return this.db.collection('rounds').doc(roundId).collection('layers').doc(layerId).delete()
+        await this.db.collection('rounds').doc(roundId).collection('layers').doc(layerId).delete()
     }
 
     createRound = async (data) => {
-        //  console.log('createRound()', data);
-        return new Promise(async (resolve, reject) => {
-            let round = _.cloneDeep(data)
-            const layers = round && round.layers ? [...round.layers] : []
-            delete round.layers
-            const userBuses = []
-            for (const [userId, userBus] of Object.entries(round.userBuses)) {
-                userBus.id = userId
-                userBuses.push(userBus)
-            }
-            delete round.userBuses
-            const allUserPatterns = []
-            for (const [userId, userPatterns] of Object.entries(round.userPatterns)) {
-                userPatterns.id = userId
-                allUserPatterns.push(userPatterns)
-            }
-            delete round.userPatterns
-            round.createdAt = Date.now()
-            try {
-                await this.db.collection('rounds')
-                    .doc(data.id)
-                    .set(round)
-                for (const layer of layers) {
-                    await this.createLayer(data.id, layer)
-                }
-                for (const userBus of userBuses) {
-                    await this.createUserBus(data.id, userBus.id, userBus)
-                }
-                for (const userPatterns of allUserPatterns) {
-                    await this.saveUserPatterns(data.id, userPatterns.id, userPatterns)
-                }
-                resolve(round)
-            } catch (e) {
-                console.error(e)
-            }
-        })
+        const round = _.cloneDeep(data)
+        const layers = round.layers || []
+        delete round.layers
+        const userBuses = Object.entries(round.userBuses || {}).map(([userId, userBus]) => ({ ...userBus, id: userId }))
+        delete round.userBuses
+        const allUserPatterns = Object.entries(round.userPatterns || {}).map(([userId, userPatterns]) => ({ ...userPatterns, id: userId }))
+        delete round.userPatterns
+        round.createdAt = Date.now()
+
+        await this.db.collection('rounds').doc(data.id).set(round)
+        await Promise.all([
+            ...layers.map(layer => this.createLayer(data.id, layer)),
+            ...userBuses.map(userBus => this.createUserBus(data.id, userBus.id, userBus)),
+            ...allUserPatterns.map(userPatterns => this.saveUserPatterns(data.id, userPatterns.id, userPatterns))
+        ])
+        return round
     }
 
     createLayer = async (roundId, layerData) => {
-        return new Promise(async (resolve, reject) => {
-            let layer = _.cloneDeep(layerData)
-            try {
-                await this.db.collection('rounds')
-                    .doc(roundId)
-                    .collection('layers')
-                    .doc(layer.id)
-                    .set(layer)
-                resolve()
-            } catch (e) {
-                console.error(e)
-            }
-        })
+        const layer = _.cloneDeep(layerData)
+        await this.db.collection('rounds')
+            .doc(roundId)
+            .collection('layers')
+            .doc(layer.id)
+            .set(layer)
     }
 
     createUserBus = async (roundId, id, userBus) => {
-        let userBusClone = _.cloneDeep(userBus)
+        const userBusClone = _.cloneDeep(userBus)
         delete userBusClone.id
-        return new Promise(async (resolve, reject) => {
-            try {
-                await this.db.collection('rounds')
-                    .doc(roundId)
-                    .collection('userBuses')
-                    .doc(id)
-                    .set(userBusClone)
-                resolve()
-            } catch (e) {
-                console.error(e)
-            }
-        })
-    }
-
-    createSample = async (sample) => {
-        let sampleClone = _.cloneDeep(sample)
-        delete sampleClone.id
-        delete sampleClone.localURL
-        return new Promise(async (resolve, reject) => {
-            try {
-                await this.db.collection('samples')
-                    .doc(sample.id)
-                    .set(sampleClone)
-                resolve()
-            } catch (e) {
-                console.error(e)
-            }
-        })
-    }
-
-    getSample = async (id) => {
-        return new Promise(async (resolve, reject) => {
-            try {
-                const snapshot = await this.db.collection('samples').doc(id).get()
-                if (snapshot.exists) {
-                    resolve({ id: snapshot.id, ...snapshot.data() })
-                } else {
-                    resolve(null)
-                }
-            } catch (e) {
-                console.error(e)
-            }
-        })
-    }
-
-    deleteSample = async id => {
-        return this.db.collection('samples').doc(id).delete()
-    }
-
-    updateSample = async (sample) => {
-        let sampleClone = _.cloneDeep(sample)
-        delete sampleClone.id
-        delete sampleClone.localURL
-        return new Promise(async (resolve, reject) => {
-            try {
-                await this.db.collection('samples')
-                    .doc(sample.id)
-                    .set(sampleClone, { merge: true })
-                resolve()
-            } catch (e) {
-                console.error(e)
-            }
-        })
-    }
-
-    getSamples = async (userId) => {
-        return new Promise(async (resolve, reject) => {
-            let samples = []
-            try {
-                const roundsSnapshot = await this.db
-                    .collection("samples")
-                    .where('createdBy', '==', userId)
-                    .get();
-                roundsSnapshot.forEach(sampleDoc => {
-                    let sample = sampleDoc.data();
-                    sample.id = sampleDoc.id;
-                    samples.push(sample);
-                })
-                // console.log('getSamples()', samples);
-                resolve(samples)
-            }
-            catch (e) {
-                console.error(e)
-                reject(e)
-            }
-        })
+        await this.db.collection('rounds')
+            .doc(roundId)
+            .collection('userBuses')
+            .doc(id)
+            .set(userBusClone)
     }
 
     saveUserPatterns = async (roundId, userId, userPatterns) => {
-        console.log('saveUserPatterns()', roundId, userId, userPatterns);
-        let userPatternsClone = _.cloneDeep(userPatterns)
-        return new Promise(async (resolve, reject) => {
-            try {
-                delete userPatternsClone.id
-                await this.db.collection('rounds')
-                    .doc(roundId)
-                    .collection('userPatterns')
-                    .doc(userId)
-                    .set(userPatternsClone)
-                resolve()
-            } catch (e) {
-                console.error(e)
-            }
-        })
+        const userPatternsClone = _.cloneDeep(userPatterns)
+        delete userPatternsClone.id
+        await this.db.collection('rounds')
+            .doc(roundId)
+            .collection('userPatterns')
+            .doc(userId)
+            .set(userPatternsClone)
     }
 
     updateRound = async (roundId, data) => {
-        // console.log('updateRound', roundId, data)
-        try {
-            await this.db.collection('rounds')
-                .doc(roundId)
-                .set(data, { merge: true })
-            //   console.log('updated round');
-        } catch (e) {
-            console.error(e)
-        }
+        await this.db.collection('rounds').doc(roundId).set(data, { merge: true })
+    }
+
+    /** Adds a user to a round's members atomically (no read-modify-write of the array). */
+    joinRound = async (roundId, userId) => {
+        await this.db.collection('rounds').doc(roundId).set({
+            currentUsers: app.firestore.FieldValue.arrayUnion(userId)
+        }, { merge: true })
     }
 
     updateLayer = async (roundId, layerId, data) => {
-        //   console.log('updateLayer', roundId, data)
-        try {
-            await this.db.collection('rounds')
-                .doc(roundId)
-                .collection('layers')
-                .doc(layerId)
-                .set(data, { merge: true })
-        } catch (e) {
-            console.error(e)
-        }
+        await this.db.collection('rounds')
+            .doc(roundId)
+            .collection('layers')
+            .doc(layerId)
+            .set(data, { merge: true })
     }
 
     updateUserBus = async (roundId, userId, userBus) => {
-        // console.log('firebase::updateUserBus()', roundId, userId, userBus);
-        return new Promise(async (resolve, reject) => {
-            try {
-                await this.db.collection('rounds')
-                    .doc(roundId)
-                    .collection('userBuses')
-                    .doc(userId)
-                    .set(userBus, { merge: true })
-                resolve()
-            } catch (e) {
-                console.error(e)
-            }
+        await this.db.collection('rounds')
+            .doc(roundId)
+            .collection('userBuses')
+            .doc(userId)
+            .set(userBus, { merge: true })
+    }
+
+    // *** Custom samples ***
+    createSample = async (sample) => {
+        const sampleClone = _.cloneDeep(sample)
+        delete sampleClone.id
+        delete sampleClone.localURL
+        await this.db.collection('samples').doc(sample.id).set(sampleClone)
+    }
+
+    getSample = async (id) => {
+        const snapshot = await this.db.collection('samples').doc(id).get()
+        return snapshot.exists ? { id: snapshot.id, ...snapshot.data() } : null
+    }
+
+    deleteSample = async id => {
+        await this.db.collection('samples').doc(id).delete()
+    }
+
+    updateSample = async (sample) => {
+        const sampleClone = _.cloneDeep(sample)
+        delete sampleClone.id
+        delete sampleClone.localURL
+        await this.db.collection('samples').doc(sample.id).set(sampleClone, { merge: true })
+    }
+
+    getSamples = async (userId) => {
+        const samplesSnapshot = await this.db
+            .collection("samples")
+            .where('createdBy', '==', userId)
+            .get();
+        const samples = []
+        samplesSnapshot.forEach(sampleDoc => {
+            samples.push({ ...sampleDoc.data(), id: sampleDoc.id });
         })
-    }
-
-    getCollaboration = async (collabId) => {
-        try {
-            const doc = await this.db.collection('collaborations').doc(collabId).get();
-            return { id: doc.id, ...doc.data() };
-        } catch (e) {
-            console.error(e)
-        }
-    }
-
-    updateCollaboration = async (collabId, data) => {
-        // console.log(data)
-        try {
-            await this.db.collection('collaborations')
-                .doc(collabId)
-                .set(data, { merge: true })
-        } catch (e) {
-            console.error(e)
-        }
+        return samples
     }
 }
 

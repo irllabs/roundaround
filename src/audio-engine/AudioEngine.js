@@ -20,7 +20,6 @@ const AudioEngine = {
         })
     },
     async load (round) {
-        // console.log('audio engine loading round', round);
         const _this = this
         return new Promise(async (resolve, reject) => {
             _this.round = round
@@ -41,13 +40,11 @@ const AudioEngine = {
                 const track = await _this.createTrack(layer)
                 await track.load(layer, round.userPatterns[layer.createdBy])
             };
-            //  console.log('audio engine finsihed loading round');
             resolve()
         })
     },
     async addUser (userId, userFx) {
         return new Promise(async (resolve, reject) => {
-            //console.log('addUser()', userId);
             const userBus = await this.createTrack({ fx: userFx, id: userId, createdBy: userId, type: Track.TRACK_TYPE_USER })
             //userBus.buildAudioChain()
             this.busesByUser[userId] = userBus;
@@ -73,8 +70,6 @@ const AudioEngine = {
     },
     // assumes tracks haven't changed, just the steps
     recalculateParts (round, layerId = null) {
-        console.log('AudioEngine::recalculateParts()');
-        console.time('AudioEngine::recalculateParts')
         if (!_.isNil(round)) {
             this.round = round
             for (let layer of round.layers) {
@@ -85,7 +80,6 @@ const AudioEngine = {
                 }
             }
         }
-        console.timeEnd('AudioEngine::recalculateParts')
     },
     getIsPlayingSequence (userId, round) {
         return round.userPatterns[userId].isPlayingSequence
@@ -94,7 +88,6 @@ const AudioEngine = {
     createTrack (trackParameters) {
         const userId = trackParameters.createdBy
         const type = trackParameters.type
-        // console.log('createTrack', trackParameters, userId, type);
         let _this = this
         return new Promise(async function (resolve, reject) {
             let track = new Track(trackParameters, type, userId)

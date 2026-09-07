@@ -1,0 +1,5 @@
+node_modules
+*.pk
+.env
+.env.*
+!.env.example

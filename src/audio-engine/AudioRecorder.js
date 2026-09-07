@@ -7,10 +7,10 @@ import MediaRecorder from 'opus-media-recorder';
 // opus-media-recorder options
 const workerOptions = {
     encoderWorkerFactory: function () {
-        return new Worker(process.env.PUBLIC_URL + '/opus-media-recorder/encoderWorker.umd.js')
+        return new Worker(import.meta.env.BASE_URL.replace(/\/$/, '') + '/opus-media-recorder/encoderWorker.umd.js')
     },
-    OggOpusEncoderWasmPath: process.env.PUBLIC_URL + '/opus-media-recorder/OggOpusEncoder.wasm',
-    WebMOpusEncoderWasmPath: process.env.PUBLIC_URL + '/opus-media-recorder/WebMOpusEncoder.wasm',
+    OggOpusEncoderWasmPath: import.meta.env.BASE_URL.replace(/\/$/, '') + '/opus-media-recorder/OggOpusEncoder.wasm',
+    WebMOpusEncoderWasmPath: import.meta.env.BASE_URL.replace(/\/$/, '') + '/opus-media-recorder/WebMOpusEncoder.wasm',
 };
 
 const AudioRecorder = {
@@ -27,7 +27,6 @@ const AudioRecorder = {
 
         try {
             await this.mic.open()
-            // console.log("mic open");
 
             _this.inputMeterInterval = setInterval(() => {
                 if (!_.isNil(levelCallback)) {
@@ -46,7 +45,6 @@ const AudioRecorder = {
 
 
         } catch (e) {
-            console.log('Error opening mic', e);
         }
     },
     scheduleCountdown () {
@@ -55,12 +53,10 @@ const AudioRecorder = {
         this.hasBegunRecording = false
         this.scheduleCountdownEvent = new Tone.ToneEvent(function () {
             if (!_this.hasBegunCountdown) {
-                //    console.log('first 0 event');
                 _this.hasBegunCountdown = true
                 _this.startCountdown()
             } else if (!_this.hasBegunRecording) {
                 // second time we've passed 0, start recording
-                //  console.log('second 0 event');
                 _this.hasBegunRecording = true
                 _this.countDownPart.dispose()
 
@@ -68,7 +64,6 @@ const AudioRecorder = {
                 _this.startRecording()
             } else {
                 // third time we've passed 0, stop the recording
-                //  console.log('third 0 event');
                 _this.scheduleCountdownEvent.dispose()
                 _this.stop()
             }
@@ -116,7 +111,6 @@ const AudioRecorder = {
         _this.countdownCallack(4)
     },
     async stop () {
-        //  console.log('AudioRecorder::stop()');
         this.hasBegunCountdown = false
         this.hasBegunRecording = false
         if (!_.isNil(this.mic)) {
@@ -132,10 +126,8 @@ const AudioRecorder = {
 
     },
     startRecording () {
-        //   console.log('startRecording()');
         const _this = this
 
-        // console.log('start recording called');
         this.chunks = []
         navigator.mediaDevices.getUserMedia({ audio: true }).then(stream => {
             const options = { mimeType: 'audio/wav' }
@@ -144,15 +136,12 @@ const AudioRecorder = {
             _this.recorder.start();
 
             _this.recorder.addEventListener('dataavailable', (e) => {
-                //   console.log('Recording stopped, data available');
                 _this.chunks.push(e.data)
             });
             _this.recorder.addEventListener('start', (e) => {
-                //  console.log('start');
                 //this.setState({ state: 'recording' });
             })
             _this.recorder.addEventListener('stop', (e) => {
-                //   console.log('stop');
                 // this.setState({ state: 'inactive' });
                 let blob = new Blob(_this.chunks, {
                     type: 'audio/wav'
@@ -160,15 +149,12 @@ const AudioRecorder = {
                 _this.recordingFinishedCallback(blob)
             })
             _this.recorder.addEventListener('pause', (e) => {
-                //   console.log('pause');
                 // this.setState({ state: 'paused' });
             })
             _this.recorder.addEventListener('resume', (e) => {
-                //   console.log('resume');
                 // this.setState({ state: 'recording' });
             })
             _this.recorder.addEventListener('error', (e) => {
-                console.log('error', e);
             })
         });
 
