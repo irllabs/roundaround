@@ -556,11 +556,12 @@ class PlayUI extends Component {
     clear() {
         this.removeAllStepEventListeners()
         this.removeAllLayerEventListeners()
-        if (!_.isNil(this.layerGrahpics)) {
-            for (let layerGrahpic of this.layerGrahpics) {
-                layerGrahpic.clear()
+        if (!_.isNil(this.layerGraphics)) {
+            for (let layerGraphic of this.layerGraphics) {
+                layerGraphic.clear()
             }
         }
+        this.layerGraphics = []
 
         if (!_.isNil(this.stepGraphics)) {
             for (let stepGraphic of this.stepGraphics) {
@@ -1190,11 +1191,6 @@ class PlayUI extends Component {
     removeAllStepEventListeners() {
         for (let stepGraphic of this.stepGraphics) {
             stepGraphic.click(null)
-            if (!_.isNil(stepGraphic.hammertime)) {
-                stepGraphic.hammertime.off('pan')
-                stepGraphic.hammertime.off('panstart')
-                stepGraphic.hammertime.off('panend')
-            }
         }
     }
 
