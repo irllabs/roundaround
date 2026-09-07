@@ -90,11 +90,14 @@ class Header extends Component {
 						// name) and then read back whatever both writers produced.
 						const profile = { ...profileFromAuthUser(authUser), color: getRandomColor() }
 						await _this.context.createUser(profile)
-						user = await _this.context.loadUser(authUser.uid)
-						_this.props.setUser(user || profile)
+						user = (await _this.context.loadUser(authUser.uid)) || profile
+						_this.props.setUser(user)
 					}
 					if (!_.isNil(_this.props.redirectAfterSignIn)) {
-						_this.redirect(authUser)
+						// The user goes to `redirect` rather than being read back off props: React 18
+						// schedules the re-render `setUser` asks for, so `this.props.user` here is
+						// still whoever was signed in before, and for a first sign-in that is nobody.
+						_this.redirect(authUser, user)
 					}
 				} catch (error) {
 					console.error('Could not load the signed-in user', error)
@@ -115,14 +118,14 @@ class Header extends Component {
 		}
 	}
 
-	redirect = async (authUser) => {
+	redirect = async (authUser, signedInUser) => {
 		if (!authUser.isAnonymous) {
 			// if not guest user go to rounds list
 			this.props.history.push(this.props.redirectAfterSignIn)
 			this.props.setRedirectAfterSignIn(null)
 		} else if (this.props.redirectAfterSignIn === '/rounds') {
 			// guest user, create a new round and redirect to there instead of /rounds
-			let newRound = await createRound(this.props.user.id)
+			let newRound = await createRound(signedInUser.id)
 			if (!newRound) return;
 			let newRounds = [newRound, ...this.props.rounds]
 			await this.context.createRound(newRound)
