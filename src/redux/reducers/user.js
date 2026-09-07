@@ -1,40 +1,16 @@
-/* eslint-disable import/no-anonymous-default-export */
+import { createReducer } from "@reduxjs/toolkit";
 import { SET_USER, CLEAR_USER, SET_USER_DISPLAYNAME, SET_USER_COLOR } from "../actionTypes";
-import update from 'immutability-helper';
 
 const initialState = null;
 
-export default function (state = initialState, action) {
-    switch (action.type) {
-        case SET_USER: {
-            return update(state, {
-                $set: action.payload.value
-            }
-            )
-        }
-        case SET_USER_DISPLAYNAME: {
-            return update(state, {
-                displayName: {
-                    $set: action.payload.value
-                }
-            }
-            )
-        }
-        case SET_USER_COLOR: {
-            return update(state, {
-                color: {
-                    $set: action.payload.value
-                }
-            }
-            )
-        }
-        case CLEAR_USER: {
-            return update(state, {
-                $set: initialState
-            }
-            )
-        }
-        default:
-            return state;
-    }
-}
+export default createReducer(initialState, (builder) => {
+    builder
+        .addCase(SET_USER, (state, action) => action.payload.value)
+        .addCase(SET_USER_DISPLAYNAME, (state, action) => {
+            state.displayName = action.payload.value
+        })
+        .addCase(SET_USER_COLOR, (state, action) => {
+            state.color = action.payload.value
+        })
+        .addCase(CLEAR_USER, () => initialState)
+});

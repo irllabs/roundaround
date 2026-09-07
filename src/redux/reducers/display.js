@@ -1,4 +1,4 @@
-/* eslint-disable import/no-anonymous-default-export */
+import { createReducer } from "@reduxjs/toolkit";
 import {
     SET_IS_SHOWING_SIGNIN_DIALOG,
     SET_REDIRECT_AFTER_SIGN_IN,
@@ -15,7 +15,6 @@ import {
     SET_IS_RECORDING_SEQUENCE,
     SET_CURRENT_SEQUENCE_PATTERN
 } from "../actionTypes";
-import update from 'immutability-helper';
 
 const initialState = {
     selectedLayerId: null,
@@ -33,80 +32,48 @@ const initialState = {
     currentSequencePattern: null
 };
 
-export default function (state = initialState, action) {
-    switch (action.type) {
-        case SET_IS_SHOWING_SIGNIN_DIALOG: {
-            return update(state, {
-                isShowingSignInDialog: { $set: action.payload.value }
-            })
-        }
-        case SET_REDIRECT_AFTER_SIGN_IN: {
-            return update(state, {
-                redirectAfterSignIn: { $set: action.payload.value }
-            })
-        }
-        case SET_SIGNUP_DISPLAYNAME: {
-            return update(state, {
-                signupDisplayName: { $set: action.payload.value }
-            })
-        }
-        case SET_SELECTED_LAYER_ID: {
-            return update(state, {
-                selectedLayerId: { $set: action.payload.layerId }
-            })
-        }
-        case SET_IS_SHOWING_LAYER_SETTINGS: {
-            return update(state, {
-                isShowingLayerSettings: { $set: action.payload.value }
-            })
-        }
-        case SET_IS_USING_JITSI: {
-            return update(state, {
-                isUsingJitsi: { $set: action.payload.value }
-            })
-        }
-        case SET_IS_SHOWING_RENAME_DIALOG: {
-            return update(state, {
-                isShowingRenameDialog: { $set: action.payload.value }
-            })
-        }
-        case SET_IS_SHOWING_DELETE_ROUND_DIALOG: {
-            return update(state, {
-                isShowingDeleteRoundDialog: { $set: action.payload.value }
-            })
-        }
-        case SET_IS_SHOWING_SHARE_DIALOG: {
-            return update(state, {
-                isShowingShareDialog: { $set: action.payload.value }
-            })
-        }
-        case SET_DISABLE_KEY_LISTENER: {
-            return update(state, {
-                disableKeyListener: { $set: action.payload.value }
-            })
-        }
-        case SET_SELECTED_ROUND_ID: {
-            return update(state, {
-                selectedRoundId: { $set: action.payload.value }
-            })
-        }
-        case SET_IS_SHOWING_ORIENTATION_DIALOG: {
-            return update(state, {
-                isShowingOrientationDialog: { $set: action.payload.value }
-            })
-        }
-        case SET_IS_RECORDING_SEQUENCE: {
-            return update(state, {
-                isRecordingSequence: { $set: action.payload.value }
-            })
-        }
-        case SET_CURRENT_SEQUENCE_PATTERN: {
-            return update(state, {
-                currentSequencePattern: { $set: action.payload.value }
-            })
-        }
-
-        default:
-            return state;
-    }
-}
+export default createReducer(initialState, (builder) => {
+    builder
+        .addCase(SET_IS_SHOWING_SIGNIN_DIALOG, (state, action) => {
+            state.isShowingSignInDialog = action.payload.value
+        })
+        .addCase(SET_REDIRECT_AFTER_SIGN_IN, (state, action) => {
+            state.redirectAfterSignIn = action.payload.value
+        })
+        .addCase(SET_SIGNUP_DISPLAYNAME, (state, action) => {
+            state.signupDisplayName = action.payload.value
+        })
+        .addCase(SET_SELECTED_LAYER_ID, (state, action) => {
+            state.selectedLayerId = action.payload.layerId
+        })
+        .addCase(SET_IS_SHOWING_LAYER_SETTINGS, (state, action) => {
+            state.isShowingLayerSettings = action.payload.value
+        })
+        .addCase(SET_IS_USING_JITSI, (state, action) => {
+            state.isUsingJitsi = action.payload.value
+        })
+        .addCase(SET_IS_SHOWING_RENAME_DIALOG, (state, action) => {
+            state.isShowingRenameDialog = action.payload.value
+        })
+        .addCase(SET_IS_SHOWING_DELETE_ROUND_DIALOG, (state, action) => {
+            state.isShowingDeleteRoundDialog = action.payload.value
+        })
+        .addCase(SET_IS_SHOWING_SHARE_DIALOG, (state, action) => {
+            state.isShowingShareDialog = action.payload.value
+        })
+        .addCase(SET_DISABLE_KEY_LISTENER, (state, action) => {
+            state.disableKeyListener = action.payload.value
+        })
+        .addCase(SET_SELECTED_ROUND_ID, (state, action) => {
+            state.selectedRoundId = action.payload.value
+        })
+        .addCase(SET_IS_SHOWING_ORIENTATION_DIALOG, (state, action) => {
+            state.isShowingOrientationDialog = action.payload.value
+        })
+        .addCase(SET_IS_RECORDING_SEQUENCE, (state, action) => {
+            state.isRecordingSequence = action.payload.value
+        })
+        .addCase(SET_CURRENT_SEQUENCE_PATTERN, (state, action) => {
+            state.currentSequencePattern = action.payload.value
+        })
+});
