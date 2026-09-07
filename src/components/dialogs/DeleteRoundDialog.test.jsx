@@ -18,7 +18,9 @@ function setup({ round = null, deleteRound, route = '/rounds' }) {
 }
 
 describe('DeleteRoundDialog', () => {
-    beforeEach(() => vi.spyOn(console, 'error').mockImplementation(() => {}))
+    beforeEach(() => {
+        vi.spyOn(console, 'error').mockImplementation(() => {})
+    })
     afterEach(() => console.error.mockRestore())
 
     it('removes the round from the list and closes', async () => {

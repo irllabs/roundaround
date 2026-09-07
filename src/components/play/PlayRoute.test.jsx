@@ -84,7 +84,9 @@ function renderRoute(firebase) {
 }
 
 describe('PlayRoute', () => {
-    beforeEach(() => vi.spyOn(console, 'error').mockImplementation(() => {}))
+    beforeEach(() => {
+        vi.spyOn(console, 'error').mockImplementation(() => {})
+    })
     afterEach(() => console.error.mockRestore())
 
     it('subscribes to the round, its sub-collections and its users, and unsubscribes from all of them on unmount', async () => {
