@@ -182,17 +182,33 @@ describe('PlayRoute', () => {
         expect(firebase.joinRoundLegacy).not.toHaveBeenCalled()
     })
 
-    it('falls back to the one-field join when the round\'s rules predate contributors', async () => {
+    it('falls back to two writes when the round\'s rules predate contributors', async () => {
         // rules are deployed by hand: a round can still be under rules that only let a visitor add
-        // themselves to currentUsers, and reject the write that also adds them to contributors
+        // themselves to currentUsers, and reject the write that also adds them to contributors.
+        // Those same rules let a member write anything, so the contributors entry goes in second.
         const { firebase } = makeFirebase({ round: roundWithMembers(['owner']) })
         firebase.joinRound.mockRejectedValue(firestoreError('permission-denied', 'Missing or insufficient permissions'))
         const { store } = renderRoute(firebase)
 
         await waitFor(() => expect(store.getState().round).not.toBeNull())
         expect(firebase.joinRoundLegacy).toHaveBeenCalledWith('r1', 'me')
+        expect(firebase.backfillContributors).toHaveBeenCalledWith('r1', ['me'])
         expect(screen.queryByRole('alert')).toBeNull() // the round loads, the visitor is not locked out
+        expect(store.getState().round.contributors).toContain('me')
         expect(store.getState().users.map(user => user.id)).toContain('me')
+    })
+
+    it('does not claim a contributors entry the second write could not make', async () => {
+        const { firebase } = makeFirebase({ round: roundWithMembers(['owner']) })
+        firebase.joinRound.mockRejectedValue(firestoreError('permission-denied', 'Missing or insufficient permissions'))
+        firebase.backfillContributors.mockRejectedValue(firestoreError('permission-denied', 'Missing or insufficient permissions'))
+        const { store } = renderRoute(firebase)
+
+        await waitFor(() => expect(store.getState().round).not.toBeNull())
+        expect(firebase.joinRoundLegacy).toHaveBeenCalledWith('r1', 'me')
+        expect(screen.queryByRole('alert')).toBeNull() // still in the round, still playable
+        // the store says what the document says, so the round listener has nothing to correct
+        expect(store.getState().round.contributors).not.toContain('me')
     })
 
     it('shows an error when the join fails for a reason other than the rules', async () => {

@@ -146,11 +146,13 @@ class PlayRoute extends Component {
                 }
             }
             if (!isMember || isMissingFromContributors) {
-                // joinRound unions the user into both lists, so it settles either case atomically:
-                // two people joining at once cannot drop each other, and the user is in the stored
-                // list the round listener reloads profiles from.
-                await this.joinRoundOrLegacy(roundId, userId)
-                if (isMissingFromContributors) {
+                // The join unions the user into both lists, so it settles either case without a
+                // read-modify-write: two people joining at once cannot drop each other, and the
+                // user is in the stored list the round listener reloads profiles from. Under rules
+                // that predate `contributors` it takes two writes, and the second can be refused;
+                // the local list only gains the user when the stored one did.
+                const isInContributors = await this.joinRoundOrLegacy(roundId, userId)
+                if (isMissingFromContributors && isInContributors) {
                     round.contributors.push(userId)
                 }
             }
@@ -212,23 +214,38 @@ class PlayRoute extends Component {
     }
 
     /**
-     * Adds the user to the round's members. `joinRound` writes `currentUsers` and `contributors`
-     * together, which the rules deployed with this branch allow but the ones before them do not:
-     * they let a visitor add themselves only when `currentUsers` is the single field that changes.
-     * Rules are deployed by hand, so this client cannot assume the new ones are live yet, and falls
-     * back to the one-field join for a round that rejects the two-field one. The contributors entry
-     * is then picked up on a later open, by the "member missing from contributors" path above. Any
-     * other failure is the caller's to handle.
+     * Adds the user to the round's members and to its contributors. Answers whether they ended up
+     * in the stored `contributors`, so the caller does not put them in its copy of a list the
+     * server does not have them in.
+     *
+     * `joinRound` writes both fields together, which the rules deployed with this branch allow but
+     * the ones before them do not: they let a visitor add themselves only when `currentUsers` is
+     * the single field that changes. Rules are deployed by hand, so this client cannot assume the
+     * new ones are live, and a round that rejects the one write is joined with two instead: the
+     * one-field join those rules do accept, and then, now that the user is a member and the same
+     * rules let a member write, a contributors-only union for them. Both writes are what the new
+     * rules allow as well, so the fallback is safe either way. Any failure other than the rules is
+     * the caller's to handle.
      */
     async joinRoundOrLegacy(roundId, userId) {
         try {
             await this.context.joinRound(roundId, userId)
+            return true
         } catch (error) {
             if (_.get(error, 'code') !== 'permission-denied') {
                 throw error
             }
             console.warn('This round\'s rules predate contributors; joining without it', roundId)
             await this.context.joinRoundLegacy(roundId, userId)
+            try {
+                await this.context.backfillContributors(roundId, [userId])
+                return true
+            } catch (contributorsError) {
+                // The user is in the round either way. Their contributors entry is picked up on a
+                // later open, by the "member missing from contributors" path above.
+                console.error('Could not add the user to contributors', roundId, contributorsError)
+                return false
+            }
         }
     }
 

@@ -307,9 +307,10 @@ class Firebase {
 
     /**
      * The join a round whose security rules predate `contributors` still accepts: it changes
-     * `currentUsers` and nothing else. Only for the `permission-denied` fallback in PlayRoute —
-     * once the rules from this branch are deployed, `joinRound` above is the one that runs, and the
-     * missing contributors entry is added on the next open.
+     * `currentUsers` and nothing else. Only for the `permission-denied` fallback in PlayRoute,
+     * where it is followed by a `backfillContributors` for the same user: those rules let any
+     * member write, and this write is what makes the user one. Once the rules from this branch are
+     * deployed, `joinRound` above does both fields in a single write and this is never reached.
      */
     joinRoundLegacy = async (roundId, userId) => {
         await setDoc(doc(this.db, 'rounds', roundId), {
@@ -325,9 +326,10 @@ class Firebase {
     }
 
     /**
-     * Gives a round written before `contributors` existed the list it should have had. A union, so
-     * two clients opening the round at the same time cannot drop each other's ids, and so a second
-     * run adds nothing. Does not write when there is nothing to add.
+     * Adds ids to a round's contributors: the list a round written before `contributors` existed
+     * should have had, or the single user the legacy join above could not add. A union, so two
+     * clients opening the round at the same time cannot drop each other's ids, and so a second run
+     * adds nothing. Does not write when there is nothing to add.
      */
     backfillContributors = async (roundId, userIds) => {
         if (_.isEmpty(userIds)) {
