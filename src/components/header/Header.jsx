@@ -65,13 +65,14 @@ class Header extends Component {
 	static contextType = FirebaseContext;
 	constructor(props) {
 		super(props);
+		this.unsubscribeFromAuth = null
 		this.onSignInClick = this.onSignInClick.bind(this)
 		this.onShareClick = this.onShareClick.bind(this)
 	}
 
 	componentDidMount() {
 		const _this = this
-		_this.context.onUserUpdatedObservers.push(async (authUser) => {
+		this.unsubscribeFromAuth = this.context.onAuthStateChanged(async (authUser) => {
 			if (!_.isNil(authUser)) {
 				try {
 					let user = await _this.context.loadUser(authUser.uid)
@@ -105,6 +106,13 @@ class Header extends Component {
 				}
 			}
 		})
+	}
+
+	componentWillUnmount() {
+		if (!_.isNil(this.unsubscribeFromAuth)) {
+			this.unsubscribeFromAuth()
+			this.unsubscribeFromAuth = null
+		}
 	}
 
 	redirect = async (authUser) => {

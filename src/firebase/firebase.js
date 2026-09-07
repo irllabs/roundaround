@@ -1,10 +1,34 @@
-// The compat entry points keep the namespaced (v8-style) API this wrapper was written against
-// while running on the current SDK. Moving each product to the modular API is the next step.
-import app from 'firebase/compat/app';
-import 'firebase/compat/auth';
-import 'firebase/compat/firestore';
-import 'firebase/compat/functions';
-import 'firebase/compat/storage';
+// The modular ("v9") entry points: every product is imported as tree-shakeable functions, so the
+// bundle only carries the parts of the SDK this wrapper actually calls.
+import { getApp, getApps, initializeApp } from 'firebase/app';
+import {
+    createUserWithEmailAndPassword,
+    getAuth,
+    GoogleAuthProvider,
+    onAuthStateChanged as onAuthStateChangedSdk,
+    signInAnonymously as signInAnonymouslySdk,
+    signInWithEmailAndPassword,
+    signInWithPopup,
+    signOut as signOutSdk
+} from 'firebase/auth';
+import {
+    arrayUnion,
+    collection,
+    deleteDoc,
+    doc,
+    getDoc,
+    getDocs,
+    getFirestore,
+    limit,
+    onSnapshot,
+    orderBy,
+    query,
+    setDoc,
+    where,
+    writeBatch
+} from 'firebase/firestore';
+import { getFunctions, httpsCallable } from 'firebase/functions';
+import { deleteObject, getStorage, ref } from 'firebase/storage';
 import _ from 'lodash'
 
 var firebaseConfig = {
@@ -20,75 +44,101 @@ var firebaseConfig = {
 
 const DELETE_BATCH_SIZE = 64
 
-// Thin wrapper around the Firebase SDK. Every method is a plain async function: on failure it
-// rejects, so callers can catch and show something instead of waiting on a promise that never
-// settles. Access control lives in firestore.rules / storage.rules.
+// Thin wrapper around the Firebase SDK: it owns every call into Firebase so the rest of the app
+// never touches an SDK object. Every method is a plain async function (or, for the subscriptions,
+// returns an unsubscribe): on failure it rejects, so callers can catch and show something instead
+// of waiting on a promise that never settles. Access control lives in firestore.rules /
+// storage.rules.
 class Firebase {
     constructor() {
-        if (!app.apps.length) {
-            app.initializeApp(firebaseConfig);
-        }
+        this.app = getApps().length ? getApp() : initializeApp(firebaseConfig);
 
         // add this for local function development
-        //app.functions().useFunctionsEmulator('http://localhost:5001')
+        //connectFunctionsEmulator(this.functions, 'localhost', 5001)
 
-        this.app = app;
-        this.currentUser = null;
-        this.auth = app.auth();
-        this.db = app.firestore();
-        this.firestore = app.firestore;
-        this.functions = app.functions()
-        this.storage = app.storage()
-        this.onUserUpdatedObservers = [];
-
-        app.auth().onAuthStateChanged((user) => {
-            this.currentUser = user || null;
-            this.onUserUpdatedObservers.forEach(observer => observer(this.currentUser));
-        });
+        this.auth = getAuth(this.app);
+        this.db = getFirestore(this.app);
+        this.functions = getFunctions(this.app);
+        this.storage = getStorage(this.app);
     }
+
+    // *** Auth ***
+    /** Calls `cb` with the auth user (or null) whenever it changes. Returns the unsubscribe. */
+    onAuthStateChanged = (cb) => onAuthStateChangedSdk(this.auth, cb);
+
+    /** Each sign-in resolves to the auth user, so callers never see an SDK credential. */
+    signInWithGoogle = async () => {
+        const credential = await signInWithPopup(this.auth, new GoogleAuthProvider())
+        return credential.user
+    }
+
+    signInWithEmail = async (email, password) => {
+        const credential = await signInWithEmailAndPassword(this.auth, email, password)
+        return credential.user
+    }
+
+    signUpWithEmail = async (email, password) => {
+        const credential = await createUserWithEmailAndPassword(this.auth, email, password)
+        return credential.user
+    }
+
+    signInAnonymously = async () => {
+        const credential = await signInAnonymouslySdk(this.auth)
+        return credential.user
+    }
+
+    signOut = () => signOutSdk(this.auth);
 
     // *** Users ***
     loadUser = async (id) => {
-        const userSnapshot = await this.db.collection('users').doc(id).get()
-        return userSnapshot.exists ? { id: userSnapshot.id, ...userSnapshot.data() } : null
+        const userSnapshot = await getDoc(doc(this.db, 'users', id))
+        return userSnapshot.exists() ? { id: userSnapshot.id, ...userSnapshot.data() } : null
     }
 
     /** Creates or completes a user profile. Merges so two writers (sign-up dialog and the auth observer) cannot wipe each other's fields. */
     createUser = async (userData) => {
         const user = _.cloneDeep(userData)
         delete user.id
-        await this.db.collection('users').doc(userData.id).set(user, { merge: true })
+        await setDoc(doc(this.db, 'users', userData.id), user, { merge: true })
     }
 
     updateUser = async (id, userData) => {
         const user = _.cloneDeep(userData)
         delete user.id
-        await this.db.collection('users').doc(id).set(user, { merge: true })
+        await setDoc(doc(this.db, 'users', id), user, { merge: true })
     }
 
-    signOut = () => this.auth.signOut();
+    /**
+     * Watches one user profile. Delivers `{ exists, data }` on every change (`data` is undefined
+     * once the profile is gone). Returns the unsubscribe.
+     */
+    subscribeToUser = (userId, onNext, onError) => onSnapshot(
+        doc(this.db, 'users', userId),
+        snapshot => onNext({ exists: snapshot.exists(), data: snapshot.data() }),
+        onError
+    )
 
     // *** Cloud Functions ***
     // Both callables take a single { roundId } object; identity comes from the auth token server-side.
     getJitsiToken = async (roundId) => {
-        const getJaasToken = this.functions.httpsCallable('getJaasToken');
+        const getJaasToken = httpsCallable(this.functions, 'getJaasToken');
         const result = await getJaasToken({ roundId })
         return result.data // { token, appId, room }
     }
 
     createShortLink = async (roundId) => {
-        const createShortLink = this.functions.httpsCallable('createShortLink');
+        const createShortLink = httpsCallable(this.functions, 'createShortLink');
         const result = await createShortLink({ roundId })
         return result.data // { link }
     }
 
     // *** Rounds ***
     getRoundsList = async (userId, minimumVersion = 1) => {
-        const roundsSnapshot = await this.db
-            .collection("rounds")
-            .where('createdBy', '==', userId)
-            .orderBy('createdAt', 'desc')
-            .get();
+        const roundsSnapshot = await getDocs(query(
+            collection(this.db, 'rounds'),
+            where('createdBy', '==', userId),
+            orderBy('createdAt', 'desc')
+        ));
         const rounds = []
         roundsSnapshot.forEach(roundDoc => {
             const round = { ...roundDoc.data(), id: roundDoc.id }
@@ -101,8 +151,8 @@ class Firebase {
 
     /** Resolves to null when the round does not exist. */
     getRound = async (roundId) => {
-        const roundSnapshot = await this.db.collection('rounds').doc(roundId).get()
-        if (!roundSnapshot.exists) {
+        const roundSnapshot = await getDoc(doc(this.db, 'rounds', roundId))
+        if (!roundSnapshot.exists()) {
             return null
         }
         const [layers, userBuses, userPatterns] = await Promise.all([
@@ -114,11 +164,7 @@ class Firebase {
     }
 
     getLayers = async (roundId) => {
-        const layerSnapshot = await this.db
-            .collection("rounds")
-            .doc(roundId)
-            .collection('layers')
-            .get();
+        const layerSnapshot = await getDocs(collection(this.db, 'rounds', roundId, 'layers'));
         const layers = []
         layerSnapshot.forEach(layerDoc => {
             layers.push({ ...layerDoc.data(), id: layerDoc.id });
@@ -127,11 +173,7 @@ class Firebase {
     }
 
     getUserBuses = async (roundId) => {
-        const userBusesSnapshot = await this.db
-            .collection("rounds")
-            .doc(roundId)
-            .collection('userBuses')
-            .get();
+        const userBusesSnapshot = await getDocs(collection(this.db, 'rounds', roundId, 'userBuses'));
         const userBuses = {}
         userBusesSnapshot.forEach(userBusDoc => {
             userBuses[userBusDoc.id] = { ...userBusDoc.data(), id: userBusDoc.id };
@@ -140,11 +182,7 @@ class Firebase {
     }
 
     getUserPatterns = async (roundId) => {
-        const userPatternsSnapshot = await this.db
-            .collection("rounds")
-            .doc(roundId)
-            .collection('userPatterns')
-            .get();
+        const userPatternsSnapshot = await getDocs(collection(this.db, 'rounds', roundId, 'userPatterns'));
         const allUserPatterns = {}
         userPatternsSnapshot.forEach(userPatternsDoc => {
             allUserPatterns[userPatternsDoc.id] = { ...userPatternsDoc.data(), id: userPatternsDoc.id };
@@ -152,31 +190,61 @@ class Firebase {
         return allUserPatterns
     }
 
+    /**
+     * Watches a round document. Delivers `{ exists, data }` on every change (`data` is undefined
+     * once the round is deleted). Returns the unsubscribe.
+     */
+    subscribeToRound = (roundId, onNext, onError) => onSnapshot(
+        doc(this.db, 'rounds', roundId),
+        snapshot => onNext({ exists: snapshot.exists(), data: snapshot.data() }),
+        onError
+    )
+
+    /**
+     * Shared by the three round sub-collection subscriptions below. Delivers the changes of every
+     * snapshot as an array of `{ type: 'added'|'modified'|'removed', id, data }`.
+     */
+    subscribeToRoundSubCollection = (roundId, name, onChanges, onError) => onSnapshot(
+        collection(this.db, 'rounds', roundId, name),
+        snapshot => onChanges(snapshot.docChanges().map(change => ({
+            type: change.type,
+            id: change.doc.id,
+            data: change.doc.data()
+        }))),
+        onError
+    )
+
+    subscribeToLayers = (roundId, onChanges, onError) => this.subscribeToRoundSubCollection(roundId, 'layers', onChanges, onError)
+
+    subscribeToUserBuses = (roundId, onChanges, onError) => this.subscribeToRoundSubCollection(roundId, 'userBuses', onChanges, onError)
+
+    subscribeToUserPatterns = (roundId, onChanges, onError) => this.subscribeToRoundSubCollection(roundId, 'userPatterns', onChanges, onError)
+
     /** Deletes every document in a collection, in batches. */
     deleteCollection = async (collectionRef) => {
-        let snapshot = await collectionRef.limit(DELETE_BATCH_SIZE).get();
+        let snapshot = await getDocs(query(collectionRef, limit(DELETE_BATCH_SIZE)));
         while (snapshot.size > 0) {
-            const batch = this.db.batch();
-            snapshot.docs.forEach(doc => batch.delete(doc.ref));
+            const batch = writeBatch(this.db);
+            snapshot.docs.forEach(docSnapshot => batch.delete(docSnapshot.ref));
             await batch.commit();
             if (snapshot.size < DELETE_BATCH_SIZE) {
                 break
             }
-            snapshot = await collectionRef.limit(DELETE_BATCH_SIZE).get();
+            snapshot = await getDocs(query(collectionRef, limit(DELETE_BATCH_SIZE)));
         }
     }
 
     /** Deletes a round together with its layers, user buses and user patterns. */
     deleteRound = async (round) => {
-        const roundRef = this.db.collection('rounds').doc(round.id)
-        await this.deleteCollection(roundRef.collection('layers'))
-        await this.deleteCollection(roundRef.collection('userBuses'))
-        await this.deleteCollection(roundRef.collection('userPatterns'))
-        await roundRef.delete()
+        const roundRef = doc(this.db, 'rounds', round.id)
+        await this.deleteCollection(collection(roundRef, 'layers'))
+        await this.deleteCollection(collection(roundRef, 'userBuses'))
+        await this.deleteCollection(collection(roundRef, 'userPatterns'))
+        await deleteDoc(roundRef)
     }
 
     deleteLayer = async (roundId, layerId) => {
-        await this.db.collection('rounds').doc(roundId).collection('layers').doc(layerId).delete()
+        await deleteDoc(doc(this.db, 'rounds', roundId, 'layers', layerId))
     }
 
     createRound = async (data) => {
@@ -189,7 +257,7 @@ class Firebase {
         delete round.userPatterns
         round.createdAt = Date.now()
 
-        await this.db.collection('rounds').doc(data.id).set(round)
+        await setDoc(doc(this.db, 'rounds', data.id), round)
         await Promise.all([
             ...layers.map(layer => this.createLayer(data.id, layer)),
             ...userBuses.map(userBus => this.createUserBus(data.id, userBus.id, userBus)),
@@ -200,58 +268,38 @@ class Firebase {
 
     createLayer = async (roundId, layerData) => {
         const layer = _.cloneDeep(layerData)
-        await this.db.collection('rounds')
-            .doc(roundId)
-            .collection('layers')
-            .doc(layer.id)
-            .set(layer)
+        await setDoc(doc(this.db, 'rounds', roundId, 'layers', layer.id), layer)
     }
 
     createUserBus = async (roundId, id, userBus) => {
         const userBusClone = _.cloneDeep(userBus)
         delete userBusClone.id
-        await this.db.collection('rounds')
-            .doc(roundId)
-            .collection('userBuses')
-            .doc(id)
-            .set(userBusClone)
+        await setDoc(doc(this.db, 'rounds', roundId, 'userBuses', id), userBusClone)
     }
 
     saveUserPatterns = async (roundId, userId, userPatterns) => {
         const userPatternsClone = _.cloneDeep(userPatterns)
         delete userPatternsClone.id
-        await this.db.collection('rounds')
-            .doc(roundId)
-            .collection('userPatterns')
-            .doc(userId)
-            .set(userPatternsClone)
+        await setDoc(doc(this.db, 'rounds', roundId, 'userPatterns', userId), userPatternsClone)
     }
 
     updateRound = async (roundId, data) => {
-        await this.db.collection('rounds').doc(roundId).set(data, { merge: true })
+        await setDoc(doc(this.db, 'rounds', roundId), data, { merge: true })
     }
 
     /** Adds a user to a round's members atomically (no read-modify-write of the array). */
     joinRound = async (roundId, userId) => {
-        await this.db.collection('rounds').doc(roundId).set({
-            currentUsers: app.firestore.FieldValue.arrayUnion(userId)
+        await setDoc(doc(this.db, 'rounds', roundId), {
+            currentUsers: arrayUnion(userId)
         }, { merge: true })
     }
 
     updateLayer = async (roundId, layerId, data) => {
-        await this.db.collection('rounds')
-            .doc(roundId)
-            .collection('layers')
-            .doc(layerId)
-            .set(data, { merge: true })
+        await setDoc(doc(this.db, 'rounds', roundId, 'layers', layerId), data, { merge: true })
     }
 
     updateUserBus = async (roundId, userId, userBus) => {
-        await this.db.collection('rounds')
-            .doc(roundId)
-            .collection('userBuses')
-            .doc(userId)
-            .set(userBus, { merge: true })
+        await setDoc(doc(this.db, 'rounds', roundId, 'userBuses', userId), userBus, { merge: true })
     }
 
     // *** Custom samples ***
@@ -259,30 +307,35 @@ class Firebase {
         const sampleClone = _.cloneDeep(sample)
         delete sampleClone.id
         delete sampleClone.localURL
-        await this.db.collection('samples').doc(sample.id).set(sampleClone)
+        await setDoc(doc(this.db, 'samples', sample.id), sampleClone)
     }
 
     getSample = async (id) => {
-        const snapshot = await this.db.collection('samples').doc(id).get()
-        return snapshot.exists ? { id: snapshot.id, ...snapshot.data() } : null
+        const snapshot = await getDoc(doc(this.db, 'samples', id))
+        return snapshot.exists() ? { id: snapshot.id, ...snapshot.data() } : null
     }
 
     deleteSample = async id => {
-        await this.db.collection('samples').doc(id).delete()
+        await deleteDoc(doc(this.db, 'samples', id))
+    }
+
+    /** Deletes the uploaded .wav behind a sample. Storage paths are `{userId}/{sampleId}.wav`. */
+    deleteSampleFile = async (userId, sampleId) => {
+        await deleteObject(ref(this.storage, `${userId}/${sampleId}.wav`))
     }
 
     updateSample = async (sample) => {
         const sampleClone = _.cloneDeep(sample)
         delete sampleClone.id
         delete sampleClone.localURL
-        await this.db.collection('samples').doc(sample.id).set(sampleClone, { merge: true })
+        await setDoc(doc(this.db, 'samples', sample.id), sampleClone, { merge: true })
     }
 
     getSamples = async (userId) => {
-        const samplesSnapshot = await this.db
-            .collection("samples")
-            .where('createdBy', '==', userId)
-            .get();
+        const samplesSnapshot = await getDocs(query(
+            collection(this.db, 'samples'),
+            where('createdBy', '==', userId)
+        ));
         const samples = []
         samplesSnapshot.forEach(sampleDoc => {
             samples.push({ ...sampleDoc.data(), id: sampleDoc.id });

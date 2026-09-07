@@ -1,8 +1,9 @@
 import { vi, describe, it, expect, beforeEach, afterEach } from 'vitest'
 import React from 'react'
-import { screen, waitFor } from '@testing-library/react'
+import { act, screen, waitFor } from '@testing-library/react'
 import { Route } from 'react-router-dom'
 import PlayRoute from './PlayRoute'
+import AudioEngine from '../../audio-engine/AudioEngine'
 import { renderWithProviders, makeStore, LocationProbe } from '../../test/test-utils'
 import { setUser } from '../../redux/actions'
 
@@ -29,25 +30,30 @@ vi.mock('../dialogs/OrientationDialog', () => ({ default: () => null }))
 
 const me = { id: 'me', displayName: 'Me', color: '#fff' }
 
+/**
+ * A stand-in for the Firebase wrapper. Every subscribe method hands back an unsubscribe and keeps
+ * the delivered callback in `listeners`, so a test can push a snapshot through it.
+ */
 function makeFirebase({ round }) {
     const unsubs = { round: vi.fn(), layers: vi.fn(), userBuses: vi.fn(), userPatterns: vi.fn(), user: vi.fn() }
-    const subCollections = {
-        layers: { onSnapshot: vi.fn(() => unsubs.layers) },
-        userBuses: { onSnapshot: vi.fn(() => unsubs.userBuses) },
-        userPatterns: { onSnapshot: vi.fn(() => unsubs.userPatterns) }
-    }
-    const roundDoc = { onSnapshot: vi.fn(() => unsubs.round), collection: vi.fn(name => subCollections[name]) }
-    const userDoc = { onSnapshot: vi.fn(() => unsubs.user) }
-    const db = { collection: vi.fn(name => ({ doc: vi.fn(() => (name === 'rounds' ? roundDoc : userDoc)) })) }
+    const listeners = {}
+    const subscribe = name => vi.fn((id, onNext) => {
+        listeners[name] = onNext
+        return unsubs[name]
+    })
     const firebase = {
-        db,
+        subscribeToRound: subscribe('round'),
+        subscribeToLayers: subscribe('layers'),
+        subscribeToUserBuses: subscribe('userBuses'),
+        subscribeToUserPatterns: subscribe('userPatterns'),
+        subscribeToUser: subscribe('user'),
         getRound: typeof round === 'function' ? vi.fn(round) : vi.fn().mockResolvedValue(round),
         loadUser: vi.fn().mockResolvedValue(me),
         createUserBus: vi.fn().mockResolvedValue(),
         saveUserPatterns: vi.fn().mockResolvedValue(),
         joinRound: vi.fn().mockResolvedValue()
     }
-    return { firebase, unsubs, roundDoc, subCollections }
+    return { firebase, unsubs, listeners }
 }
 
 function roundWithMembers(members) {
@@ -69,14 +75,15 @@ describe('PlayRoute', () => {
     afterEach(() => console.error.mockRestore())
 
     it('subscribes to the round, its sub-collections and its users, and unsubscribes from all of them on unmount', async () => {
-        const { firebase, unsubs, roundDoc, subCollections } = makeFirebase({ round: roundWithMembers(['me']) })
+        const { firebase, unsubs } = makeFirebase({ round: roundWithMembers(['me']) })
         const { store, unmount } = renderRoute(firebase)
 
         await waitFor(() => expect(store.getState().round).not.toBeNull())
-        expect(roundDoc.onSnapshot).toHaveBeenCalledTimes(1)
-        expect(subCollections.layers.onSnapshot).toHaveBeenCalledTimes(1)
-        expect(subCollections.userBuses.onSnapshot).toHaveBeenCalledTimes(1)
-        expect(subCollections.userPatterns.onSnapshot).toHaveBeenCalledTimes(1)
+        expect(firebase.subscribeToRound).toHaveBeenCalledTimes(1)
+        expect(firebase.subscribeToLayers).toHaveBeenCalledTimes(1)
+        expect(firebase.subscribeToUserBuses).toHaveBeenCalledTimes(1)
+        expect(firebase.subscribeToUserPatterns).toHaveBeenCalledTimes(1)
+        expect(firebase.subscribeToUser).toHaveBeenCalledWith('me', expect.any(Function), expect.any(Function))
         expect(firebase.joinRound).not.toHaveBeenCalled() // already a member
 
         unmount()
@@ -84,6 +91,38 @@ describe('PlayRoute', () => {
             expect(unsubscribe).toHaveBeenCalledTimes(1)
         }
         expect(store.getState().round).toBeNull()
+    })
+
+    it('applies a tempo change delivered by the round subscription', async () => {
+        const { firebase, listeners } = makeFirebase({ round: roundWithMembers(['me']) })
+        const { store } = renderRoute(firebase)
+
+        await waitFor(() => expect(store.getState().round).not.toBeNull())
+        await act(async () => listeners.round({ exists: true, data: { ...roundWithMembers(['me']), bpm: 140 } }))
+
+        expect(AudioEngine.setTempo).toHaveBeenCalledWith(140)
+        expect(store.getState().round.bpm).toBe(140)
+    })
+
+    it('adds a user bus delivered by the sub-collection subscription', async () => {
+        const { firebase, listeners } = makeFirebase({ round: roundWithMembers(['me']) })
+        const { store } = renderRoute(firebase)
+
+        await waitFor(() => expect(store.getState().round).not.toBeNull())
+        await act(async () => listeners.userBuses([{ type: 'added', id: 'them', data: { fx: [] } }]))
+
+        expect(store.getState().round.userBuses.them).toMatchObject({ id: 'them' })
+        expect(AudioEngine.addUser).toHaveBeenCalledWith('them', [])
+    })
+
+    it('goes back to the rounds list when the round is deleted while playing', async () => {
+        const { firebase, listeners } = makeFirebase({ round: roundWithMembers(['me']) })
+        const { store } = renderRoute(firebase)
+
+        await waitFor(() => expect(store.getState().round).not.toBeNull())
+        await act(async () => listeners.round({ exists: false, data: undefined }))
+
+        expect(screen.getByTestId('location')).toHaveTextContent('/rounds')
     })
 
     it('joins a round atomically on the first visit and creates the user documents', async () => {

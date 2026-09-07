@@ -174,19 +174,18 @@ class PlayRoute extends Component {
 
     addFirebaseListeners() {
         const _this = this
-        const roundRef = this.context.db.collection('rounds').doc(this.props.round.id)
+        const roundId = this.props.round.id
 
         // Round
-        this.unsubscribers.push(roundRef.onSnapshot(async (doc) => {
+        this.unsubscribers.push(this.context.subscribeToRound(roundId, async ({ exists, data: updatedRound }) => {
             if (_this.isDisposing) {
                 return
             }
-            if (!doc.exists || _.isNil(_this.props.round)) {
+            if (!exists || _.isNil(_this.props.round)) {
                 // deleted round
                 _this.props.history.push('/rounds')
                 return
             }
-            const updatedRound = doc.data()
             if (!_.isEqual(_this.props.round.currentUsers, updatedRound.currentUsers)) {
                 const users = await _this.loadUsersById(updatedRound.currentUsers || [])
                 if (_this.isDisposing) {
@@ -207,14 +206,13 @@ class PlayRoute extends Component {
         }, (error) => console.error('Round listener failed', error)))
 
         // Layers
-        this.unsubscribers.push(roundRef.collection('layers').onSnapshot((layerCollectionSnapshot) => {
+        this.unsubscribers.push(this.context.subscribeToLayers(roundId, (changes) => {
             if (_this.isDisposing) {
                 return
             }
-            layerCollectionSnapshot.docChanges().forEach(change => {
+            changes.forEach(change => {
                 if (change.type === 'modified') {
-                    const layer = change.doc.data()
-                    if (layer.createdBy !== _this.props.user.id) {
+                    if (change.data.createdBy !== _this.props.user.id) {
                         _this.reloadCollaborationLayersThrottled()
                     }
                 }
@@ -225,13 +223,12 @@ class PlayRoute extends Component {
         }, (error) => console.error('Layers listener failed', error)))
 
         // Userbus (FX)
-        this.unsubscribers.push(roundRef.collection('userBuses').onSnapshot((userBusesCollectionSnapshot) => {
+        this.unsubscribers.push(this.context.subscribeToUserBuses(roundId, (changes) => {
             if (_this.isDisposing || _.isNil(_this.props.round)) {
                 return
             }
-            userBusesCollectionSnapshot.docChanges().forEach(change => {
-                const userBus = change.doc.data()
-                userBus.id = change.doc.id
+            changes.forEach(change => {
+                const userBus = { ...change.data, id: change.id }
                 if (change.type === 'modified') {
                     _this.handleUserBusChange(userBus)
                 }
@@ -245,13 +242,13 @@ class PlayRoute extends Component {
         }, (error) => console.error('User buses listener failed', error)))
 
         // UserPatterns
-        this.unsubscribers.push(roundRef.collection('userPatterns').onSnapshot((userPatternsCollectionSnapshot) => {
+        this.unsubscribers.push(this.context.subscribeToUserPatterns(roundId, (changes) => {
             if (_this.isDisposing || _.isNil(_this.props.round)) {
                 return
             }
-            userPatternsCollectionSnapshot.docChanges().forEach(async change => {
-                const data = change.doc.data();
-                const userId = change.doc.id;
+            changes.forEach(async change => {
+                const data = change.data;
+                const userId = change.id;
                 if (change.type === 'modified') {
                     const userPatterns = { ...data, id: userId }
                     _this.handleUserPatternsChange(userPatterns)
@@ -292,7 +289,7 @@ class PlayRoute extends Component {
         this.removeUsersListeners()
         const _this = this;
         for (const user of this.props.users) {
-            const userListenerUnsubscribe = this.context.db.collection('users').doc(user.id).onSnapshot(() => {
+            const userListenerUnsubscribe = this.context.subscribeToUser(user.id, () => {
                 if (!_this.isDisposing) {
                     _this.loadUsers()
                 }
