@@ -236,7 +236,6 @@ class PlayUI extends Component {
         }
         if (change.tempoChanged) {
             AudioEngine.setTempo(round.bpm)
-            this.reclaculateIndicatorAnimation()
             this.adjustAllLayerOffsets()
         }
         const layersToRecalculate = new Set(Object.keys(change.changedSteps))
@@ -332,9 +331,6 @@ class PlayUI extends Component {
             // add order parameter so we can calculate offsets (todo: add this when we create a layer?)
             this.addLayer(layer, i++, shouldAnimate)
         }
-        // Create activity line
-        this.activityIndicator = this.container.circle(HTML_UI_Params.activityIndicatorDiameter).fill({ color: '#fff', opacity: 0 })
-
         // add layer button
         this.playbackToggle = this.container.circle(HTML_UI_Params.addNewLayerButtonDiameter).stroke({ width: 1, color: 'rgba(0,0,0,0)' }).fill('white').opacity('0.1')
         this.playbackToggle.x((this.containerWidth / 2) - (HTML_UI_Params.addNewLayerButtonDiameter / 2))
@@ -553,19 +549,6 @@ class PlayUI extends Component {
         }
     }
 
-    reclaculateIndicatorAnimation() {
-        /* if (!_.isNil(this.positionLineAnimation)) {
-             this.positionLineAnimation.unschedule()
-         }
-         const positionLineTime = (60 / this.round.bpm) * 4000
-         this.positionLineAnimation = this.positionLine.animate({ duration: positionLineTime }).ease('-').transform({ rotate: 360, relative: true, origin: 'bottom center' }).loop()
-         if (!this.isOn) {
-             this.positionLine.timeline().pause()
-         } else {
-             this.positionLine.timeline().seek(AudioEngine.getPositionMilliseconds())
-         }*/
-    }
-
     addLayer(layer, order, shouldAnimate = true) {
         const dim = this.isRecordingSequence
         // let animateTime = shouldAnimate ? 600 : 0
@@ -684,42 +667,22 @@ class PlayUI extends Component {
         this.updateLayerLabel(layerGraphic)
     }
 
-    updateStep(step, showActivityIndicator = false) {
-        if (!_.isEmpty(this.stepGraphics) && !_.isNil(step)) {
-            const layer = this.stepLayerDictionary[step.id]
-            const stepGraphic = _.find(this.stepGraphics, { id: step.id })
-            const _this = this
-            if (showActivityIndicator) {
-                // add delay so that graphic updates after activity indicator hits it
-                _.delay(() => {
-                    if (step.isOn) {
-                        stepGraphic.animate(HTML_UI_Params.stepAnimationUpdateTime).attr({
-                            fill: layer.isMuted ? 'rgba(255,255,255, 0.1)' : _this.userColors[layer.createdBy],
-                            stroke: layer.isMuted ? 'rgba(255,255,255, 0.1)' : _this.userColors[layer.createdBy],
-                            'fill-opacity': step.probability
-                        })
-                        stepGraphic.animate(HTML_UI_Params.stepAnimationUpdateTime).transform({
-                            scale: numberRange(step.velocity, 0, 1, 0.5, 1)
-                        })
-                    } else {
-                        stepGraphic.animate(HTML_UI_Params.stepAnimationUpdateTime).attr({ fill: '#101114' })
-                    }
-                }, HTML_UI_Params.activityAnimationTime)
-                this.animateActivityIndicator(layer.createdBy, stepGraphic.x() + (HTML_UI_Params.stepDiameter / 2), stepGraphic.y() + (HTML_UI_Params.stepDiameter / 2))
-            } else {
-                if (step.isOn) {
-                    stepGraphic.attr({
-                        fill: layer.isMuted ? 'rgba(255,255,255, 0.1)' : _this.userColors[layer.createdBy],
-                        stroke: layer.isMuted ? 'rgba(255,255,255, 0.1)' : _this.userColors[layer.createdBy],
-                        'fill-opacity': step.probability
-                    })
-                    stepGraphic.transform({
-                        scale: numberRange(step.velocity, 0, 1, 0.5, 1)
-                    })
-                } else {
-                    stepGraphic.attr({ fill: '#101114', 'fill-opacity': 1 })
-                }
-            }
+    /** Paints a step's graphic the way the step is: its layer's colour when on, dark when off. */
+    updateStep(step) {
+        if (_.isNil(step) || _.isEmpty(this.stepGraphics)) {
+            return
+        }
+        const layer = this.stepLayerDictionary[step.id]
+        const stepGraphic = _.find(this.stepGraphics, { id: step.id })
+        if (_.isNil(layer) || _.isNil(stepGraphic)) {
+            return
+        }
+        if (step.isOn) {
+            const color = layer.isMuted ? 'rgba(255,255,255, 0.1)' : this.userColors[layer.createdBy]
+            stepGraphic.attr({ fill: color, stroke: color, 'fill-opacity': step.probability })
+            stepGraphic.transform({ scale: numberRange(step.velocity, 0, 1, 0.5, 1) })
+        } else {
+            stepGraphic.attr({ fill: '#101114', 'fill-opacity': 1 })
         }
     }
 
@@ -802,22 +765,6 @@ class PlayUI extends Component {
         const msPerBeat = 60000 / BPM
         const msPerTick = msPerBeat / PPQ
         return Math.round(ms / msPerTick)
-    }
-
-    animateActivityIndicator(userId, toX, toY) {
-        const avatarGraphic = _.find(this.avatarGraphics, { id: userId })
-        if (!_.isNil(this.activityIndicator) && !_.isNil(avatarGraphic)) {
-            this.activityIndicator.fill({ color: this.userColors[userId], opacity: 1 })
-            const fromX = avatarGraphic.x() + (HTML_UI_Params.avatarDiameter / 2)
-            const fromY = avatarGraphic.y() + (HTML_UI_Params.avatarDiameter / 2)
-            toX -= HTML_UI_Params.activityIndicatorDiameter / 2
-            toY -= HTML_UI_Params.activityIndicatorDiameter / 2
-            this.activityIndicator.move(fromX, fromY)
-            const animation = this.activityIndicator.animate(HTML_UI_Params.activityAnimationTime).move(toX, toY)//.animate(HTML_UI_Params.activityAnimationTime * 1.3).fill({ opacity: 0 })
-            animation.after(() => {
-                this.activityIndicator.animate().fill({ opacity: 0 })
-            })
-        }
     }
 
     addLayerEventListeners(layerGraphic) {
