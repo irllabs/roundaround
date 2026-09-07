@@ -1,25 +1,33 @@
 
 import _ from "lodash";
-import HiHats from './instruments/HiHats'
-import Kicks from './instruments/Kicks'
-import Snares from './instruments/Snares'
-import Perc from './instruments/Perc'
+import { createSampleInstrument } from './instruments/sampleInstrument'
 import Custom from './instruments/Custom'
 import CustomSamples from './CustomSamples'
+import HiHatSamples from '../samples/HiHats/index'
+import KickSamples from '../samples/Kicks/index'
+import SnareSamples from '../samples/Snares/index'
+import PercSamples from '../samples/Perc/index'
 import { randomInt } from "../utils/helpers";
+
+const HiHats = createSampleInstrument({ instrumentName: 'HiHats', label: 'Hi-hat', folder: 'HiHats', samples: HiHatSamples })
+const Kicks = createSampleInstrument({ instrumentName: 'Kicks', label: 'Kick', folder: 'Kicks', samples: KickSamples })
+const Snares = createSampleInstrument({ instrumentName: 'Snares', label: 'Snare', folder: 'Snares', samples: SnareSamples })
+const Perc = createSampleInstrument({ instrumentName: 'Perc', label: 'Perc', folder: 'Perc', samples: PercSamples })
+
+// the order decides the order of Instruments.classes(), which is what new layers pick from
+const INSTRUMENT_CLASSES = [
+    HiHats,
+    Kicks,
+    Snares,
+    Perc,
+    Custom
+];
 
 const Instruments = {
     instrumentClasses: {},
     instruments: [],
     init() {
-        const classes = [
-            HiHats,
-            Kicks,
-            Snares,
-            Perc,
-            Custom
-        ];
-        for (let instrumentClass of classes) {
+        for (let instrumentClass of INSTRUMENT_CLASSES) {
             this.instrumentClasses[instrumentClass.instrumentName] = instrumentClass;
         }
     },
@@ -32,15 +40,8 @@ const Instruments = {
         return sampleKeys[randomSoundNo];
     },
     async classes() {
-        const classes = [
-            HiHats,
-            Kicks,
-            Snares,
-            Perc,
-            Custom
-        ];
         const inst = {};
-        for (let instrument of classes) {
+        for (let instrument of INSTRUMENT_CLASSES) {
             inst[instrument.instrumentName] = {
                 instrumentName: instrument.instrumentName,
                 name: instrument.name,
