@@ -30,7 +30,7 @@ import {
 } from 'firebase/firestore';
 import { getFunctions, httpsCallable } from 'firebase/functions';
 import { deleteObject, getStorage, ref } from 'firebase/storage';
-import { getAnalytics, isSupported, logEvent } from 'firebase/analytics';
+import { initializeAnalytics, isSupported, logEvent } from 'firebase/analytics';
 import _ from 'lodash'
 
 var firebaseConfig = {
@@ -47,6 +47,8 @@ var firebaseConfig = {
 const DELETE_BATCH_SIZE = 64
 // Analytics event descriptions are truncated to what GA4 accepts.
 const MAX_DESCRIPTION_LENGTH = 150
+// The one host the live Analytics property belongs to.
+const ANALYTICS_HOSTNAME = 'rounds.studio'
 
 // Thin wrapper around the Firebase SDK: it owns every call into Firebase so the rest of the app
 // never touches an SDK object. Every method is a plain async function (or, for the subscriptions,
@@ -387,16 +389,22 @@ class Firebase {
 
     // *** Analytics / error reporting ***
     /**
-     * Analytics only runs in a production build, and only where the browser supports it. It never
-     * loads under `yarn start` or in tests, so neither sends events to the live property.
+     * Analytics only runs in a production build served from the live host, and only where the
+     * browser supports it: `yarn start`, the tests, the PR preview channels and the Cypress build
+     * in CI are all production-mode or local builds on other hosts, and none of them may post to
+     * the live property.
+     *
+     * The automatic `page_view` is switched off because its `page_location` would be the address
+     * bar, and a round's URL is a bearer link: whoever has it can open the round. Nothing takes its
+     * place; no event carries the path.
      */
     initAnalytics = async () => {
-        if (import.meta.env.MODE !== 'production') {
+        if (import.meta.env.MODE !== 'production' || window.location.hostname !== ANALYTICS_HOSTNAME) {
             return
         }
         try {
             if (await isSupported()) {
-                this.analytics = getAnalytics(this.app)
+                this.analytics = initializeAnalytics(this.app, { config: { send_page_view: false } })
             }
         } catch {
             // Analytics is best effort: a blocked measurement script must not break the app.
