@@ -75,11 +75,28 @@
   }
   body {
     margin: 0;
-    background-color: var(--background);
+    /* CssBaseline injects an unlayered `body { background-color: #303030 }` at
+       runtime, and unlayered rules beat anything in a cascade layer whatever its
+       specificity, so this needs !important to hold. App.css used to win the same
+       fight the same way. Drop it once CssBaseline is gone. */
+    background-color: var(--background) !important;
     color: var(--foreground);
     font-family: var(--font-sans);
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
+  }
+  /* The MUI screens still render bare headings and paragraphs: <h1> in
+     LandingPageRoute and RoundsListRoute, <h2>/<h3> in HeaderAvatar, <p> in
+     LandingPageRoute, SignInDialog, ShareDialog and OutlinedField. They lean on
+     the browser's default sizes, weights and margins, which preflight zeroes out.
+     Hand those defaults back in the base layer only, so utilities and the shadcn
+     components still win. h4-h6 are unused today and ride along to keep the
+     heading set whole. Drop selectors as their screens move to real typography
+     components. */
+  h1, h2, h3, h4, h5, h6, p {
+    font-size: revert;
+    font-weight: revert;
+    margin: revert;
   }
   code {
     font-family: var(--font-mono);
