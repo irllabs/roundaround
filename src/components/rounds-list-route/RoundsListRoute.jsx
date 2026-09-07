@@ -112,7 +112,9 @@ class RoundsListRoute extends Component {
                         </div>
                     </div>
                     <div>
-                        {/* MUI's List: 8px of vertical padding and no bullets. */}
+                        {/* MUI's List: 8px of vertical padding and no bullets. `m-0 list-none
+                            px-0` restates Tailwind preflight's own list reset, so the rows keep
+                            their spacing whatever PR 3 does to the base layer. */}
                         <ul className="relative m-0 list-none px-0 py-2">
                             {rounds.map((round) => (
                                 <li key={round.id} className="relative">
@@ -125,7 +127,9 @@ class RoundsListRoute extends Component {
                                         type="button"
                                         data-test="list-item-round"
                                         onClick={this.onLaunchRoundClick.bind(this, round.id)}
-                                        className="flex w-full items-center justify-start px-4 py-2 pr-12 text-left hover:bg-white/8"
+                                        // focus-visible is MUI's ButtonBase focusVisible tint on a
+                                        // ListItem: action.selected, rgba(255,255,255,0.16).
+                                        className="flex w-full items-center justify-start px-4 py-2 pr-12 text-left hover:bg-white/8 focus-visible:bg-white/16"
                                     >
                                         {/* ListItemAvatar: 56px of gutter around a 40px avatar. */}
                                         <span className="w-14 shrink-0">
