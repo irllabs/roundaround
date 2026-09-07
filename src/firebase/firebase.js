@@ -12,6 +12,7 @@ import {
     signOut as signOutSdk
 } from 'firebase/auth';
 import {
+    arrayRemove,
     arrayUnion,
     collection,
     deleteDoc,
@@ -290,10 +291,36 @@ class Firebase {
         await setDoc(doc(this.db, 'rounds', roundId), data, { merge: true })
     }
 
-    /** Adds a user to a round's members atomically (no read-modify-write of the array). */
+    /**
+     * Adds a user to a round's members and to its contributors atomically (no read-modify-write of
+     * either array). `currentUsers` is who is in the round now; `contributors` is everyone who has
+     * ever been in it, so their layers keep their colour once they have gone.
+     */
     joinRound = async (roundId, userId) => {
         await setDoc(doc(this.db, 'rounds', roundId), {
-            currentUsers: arrayUnion(userId)
+            currentUsers: arrayUnion(userId),
+            contributors: arrayUnion(userId)
+        }, { merge: true })
+    }
+
+    /** Takes a user out of a round's members. Nobody is ever taken out of `contributors`. */
+    leaveRound = async (roundId, userId) => {
+        await setDoc(doc(this.db, 'rounds', roundId), {
+            currentUsers: arrayRemove(userId)
+        }, { merge: true })
+    }
+
+    /**
+     * Gives a round written before `contributors` existed the list it should have had. A union, so
+     * two clients opening the round at the same time cannot drop each other's ids, and so a second
+     * run adds nothing. Does not write when there is nothing to add.
+     */
+    backfillContributors = async (roundId, userIds) => {
+        if (_.isEmpty(userIds)) {
+            return
+        }
+        await setDoc(doc(this.db, 'rounds', roundId), {
+            contributors: arrayUnion(...userIds)
         }, { merge: true })
     }
 

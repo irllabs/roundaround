@@ -295,6 +295,11 @@ describe('the round reducer', () => {
             name: 'SET_ROUND_CURRENT_USERS replaces the list of members',
             action: () => ({ type: types.SET_ROUND_CURRENT_USERS, payload: { value: [USER_ID] } }),
             assert: (next) => expect(next.currentUsers).toEqual([USER_ID])
+        },
+        {
+            name: 'SET_ROUND_CONTRIBUTORS replaces the list of contributors',
+            action: () => ({ type: types.SET_ROUND_CONTRIBUTORS, payload: { value: [USER_ID, COLLABORATOR_ID, 'user-3'] } }),
+            assert: (next) => expect(next.contributors).toEqual([USER_ID, COLLABORATOR_ID, 'user-3'])
         }
     ]
 
@@ -316,7 +321,8 @@ describe('the round reducer', () => {
             types.REMOVE_LAYER, types.ADD_USERBUS, types.SET_USER_BUS_FX_OVERRIDE, types.SET_USER_BUS_FX,
             types.SAVE_USER_PATTERN, types.SET_USER_PATTERN_SEQUENCE, types.SET_IS_PLAYING_SEQUENCE,
             types.SET_ROUND_NAME, types.SET_ROUND_BPM, types.SET_ROUND_SWING, types.SET_ROUND_ID,
-            types.SET_IS_PLAYING, types.SET_ROUND_SHORTLINK, types.SET_ROUND_CURRENT_USERS
+            types.SET_IS_PLAYING, types.SET_ROUND_SHORTLINK, types.SET_ROUND_CURRENT_USERS,
+            types.SET_ROUND_CONTRIBUTORS
         ]
         const covered = new Set(cases.map(({ action }) => action().type))
         expect([...covered].sort()).toEqual([...handled].sort())

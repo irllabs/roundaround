@@ -12,5 +12,6 @@ export async function makeRound() {
     round.userBuses[COLLABORATOR_ID] = getDefaultUserBus(COLLABORATOR_ID)
     round.userPatterns[COLLABORATOR_ID] = getDefaultUserPatterns(COLLABORATOR_ID)
     round.currentUsers = [USER_ID, COLLABORATOR_ID]
+    round.contributors = [USER_ID, COLLABORATOR_ID]
     return round
 }

@@ -185,6 +185,31 @@ export const soloMuteStates = (layers, soloedLayerId) => {
 }
 
 /**
+ * The contributors who are in the round right now. The app keeps a profile for every contributor,
+ * present or not, so a layer keeps its author's colour after the author has gone; the header shows
+ * an avatar, and voice chat opens, only for the people who are actually here.
+ */
+export const presentUsers = (users, round) => {
+    const currentUsers = _.get(round, 'currentUsers')
+    if (_.isNil(currentUsers)) {
+        return []
+    }
+    return (users || []).filter(user => currentUsers.includes(user.id))
+}
+
+/**
+ * The contributors of a round saved before rounds had a `contributors` field: whoever created it,
+ * whoever is in it now, and whoever made one of its layers. De-duplicated; the order means nothing.
+ */
+export const derivedContributors = (round) => {
+    if (_.isNil(round)) {
+        return []
+    }
+    const layerCreators = (round.layers || []).map(layer => layer.createdBy)
+    return _.uniq([round.createdBy, ...(round.currentUsers || []), ...layerCreators].filter(id => !_.isNil(id)))
+}
+
+/**
  * The profile fields an auth user contributes to their users/{uid} document. Null fields are
  * left out so a merge write never overwrites a display name chosen in the sign-up dialog.
  */

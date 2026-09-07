@@ -32,6 +32,7 @@ import {
     SET_IS_PLAYING,
     SET_ROUND_SHORTLINK,
     SET_ROUND_CURRENT_USERS,
+    SET_ROUND_CONTRIBUTORS,
     SET_LAYER_TIME_OFFSET,
     SET_LAYER_PERCENT_OFFSET,
     UPDATE_LAYER,
@@ -193,5 +194,8 @@ export default createReducer(initialState, (builder) => {
         })
         .addCase(SET_ROUND_CURRENT_USERS, (state, action) => {
             state.currentUsers = action.payload.value
+        })
+        .addCase(SET_ROUND_CONTRIBUTORS, (state, action) => {
+            state.contributors = action.payload.value
         })
 });

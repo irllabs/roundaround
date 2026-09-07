@@ -20,6 +20,7 @@ import {
     SET_LAYER_STEPS,
     ADD_USERBUS,
     SET_ROUND_CURRENT_USERS,
+    SET_ROUND_CONTRIBUTORS,
     SET_DISABLE_KEY_LISTENER,
     SET_USER_COLOR,
     SET_ROUND_BPM,
@@ -154,6 +155,10 @@ export const saveUserPattern = (userId, patternId, data) => ({
 })
 export const setRoundCurrentUsers = (value) => ({
     type: SET_ROUND_CURRENT_USERS,
+    payload: { value }
+})
+export const setRoundContributors = (value) => ({
+    type: SET_ROUND_CONTRIBUTORS,
     payload: { value }
 })
 export const setRoundBpm = (bpm) => ({

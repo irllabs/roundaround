@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { changeLayerLength, convertPercentToDB, convertDBToPercent, duplicateRound, uuid, arraymove, soloMuteStates, profileFromAuthUser, layerWithStepsOff, patternLayersForRound, normalizeLegacyFxOrder } from './index'
+import { changeLayerLength, convertPercentToDB, convertDBToPercent, derivedContributors, duplicateRound, uuid, arraymove, presentUsers, soloMuteStates, profileFromAuthUser, layerWithStepsOff, patternLayersForRound, normalizeLegacyFxOrder } from './index'
 import { deepFreeze } from '../test/deep-freeze'
 
 const layerWithSteps = (pattern) => ({
@@ -155,6 +155,47 @@ describe('layerWithStepsOff', () => {
         expect(silenced.steps.map(s => s.isOn)).toEqual([false, false])
         expect(silenced.gain).toBe(-3)
         expect(original.steps[0].isOn).toBe(true)
+    })
+})
+
+describe('presentUsers', () => {
+    const users = [{ id: 'a' }, { id: 'b' }, { id: 'c' }]
+
+    it('keeps the contributors who are in the round now, in the order they are listed', () => {
+        expect(presentUsers(users, { currentUsers: ['c', 'a'] })).toEqual([{ id: 'a' }, { id: 'c' }])
+    })
+
+    it('leaves out a contributor who has left', () => {
+        expect(presentUsers(users, { currentUsers: ['b'] })).toEqual([{ id: 'b' }])
+    })
+
+    it('finds nobody without a round, or in a round nobody is in', () => {
+        expect(presentUsers(users, null)).toEqual([])
+        expect(presentUsers(users, {})).toEqual([])
+        expect(presentUsers(users, { currentUsers: [] })).toEqual([])
+        expect(presentUsers([], { currentUsers: ['a'] })).toEqual([])
+    })
+
+    it('leaves the list it was given alone', () => {
+        deepFreeze(users)
+        expect(() => presentUsers(users, { currentUsers: ['a'] })).not.toThrow()
+    })
+})
+
+describe('derivedContributors', () => {
+    it('is whoever made the round, whoever is in it and whoever made a layer, without repeats', () => {
+        const round = {
+            createdBy: 'owner',
+            currentUsers: ['owner', 'here'],
+            layers: [{ createdBy: 'owner' }, { createdBy: 'gone' }]
+        }
+        expect(derivedContributors(round)).toEqual(['owner', 'here', 'gone'])
+    })
+
+    it('copes with a round that is missing the parts it derives from', () => {
+        expect(derivedContributors({ createdBy: 'owner' })).toEqual(['owner'])
+        expect(derivedContributors({ currentUsers: ['here'], layers: [{}] })).toEqual(['here'])
+        expect(derivedContributors(null)).toEqual([])
     })
 })
 

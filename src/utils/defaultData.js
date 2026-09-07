@@ -76,6 +76,8 @@ export const getDefaultRoundData = async (userId) => {
         "name": "Default Round",
         "createdAt": Date.now(),
         "currentUsers": [],
+        // Everyone who has ever been in the round; nobody is ever taken out of it.
+        "contributors": [],
         "layers": [
             await getDefaultLayerData(userId, {
                 "instrument": "Sampler",
