@@ -5,10 +5,10 @@ import userEvent from '@testing-library/user-event'
 import { AppMenu, AppMenuItem } from './AppMenu'
 import { Button } from '@/components/ui/button'
 
-function Harness({ onPick = vi.fn() }) {
+function Harness({ onPick = vi.fn(), footer }) {
     const [open, setOpen] = React.useState(false)
     return (
-        <AppMenu open={open} onOpenChange={setOpen} listId="menu-list-grow" trigger={<Button aria-label="More options">…</Button>}>
+        <AppMenu open={open} onOpenChange={setOpen} listId="menu-list-grow" label="Round options" footer={footer} trigger={<Button aria-label="More options" aria-haspopup="menu">…</Button>}>
             <AppMenuItem onClick={() => onPick('one')}>One</AppMenuItem>
             <AppMenuItem onClick={() => onPick('two')}>Two</AppMenuItem>
         </AppMenu>
@@ -20,6 +20,16 @@ describe('AppMenu', () => {
         render(<Harness />)
         screen.getByRole('button', { name: 'More options' }).click()
         expect(await screen.findByRole('menu')).toHaveAttribute('id', 'menu-list-grow')
+    })
+
+    it('names the popover and lets the trigger say it opens a menu', async () => {
+        render(<Harness />)
+        const trigger = screen.getByRole('button', { name: 'More options' })
+        // Radix's PopoverTrigger writes aria-haspopup="dialog"; the caller's own value has to win,
+        // because what opens is a menu.
+        expect(trigger).toHaveAttribute('aria-haspopup', 'menu')
+        trigger.click()
+        expect(await screen.findByRole('dialog', { name: 'Round options' })).toBeInTheDocument()
     })
 
     it('walks its items with the arrow keys and wraps', async () => {
@@ -44,6 +54,17 @@ describe('AppMenu', () => {
         await user.keyboard('{Escape}')
         expect(screen.queryByRole('menu')).toBeNull()
         expect(trigger).toHaveFocus()
+    })
+
+    it('puts a footer below the list rather than inside it', async () => {
+        render(<Harness footer={<div data-test="tempo">Tempo</div>} />)
+        screen.getByRole('button', { name: 'More options' }).click()
+        const list = await screen.findByRole('menu')
+        const footer = screen.getByTestId('tempo')
+        // The list's own bottom padding has to stay between the last item and the footer, which
+        // only happens if the footer is in the popover but outside the list.
+        expect(screen.getByRole('dialog', { name: 'Round options' }).contains(footer)).toBe(true)
+        expect(list.contains(footer)).toBe(false)
     })
 
     it('runs an item and lets the caller close the menu', async () => {

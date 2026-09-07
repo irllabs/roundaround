@@ -13,7 +13,7 @@ const PAPER = 'w-auto min-w-0 gap-0 rounded-lg bg-popover p-0 text-sm text-popov
  * arrow-key roving focus that MenuList gave us is re-implemented here so the menus stay
  * keyboard-navigable.
  */
-export function AppMenu({ open, onOpenChange, trigger, listId, align = 'center', alignOffset = 0, sideOffset = 0, contentClassName, listClassName, children }) {
+export function AppMenu({ open, onOpenChange, trigger, listId, label, align = 'center', alignOffset = 0, sideOffset = 0, contentClassName, listClassName, footer, children }) {
     const onKeyDown = (event) => {
         if (!['ArrowDown', 'ArrowUp', 'Home', 'End'].includes(event.key)) return
         const items = [...event.currentTarget.querySelectorAll('[data-menu-item]')]
@@ -35,10 +35,18 @@ export function AppMenu({ open, onOpenChange, trigger, listId, align = 'center',
                 falls back to focusing the content element itself. A handler on the list would
                 sit below where the keydown starts and never see it. On the content it fires
                 exactly once whether the content or one of the items has focus. */}
-            <PopoverContent side="bottom" align={align} alignOffset={alignOffset} sideOffset={sideOffset} onKeyDown={onKeyDown} className={cn(PAPER, contentClassName)}>
+            {/* `label` names the popover. Radix's PopoverContent is a `role="dialog"`, and an
+                unnamed dialog is announced as nothing at all; MUI's Popper had no role to name.
+                Callers pass the menu's own name ("Round options", "Account"). */}
+            <PopoverContent side="bottom" align={align} alignOffset={alignOffset} sideOffset={sideOffset} aria-label={label} onKeyDown={onKeyDown} className={cn(PAPER, contentClassName)}>
                 <div id={listId} role="menu" className={cn('py-2', listClassName)}>
                     {children}
                 </div>
+                {/* Below the list, not in it. MUI's header menu puts its tempo slider after the
+                    MenuList's closing tag, so the list's 8px bottom padding sits between the
+                    divider and the slider; and a slider is not a menuitem, so it has no business
+                    inside a role="menu" either. */}
+                {footer}
             </PopoverContent>
         </Popover>
     )

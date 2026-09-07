@@ -1,14 +1,12 @@
 import React, { Component } from 'react'
-import PropTypes from 'prop-types';
 import { connect } from "react-redux";
-import Button from '@material-ui/core/Button';
-import IconButton from '@material-ui/core/IconButton';
-import Box from '@material-ui/core/Box';
 import {
 	Link, withRouter
 } from "react-router-dom";
-import { withStyles } from '@material-ui/core/styles';
-import ShareIcon from '@material-ui/icons/Share';
+import { Button } from '@/components/ui/button';
+import { MUI_BUTTON } from '../dialogs/AppDialog';
+import { ShareIcon } from '@/components/icons';
+import { cn } from '@/lib/utils';
 import { BackButton } from '../play/layer-settings/resources';
 import { setUser, setIsShowingSignInDialog, setRedirectAfterSignIn, setRounds, setUserDisplayName, setSignUpDisplayName, setIsShowingShareDialog } from '../../redux/actions'
 import _ from 'lodash'
@@ -20,46 +18,6 @@ import { FirebaseContext } from '../../firebase';
 import { getRandomColor, presentUsers, profileFromAuthUser } from '../../utils/index'
 import CustomSamples from '../../audio-engine/CustomSamples'
 import { createRound } from '../../utils/index'
-import { Typography } from '@material-ui/core';
-
-const styles = theme => ({
-	root: {
-		height: '64px',
-		width: '100%',
-		display: 'flex',
-		flexDirection: 'row',
-		justifyContent: 'space-between',
-		alignItems: 'center',
-		paddingLeft: '1rem',
-		paddingRight: '1rem',
-		position: 'fixed',
-		zIndex: 4,
-		backgroundColor: 'rgba(47,47,47,0.9)',
-	},
-	rightSide: {
-		display: 'flex',
-		alignItems: 'center'
-	},
-	rightSideChild: {
-		marginRight: '1rem',
-	},
-	roundAroundLogoButton: {
-		fontWeight: 600
-	},
-	avatars: {
-		display: 'flex',
-		marginRight: '1rem',
-		alignItems: 'center'
-	},
-	shareButton: {
-		backgroundColor: theme.palette.secondary.main,
-		marginRight: '1rem'
-	},
-	avatar: {
-		position: 'relative',
-
-	}
-})
 
 class Header extends Component {
 	static contextType = FirebaseContext;
@@ -144,60 +102,73 @@ class Header extends Component {
 	}
 
 	render() {
-		const { classes, location, round, users, user } = this.props;
-		const isPlayMode = location.pathname.includes('/play/') ? true : false
+		const { location, round, users, user } = this.props;
+		const isPlayMode = location.pathname.includes('/play/')
 		// `users` holds a profile for every contributor so that layers keep their colour; only the
 		// people who are in the round right now get an avatar, and voice chat only opens for them.
 		const usersPresent = presentUsers(users, round)
+		// The bar stays translucent: on the play route the round is drawn underneath it and shows
+		// through, so `--surface` (opaque #2d2d2d) is not the same colour at all.
 		return (
-			<Box className={classes.root} bgcolor={"background.default"}>
+			<div className="fixed z-[4] flex h-16 w-full flex-row items-center justify-between bg-[rgba(47,47,47,0.9)] px-4">
 				{isPlayMode &&
 					<>
-						<Box style={{ display: 'flex', flexDirection: 'row', alignItems: 'center' }}>
-							<IconButton data-test="button-back-to-rounds" aria-label="Back to my rounds" to="/rounds" component={Link}>
-								<BackButton />
-							</IconButton>
-							<Box style={{ marginLeft: 8 }}>
+						<div className="flex flex-row items-center">
+							{/* 44x42, not the 48x48 of `icon-round`: MUI's IconButton is 12px of padding
+							    around whatever it holds, and BackButton is a 20x18 SVG, not a 24px
+							    glyph. Its own width is what puts the round's name at x 76 on
+							    05-round.png, so the button has to size to its content and the icon
+							    has to keep its natural size. border-0 for the same reason: the generated
+							    Button's transparent 1px border is part of a shrink-to-fit width, and
+							    MUI's ButtonBase has none. */}
+							<Button asChild variant="plain" size="icon-round" className="size-auto border-0 p-3 [&_svg:not([class*='size-'])]:size-auto">
+								<Link data-test="button-back-to-rounds" aria-label="Back to my rounds" to="/rounds"><BackButton /></Link>
+							</Button>
+							<div className="ml-2">
 								{
 									round &&
-									<Box>
+									<div>
 										<ProjectName name={round.name} />
-									</Box>
+									</div>
 								}
 								{
 									_.isNil(round) &&
-									<Typography>Loading...</Typography>
-
+									<p className="m-0 text-base leading-6 tracking-[0.00938em]">Loading...</p>
 								}
-							</Box>
-						</Box>
-						<Box className={classes.rightSide} >
-							<Box className={classes.avatars}>
+							</div>
+						</div>
+						<div className="flex items-center">
+							<div className="mr-4 flex items-center">
 								{
 									usersPresent.map((currentUser) => (
-										<HeaderAvatar className={classes.avatar} key={currentUser.id} user={currentUser} users={users} shouldShowMenu={!_.isNil(user) && (currentUser.id === user.id)} />
+										<HeaderAvatar className="relative" key={currentUser.id} user={currentUser} users={users} shouldShowMenu={!_.isNil(user) && (currentUser.id === user.id)} />
 									))
 								}
-							</Box>
+							</div>
 							{round && usersPresent.length > 1 && <JitsiComponent />}
 							{round &&
-								<Box>
-									<IconButton aria-label="Share this round" className={classes.shareButton} onClick={this.onShareClick}><ShareIcon /></IconButton>
-								</Box>
+								<div>
+									{/* border-0 because the generated Button carries a transparent 1px border
+									    and `bg-clip-padding`, which would inset this one's fill to a 46px
+									    circle inside its 48px box. MUI's IconButton has `border: 0`. */}
+									<Button aria-label="Share this round" variant="plain" size="icon-round" className="mr-4 border-0 bg-secondary hover:bg-secondary" onClick={this.onShareClick}><ShareIcon /></Button>
+								</div>
 							}
 							{round &&
-								<Box>
+								<div>
 									<HeaderMenu />
-								</Box>
+								</div>
 							}
-						</Box>
+						</div>
 					</>
 				}
 				{!isPlayMode &&
 					<>
-						<Box>
-							<Button className={classes.roundAroundLogoButton} component={Link} to="/">RoundAround</Button>
-						</Box>
+						<div>
+							<Button asChild variant="plain" className={cn(MUI_BUTTON, 'px-2 font-semibold')}>
+								<Link to="/">RoundAround</Link>
+							</Button>
+						</div>
 						{
 							user &&
 							<HeaderAvatar user={user} users={users} shouldShowMenu={true} />
@@ -205,24 +176,18 @@ class Header extends Component {
 						{
 							!user &&
 							<Button
-								variant="contained"
-								color="secondary"
-								disableElevation
+								className={cn(MUI_BUTTON, 'signed-out bg-secondary text-white hover:bg-secondary/90')}
 								onClick={this.onSignInClick}
 								data-test="button-sign-in-out"
-								className="signed-out"
 							>Sign in</Button>
 						}
 
 					</>
 				}
-			</Box >
+			</div>
 		)
 	}
 }
-Header.propTypes = {
-	classes: PropTypes.object.isRequired,
-};
 
 const mapStateToProps = state => {
 	return {
@@ -246,4 +211,4 @@ export default connect(
 		setRounds,
 		setIsShowingShareDialog
 	}
-)(withRouter((withStyles(styles)(Header))));
+)(withRouter(Header));
