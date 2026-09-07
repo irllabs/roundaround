@@ -24,7 +24,6 @@
 		"@svgdotjs/svg.js": "^3.0.16",
 		"@svgdotjs/svg.panzoom.js": "^2.1.1",
 		"@tonaljs/note": "^4.12.1",
-		"deep-object-diff": "^1.1.0",
 		"firebase": "^12.18.0",
 		"lodash": "^4.17.20",
 		"prop-types": "^15.8.1",
