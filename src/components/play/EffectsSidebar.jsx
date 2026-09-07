@@ -9,10 +9,17 @@ import {
     setUserBusFx,
     setUserBusFxOverride
 } from "../../redux/actions"
-import arrayMove from 'array-move'
 import EffectThumbControl from './EffectThumbControl'
 import ChevronRightIcon from '@material-ui/icons/ChevronRight'
 import _ from 'lodash'
+
+/** Returns a new array with the element at `from` moved to `to`, leaving `array` untouched. */
+const moveItem = (array, from, to) => {
+    const result = [...array]
+    const [item] = result.splice(from, 1)
+    result.splice(to, 0, item)
+    return result
+}
 
 const styles = theme => ({
     root: {
@@ -116,7 +123,7 @@ class EffectsSidebar extends Component {
 
     onSortEnd = ({ oldIndex, newIndex }) => {
         let userBus = _.cloneDeep(this.props.round.userBuses[this.props.user.id])
-        userBus.fx = arrayMove(userBus.fx, oldIndex, newIndex)
+        userBus.fx = moveItem(userBus.fx, oldIndex, newIndex)
         for (let i = 0; i < userBus.fx.length; i++) {
             userBus.fx[i].order = i
         }
