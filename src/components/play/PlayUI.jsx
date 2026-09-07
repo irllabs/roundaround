@@ -24,6 +24,9 @@ import {
     setCurrentSequencePattern,
     saveUserPattern
 } from "../../redux/actions";
+// How long after the last step edit the active pattern is saved. A run of toggles is one write.
+const PATTERN_SAVE_DEBOUNCE_MS = 1000
+
 const styles = theme => ({
     button: {
         cursor: 'pointer'
@@ -77,6 +80,7 @@ class PlayUI extends Component {
         this.onKeypress = this.onKeypress.bind(this)
         this.onOutsideClick = this.onOutsideClick.bind(this)
         this.stepModalStepUpdateThrottled = _.throttle(this.stepModalStepUpdate.bind(this), 300)
+        this.savePatternDebounced = _.debounce(this.saveActivePatternIfChanged.bind(this), PATTERN_SAVE_DEBOUNCE_MS)
         this.sequencerParts = {}
     }
 
@@ -98,6 +102,8 @@ class PlayUI extends Component {
     }
 
     async componentWillUnmount() {
+        // a toggle made in the last second is still waiting to be saved into the pattern
+        this.savePatternDebounced.flush()
         window.removeEventListener('click', this.interfaceClicked)
         window.removeEventListener('resize', this.onWindowResizeThrottled)
         window.removeEventListener('keydown', this.onKeypress)
@@ -1105,7 +1111,7 @@ class PlayUI extends Component {
         let step = this.getStep(stepGraphic.id)
         step.probability = _.round(stepGraphic.probability, 1)
         step.velocity = _.round(stepGraphic.velocity, 1)
-        this.saveLayer(stepGraphic.layerId)
+        this.saveLayerSteps(stepGraphic.layerId)
         AudioEngine.recalculateParts(this.props.round)
     }
 
@@ -1116,7 +1122,7 @@ class PlayUI extends Component {
             step.velocity = _.round(stepGraphic.velocity, 1)
             // a copy, for the same reason as loadPattern: the step belongs to this.round
             this.props.dispatch({ type: UPDATE_STEP, payload: { step: _.cloneDeep(step), layerId: stepGraphic.layerId } })
-            this.saveLayer(stepGraphic.layerId)
+            this.saveLayerSteps(stepGraphic.layerId)
         }
         AudioEngine.recalculateParts(this.props.round)
     }
@@ -1134,9 +1140,14 @@ class PlayUI extends Component {
         }
     }
 
-    async saveLayer(id, round) {
-        const currentRound = round || this.props.round
-        await this.context.updateLayer(this.round.id, id, _.find(currentRound.layers, { id }))
+    /**
+     * Writes a layer's steps, which is all a step edit changes; the wrapper merges them into the
+     * layer document. The steps come from this component's copy of the round, which is the one
+     * the edit was made to.
+     */
+    saveLayerSteps(layerId) {
+        const { steps } = _.find(this.round.layers, { id: layerId })
+        this.context.updateLayer(this.round.id, layerId, { steps }).catch(error => console.error('Could not save steps', error))
     }
 
     removeAllStepEventListeners() {
@@ -1158,19 +1169,20 @@ class PlayUI extends Component {
         this.stepModalThumb.y((1 - stepGraphic.velocity) * (HTML_UI_Params.stepModalDimensions - HTML_UI_Params.stepModalThumbDiameter))
     }
 
-    async onStepClick(stepGraphic) {
-        //const { user } = this.props
-        let step = this.getStep(stepGraphic.id)
+    /**
+     * A toggle repaints its own step graphic, recalculates its layer's part, and writes the layer's
+     * steps. The active pattern follows a second later, once the run of toggles it belongs to is
+     * over. Nothing else on screen depends on one step, so the round is not redrawn.
+     */
+    onStepClick(stepGraphic) {
+        const step = this.getStep(stepGraphic.id)
         // update internal round so that it doesn't trigger another update when we receive a change after the dispatch
         step.isOn = !step.isOn
-        this.updateStep(step, false)
+        this.updateStep(step)
         this.props.dispatch({ type: TOGGLE_STEP, payload: { layerId: stepGraphic.layerId, stepId: stepGraphic.id, lastUpdated: new Date().getTime(), isOn: step.isOn, user: null } })
-        AudioEngine.recalculateParts(this.round)
-        await this.saveLayer(stepGraphic.layerId)
-        if (this.activePatternId) {
-            await this.onSavePattern(this.activePatternId)
-        }
-        this.draw()
+        AudioEngine.recalculateParts(this.round, stepGraphic.layerId)
+        this.saveLayerSteps(stepGraphic.layerId)
+        this.savePatternDebounced()
     }
 
     async onAddLayerClick() {
@@ -1463,9 +1475,38 @@ class PlayUI extends Component {
     onSavePattern = async (id) => {
         this.setState({ selectedPattern: id })
         this.selectedPatternNeedsSaving = false
-        const state = this.getCurrentState(this.props.user.id)
-        this.props.saveUserPattern(this.props.user.id, id, state)
-        await this.context.saveUserPatterns(this.props.round.id, this.props.user.id, this.props.round.userPatterns[this.props.user.id])
+        await this.savePattern(id, this.getCurrentState(this.props.user.id))
+    }
+
+    /**
+     * Stores `state` as pattern `id` in the store and writes the user's patterns document. The
+     * document is put together here rather than read back from the props, because a save that runs
+     * while the component is unmounting never sees the props the dispatch would have produced.
+     */
+    savePattern(id, state) {
+        const { round, user } = this.props
+        this.props.saveUserPattern(user.id, id, state)
+        const userPatterns = round.userPatterns[user.id]
+        const patterns = userPatterns.patterns.map(pattern => pattern.id === id ? { ...pattern, state } : pattern)
+        return this.context.saveUserPatterns(round.id, user.id, { ...userPatterns, patterns })
+    }
+
+    /**
+     * Saves the active pattern, unless it already holds what the user's layers hold now. Step
+     * edits reach this through `savePatternDebounced`, so a run of edits costs one write.
+     */
+    saveActivePatternIfChanged() {
+        const { round, user } = this.props
+        const id = this.activePatternId
+        if (_.isNil(round) || _.isNil(id)) {
+            return
+        }
+        const pattern = _.find(round.userPatterns[user.id].patterns, { id })
+        const state = this.getCurrentState(user.id)
+        if (_.isNil(pattern) || _.isEqual(pattern.state, state)) {
+            return
+        }
+        this.savePattern(id, state).catch(error => console.error('Could not save pattern', error))
     }
 
     getCurrentState = (userId) => {
