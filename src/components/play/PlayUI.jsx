@@ -46,7 +46,7 @@ const styles = theme => ({
     }
 })
 
-class PlayUI extends Component {
+export class PlayUI extends Component {
     static contextType = FirebaseContext
     constructor(props) {
         super(props)
@@ -115,8 +115,20 @@ class PlayUI extends Component {
     setDefaultPattern = async () => {
         const { user, round } = this.props
         const defaultPattern = round.userPatterns[user.id].patterns[0]
-        this.activePatternId = defaultPattern.id
+        this.setActivePattern(defaultPattern.id)
         this.onLoadPattern(defaultPattern.id)
+    }
+
+    /**
+     * Makes pattern `id` the active one, the only way the active pattern may change. A toggle made
+     * in the last second is still waiting to be saved, and the debounced save reads the active
+     * pattern when it fires, so it is flushed first: after the switch it would compare the new
+     * pattern with the layers just loaded from it, find them equal, and the toggle would be lost
+     * from the pattern it was made in.
+     */
+    setActivePattern(id) {
+        this.savePatternDebounced.flush()
+        this.activePatternId = id
     }
 
     interfaceClicked = (e) => {
@@ -1655,7 +1667,7 @@ class PlayUI extends Component {
                 const patterns = round.userPatterns[user.id].patterns
                 if (this.isPlayingSequence && isPlaying) return
                 if (!this.isRecordingSequence) {
-                    this.activePatternId = id
+                    this.setActivePattern(id)
                     const pattern = _.find(patterns, { id })
                     const patternLayers = pattern.state.layers
                     if (!patternLayers) {
@@ -1672,7 +1684,7 @@ class PlayUI extends Component {
                     this.draw()
                 }
                 if (layers && layers.length > 0 && this.isRecordingSequence) {
-                    this.activePatternId = id
+                    this.setActivePattern(id)
                     this.onLoadPattern(id)
                     this.draw()
                 }
