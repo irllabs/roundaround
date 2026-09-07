@@ -76,6 +76,11 @@ class PlayRoute extends Component {
         this.usersChangeListenersUnsubscribe = []
     }
     componentDidMount() {
+        // A mount is a fresh start, whether or not this instance has been mounted before. React 18
+        // remounts class components in development under StrictMode, and everything componentWill-
+        // Unmount set is set back there except this flag: left true, every loadRound would bail at
+        // its first check and componentDidUpdate would start another one on every store change.
+        this.isDisposing = false;
         this.addStartAudioContextListener()
         this.addPageTransitionListeners()
         if (this.shouldLoadRound()) {

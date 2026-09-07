@@ -121,6 +121,22 @@ describe('PlayRoute', () => {
         expect(store.getState().round).toBeNull()
     })
 
+    it('loads the round again when the route is unmounted and mounted a second time', async () => {
+        // React 18's StrictMode does this to every class component in development: componentWill-
+        // Unmount and then componentDidMount, on the same instance, to prove it survives it. The
+        // dev server renders the whole app inside StrictMode, so this is the mount the developer
+        // actually gets, and a round that only loads on the first one loads for nobody.
+        const { firebase } = makeFirebase({ round: roundWithMembers(['me']) })
+        const store = makeStore()
+        store.dispatch(setUser(me))
+        const route = <><Route path="/play" component={PlayRoute} /><LocationProbe /></>
+        renderWithProviders(<React.StrictMode>{route}</React.StrictMode>, { store, firebase, route: '/play/r1' })
+
+        await waitFor(() => expect(store.getState().round).not.toBeNull())
+        expect(screen.getByTestId('location')).toHaveTextContent('/play/r1')
+        expect(store.getState().users.map(user => user.id)).toEqual(['me'])
+    })
+
     it('stays in the round when the first snapshot arrives before the round has been rendered', async () => {
         const round = roundWithMembers(['me'])
         const { firebase } = makeFirebase({ round })
