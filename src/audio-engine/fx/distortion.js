@@ -1,6 +1,5 @@
 
 import FXBaseClass from './fx-base-class';
-import _ from 'lodash';
 import * as Tone from 'tone';
 
 export default class Distortion extends FXBaseClass {
@@ -12,60 +11,24 @@ export default class Distortion extends FXBaseClass {
             <path fill-rule="evenodd" clip-rule="evenodd" d="M19.0734 18.567C19.5228 18.8518 20.0558 19 20.6674 19H22.0007C22.3689 19 22.6674 18.7015 22.6674 18.3333C22.6674 17.9651 22.3689 17.6667 22.0007 17.6667H20.6674C20.2789 17.6667 19.9994 17.5753 19.7873 17.4408C19.5716 17.3041 19.3871 17.0982 19.2305 16.8138C18.9058 16.2243 18.7468 15.3851 18.6648 14.4422C18.6246 13.9802 18.6043 13.515 18.586 13.0654C18.5847 13.0319 18.5833 12.9985 18.582 12.9651C18.5656 12.5572 18.5494 12.1566 18.519 11.8068C18.4872 11.4412 18.4351 11.0604 18.3181 10.7565C18.2045 10.4616 17.9234 10 17.334 10C17.0823 10 16.8274 10.0484 16.5939 10.1837C16.3585 10.3201 16.1991 10.5135 16.0886 10.7133C15.8989 11.0563 15.8089 11.5153 15.7283 11.9262C15.7256 11.94 15.7229 11.9537 15.7202 11.9673C15.7171 11.983 15.714 11.9987 15.7109 12.0146C15.5336 12.918 15.2926 14.1452 14.4217 15.6692C13.8205 16.7213 12.6546 17.8231 11.5816 18.6897C11.0545 19.1154 10.5672 19.4707 10.2119 19.7195C10.0345 19.8437 9.8905 19.9409 9.79162 20.0066C9.7422 20.0395 9.70409 20.0644 9.67875 20.0809L9.65051 20.0991L9.64392 20.1033L9.64257 20.1042C9.33203 20.3019 9.24036 20.714 9.43801 21.0246C9.63569 21.3352 10.0478 21.4268 10.3584 21.2291L10.0005 20.6667C10.3584 21.2291 10.3584 21.2291 10.3584 21.2291L10.3597 21.2283L10.3623 21.2266L10.3715 21.2207L10.4052 21.1989C10.4342 21.1801 10.4762 21.1526 10.5296 21.1171C10.6365 21.0461 10.7894 20.9428 10.9765 20.8118C11.3504 20.5501 11.8631 20.1763 12.4194 19.727C13.5131 18.8436 14.8473 17.612 15.5794 16.3308C16.5592 14.6162 16.8342 13.2147 17.0176 12.2803C17.0213 12.2615 17.0249 12.2429 17.0286 12.2244C17.0807 11.9589 17.1213 11.7677 17.1585 11.6274C17.1702 11.7129 17.1809 11.8109 17.1906 11.9223C17.2182 12.2397 17.2332 12.6097 17.2501 13.0282C17.2513 13.0584 17.2525 13.0888 17.2538 13.1195C17.272 13.5683 17.2933 14.0615 17.3365 14.5578C17.4212 15.5316 17.5955 16.609 18.0625 17.457C18.3017 17.8914 18.6277 18.2844 19.0734 18.567Z" fill="white" fill-opacity="0.9"/>
         </svg>`
 
+    static defaultMix = 0.2
+
     constructor(fxParameters) {
         super(fxParameters)
         this._amount = 4
-        this._mix = 0.2
-        this._mixBeforeBypass = this._mix
         this.label = 'Distortion'
         this.isOn = fxParameters.isOn
     }
 
+    createNode() {
+        return new Tone.Distortion(this._amount)
+    }
+
+    // Distortion.distortion is a plain property, not a Signal
     setAmount(value, time) {
         this._amount = value
         if (this.isOn) {
             this.fx.distortion = value
         }
-    }
-    setMix(value, time) {
-        this._mix = value
-        if (this.isOn) {
-            if (!_.isNil(time)) {
-                this.fx.wet.setValueAtTime(value, time)
-            } else {
-                this.fx.wet.value = value
-            }
-        }
-    }
-    setBypass(value, time) {
-        if (value === true && !this._override) {
-            // set mix to 0 rather than turn off so that we can do this rapidly without needing to rebuild the audio chain
-            if (this._mix > 0) {
-                this._mixBeforeBypass = this._mix
-            }
-            this.setMix(0, time)
-        } else {
-            this.setMix(this._mixBeforeBypass, time)
-        }
-    }
-
-
-    enable() {
-        this.fx = new Tone.Distortion(this._amount)
-        this.fx.wet.value = this._mix
-        this.setBypass(true)
-    }
-
-    getAutomationOptions() {
-        return [
-            {
-                label: 'Enabled',
-                name: 'enabled',
-                setParameter: this.setBypass.bind(this),
-                calculateValue: function (value) {
-                    return value === false ? true : false
-                }
-            }
-        ]
     }
 }

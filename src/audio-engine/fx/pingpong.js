@@ -1,6 +1,5 @@
 
 import FXBaseClass from './fx-base-class';
-import _ from 'lodash';
 import * as Tone from 'tone';
 
 export default class PingPong extends FXBaseClass {
@@ -12,90 +11,30 @@ export default class PingPong extends FXBaseClass {
             <path opacity="0.5" fill-rule="evenodd" clip-rule="evenodd" d="M17.3187 10.6452C17.6581 10.2759 18.1109 9.99992 18.6807 9.99992C19.7443 9.99992 20.373 10.7887 20.7579 11.5698C21.1423 12.3498 21.4063 13.362 21.6476 14.2871L21.6592 14.3316C21.9148 15.3113 22.1485 16.1957 22.4663 16.8407C22.7897 17.497 23.0777 17.6666 23.3475 17.6666C23.7157 17.6666 24.0142 17.9651 24.0142 18.3333C24.0142 18.7014 23.7157 18.9999 23.3475 18.9999C22.2839 18.9999 21.6552 18.2111 21.2703 17.43C20.8859 16.65 20.6219 15.6378 20.3806 14.7128L20.369 14.6682C20.1134 13.6885 19.8797 12.8041 19.5619 12.1592C19.2384 11.5028 18.9505 11.3333 18.6807 11.3333C18.5838 11.3333 18.4637 11.3697 18.3005 11.5474C18.1263 11.7369 17.9461 12.0447 17.766 12.4826C17.4055 13.3596 17.1257 14.5502 16.8299 15.8181L16.8207 15.8573C16.5359 17.078 16.2344 18.3702 15.8285 19.3576C15.6231 19.8572 15.371 20.3307 15.0426 20.688C14.7032 21.0572 14.2504 21.3333 13.6806 21.3333C12.765 21.3333 12.0994 20.8878 11.6534 20.2796C11.2267 19.6978 10.9934 18.9637 10.8601 18.2973C10.7248 17.6209 10.6812 16.954 10.6703 16.4626C10.6648 16.2153 10.6675 16.0086 10.6717 15.8624C10.6738 15.7892 10.6762 15.731 10.6782 15.6902C10.6792 15.6698 10.6801 15.6537 10.6808 15.6423L10.6816 15.6287L10.6819 15.6232L10.682 15.6222C10.7065 15.2549 11.0242 14.9769 11.3916 15.0014C11.7588 15.0259 12.0367 15.3433 12.0124 15.7105L12.0124 15.7118L12.0119 15.7196L12.01 15.7553C12.0084 15.7877 12.0063 15.8369 12.0045 15.9005C12.0009 16.0277 11.9984 16.2116 12.0033 16.433C12.0132 16.8792 12.0529 17.4623 12.1676 18.0358C12.2843 18.6195 12.4677 19.1354 12.7286 19.4911C12.97 19.8203 13.2628 19.9999 13.6806 19.9999C13.7775 19.9999 13.8975 19.9634 14.0608 19.7858C14.235 19.5962 14.4152 19.2885 14.5953 18.8506C14.9558 17.9736 15.2356 16.7829 15.5314 15.5151L15.5406 15.4759C15.8254 14.2552 16.1269 12.963 16.5328 11.9756C16.7382 11.476 16.9903 11.0025 17.3187 10.6452Z" fill="white" fill-opacity="0.9"/>
         </svg>`
 
+    static defaultMix = 0.2
+
     constructor(fxParameters) {
         super(fxParameters)
-        this._mix = 0.2
-        this._mixBeforeBypass = this._mix
         this.label = 'Ping-pong delay'
         this._delayTime = '9t';
         this._feedback = 0.7
         this.isOn = fxParameters.isOn
     }
 
+    createNode() {
+        return new Tone.PingPongDelay(this._delayTime, this._feedback)
+    }
+
     setDelayTime(value) {
         this._delayTime = value
         if (this.isOn) {
-            this.fx.delayTime.value = value
+            this.setSignalValue(this.fx.delayTime, value)
         }
     }
     setFeedback(value) {
         this._feedback = value
         if (this.isOn) {
-            this.fx.feedback.value = value
+            this.setSignalValue(this.fx.feedback, value)
         }
-    }
-    setMix(value, time) {
-        this._mix = value
-        if (this.isOn) {
-            if (!_.isNil(time)) {
-                this.fx.wet.setValueAtTime(value, time)
-            } else {
-                this.fx.wet.value = value
-            }
-        }
-    }
-    setBypass(value, time) {
-        if (value === true && !this._override) {
-            // set mix to 0 rather than turn off so that we can do this rapidly without needing to rebuild the audio chain
-            if (this._mix > 0) {
-                this._mixBeforeBypass = this._mix
-            }
-            this.setMix(0, time)
-        } else {
-            this.setMix(this._mixBeforeBypass, time)
-        }
-    }
-
-    enable() {
-        this.fx = new Tone.PingPongDelay(this._delayTime, this._feedback)
-        this.fx.wet.value = this._mix
-        this.setBypass(true)
-    }
-
-    getAutomationOptions() {
-        return [
-            {
-                label: 'Enabled',
-                name: 'enabled',
-                setParameter: this.setBypass.bind(this),
-                calculateValue: function (value) {
-                    return value === true ? false : true
-                }
-            },
-            /*{
-                label: 'Time',
-                value: 'delayTime',
-                calculateValue: function (value) {
-                    // function to take a 0 - 1 value from interface and return appropriate value for this FX parameter
-                    return numberRange(value, 0, 1, 0, 2000)
-                }
-            },
-            {
-                label: 'Feedback',
-                value: 'feedback',
-                calculateValue: function (value) {
-                    // function to take a 0 - 1 value from interface and return appropriate value for this FX parameter
-                    return value
-                }
-            },
-            {
-                label: 'Mix',
-                value: 'mix',
-                calculateValue: function (value) {
-                    // function to take a 0 - 1 value from interface and return appropriate value for this FX parameter
-                    return value
-                }
-            }*/
-        ]
     }
 }
