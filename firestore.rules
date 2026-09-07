@@ -2,7 +2,7 @@ rules_version = '2';
 
 // Data model (see src/firebase/firebase.js):
 //   users/{uid}                          profile: displayName, color, avatar, email, isGuest
-//   rounds/{roundId}                     createdBy, currentUsers[], bpm, swing, name, shortLink, ...
+//   rounds/{roundId}                     createdBy, currentUsers[], contributors[], bpm, swing, name, ...
 //   rounds/{roundId}/layers/{layerId}    createdBy + steps; only the creator edits a layer
 //   rounds/{roundId}/userBuses/{uid}     one effects bus per user
 //   rounds/{roundId}/userPatterns/{uid}  one preset/sequence document per user
@@ -38,6 +38,16 @@ service cloud.firestore {
       return request.resource.data.diff(resource.data).affectedKeys();
     }
 
+    // What an update does to one of a round's lists of user ids. Both sets are empty when the
+    // update leaves the list alone, and an empty set satisfies hasOnly().
+    function addedTo(field) {
+      return request.resource.data.get(field, []).toSet().difference(resource.data.get(field, []).toSet());
+    }
+
+    function removedFrom(field) {
+      return resource.data.get(field, []).toSet().difference(request.resource.data.get(field, []).toSet());
+    }
+
     match /users/{uid} {
       allow read: if signedIn();
       allow create, update: if isUser(uid);
@@ -45,14 +55,41 @@ service cloud.firestore {
     }
 
     match /rounds/{roundId} {
+      // Joining a round (adding yourself to both lists) and leaving one (taking yourself out of
+      // currentUsers), condition by condition:
+      //   * nothing but the two membership lists may change: no editing the round in passing;
+      //   * currentUsers may only gain the caller: nobody is dragged into a round by somebody else;
+      //   * currentUsers may only lose the caller: nobody is thrown out of a round;
+      //   * contributors may never lose anybody, whoever is writing;
+      //   * contributors may only gain the caller, except for the one-off backfill of a round saved
+      //     before the field existed, which writes everybody the round can be seen to have had.
+      //     That write says nothing about the caller, so it is limited to a member or the creator
+      //     (who may write the round anyway, by the creator and member clauses in `update` below:
+      //     this spells the case out and keeps holding if those are ever tightened).
+      function selfJoinOrLeave() {
+        return changedKeys().hasOnly(['currentUsers', 'contributors']) &&
+          addedTo('currentUsers').hasOnly([request.auth.uid]) &&
+          removedFrom('currentUsers').hasOnly([request.auth.uid]) &&
+          removedFrom('contributors').size() == 0 &&
+          (addedTo('contributors').hasOnly([request.auth.uid]) ||
+            request.auth.uid in resource.data.get('currentUsers', []) ||
+            resource.data.createdBy == request.auth.uid);
+      }
+
       allow read: if signedIn();
       allow create: if signedIn() && request.resource.data.createdBy == request.auth.uid;
-      // Members edit the round; anyone signed in may add themselves to currentUsers when joining.
+      // `currentUsers` is who is in the round right now; `contributors` is everyone who has ever
+      // been in it. Nobody is ever taken out of `contributors`, because a layer is drawn in its
+      // author's colour long after the author has left.
+      //
+      // Members edit the round; anyone signed in may add themselves to currentUsers when joining;
+      // and, whether or not they are a member, anyone signed in may join or leave (last clause).
       allow update: if signedIn() && (
         resource.data.createdBy == request.auth.uid ||
         request.auth.uid in resource.data.get('currentUsers', []) ||
         (changedKeys().hasOnly(['currentUsers']) &&
-          request.auth.uid in request.resource.data.currentUsers)
+          request.auth.uid in request.resource.data.currentUsers) ||
+        selfJoinOrLeave()
       );
       allow delete: if signedIn() && resource.data.createdBy == request.auth.uid;
 
