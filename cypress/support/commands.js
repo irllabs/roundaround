@@ -26,6 +26,17 @@
 
 import { requireTestUser } from "./users";
 
+// Firebase Auth persists sessions in IndexedDB, which clearLocalStorage/clearCookies never touch.
+// Drop that database before the app boots so a previous test's session cannot be restored
+// mid-test (the restore swaps the "Sign in" button for the avatar button under Cypress' feet).
+Cypress.Commands.add("resetAuth", () => {
+	cy.visit("/", {
+		onBeforeLoad(win) {
+			win.indexedDB.deleteDatabase("firebaseLocalStorageDb");
+		}
+	});
+});
+
 Cypress.Commands.add("logout", () => {
 	cy.visit("/");
 	cy.get("[data-test=button-sign-in-out]").then(($btn) => {

@@ -7,6 +7,7 @@ describe("Can see a round", () => {
 		hash = crypto.randomBytes(3).toString('hex');
 		cy.clearLocalStorage();
 		cy.clearCookies();
+		cy.resetAuth();
 	});
 
 	it("As a guest", () => {
