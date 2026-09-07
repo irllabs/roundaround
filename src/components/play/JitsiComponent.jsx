@@ -162,7 +162,7 @@ class JitsiComponent extends Component {
                     </IconButton>
 
                 }
-                <div className={classes.root}>
+                <div className={classes.root} data-test="voice-chat">
                     <div id="jaas-container" style={{ height: "100%" }}></div>
                 </div >
             </>

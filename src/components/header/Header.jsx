@@ -17,7 +17,7 @@ import JitsiComponent from '../play/JitsiComponent';
 import ProjectName from './ProjectName'
 import HeaderMenu from './HeaderMenu';
 import { FirebaseContext } from '../../firebase';
-import { getRandomColor, profileFromAuthUser } from '../../utils/index'
+import { getRandomColor, presentUsers, profileFromAuthUser } from '../../utils/index'
 import CustomSamples from '../../audio-engine/CustomSamples'
 import { createRound } from '../../utils/index'
 import { Typography } from '@material-ui/core';
@@ -143,6 +143,9 @@ class Header extends Component {
 	render() {
 		const { classes, location, round, users, user } = this.props;
 		const isPlayMode = location.pathname.includes('/play/') ? true : false
+		// `users` holds a profile for every contributor so that layers keep their colour; only the
+		// people who are in the round right now get an avatar, and voice chat only opens for them.
+		const usersPresent = presentUsers(users, round)
 		return (
 			<Box className={classes.root} bgcolor={"background.default"}>
 				{isPlayMode &&
@@ -168,12 +171,12 @@ class Header extends Component {
 						<Box className={classes.rightSide} >
 							<Box className={classes.avatars}>
 								{
-									users.map((currentUser) => (
+									usersPresent.map((currentUser) => (
 										<HeaderAvatar className={classes.avatar} key={currentUser.id} user={currentUser} users={users} shouldShowMenu={!_.isNil(user) && (currentUser.id === user.id)} />
 									))
 								}
 							</Box>
-							{round && users.length > 1 && <JitsiComponent />}
+							{round && usersPresent.length > 1 && <JitsiComponent />}
 							{round &&
 								<Box>
 									<IconButton aria-label="Share this round" className={classes.shareButton} onClick={this.onShareClick}><ShareIcon /></IconButton>

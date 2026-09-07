@@ -335,7 +335,6 @@ class PlayUI extends Component {
             this.addLayer(layer, i++, shouldAnimate)
         }
         // Create activity line
-        this.drawAvatars()
         this.activityIndicator = this.container.circle(HTML_UI_Params.activityIndicatorDiameter).fill({ color: '#fff', opacity: 0 })
 
         // add layer button
@@ -804,34 +803,6 @@ class PlayUI extends Component {
         const msPerBeat = 60000 / BPM
         const msPerTick = msPerBeat / PPQ
         return Math.round(ms / msPerTick)
-    }
-
-    drawAvatars() {
-        if (!_.isNil(this.props.collaboration)) {
-            this.avatarGraphics = []
-            const numberOfContributors = Object.entries(this.props.collaboration.contributors).length
-            const totalAvatarHeight = (HTML_UI_Params.avatarDiameter * numberOfContributors) + (HTML_UI_Params.avatarPadding * (numberOfContributors - 1))
-            const offsetY = (this.containerHeight / 2) - (totalAvatarHeight / 2)
-            let x = (this.containerWidth / 2) + (HTML_UI_Params.addNewLayerButtonDiameter / 2) + (HTML_UI_Params.initialLayerPadding / 2) + ((HTML_UI_Params.stepDiameter + HTML_UI_Params.layerPadding) * (this.round.layers.length)) + HTML_UI_Params.avatarRoundPadding
-            let y = 0
-            for (let [id, contributor] of Object.entries(this.props.collaboration.contributors)) {
-                let avatarGraphic = this.container.circle(HTML_UI_Params.avatarDiameter).attr({ fill: contributor.color })
-                avatarGraphic.x(x)
-                avatarGraphic.y(y + offsetY)
-                avatarGraphic.id = id
-                this.avatarGraphics.push(avatarGraphic)
-                y += HTML_UI_Params.avatarDiameter + HTML_UI_Params.avatarPadding
-            }
-        }
-    }
-
-    updateAvatarPositions(numberOfLayers) {
-        if (!_.isEmpty(this.avatarGraphics)) {
-            let x = (this.containerWidth / 2) + (HTML_UI_Params.addNewLayerButtonDiameter / 2) + (HTML_UI_Params.initialLayerPadding / 2) + ((HTML_UI_Params.stepDiameter + HTML_UI_Params.layerPadding) * numberOfLayers) + HTML_UI_Params.avatarRoundPadding
-            for (let avatarGraphic of this.avatarGraphics) {
-                avatarGraphic.x(x)
-            }
-        }
     }
 
     animateActivityIndicator(userId, toX, toY) {
