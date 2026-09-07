@@ -37,6 +37,13 @@ describe("Can see a round", () => {
 		}
 		cy.login();
 
+		// Get started takes a signed-in user to their rounds list. Wait for that route and for
+		// the list's own New round button, which is rendered whether or not the user has any
+		// rounds, so the branch below is decided on a list that has rendered rather than on
+		// whatever happened to be in the DOM the moment login() returned.
+		cy.location("pathname", { timeout: 20000 }).should("include", "/rounds");
+		cy.get("[data-test=button-new-round]", { timeout: 20000 }).should("be.visible");
+
 		cy.get('html').then(($html) => {
 			if ($html.find("[data-test=list-item-round]").length) {
 				cy.get("[data-test=list-item-round]").first().click();
