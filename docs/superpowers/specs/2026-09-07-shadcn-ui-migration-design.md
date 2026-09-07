@@ -54,7 +54,7 @@ Values not documented in code (MUI default shadows, exact paddings) are taken fr
 | `List`, `ListItem`, `ListItemAvatar`, `ListItemText`, `ListItemSecondaryAction`, `ListItemIcon` | a Tailwind list of `Button` rows |
 | `CircularProgress`, react-loader-spinner `Puff` | shadcn `Spinner` |
 | `CssBaseline` | Tailwind preflight + `src/index.css` |
-| `@material-ui/icons/*` (12 glyphs) | local SVG components in `src/components/icons/` copied from the MUI icon paths, so glyphs are identical; the app's own SVG resources stay |
+| `@material-ui/icons/*` (12 glyphs) | local SVG components in `src/components/icons/` copied from the MUI icon paths, so glyphs are identical; the app's own SVG resources stay; `lucide-react` remains only as a dependency of the generated shadcn components |
 | react-color `CirclePicker` | a grid of round colour buttons in the avatar menu |
 | `withStyles`/`makeStyles` (19 files), 61 inline `style={{}}` | Tailwind classes composed with `cn()`; dynamic values via CSS variables |
 
@@ -62,8 +62,8 @@ The Jitsi container keeps its markup and gets Tailwind classes. `PlayUI.jsx` kee
 
 ## Stack
 
-- React 17 → 19 (`createRoot` in `src/index.jsx`), react-redux 7 → 9, Redux Toolkit 1.9 → 2 (redux 5), @testing-library/react 11 → 16. react-router-dom 5 stays. Vite 7, Vitest 3, eslint 8 stay.
-- Tailwind 4 via `@tailwindcss/vite`; shadcn 4 CLI (`components.json` with `tsx: false`, alias `@/` → `src/`, style `new-york`, no base colour since the tokens are hand-written); `jsconfig.json` and the Vite alias for `@/`.
+- React 17 → 18 in PR 1 (`createRoot` in `src/index.jsx`), react-redux 7 → 9, Redux Toolkit 1.9 → 2 (redux 5), @testing-library/react 11 → 16 with user-event 14. React 18 → 19 in PR 3, after Material UI is deleted: MUI 4 calls `findDOMNode` (ButtonBase, Modal, Popover, its transitions), which React 19 removed, so the two cannot coexist. Until then the generated `Button` carries a `forwardRef` so Radix's `asChild` works on React 18. react-router-dom 5 stays. Vite 7, Vitest 3, eslint 8 stay.
+- Tailwind 4 via `@tailwindcss/vite`; shadcn 4.21 CLI initialised with `-b radix -p nova --pointer` (`components.json`: style `radix-nova`, `tsx: false`, css `src/index.css`, alias `@/` → `src/`); components are JavaScript, import `cn` from the `cn` package and primitives from `radix-ui`; `lucide-react` and `tw-animate-css` come along as their internal dependencies (the app's own icons are the copied Material glyphs); the preset's Geist font is removed in favour of the system stack; `jsconfig.json` and the Vite alias for `@/`.
 - Removed at the end of PR 3: `@material-ui/core`, `@material-ui/icons`, `react-color`, `react-loader-spinner`.
 
 ## File layout
@@ -82,9 +82,9 @@ Everything else keeps its current path and file name.
 
 ## Staging
 
-- PR 1, foundation: React 19 and the library upgrades above; Tailwind + shadcn initialised with the tokens; `cn`, icons, `OutlinedField`, the generated ui components; jsdom shims for Radix in `setupTests.js`. MUI still installed and rendering everything. Pixel comparison must show no change.
+- PR 1, foundation: React 18 and the library upgrades above; Tailwind + shadcn initialised with the tokens; `cn`, icons, `OutlinedField`, the generated ui components; jsdom shims for Radix in `setupTests.js`. MUI still installed and rendering everything. Pixel comparison must show no change.
 - PR 2, shell: `App.jsx` (theme object removed), `Header`, `HeaderAvatar`, `HeaderMenu`, `ProjectName`, `TempoSlider`, `LandingPageRoute`, `RoundsListRoute`, `SignInDialog`, `RenameDialog`, `DeleteRoundDialog`, `ShareDialog`, `ErrorBoundary`, `OrientationDialog`. MUI removed from these files.
-- PR 3, play route: `PlayRoute`, `LayerSettings` and every `layer-settings/*` popup, `EffectsSidebar`, `EffectThumbControl`, `JitsiComponent`, `PlayUI`'s class names; then MUI, JSS, react-color, react-loader-spinner and the last inline styles are deleted. `grep -rn "@material-ui\|withStyles\|makeStyles\|style={{" src` returns only the user-colour variable.
+- PR 3, play route: `PlayRoute`, `LayerSettings` and every `layer-settings/*` popup, `EffectsSidebar`, `EffectThumbControl`, `JitsiComponent`, `PlayUI`'s class names; then MUI, JSS, react-color, react-loader-spinner and the last inline styles are deleted, and React moves to 19 (drop the `forwardRef` on `Button`). `grep -rn "@material-ui\|withStyles\|makeStyles\|style={{" src` returns only the user-colour variable.
 
 Each PR: unit tests green (data-test hooks kept), Cypress smoke green, pixel comparison reviewed, two-browser collaboration check on the preview, then merge (deploys to production).
 
@@ -102,4 +102,4 @@ Each PR: unit tests green (data-test hooks kept), Cypress smoke green, pixel com
 
 ## Decisions taken
 
-- Same look, new engine (Meriç, 2026-09-07). Three staged PRs (Meriç). React 19, no router upgrade, JavaScript output, local icon copies instead of lucide, user colours as the single inline style (controller).
+- Same look, new engine (Meriç, 2026-09-07). Three staged PRs (Meriç). Latest shadcn and a React bump (Meriç): React 18 now, 19 when MUI is gone, because MUI 4 cannot run on 19. No router upgrade, JavaScript output, local icon copies for the app's glyphs, user colours as the single inline style (controller).
