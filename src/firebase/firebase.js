@@ -29,6 +29,7 @@ import {
 } from 'firebase/firestore';
 import { getFunctions, httpsCallable } from 'firebase/functions';
 import { deleteObject, getStorage, ref } from 'firebase/storage';
+import { getAnalytics, isSupported, logEvent } from 'firebase/analytics';
 import _ from 'lodash'
 
 var firebaseConfig = {
@@ -43,6 +44,8 @@ var firebaseConfig = {
 };
 
 const DELETE_BATCH_SIZE = 64
+// Analytics event descriptions are truncated to what GA4 accepts.
+const MAX_DESCRIPTION_LENGTH = 150
 
 // Thin wrapper around the Firebase SDK: it owns every call into Firebase so the rest of the app
 // never touches an SDK object. Every method is a plain async function (or, for the subscriptions,
@@ -52,14 +55,14 @@ const DELETE_BATCH_SIZE = 64
 class Firebase {
     constructor() {
         this.app = getApps().length ? getApp() : initializeApp(firebaseConfig);
-
-        // add this for local function development
-        //connectFunctionsEmulator(this.functions, 'localhost', 5001)
-
         this.auth = getAuth(this.app);
         this.db = getFirestore(this.app);
         this.functions = getFunctions(this.app);
+        // add this for local function development
+        //connectFunctionsEmulator(this.functions, 'localhost', 5001)
         this.storage = getStorage(this.app);
+        this.analytics = null;
+        this.initAnalytics();
     }
 
     // *** Auth ***
@@ -341,6 +344,39 @@ class Firebase {
             samples.push({ ...sampleDoc.data(), id: sampleDoc.id });
         })
         return samples
+    }
+
+    // *** Analytics / error reporting ***
+    /**
+     * Analytics only runs in a production build, and only where the browser supports it. It never
+     * loads under `yarn start` or in tests, so neither sends events to the live property.
+     */
+    initAnalytics = async () => {
+        if (import.meta.env.MODE !== 'production') {
+            return
+        }
+        try {
+            if (await isSupported()) {
+                this.analytics = getAnalytics(this.app)
+            }
+        } catch {
+            // Analytics is best effort: a blocked measurement script must not break the app.
+        }
+    }
+
+    /**
+     * Reports an error as an Analytics `exception` event when analytics is running, and always to
+     * the console. Descriptions carry no PII: pass a `context` that names the place that failed,
+     * never an email address, user id or round id.
+     */
+    reportError = (error, { fatal = false, context } = {}) => {
+        const name = (error && error.name) || 'Error'
+        const message = (error && error.message) || String(error)
+        const description = `${name}: ${message}${_.isNil(context) ? '' : ` [${context}]`}`.slice(0, MAX_DESCRIPTION_LENGTH)
+        if (!_.isNil(this.analytics)) {
+            logEvent(this.analytics, 'exception', { description, fatal })
+        }
+        console.error(description, error)
     }
 }
 
