@@ -71,7 +71,7 @@ describe('ShareDialog', () => {
         const store = openDialogWith({ id: 'r1', name: 'Jam', layers: [], currentUsers: [], shortLink: 'https://bit.ly/stored' })
         renderWithProviders(<ShareDialog />, { store, firebase: { createShortLink: vi.fn() } })
 
-        userEvent.click(screen.getByRole('button', { name: 'Copy' }))
+        await userEvent.click(screen.getByRole('button', { name: 'Copy' }))
         expect(await screen.findByRole('button', { name: 'Copied' })).toBeInTheDocument()
         expect(writeText).toHaveBeenCalledWith('https://bit.ly/stored')
     })

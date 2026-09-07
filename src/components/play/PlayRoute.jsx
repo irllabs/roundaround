@@ -201,8 +201,8 @@ class PlayRoute extends Component {
             this.props.setRound(round)
             this.hasLoadedRound = true
             this.removeFirebaseListeners()
-            this.addFirebaseListeners()
-            this.addUsersListeners()
+            this.addFirebaseListeners(round)
+            this.addUsersListeners(users)
         } catch (error) {
             console.error('Could not load round', roundId, error)
             if (!this.isDisposing) {
@@ -254,9 +254,11 @@ class PlayRoute extends Component {
         return users.filter(user => !_.isNil(user))
     }
 
-    addFirebaseListeners() {
+    // Takes the round rather than reading `this.props.round`: React 18 batches the re-render that
+    // a dispatch causes, so a `setRound` on the line above has not reached props yet.
+    addFirebaseListeners(round) {
         const _this = this
-        const roundId = this.props.round.id
+        const roundId = round.id
 
         // Round
         this.unsubscribers.push(this.context.subscribeToRound(roundId, async ({ exists, data: updatedRound }) => {
@@ -277,7 +279,7 @@ class PlayRoute extends Component {
                 }
                 _this.props.setUsers(users)
                 _this.props.setRoundContributors(updatedRound.contributors || [])
-                _this.addUsersListeners()
+                _this.addUsersListeners(users)
             }
             if (!_.isEqual(_this.props.round.currentUsers, updatedRound.currentUsers)) {
                 // somebody has arrived or left: the avatars and voice chat follow who is here now
@@ -390,10 +392,12 @@ class PlayRoute extends Component {
         this.removeUsersListeners()
     }
 
-    addUsersListeners() {
+    // Takes the users for the same reason `addFirebaseListeners` takes the round: the `setUsers`
+    // that precedes every call has not reached props yet under React 18's batching.
+    addUsersListeners(users) {
         this.removeUsersListeners()
         const _this = this;
-        for (const user of this.props.users) {
+        for (const user of users) {
             const userListenerUnsubscribe = this.context.subscribeToUser(user.id, () => {
                 if (!_this.isDisposing) {
                     _this.loadUsers()

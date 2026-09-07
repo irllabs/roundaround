@@ -1380,7 +1380,10 @@ export class PlayUI extends Component {
             if (firstAvailbleSlot > -1) {
                 seq[firstAvailbleSlot] = id
                 this.props.setUserPatternSequence(this.props.user.id, seq)
-                !this.isRecordingSequence && !this.isPlayingSequence && this.context.saveUserPatterns(this.props.round.id, this.props.user.id, this.props.round.userPatterns[this.props.user.id])
+                // Saves the sequence just computed rather than reading it back out of the store:
+                // this runs from an SVG.js listener, and React 18 batches the re-render a dispatch
+                // causes, so `this.props.round` here is still the round without `seq` in it.
+                !this.isRecordingSequence && !this.isPlayingSequence && this.context.saveUserPatterns(this.props.round.id, this.props.user.id, { ...this.props.round.userPatterns[this.props.user.id], sequence: seq })
             } else {
                 this.props.setIsRecordingSequence(false)
             }
