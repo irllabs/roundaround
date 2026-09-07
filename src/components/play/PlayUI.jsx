@@ -14,7 +14,7 @@ import PropTypes from 'prop-types';
 import { numberRange, layerWithStepsOff, patternLayersForRound } from '../../utils/index'
 import Instruments from '../../audio-engine/Instruments'
 import { getDefaultUserPatternSequence } from '../../utils/defaultData'
-import { detailedDiff } from 'deep-object-diff';
+import { classifyRoundChange } from './roundDiff'
 import {
     setIsPlaying,
     setIsRecordingSequence,
@@ -148,27 +148,13 @@ class PlayUI extends Component {
         this.draw()
     }
 
-    async componentDidUpdate(prevProps) {
+    componentDidUpdate(prevProps) {
         const { round, user, display, setIsRecordingSequence } = this.props
-        const oldRound = prevProps.round
-        let redraw = false
-        let shouldRecalculateParts = false
-        const _this = this
-        const sameLayerLength = prevProps.round.layers.length === round.layers.length
 
         this.isPlayingSequence = round.userPatterns[user.id].isPlayingSequence
 
         !this.activePatternId &&
             this.setDefaultPattern()
-
-        let diff = detailedDiff(this.round, this.props.round)
-        if (!_.isEqual(round.userPatterns[user.id].isPlayingSequence, oldRound.userPatterns[user.id].isPlayingSequence)) {
-            redraw = true
-        }
-
-        if (!_.isEqual(display.isRecordingSequence, prevProps.display.isRecordingSequence)) {
-            redraw = true
-        }
 
         if (!_.isEqual(this.isRecordingSequence, display.isRecordingSequence)) {
             /** update props to match state */
@@ -176,39 +162,14 @@ class PlayUI extends Component {
         }
 
         // whole round has changed
-        if (this.round.id !== this.props.round.id) {
-            this.round = _.cloneDeep(this.props.round)
-            AudioEngine.load(this.props.round)
+        if (this.round.id !== round.id) {
+            this.syncRound()
+            AudioEngine.load(round)
             this.draw()
             return
         }
 
-        if (!sameLayerLength) {
-            await this.onSavePattern(this.activePatternId)
-        }
-
-        //layer removal
-        for (let layer of this.round.layers) {
-            let newLayer = _.find(this.props.round.layers, { id: layer.id })
-            if (_.isNil(newLayer)) {
-                AudioEngine.removeTrack(layer.id)
-                redraw = true
-            }
-        }
-
-        // sequence update
-        if (!_.isNil(diff.updated.userPatterns)) {
-            this.loadSequence(diff.updated.userPatterns)
-            redraw = true
-        }
-
-        //  tempo changed
-        if (this.round.bpm !== this.props.round.bpm) {
-            this.round.bpm = this.props.round.bpm
-            AudioEngine.setTempo(this.round.bpm)
-            this.reclaculateIndicatorAnimation()
-            this.adjustAllLayerOffsets()
-        }
+        let redraw = !_.isEqual(display.isRecordingSequence, prevProps.display.isRecordingSequence)
 
         // User profile color changed
         const userColors = this.getUserColors()
@@ -217,80 +178,111 @@ class PlayUI extends Component {
             redraw = true
         }
 
-        // add layer or step
-        if (!_.isNil(diff.added.layers)) {
-            for (let [, layer] of Object.entries(diff.added.layers)) {
-                AudioEngine.createTrack(layer)
-            }
-            shouldRecalculateParts = true
-            redraw = true
-        }
-
-        // add remove layer or step
-        if (!_.isNil(diff.deleted.layers)) {
-            for (let [, layer] of Object.entries(diff.deleted.layers)) {
-                AudioEngine.createTrack(layer)
-            }
-            shouldRecalculateParts = true
-            redraw = true
-        }
-
-        // Check for layer type or instrument changes
-        for (let layer of this.round.layers) {
-            let newLayer = _.find(this.props.round.layers, { id: layer.id })
-            if (!_.isNil(newLayer) && !_.isEqual(layer.instrument, newLayer.instrument)) {
-                // instrument has changed
-                AudioEngine.tracksById[newLayer.id].setInstrument(newLayer.instrument)
-                this.updateLayerLabelText(layer.id, newLayer.instrument.sampler)
-            }
-            if (!_.isNil(newLayer) && !_.isEqual(layer.type, newLayer.type)) {
-                // type has changed
-                AudioEngine.tracksById[newLayer.id].setType(newLayer.type, newLayer.automationFxId)
-            }
-            if (!_.isNil(newLayer) && !_.isEqual(layer.automationFxId, newLayer.automationFxId)) {
-                // automation has changed
-                AudioEngine.tracksById[newLayer.id].setAutomatedFx(newLayer.automationFxId)
-            }
-        }
-        // Check for gain changes
-        for (let layer of this.round.layers) {
-            let newLayer = _.find(this.props.round.layers, { id: layer.id })
-            if (!_.isNil(newLayer) && !_.isEqual(layer.gain, newLayer.gain)) {
-                AudioEngine.tracksById[newLayer.id].setVolume(newLayer.gain)
-            }
-        }
-
-        // Check for mute changes
-        for (let layer of this.round.layers) {
-            let newLayer = _.find(this.props.round.layers, { id: layer.id })
-            if (!_.isNil(newLayer) && !_.isEqual(layer.isMuted, newLayer.isMuted)) {
-                AudioEngine.tracksById[newLayer.id]?.setMute(newLayer.isMuted)
-                redraw = true
-            }
-        }
-
-        // Check for layer time offset changes
-        for (let layer of this.round.layers) {
-            let newLayer = _.find(this.props.round.layers, { id: layer.id })
-            if (!_.isNil(newLayer) && !_.isEqual(layer.timeOffset, newLayer.timeOffset)) {
-                AudioEngine.recalculateParts(this.props.round)
-                this.adjustLayerOffset(newLayer.id, newLayer.percentOffset, newLayer.timeOffset)
-            }
-            if (!_.isNil(newLayer) && !_.isEqual(layer.percentOffset, newLayer.percentOffset)) {
-                AudioEngine.recalculateParts(this.props.round)
-                this.adjustLayerOffset(newLayer.id, newLayer.percentOffset, newLayer.timeOffset)
-            }
-        }
-
-        if (shouldRecalculateParts) {
-            AudioEngine.recalculateParts(this.props.round)
+        // The round in the store is compared with this component's copy of it, which has every
+        // change made through this component already (that is why this user's own toggle, coming
+        // back from the store, is no change at all).
+        const change = round === prevProps.round ? null : classifyRoundChange(this.round, round)
+        if (!_.isNil(change)) {
+            redraw = this.applyRoundChange(change) || redraw
+            this.syncRound()
         }
         if (redraw) {
-            this.clear()
-            this.round = _.cloneDeep(this.props.round)
-            _this.draw(false)
+            this.draw(false)
         }
+        if (!_.isNil(change) && (change.addedLayers.length > 0 || change.removedLayerIds.length > 0)) {
+            // the active pattern holds the user's layers, so it follows them
+            this.saveActivePatternIfChanged()
+        }
+    }
+
+    /**
+     * Brings the audio engine and the drawing in line with a change to the round, as
+     * classifyRoundChange sorted it. Returns whether the round has to be redrawn. A change to steps
+     * alone never needs that: the steps are repainted where they are and their layers' parts
+     * recalculated, whether the steps are this user's or a collaborator's.
+     */
+    applyRoundChange(change) {
+        const { round } = this.props
+        if (!_.isNil(change.stepsOnly)) {
+            for (const [layerId, stepIds] of Object.entries(change.stepsOnly)) {
+                const layer = _.find(round.layers, { id: layerId })
+                for (const stepId of stepIds) {
+                    this.updateStep(_.find(layer.steps, { id: stepId }))
+                }
+                AudioEngine.recalculateParts(round, layerId)
+            }
+            return false
+        }
+
+        let redraw = false
+        for (const layerId of change.removedLayerIds) {
+            AudioEngine.removeTrack(layerId)
+            redraw = true
+        }
+        for (const layer of change.addedLayers) {
+            // a collaborator's layer has its track already: the route makes it before the layer
+            // reaches the store
+            if (_.isNil(AudioEngine.tracksById[layer.id])) {
+                AudioEngine.createTrack(layer)
+            }
+            redraw = true
+        }
+        if (change.changedSequencePlayback.length > 0) {
+            this.loadSequence(_.pick(round.userPatterns, change.changedSequencePlayback))
+        }
+        if (change.changedUserPatterns.length > 0) {
+            // the pattern previews and the sequence are drawn from the patterns documents
+            redraw = true
+        }
+        if (change.tempoChanged) {
+            AudioEngine.setTempo(round.bpm)
+            this.reclaculateIndicatorAnimation()
+            this.adjustAllLayerOffsets()
+        }
+        const layersToRecalculate = new Set(Object.keys(change.changedSteps))
+        for (const [layerId, fields] of Object.entries(change.changedLayerFields)) {
+            const layer = _.find(round.layers, { id: layerId })
+            const track = AudioEngine.tracksById[layerId]
+            if (fields.includes('instrument')) {
+                track.setInstrument(layer.instrument)
+                this.updateLayerLabelText(layerId, layer.instrument.sampler)
+            }
+            if (fields.includes('type')) {
+                track.setType(layer.type, layer.automationFxId)
+            }
+            if (fields.includes('automationFxId')) {
+                track.setAutomatedFx(layer.automationFxId)
+            }
+            if (fields.includes('gain')) {
+                track.setVolume(layer.gain)
+            }
+            if (fields.includes('isMuted')) {
+                track?.setMute(layer.isMuted)
+                redraw = true
+            }
+            if (fields.includes('offset')) {
+                this.adjustLayerOffset(layerId, layer.percentOffset, layer.timeOffset)
+                layersToRecalculate.add(layerId)
+            }
+            if (fields.includes('steps')) {
+                redraw = true
+                layersToRecalculate.add(layerId)
+            }
+        }
+        if (change.addedLayers.length > 0) {
+            AudioEngine.recalculateParts(round)
+        } else {
+            for (const layerId of layersToRecalculate) {
+                AudioEngine.recalculateParts(round, layerId)
+            }
+        }
+        return redraw
+    }
+
+    /** Takes a fresh copy of the round from the store, with the layers in the order they are drawn in. */
+    syncRound() {
         this.round = _.cloneDeep(this.props.round)
+        this.orderLayers()
     }
 
     loadSequence = (patterns) => {
@@ -765,7 +757,8 @@ class PlayUI extends Component {
         const layer = _.find(this.round.layers, { id })
         let stepGraphics = _.filter(this.stepGraphics, { layerId: id })
         const layerGraphic = _.find(this.layerGraphics, { id })
-        const layerDiameter = this.getLayerDiameter(order)
+        // the ring the layer was drawn on; without it the steps would be laid out on the innermost ring
+        const layerDiameter = this.getLayerDiameter(_.isNil(order) ? layerGraphic.order : order)
         const xOffset = (this.containerWidth / 2) - (layerDiameter / 2)
         const yOffset = (this.containerHeight / 2) - (layerDiameter / 2)
         const stepSize = (2 * Math.PI) / layer.steps.length;
