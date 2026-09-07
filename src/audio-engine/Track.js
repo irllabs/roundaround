@@ -19,6 +19,9 @@ export default class Track {
         this.instrument = null
         this.automation = null
         this.notes = null
+        // the saved mixer state, kept on the track so it survives the channel being rebuilt
+        this.volume = _.isNil(trackParameters.gain) ? 0 : trackParameters.gain
+        this.isMuted = _.isNil(trackParameters.isMuted) ? false : trackParameters.isMuted
         this.setType(type)
     }
     setType (type, automationFxId) {
@@ -32,18 +35,11 @@ export default class Track {
             if (_.isNil(this.trackParameters.fx)) {
                 this.trackParameters.fx = {}
             }
+            this.applyMixerState()
             const _this = this
             this.createFX(this.trackParameters.fx).then(() => {
                 _this.buildAudioChain()
             })
-
-            // todo fix this better, for some reason fx are not bypassing correctly to start with
-            setTimeout(() => {
-                // bypass all effects
-                for (const effect of _this.sortedFx) {
-                    effect.setBypass(true)
-                }
-            }, 3000);
         } else if (this.type === Track.TRACK_TYPE_MASTER) {
             this.channel = new Tone.Gain()
         } else if (this.type === Track.TRACK_TYPE_AUTOMATION) {
@@ -69,19 +65,19 @@ export default class Track {
 
     }
     async createFX (fxList) {
-        return new Promise(async (resolve, reject) => {
-            if (!_.isNil(fxList)) {
-                this.fx = {}
-                this.sortedFx = []
-                for (let [, fxObject] of Object.entries(fxList)) {
-                    let fx = await FX.create(fxObject)
-                    this.fx[fx.id] = fx
-                    this.sortedFx.push(fx)
-                }
-                this.sortedFx = _.sortBy(this.sortedFx, 'order')
-            }
-            resolve()
-        })
+        if (_.isNil(fxList)) {
+            return
+        }
+        this.fx = {}
+        this.sortedFx = []
+        for (let [, fxObject] of Object.entries(fxList)) {
+            let fx = await FX.create(fxObject)
+            // effects come up bypassed, so switch back on the ones the user had switched on by hand
+            fx.override = fxObject.isOverride === true
+            this.fx[fx.id] = fx
+            this.sortedFx.push(fx)
+        }
+        this.sortedFx = _.sortBy(this.sortedFx, 'order')
     }
     buildAudioChain () {
         if (this.type === Track.TRACK_TYPE_MASTER) {
@@ -275,21 +271,23 @@ export default class Track {
         this.automation = new Automation(fxId, userId)
     }
     setVolume (value) {
-        const _this = this
-        // temporary hack, todo investigate why this is necessary (when loading a preset the volume sometimes doesn't update)
-        setTimeout(() => {
-            _this.channel.volume.value = value
-        }, 300)
+        this.volume = value
+        this.applyMixerState()
     }
     setSolo (value) {
         this.channel.solo = value
     }
     setMute (value) {
-        const _this = this
-        // temporary hack, todo investigate why this is necessary (when loading a preset the mute sometimes doesn't work)
-        setTimeout(() => {
-            _this.channel.mute = value
-        }, 300)
+        this.isMuted = value
+        this.applyMixerState()
+    }
+    /** Writes volume and mute to the channel. The master track is a plain Gain and has neither. */
+    applyMixerState () {
+        if (_.isNil(this.channel) || _.isNil(this.channel.volume)) {
+            return
+        }
+        this.channel.volume.value = this.volume
+        this.channel.mute = this.isMuted
     }
     async setMixerSettings (settings) {
         let _this = this
