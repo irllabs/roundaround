@@ -230,6 +230,18 @@ describe('PlayRoute', () => {
         expect(firebase.leaveRound).toHaveBeenCalledWith('r1', 'me')
     })
 
+    it('takes a user who has just signed out of the round out of it too', async () => {
+        const { firebase } = makeFirebase({ round: roundWithMembers(['owner', 'me']) })
+        const { store, unmount } = renderRoute(firebase)
+
+        await waitFor(() => expect(store.getState().round).not.toBeNull())
+        // signing out from inside a round clears the user before this route unmounts
+        act(() => { store.dispatch(setUser(null)) })
+        unmount()
+
+        expect(firebase.leaveRound).toHaveBeenCalledWith('r1', 'me')
+    })
+
     it('leaves the round when the page goes away, and only once', async () => {
         const { firebase } = makeFirebase({ round: roundWithMembers(['owner', 'me']) })
         const { store, unmount } = renderRoute(firebase)

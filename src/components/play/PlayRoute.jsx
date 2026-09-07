@@ -66,6 +66,7 @@ class PlayRoute extends Component {
         this.hasLoadedRound = false;
         this.isDisposing = false;
         this.joinedRoundId = null;
+        this.joinedUserId = null;
         this.startAudioContext = this.startAudioContext.bind(this)
         this.onPageHide = this.onPageHide.bind(this)
         this.onPageShow = this.onPageShow.bind(this)
@@ -154,8 +155,11 @@ class PlayRoute extends Component {
                 }
             }
             // From here on the user is one of the round's members and has to be taken out again on
-            // the way out, even if they leave before the rest of the load has finished.
+            // the way out, even if they leave before the rest of the load has finished. Their id is
+            // kept with the round's: signing out clears the user from the store before this route
+            // unmounts, and the leave still has to name whoever joined.
             this.joinedRoundId = roundId
+            this.joinedUserId = userId
             if (this.isDisposing) {
                 this.leaveRound()
                 return
@@ -485,6 +489,7 @@ class PlayRoute extends Component {
         const roundId = this.props.round.id
         const onError = (error) => console.error('Could not rejoin round', roundId, error)
         this.joinedRoundId = roundId
+        this.joinedUserId = this.props.user.id
         this.joinRoundOrLegacy(roundId, this.props.user.id).catch(onError)
     }
 
@@ -495,15 +500,17 @@ class PlayRoute extends Component {
      */
     leaveRound() {
         const roundId = this.joinedRoundId
-        if (_.isNil(roundId) || _.isNil(this.props.user)) {
+        const userId = this.joinedUserId
+        if (_.isNil(roundId) || _.isNil(userId)) {
             return
         }
         this.joinedRoundId = null
+        this.joinedUserId = null
         const onError = (error) => console.error('Could not leave round', roundId, error)
         try {
             // sent straight away and never waited on, so an unload has the best chance of carrying
             // the write out while nothing holds the page up
-            this.context.leaveRound(roundId, this.props.user.id).catch(onError)
+            this.context.leaveRound(roundId, userId).catch(onError)
         } catch (error) {
             onError(error)
         }
