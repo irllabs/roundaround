@@ -40,8 +40,12 @@ python3 docs/ui-baseline/compare.py /tmp/candidate
 ```
 
 `capture.py` also takes `--port` (default 9336) if 9336 is busy. It launches its own
-headless Chrome in a throwaway profile and kills it on the way out, including when a
-screen fails.
+headless Chrome in a throwaway profile and kills it on the way out on every exit path,
+including when a screen fails and including when Chrome itself never finishes starting up.
+
+`compare.py` writes its `diff-<name>.png` files next to the candidate, so running it with
+`docs/ui-baseline` as the candidate drops diffs into this directory. `.gitignore` here
+keeps them out of the repo.
 
 `compare.py` prints one line per screen, `05-round.png changed=0.02%`, writes a
 `diff-<name>.png` next to each candidate so you can see where the change is, and exits
@@ -73,9 +77,17 @@ own. `capture.py` pins all of it:
   new uuid every run. The QR canvas is not even a constant size: the encoder picks its
   QR version from how well that particular id compresses, so it comes out either 164px or
   180px square and the whole dialog resizes around it. The capture waits for the real QR
-  and the real link, checks they rendered, and then replaces them with a blank 180px
+  and the real link, checks they rendered, and then replaces them with a blank 180x180
   square and a fixed placeholder link. Everything else in that dialog, which is what the
   migration touches, stays under test.
+
+  Be clear about what that costs: **the 180x180 QR block is painted over before the shot,
+  so those pixels, 2.8% of the frame, are not under comparison at all.** Nothing inside
+  the canvas is checked by the diff. What guards the region is the assertion the capture
+  makes *before* it masks: it reads the canvas's laid-out size and aborts unless it is
+  164x164 or 180x180, the two sizes the app produces today. So a migration that resizes
+  the QR through CSS stops the capture with a message instead of being normalised away by
+  the mask. If a resize is ever intended, change `QR_SIZES` in `capture.py` deliberately.
 
 Two things are deliberately left alone because they are small enough to live inside the
 threshold: the three random instrument names on the rings, in the mixer and in the bottom

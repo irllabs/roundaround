@@ -45,7 +45,13 @@ SETTLE = 1.2                # let transitions finish before the shutter
 
 
 class Failed(Exception):
-    """A state the capture asked for never appeared."""
+    """A state the capture asked for never appeared, or came out wrong."""
+
+
+def discard(profile):
+    """Kill whatever Chrome is running on this profile and delete it."""
+    subprocess.run(['pkill', '-f', profile], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+    shutil.rmtree(profile, ignore_errors=True)
 
 
 def has(selector):
@@ -137,7 +143,20 @@ GUEST_NAME_TYPED = 'document.querySelector("[data-test=input-name] input").value
 # 180px square and the dialog resizes around it. Both are checked for real
 # content and then replaced with fixed placeholders at a fixed size, which keeps
 # the dialog's chrome, the part the migration touches, under test.
+#
+# The mask writes an inline width and height, and an inline style beats any
+# stylesheet, so on its own it would quietly normalise away a real change to the
+# QR's rendered size and the comparison would see nothing. QR_SIZES is what stops
+# that: the laid-out size is read before the mask and anything other than the two
+# sizes the app produces today aborts the run.
 QR_SIZE = 180
+QR_SIZES = (164, 180)
+QR_RECT = """(() => {
+  const c = document.getElementById('QRCanvas');
+  if (!c) return 'missing';
+  const r = c.getBoundingClientRect();
+  return Math.round(r.width) + 'x' + Math.round(r.height);
+})()"""
 QR_HAS_INK = """(() => {
   const c = document.getElementById('QRCanvas');
   if (!c || !c.width) return false;
@@ -266,8 +285,7 @@ class Browser:
             self.proc.wait(timeout=10)
         except Exception:
             self.proc.kill()
-        subprocess.run(['pkill', '-f', self.profile], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-        shutil.rmtree(self.profile, ignore_errors=True)
+        discard(self.profile)
 
 
 def capture(b, base, out):
@@ -350,6 +368,13 @@ def capture(b, base, out):
     b.must(has('#share-dialog-title'), 'the share dialog')
     b.must(SHARE_LINK_READY, 'the share link resolving')
     b.must(QR_HAS_INK, 'the QR code rendering')
+    allowed = ['%dx%d' % (n, n) for n in QR_SIZES]
+    laid_out = b.js(QR_RECT)
+    if laid_out not in allowed:
+        raise Failed('the QR code is laid out at %s, not one of %s. Masking it would hide '
+                     'that from the comparison instead of reporting it, so check what '
+                     'changed and update QR_SIZES only if the new size is intended.'
+                     % (laid_out, ' or '.join(allowed)))
     b.run(MASK_SHARE, 'mask the QR code and the share link')
     b.shot(out, '10-share-dialog', verify=SHARE_MASKED)
     b.click('.MuiBackdrop-root', 'the share dialog backdrop')
@@ -394,12 +419,19 @@ def main():
     out = os.path.abspath(args.out)
     os.makedirs(out, exist_ok=True)
     profile = tempfile.mkdtemp(prefix='roundaround-ui-baseline-')
-    browser = Browser(args.port, profile, DESKTOP)
+    browser = None
     try:
+        browser = Browser(args.port, profile, DESKTOP)
         capture(browser, args.base.rstrip('/') + '/', out)
         print('done ->', out)
     finally:
-        browser.stop()
+        # Chrome is launched inside the try, so a browser that never finished
+        # starting up is still killed by its profile path and the profile is
+        # still deleted.
+        if browser is not None:
+            browser.stop()
+        else:
+            discard(profile)
 
 
 if __name__ == '__main__':
