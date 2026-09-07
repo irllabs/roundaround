@@ -69,6 +69,7 @@ class PlayRoute extends Component {
         this.reloadCollaborationLayers = this.reloadCollaborationLayers.bind(this)
         this.startAudioContext = this.startAudioContext.bind(this)
         this.onPageHide = this.onPageHide.bind(this)
+        this.onPageShow = this.onPageShow.bind(this)
         this.handleUserPatternsChange = this.handleUserPatternsChange.bind(this)
         this.reloadCollaborationLayersThrottled = _.debounce(this.reloadCollaborationLayers, 1000)
         this.playUIRef = null;
@@ -77,7 +78,7 @@ class PlayRoute extends Component {
     }
     componentDidMount() {
         this.addStartAudioContextListener()
-        this.addPageHideListener()
+        this.addPageTransitionListeners()
         if (this.shouldLoadRound()) {
             this.loadRound()
         }
@@ -97,7 +98,7 @@ class PlayRoute extends Component {
         this.isDisposing = true;
         this.reloadCollaborationLayersThrottled.cancel()
         this.removeStartAudioContextListener()
-        this.removePageHideListener()
+        this.removePageTransitionListeners()
         this.removeFirebaseListeners()
         this.leaveRound()
         AudioEngine.stop()
@@ -129,9 +130,13 @@ class PlayRoute extends Component {
             }
 
             const userId = this.props.user.id
-            if (!round.currentUsers.includes(userId)) {
-                // first visit: give the user a bus and a patterns document, then add them to the
-                // round's members atomically so two people joining at once cannot drop each other
+            const isMember = round.currentUsers.includes(userId)
+            // A member can still be missing from `contributors`: they joined through a client that
+            // did not know about the field, or the round is a duplicate that inherited the list
+            // from the round it was copied from.
+            const isMissingFromContributors = !_.isNil(round.contributors) && !round.contributors.includes(userId)
+            if (!isMember) {
+                // first visit: give the user a bus and a patterns document
                 round.currentUsers.push(userId)
                 if (_.isNil(round.userBuses[userId])) {
                     round.userBuses[userId] = getDefaultUserBus(userId)
@@ -141,7 +146,15 @@ class PlayRoute extends Component {
                     round.userPatterns[userId] = getDefaultUserPatterns(userId)
                     await this.context.saveUserPatterns(roundId, userId, round.userPatterns[userId])
                 }
+            }
+            if (!isMember || isMissingFromContributors) {
+                // joinRound unions the user into both lists, so it settles either case atomically:
+                // two people joining at once cannot drop each other, and the user is in the stored
+                // list the round listener reloads profiles from.
                 await this.context.joinRound(roundId, userId)
+                if (isMissingFromContributors) {
+                    round.contributors.push(userId)
+                }
             }
             // From here on the user is one of the round's members and has to be taken out again on
             // the way out, even if they leave before the rest of the load has finished.
@@ -156,9 +169,6 @@ class PlayRoute extends Component {
                 // what the document does say, and write that back once, as a union.
                 round.contributors = derivedContributors(round)
                 await this.context.backfillContributors(roundId, round.contributors)
-            } else if (!round.contributors.includes(userId)) {
-                // joinRound has just added the user to the stored list
-                round.contributors.push(userId)
             }
 
             // load a profile for every contributor, present or not (colors, avatar etc), so that a
@@ -435,15 +445,43 @@ class PlayRoute extends Component {
     }
 
     // A browser does not unmount a component when the tab is closed or the page is replaced, so
-    // the round is left from `pagehide` as well as from componentWillUnmount.
-    addPageHideListener() {
+    // the round is left from `pagehide` as well as from componentWillUnmount. `pagehide` also fires
+    // when the page is put in the back/forward cache with everything still mounted, so `pageshow`
+    // puts a restored page's user back in the round they are looking at again.
+    addPageTransitionListeners() {
         window.addEventListener('pagehide', this.onPageHide)
+        window.addEventListener('pageshow', this.onPageShow)
+    }
+    removePageTransitionListeners() {
+        window.removeEventListener('pagehide', this.onPageHide)
+        window.removeEventListener('pageshow', this.onPageShow)
     }
     onPageHide() {
         this.leaveRound()
     }
-    removePageHideListener() {
-        window.removeEventListener('pagehide', this.onPageHide)
+    onPageShow(event) {
+        const hasLeft = _.isNil(this.joinedRoundId)
+        if (!event.persisted || !hasLeft || _.isNil(this.props.round) || _.isNil(this.props.user)) {
+            // not a restore from the cache, or the user was never taken out of the round
+            return
+        }
+        this.rejoinRound()
+    }
+
+    /**
+     * Puts the user back among the round's members after `pagehide` took them out for a page that
+     * turned out to be cached rather than gone. Best effort, like leaving: the write is sent and
+     * its failure logged. `joinedRoundId` is restored either way, so the next leave still happens.
+     */
+    rejoinRound() {
+        const roundId = this.props.round.id
+        const onError = (error) => console.error('Could not rejoin round', roundId, error)
+        this.joinedRoundId = roundId
+        try {
+            this.context.joinRound(roundId, this.props.user.id).catch(onError)
+        } catch (error) {
+            onError(error)
+        }
     }
 
     /**

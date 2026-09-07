@@ -108,7 +108,8 @@ export const convertDBToPercent = (dB) => {
 /**
  * Copies a round for `userId`: new id, fresh timestamps, the copier as creator and only member,
  * and no short link (a link to the original would otherwise be copied along).
- * Layers keep their original creators.
+ * Layers keep their original creators, so the copy keeps the original's contributors as well as
+ * the copier: without their profiles the copied layers would have no colour.
  */
 export const duplicateRound = (round, userId) => {
     const clone = _.cloneDeep(round)
@@ -117,6 +118,7 @@ export const duplicateRound = (round, userId) => {
     clone.createdAt = Date.now()
     clone.createdBy = userId
     clone.currentUsers = [userId]
+    clone.contributors = _.uniq([...(round.contributors || []), userId])
     delete clone.shortLink
     delete clone.isPlaying
     return clone

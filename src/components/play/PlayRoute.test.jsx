@@ -58,13 +58,23 @@ function makeFirebase({ round }) {
     return { firebase, unsubs, listeners }
 }
 
-/** A round with `members` in it now, and `contributors` who have been in it at some point. */
-function roundWithMembers(members, contributors = members) {
+/**
+ * A round with `members` in it now, and `contributors` who have been in it at some point. The two
+ * lists are separate arrays, as they are in a document that comes back from Firestore.
+ */
+function roundWithMembers(members, contributors = [...members]) {
     return {
         id: 'r1', name: 'Jam', createdBy: 'owner', bpm: 120, swing: 0, currentUsers: members, contributors, layers: [],
         userBuses: Object.fromEntries(members.map(id => [id, { id, fx: [] }])),
         userPatterns: Object.fromEntries(members.map(id => [id, { id, patterns: [], sequence: [] }]))
     }
+}
+
+/** A `pageshow`, as the browser fires it after a load (persisted false) or a cache restore (true). */
+function pageShow(persisted) {
+    const event = new Event('pageshow')
+    event.persisted = persisted
+    return event
 }
 
 function renderRoute(firebase) {
@@ -177,6 +187,40 @@ describe('PlayRoute', () => {
 
         unmount()
         expect(firebase.leaveRound).toHaveBeenCalledTimes(1)
+    })
+
+    it('puts a member who is missing from the stored contributors into it', async () => {
+        // a round joined through a client that knew nothing about contributors, or a duplicate that
+        // inherited the list from the round it was copied from
+        const { firebase } = makeFirebase({ round: roundWithMembers(['owner', 'me'], ['owner']) })
+        const { store } = renderRoute(firebase)
+
+        await waitFor(() => expect(store.getState().round).not.toBeNull())
+        expect(firebase.joinRound).toHaveBeenCalledWith('r1', 'me') // unions into both lists
+        expect(firebase.createUserBus).not.toHaveBeenCalled() // already a member: nothing to set up
+        expect(store.getState().round.contributors).toEqual(['owner', 'me'])
+        expect(store.getState().users.map(user => user.id)).toEqual(['owner', 'me'])
+    })
+
+    it('puts the user back in the round when the page comes out of the back/forward cache', async () => {
+        const { firebase } = makeFirebase({ round: roundWithMembers(['owner', 'me']) })
+        const { store, unmount } = renderRoute(firebase)
+
+        await waitFor(() => expect(store.getState().round).not.toBeNull())
+        expect(firebase.joinRound).not.toHaveBeenCalled() // already a member
+
+        await act(async () => { window.dispatchEvent(new Event('pagehide')) })
+        expect(firebase.leaveRound).toHaveBeenCalledTimes(1)
+
+        // a page that was only loaded, not restored, must not rejoin anybody
+        await act(async () => { window.dispatchEvent(pageShow(false)) })
+        expect(firebase.joinRound).not.toHaveBeenCalled()
+
+        await act(async () => { window.dispatchEvent(pageShow(true)) })
+        expect(firebase.joinRound).toHaveBeenCalledWith('r1', 'me')
+
+        unmount()
+        expect(firebase.leaveRound).toHaveBeenCalledTimes(2) // and leaves again on the way out
     })
 
     it('keeps a profile for every contributor, not only for the people in the round now', async () => {

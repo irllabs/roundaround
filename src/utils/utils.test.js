@@ -42,6 +42,7 @@ describe('volume conversion', () => {
 describe('duplicateRound', () => {
     const original = {
         id: 'r1', name: 'Jam', createdBy: 'alice', createdAt: 1, currentUsers: ['alice', 'bob'],
+        contributors: ['alice', 'bob'],
         shortLink: 'https://bit.ly/x', isPlaying: true, bpm: 100,
         layers: [{ id: 'l1', createdBy: 'bob', steps: [] }],
         userBuses: { alice: { fx: [] } }, userPatterns: { alice: { patterns: [] } }
@@ -58,6 +59,16 @@ describe('duplicateRound', () => {
         expect(copy.layers).toEqual(original.layers)
         expect(copy.layers).not.toBe(original.layers)
         expect(original.currentUsers).toEqual(['alice', 'bob'])
+        expect(original.contributors).toEqual(['alice', 'bob'])
+    })
+
+    it('keeps the original contributors and adds the copier, so copied layers keep their colour', () => {
+        expect(duplicateRound(original, 'carol').contributors).toEqual(['alice', 'bob', 'carol'])
+    })
+
+    it('does not list the copier twice, or trip over a round saved without contributors', () => {
+        expect(duplicateRound(original, 'bob').contributors).toEqual(['alice', 'bob'])
+        expect(duplicateRound({ ...original, contributors: undefined }, 'carol').contributors).toEqual(['carol'])
     })
 })
 
