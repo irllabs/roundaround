@@ -512,6 +512,12 @@ export class PlayUI extends Component {
     }
 
     async loadPatternPriority(userId, id, order) {
+        // A toggle made in the last second is still waiting to be saved into the pattern it was
+        // made in, and the debounced save reads the layers when it fires. The layers below are
+        // about to be replaced with the next pattern's, so, as when the user switches patterns by
+        // hand, the pending save goes first: otherwise the next pattern's steps would be written
+        // over the pattern that is active now.
+        this.savePatternDebounced.flush()
         const pattern = _.find(this.props.round.userPatterns[userId].patterns, { id })
         if (!_.isEmpty(pattern.state)) {
             // the same lining up onLoadPattern does, but this runs from a Tone.Part callback on every

@@ -105,6 +105,27 @@ describe('PlayUI saving a step toggle', () => {
         expect(ui.context.saveUserPatterns).toHaveBeenCalledTimes(1)
     })
 
+    it('saves a pending toggle into its own pattern before a sequence loads the next one', async () => {
+        const round = makeRound()
+        // P2 holds the layer as it was saved: both steps off
+        round.userPatterns.me.patterns[1].state = patternState(round.layers[0])
+        round.layers[0].steps[0].isOn = true // toggled since P1 was saved
+        const ui = makeUI(round)
+        ui.savePatternDebounced()
+
+        // the next bar of the sequence: P2's steps take over the layers
+        await ui.loadPatternPriority('me', 'p2', 1)
+
+        expect(ui.props.saveUserPattern).toHaveBeenCalledWith('me', 'p1', expect.objectContaining({ layers: [expect.objectContaining({ id: 'l1' })] }))
+        expect(writtenState(ui, 'p1').layers[0].steps[0].isOn).toBe(true)
+        expect(ui.round.layers[0].steps[0].isOn).toBe(false) // and P2 is what plays now
+        expect(ui.context.saveUserPatterns).toHaveBeenCalledTimes(1)
+
+        // the flushed save is not made a second time when the timer would have fired
+        vi.runAllTimers()
+        expect(ui.context.saveUserPatterns).toHaveBeenCalledTimes(1)
+    })
+
     it('saves a pending toggle when the component goes away', () => {
         const round = makeRound()
         round.layers[0].steps[1].isOn = true
