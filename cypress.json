@@ -7,5 +7,6 @@
 	"reporterOptions": {
 		"mochaFile": "cypress/results/cypress-report-[hash].xml"
 	},
-	"projectId": "miag47"
+	"projectId": "miag47",
+	"pluginsFile": false
 }
