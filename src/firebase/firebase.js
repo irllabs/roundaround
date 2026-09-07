@@ -303,6 +303,18 @@ class Firebase {
         }, { merge: true })
     }
 
+    /**
+     * The join a round whose security rules predate `contributors` still accepts: it changes
+     * `currentUsers` and nothing else. Only for the `permission-denied` fallback in PlayRoute —
+     * once the rules from this branch are deployed, `joinRound` above is the one that runs, and the
+     * missing contributors entry is added on the next open.
+     */
+    joinRoundLegacy = async (roundId, userId) => {
+        await setDoc(doc(this.db, 'rounds', roundId), {
+            currentUsers: arrayUnion(userId)
+        }, { merge: true })
+    }
+
     /** Takes a user out of a round's members. Nobody is ever taken out of `contributors`. */
     leaveRound = async (roundId, userId) => {
         await setDoc(doc(this.db, 'rounds', roundId), {

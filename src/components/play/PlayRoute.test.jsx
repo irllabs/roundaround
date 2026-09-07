@@ -55,6 +55,7 @@ function makeFirebase({ round }) {
         createUserBus: vi.fn().mockResolvedValue(),
         saveUserPatterns: vi.fn().mockResolvedValue(),
         joinRound: vi.fn().mockResolvedValue(),
+        joinRoundLegacy: vi.fn().mockResolvedValue(),
         leaveRound: vi.fn().mockResolvedValue(),
         backfillContributors: vi.fn().mockResolvedValue()
     }
@@ -73,6 +74,11 @@ function roundWithMembers(members, contributors = [...members]) {
     }
 }
 
+/** A Firestore error, which carries the reason for the rejection in `code`. */
+function firestoreError(code, message) {
+    return Object.assign(new Error(message), { code, name: 'FirebaseError' })
+}
+
 /** A `pageshow`, as the browser fires it after a load (persisted false) or a cache restore (true). */
 function pageShow(persisted) {
     const event = new Event('pageshow')
@@ -89,8 +95,12 @@ function renderRoute(firebase) {
 describe('PlayRoute', () => {
     beforeEach(() => {
         vi.spyOn(console, 'error').mockImplementation(() => {})
+        vi.spyOn(console, 'warn').mockImplementation(() => {})
     })
-    afterEach(() => console.error.mockRestore())
+    afterEach(() => {
+        console.error.mockRestore()
+        console.warn.mockRestore()
+    })
 
     it('subscribes to the round, its sub-collections and its users, and unsubscribes from all of them on unmount', async () => {
         const { firebase, unsubs } = makeFirebase({ round: roundWithMembers(['me']) })
@@ -169,6 +179,44 @@ describe('PlayRoute', () => {
         expect(store.getState().round.currentUsers).toEqual(['owner', 'me'])
         expect(store.getState().round.contributors).toEqual(['owner', 'me'])
         expect(firebase.backfillContributors).not.toHaveBeenCalled() // the round already has the field
+        expect(firebase.joinRoundLegacy).not.toHaveBeenCalled()
+    })
+
+    it('falls back to the one-field join when the round\'s rules predate contributors', async () => {
+        // rules are deployed by hand: a round can still be under rules that only let a visitor add
+        // themselves to currentUsers, and reject the write that also adds them to contributors
+        const { firebase } = makeFirebase({ round: roundWithMembers(['owner']) })
+        firebase.joinRound.mockRejectedValue(firestoreError('permission-denied', 'Missing or insufficient permissions'))
+        const { store } = renderRoute(firebase)
+
+        await waitFor(() => expect(store.getState().round).not.toBeNull())
+        expect(firebase.joinRoundLegacy).toHaveBeenCalledWith('r1', 'me')
+        expect(screen.queryByRole('alert')).toBeNull() // the round loads, the visitor is not locked out
+        expect(store.getState().users.map(user => user.id)).toContain('me')
+    })
+
+    it('shows an error when the join fails for a reason other than the rules', async () => {
+        const { firebase } = makeFirebase({ round: roundWithMembers(['owner']) })
+        firebase.joinRound.mockRejectedValue(firestoreError('unavailable', 'The service is currently unavailable'))
+        renderRoute(firebase)
+
+        expect(await screen.findByRole('alert')).toHaveTextContent('The service is currently unavailable')
+        expect(firebase.joinRoundLegacy).not.toHaveBeenCalled()
+    })
+
+    it('still loads the round when the one-off contributors backfill is rejected', async () => {
+        const round = roundWithMembers(['owner', 'me'])
+        delete round.contributors
+        const { firebase } = makeFirebase({ round })
+        firebase.backfillContributors.mockRejectedValue(firestoreError('permission-denied', 'Missing or insufficient permissions'))
+        const { store } = renderRoute(firebase)
+
+        await waitFor(() => expect(store.getState().round).not.toBeNull())
+        expect(screen.queryByRole('alert')).toBeNull()
+        // the write did not happen, so the store does not pretend it did
+        expect(store.getState().round.contributors).toBeUndefined()
+        // the profiles are still loaded, so the layers keep their colours
+        expect(store.getState().users.map(user => user.id)).toEqual(['owner', 'me'])
     })
 
     it('takes the user out of the round when the play route goes away', async () => {

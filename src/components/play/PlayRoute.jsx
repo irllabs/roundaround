@@ -148,7 +148,7 @@ class PlayRoute extends Component {
                 // joinRound unions the user into both lists, so it settles either case atomically:
                 // two people joining at once cannot drop each other, and the user is in the stored
                 // list the round listener reloads profiles from.
-                await this.context.joinRound(roundId, userId)
+                await this.joinRoundOrLegacy(roundId, userId)
                 if (isMissingFromContributors) {
                     round.contributors.push(userId)
                 }
@@ -161,16 +161,25 @@ class PlayRoute extends Component {
                 return
             }
 
+            // Everyone who has ever been in the round: the stored list, or, for a round saved
+            // before rounds had contributors, who the rest of the document says has been in it.
+            const contributors = round.contributors || derivedContributors(round)
             if (_.isNil(round.contributors)) {
-                // A round saved before rounds had contributors: work out who has been in it from
-                // what the document does say, and write that back once, as a union.
-                round.contributors = derivedContributors(round)
-                await this.context.backfillContributors(roundId, round.contributors)
+                try {
+                    // write the derived list back, once, as a union
+                    await this.context.backfillContributors(roundId, contributors)
+                    round.contributors = contributors
+                } catch (error) {
+                    // Best effort: a round whose rules do not allow this write yet is still worth
+                    // playing. The round keeps the contributors the server has (none), so the store
+                    // matches the document, and the next open tries the backfill again.
+                    console.error('Could not backfill contributors', roundId, error)
+                }
             }
 
             // load a profile for every contributor, present or not (colors, avatar etc), so that a
             // layer keeps its author's colour after the author has left
-            const contributors = await this.loadUsersById(round.contributors)
+            const users = await this.loadUsersById(contributors)
 
             // load audio
             CustomSamples.init(this.context)
@@ -182,7 +191,7 @@ class PlayRoute extends Component {
                 return
             }
 
-            this.props.setUsers(contributors)
+            this.props.setUsers(users)
             this.props.setRound(round)
             this.hasLoadedRound = true
             this.removeFirebaseListeners()
@@ -195,6 +204,27 @@ class PlayRoute extends Component {
             }
         } finally {
             this.isLoadingRound = false
+        }
+    }
+
+    /**
+     * Adds the user to the round's members. `joinRound` writes `currentUsers` and `contributors`
+     * together, which the rules deployed with this branch allow but the ones before them do not:
+     * they let a visitor add themselves only when `currentUsers` is the single field that changes.
+     * Rules are deployed by hand, so this client cannot assume the new ones are live yet, and falls
+     * back to the one-field join for a round that rejects the two-field one. The contributors entry
+     * is then picked up on a later open, by the "member missing from contributors" path above. Any
+     * other failure is the caller's to handle.
+     */
+    async joinRoundOrLegacy(roundId, userId) {
+        try {
+            await this.context.joinRound(roundId, userId)
+        } catch (error) {
+            if (_.get(error, 'code') !== 'permission-denied') {
+                throw error
+            }
+            console.warn('This round\'s rules predate contributors; joining without it', roundId)
+            await this.context.joinRoundLegacy(roundId, userId)
         }
     }
 
@@ -455,11 +485,7 @@ class PlayRoute extends Component {
         const roundId = this.props.round.id
         const onError = (error) => console.error('Could not rejoin round', roundId, error)
         this.joinedRoundId = roundId
-        try {
-            this.context.joinRound(roundId, this.props.user.id).catch(onError)
-        } catch (error) {
-            onError(error)
-        }
+        this.joinRoundOrLegacy(roundId, this.props.user.id).catch(onError)
     }
 
     /**
