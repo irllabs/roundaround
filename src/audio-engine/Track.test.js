@@ -20,7 +20,7 @@ vi.mock('tone', () => {
             this._context = {}
             this.context = { _context: {} }
         }
-        connect () { }
+        connect (destination) { (this.connections = this.connections || []).push(destination) }
         disconnect () { }
         dispose () { }
         toDestination () { }
@@ -40,6 +40,14 @@ vi.mock('tone', () => {
             this.type = args[1]
         }
     }
+    class Compressor extends Node {
+        constructor (options) {
+            super(options)
+            this.options = options
+            this.toDestinationCalls = 0
+        }
+        toDestination () { this.toDestinationCalls += 1 }
+    }
     class FeedbackDelay extends Node {
         constructor (...args) {
             super(...args)
@@ -51,6 +59,7 @@ vi.mock('tone', () => {
         Filter,
         FeedbackDelay,
         Gain: Node,
+        Compressor,
         Part: class { dispose () { } },
         Transport: { PPQ: 192, bpm: { value: 120 } }
     }
@@ -190,5 +199,17 @@ describe('AudioEngine and a removed track', () => {
         expect(AudioEngine.tracksById['layer-1']).toBeUndefined()
         expect(AudioEngine.tracks).toEqual([])
         expect(AudioEngine.tracksByType[Track.TRACK_TYPE_LAYER]).toEqual([])
+    })
+})
+
+describe('the master track', () => {
+    it('routes the master gain through a limiter into the destination', () => {
+        // Three coincident full-scale samples reach the output at 1.7x full scale and the device
+        // clips them; the limiter is what keeps stacked hits under 0 dBFS.
+        const master = new Track({ fx: [] }, Track.TRACK_TYPE_MASTER)
+        master.buildAudioChain()
+        expect(master.limiter.options).toEqual({ threshold: -2, knee: 0, ratio: 20, attack: 0.001, release: 0.05 })
+        expect(master.channel.connections).toEqual([master.limiter])
+        expect(master.limiter.toDestinationCalls).toBe(1)
     })
 })

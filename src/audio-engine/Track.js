@@ -17,6 +17,7 @@ export default class Track {
     static TRACK_TYPE_USER = 'TRACK_TYPE_USER' // User busses are routed to master
     static TRACK_TYPE_MASTER = 'TRACK_TYPE_MASTER'
     static TRACK_TYPE_AUTOMATION = 'TRACK_TYPE_AUTOMATION' // Each layer is routed to a user bus
+    static MASTER_LIMITER = { threshold: -2, knee: 0, ratio: 20, attack: 0.001, release: 0.05 }
     constructor (trackParameters, type, userId) {
         this.trackParameters = ownCopy(trackParameters)
         this.id = trackParameters.id
@@ -48,6 +49,14 @@ export default class Track {
             })
         } else if (this.type === Track.TRACK_TYPE_MASTER) {
             this.channel = new Tone.Gain()
+            // Every layer sits at 0 dB and the samples are normalised to full scale, so three
+            // layers hitting the same step reach this bus at up to 1.7x full scale (measured on
+            // production, 2026-09-08) and the device clips them into a short crackle. The limiter
+            // holds stacked peaks under 0 dBFS and leaves single hits untouched. Tone's Limiter
+            // keeps the compressor's default 30 dB soft knee, which let the overshoot through at
+            // 1.05x full scale, and a 3 ms attack still passed the first milliseconds of a stacked
+            // transient at 1.00x; a hard knee, 1 ms attack and 1 dB of margin measure under 1.0.
+            this.limiter = new Tone.Compressor(Track.MASTER_LIMITER)
         } else if (this.type === Track.TRACK_TYPE_AUTOMATION) {
             if (!_.isNil(automationFxId)) {
                 this.trackParameters.automationFxId = automationFxId
@@ -86,7 +95,8 @@ export default class Track {
     }
     buildAudioChain () {
         if (this.type === Track.TRACK_TYPE_MASTER) {
-            this.channel.toDestination()
+            this.channel.connect(this.limiter)
+            this.limiter.toDestination()
         } else if (this.type !== Track.TRACK_TYPE_AUTOMATION) {
             this.disconnectAudioChain()
             if (!_.isNil(this.instrument) && !_.isNil(this.instrument.instrument)) {
@@ -169,6 +179,10 @@ export default class Track {
                 this.channel.dispose()
             } catch (e) {
             }
+        }
+        if (!_.isNil(this.limiter)) {
+            this.limiter.dispose()
+            this.limiter = null
         }
     }
     calculatePart (layer, userPatterns) {
