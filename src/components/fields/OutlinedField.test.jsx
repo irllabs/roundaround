@@ -84,8 +84,16 @@ describe('OutlinedField', () => {
         expect(ref.current.querySelectorAll('input')[0]).toBe(screen.getByLabelText('Email address'))
     })
 
-    it('draws MUI\'s outline, not a lighter one', () => {
+    it('draws MUI\'s outline, not a lighter one, and insets the text by MUI\'s 14px', () => {
         render(<OutlinedField id="link" label="Link" />)
-        expect(screen.getByLabelText('Link')).toHaveClass('border-white/23', 'px-[14px]')
+        // 13px + the 1px border this component draws itself = MUI's 14px, where the outline is
+        // an overlaid <legend> and the padding is the whole inset
+        expect(screen.getByLabelText('Link')).toHaveClass('border-white/23', 'px-[13px]')
+    })
+
+    it('puts the floated label on MUI\'s 14px, patch included', () => {
+        render(<OutlinedField id="link" label="Link" value="x" onChange={() => {}} />)
+        // translate 9px + the patch's 6.67px at scale 0.75 = 14px of text inset
+        expect(screen.getByText('Link')).toHaveClass('translate-x-[9px]', 'px-[6.67px]', 'scale-75')
     })
 })

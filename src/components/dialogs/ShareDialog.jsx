@@ -106,14 +106,9 @@ const ShareDialog = ({ round, isShowingShareDialog, setIsShowingShareDialog, set
                     194px field (a default 20-character input plus its 28px of padding), 16px, the
                     100px Copy button, and the button's own 16px right margin. All four are
                     load-bearing -- the JSS put marginRight on both children, and dropping the
-                    button's takes the paper to 342px.
-                    px-[13px]: MUI draws the outline on an absolutely positioned <legend>, which
-                    overlays the box and adds nothing to its width, while OutlinedField's border
-                    is on the input itself and does. 13 + the 1px border puts the text back at
-                    14px from the edge and the field back at 194px; without it the paper is 360.
-                    Only this dialog measures the field, so the fix stays local to it. */}
+                    button's takes the paper to 342px. */}
                 <div className="flex">
-                    <OutlinedField ref={fieldRef} className="mr-4" id="share-link" label="Link" value={link} onChange={() => {}} inputProps={{ readOnly: true, className: 'px-[13px]' }} />
+                    <OutlinedField ref={fieldRef} className="mr-4" id="share-link" label="Link" value={link} onChange={() => {}} inputProps={{ readOnly: true }} />
                     <Button className={cn(MUI_BUTTON, 'mr-4 min-w-[100px] shrink-0 bg-secondary text-white hover:bg-secondary/90')} onClick={onCopyClick}>{copied ? 'Copied' : 'Copy'}</Button>
                 </div>
             </AppDialogBody>

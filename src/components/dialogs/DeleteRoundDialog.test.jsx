@@ -48,6 +48,30 @@ describe('DeleteRoundDialog', () => {
         expect(firebase.deleteRound).not.toHaveBeenCalled()
     })
 
+    // Cancel carries autoFocus, so Radix's FocusScope never dispatches its mount event -- the
+    // paper already holds the active element. AppDialog therefore cannot learn the opener from
+    // that event, and this is the dialog that proves it learns it anyway.
+    it('gives focus back to whatever opened it, though Cancel takes the autoFocus', async () => {
+        const store = makeStore()
+        store.dispatch(setRounds([{ id: 'r1', name: 'One' }]))
+        store.dispatch(setSelectedRoundId('r1'))
+        renderWithProviders(
+            <>
+                <button onClick={() => store.dispatch(setIsShowingDeleteRoundDialog(true))}>delete round</button>
+                <DeleteRoundDialog />
+            </>,
+            { store, firebase: { deleteRound: vi.fn() } }
+        )
+        // taken before the dialog opens: Radix aria-hides everything outside it while it is up
+        const trigger = screen.getByRole('button', { name: 'delete round' })
+        await userEvent.click(trigger)
+        expect(await screen.findByRole('button', { name: 'Cancel' })).toHaveFocus()
+
+        await userEvent.keyboard('{Escape}')
+        await waitFor(() => expect(store.getState().display.isShowingDeleteRoundDialog).toBe(false))
+        expect(trigger).toHaveFocus()
+    })
+
     it('leaves the round when the open round is deleted', async () => {
         setup({
             round: { id: 'r1', name: 'One', layers: [], currentUsers: [] },

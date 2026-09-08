@@ -23,18 +23,41 @@ export function AppDialog({ open, onOpenChange, titleId, title, titleClassName, 
     // Radix's modal DialogContent closes by calling `context.triggerRef.current?.focus()` and
     // preventDefaulting FocusScope's own restore. Every dialog in this app is opened from Redux
     // or component state rather than from a DialogTrigger, so that ref is always null and the
-    // close would leave focus on <body>. MUI's Dialog hands focus back to whatever opened it;
-    // remember that element as the dialog opens (FocusScope dispatches this before it moves
-    // focus) and put focus back on it as the dialog closes.
+    // close would leave focus on <body>. MUI's Dialog hands focus back to whatever opened it, so
+    // remember that element as the dialog opens and put focus back on it as the dialog closes.
+    //
+    // The opener is read during render, not from onOpenAutoFocus and not from an effect.
+    // FocusScope only dispatches its mount event when the paper does not already contain the
+    // active element (`container.contains(previouslyFocusedElement)`), so a dialog whose child
+    // carries autoFocus -- Rename's input, Delete's Cancel -- never fires it and would close
+    // dropping focus on <body>. A layout effect is no better: React applies a child's autoFocus
+    // during commit, before any parent effect runs, so by then the active element is the
+    // dialog's own control. The render pass is the last moment the opener is still focused.
     const restoreFocusTo = React.useRef(null)
+    const wasOpen = React.useRef(false)
+    if (open && !wasOpen.current) {
+        restoreFocusTo.current = document.activeElement
+    }
+    wasOpen.current = open
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>
             <DialogContent
                 showCloseButton={false}
                 aria-labelledby={titleId}
                 aria-describedby={undefined}
-                onOpenAutoFocus={() => { restoreFocusTo.current = document.activeElement }}
-                onCloseAutoFocus={(event) => { event.preventDefault(); restoreFocusTo.current && restoreFocusTo.current.focus() }}
+                // MUI's TrapFocus parks focus on the paper itself and lets a child's autoFocus
+                // win; Radix's FocusScope walks to the first tabbable control, which lights up
+                // the share dialog's read-only link field with the focused outline. Take the
+                // paper (the FocusScope container, already tabIndex=-1) instead. Dialogs whose
+                // child has autoFocus never get here at all, so they keep their own behaviour.
+                onOpenAutoFocus={(event) => { event.preventDefault(); event.target.focus({ preventScroll: true }) }}
+                onCloseAutoFocus={(event) => {
+                    event.preventDefault()
+                    const opener = restoreFocusTo.current
+                    if (opener && opener !== document.body && document.contains(opener) && opener.focus) {
+                        opener.focus({ preventScroll: true })
+                    }
+                }}
                 className={cn(PAPER, className)}
             >
                 {/* Not `relative`: MUI's DialogTitle is static and the back arrow is positioned

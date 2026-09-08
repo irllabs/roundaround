@@ -30,6 +30,18 @@ describe('AppDialog', () => {
         expect(trigger).toHaveFocus()
     })
 
+    // MUI's TrapFocus parks focus on the paper and lets a child's autoFocus win; Radix's
+    // FocusScope walks to the first tabbable control, which lit up the share dialog's read-only
+    // link field with the focused outline on 10-share-dialog.png.
+    it('parks focus on the paper rather than on the first control inside it', async () => {
+        const user = userEvent.setup()
+        render(<Harness />)
+        await user.click(screen.getByRole('button', { name: 'open' }))
+        const dialog = await screen.findByRole('dialog')
+        expect(dialog).toHaveFocus()
+        expect(screen.getByRole('button', { name: 'inside' })).not.toHaveFocus()
+    })
+
     it('traps Tab inside the dialog', async () => {
         const user = userEvent.setup()
         render(<Harness />)
