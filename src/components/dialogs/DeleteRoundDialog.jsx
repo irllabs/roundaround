@@ -3,7 +3,8 @@ import { connect } from "react-redux";
 import { useHistory } from 'react-router-dom';
 import { FirebaseContext } from '../../firebase';
 import { setIsShowingDeleteRoundDialog, setRounds } from '../../redux/actions'
-import { AppDialog, AppDialogActions, AppDialogContent, MUI_BUTTON, MUI_PRIMARY } from './AppDialog'
+import { AppDialog, AppDialogActions, AppDialogContent } from './AppDialog'
+import { MUI_BUTTON, MUI_PRIMARY } from '@/lib/mui'
 import { Button } from '@/components/ui/button'
 import { Spinner } from '@/components/ui/spinner'
 import { cn } from '@/lib/utils'

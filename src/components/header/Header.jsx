@@ -4,7 +4,7 @@ import {
 	Link, withRouter
 } from "react-router-dom";
 import { Button } from '@/components/ui/button';
-import { MUI_BUTTON, MUI_SECONDARY } from '../dialogs/AppDialog';
+import { MUI_BUTTON, MUI_SECONDARY } from '@/lib/mui';
 import { ShareIcon } from '@/components/icons';
 import { cn } from '@/lib/utils';
 import { BackButton } from '../play/layer-settings/resources';

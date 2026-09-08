@@ -1,6 +1,6 @@
 import React from 'react'
 import { FirebaseContext } from '../firebase'
-import { MUI_BUTTON, MUI_PRIMARY } from './dialogs/AppDialog'
+import { MUI_BUTTON, MUI_PRIMARY } from '@/lib/mui'
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
 
@@ -37,8 +37,8 @@ export default class ErrorBoundary extends React.Component {
             return (
                 <div role="alert" className="px-8 py-16 text-center">
                     {/* MUI's h5 and body1, and gutterBottom's 0.35em. */}
-                    <p className="mb-[0.35em] mt-0 text-2xl leading-[1.334]">Something went wrong.</p>
-                    <p className="mb-[0.35em] mt-0 text-base leading-6 tracking-[0.00938em] text-white/70">{message}</p>
+                    <p className="m-0 mb-[0.35em] text-2xl leading-[1.334] tracking-normal">Something went wrong.</p>
+                    <p className="m-0 mb-[0.35em] text-base leading-6 tracking-[0.00938em] text-white/70">{message}</p>
                     <Button className={cn(MUI_BUTTON, MUI_PRIMARY)} onClick={() => window.location.assign('/rounds')}>
                         Back to my rounds
                     </Button>

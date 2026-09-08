@@ -3,7 +3,8 @@ import { connect } from "react-redux";
 import { FirebaseContext } from '../../firebase';
 import QRCode from 'qrcode'
 import { setIsShowingShareDialog, setRoundShortLink } from '../../redux/actions'
-import { AppDialog, AppDialogBody, MUI_BUTTON, MUI_SECONDARY } from './AppDialog'
+import { AppDialog, AppDialogBody } from './AppDialog'
+import { MUI_BUTTON, MUI_SECONDARY } from '@/lib/mui'
 import { OutlinedField } from '../fields/OutlinedField'
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'

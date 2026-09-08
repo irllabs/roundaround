@@ -8,7 +8,7 @@ import SignInDialog from '../dialogs/SignInDialog'
 import { createRound, duplicateRound } from '../../utils/index'
 import { FirebaseContext } from '../../firebase';
 import { AppMenu, AppMenuItem } from '../header/AppMenu'
-import { MUI_BUTTON, MUI_SECONDARY } from '../dialogs/AppDialog'
+import { MUI_BUTTON, MUI_SECONDARY } from '@/lib/mui'
 import { Button } from '@/components/ui/button'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import { AddIcon, ImageIcon, MoreHorizIcon } from '@/components/icons'

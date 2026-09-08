@@ -3,7 +3,8 @@ import { connect } from "react-redux";
 import { setIsShowingSignInDialog, setSignUpDisplayName, setUser, setRounds, setRedirectAfterSignIn } from '../../redux/actions'
 import { FirebaseContext } from '../../firebase';
 import { getRandomColor } from '../../utils/index'
-import { AppDialog, AppDialogBody, MUI_BUTTON, MUI_PRIMARY, MUI_SECONDARY } from './AppDialog'
+import { AppDialog, AppDialogBody } from './AppDialog'
+import { MUI_BUTTON, MUI_PRIMARY, MUI_SECONDARY } from '@/lib/mui'
 import { OutlinedField } from '../fields/OutlinedField'
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
