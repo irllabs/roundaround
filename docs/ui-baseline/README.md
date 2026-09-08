@@ -48,6 +48,14 @@ python3 docs/ui-baseline/capture.py --out /tmp/candidate
 python3 docs/ui-baseline/compare.py /tmp/candidate
 ```
 
+Until this PR is live, the first of those two commands cannot finish against production.
+Commit 6ba3fbc deleted the click shield that used to hide screens 14-19's clicks from `window`,
+because this branch fixes the bug it existed for -- a layer picked in the mixer being dropped by
+the next click to reach `window`, including the layer popup's own ms button. Production still
+has that bug, so a production run stops at `15-layer-offset-ms` with the popup it was about to
+photograph closed underneath it. It is the last screen that will ever need the shield: once
+this PR ships, production is a build of this branch and the command works as written.
+
 `capture.py` also takes `--port` (default 9336) if 9336 is busy. It launches its own
 headless Chrome in a throwaway profile and kills it on the way out on every exit path,
 including when a screen fails and including when Chrome itself never finishes starting up.
@@ -97,9 +105,10 @@ baseline for it was recorded.
 
 **Every screen must come in under 0.5% changed pixels.** That is the acceptance rule
 for a PR that is not supposed to change the look of anything. Two consecutive captures
-of the same build land between 0.00% and 0.27%, so anything above 0.5% is a real
-change, not anti-aliasing. The top of that range is where the random instrument names are:
-`21-mixer-popup-mobile` draws three of them at device pixel ratio 2.
+of the same build land between 0.00% and 0.17%, so anything above 0.5% is a real
+change, not anti-aliasing. The top of that range is where the random instrument names still
+are: `07-mixer-popup` draws three of them, and pinning them there is not worth the cost --
+unlike on 21, which used to be the top of the range at 0.31-0.46% and is now 0.08-0.11%.
 
 **A PR that changes a screen on purpose has to re-capture the baseline in the same PR**,
 against the branch's own build, and the new PNGs go in the same commit as the change.
@@ -137,6 +146,32 @@ own. `capture.py` pins all of it:
   which is logged. The mask normalises it to 180px either way, which is what lets a
   preview capture be compared against the baseline at all.
 
+- **The three layer names in the mobile mixer, on `21-mixer-popup-mobile` only.** Each layer
+  gets a random one of 64 sample ids, and 21 was the noisiest screen in the baseline: two
+  captures of the same build landed at 0.31-0.46% against a 0.5% threshold, which left almost
+  no headroom for a real change to show up in. Before the shot the capture reads all three
+  name boxes, asserts their geometry, and then replaces each word with `sample`, the way the
+  share link is replaced with a fixed placeholder.
+
+  The words are not the noise; they cause it. Their column is shrink-to-fit -- `max(73px,
+  19px + the word)` -- so a longer word pushes that row's volume slider, its S and its M to
+  the right, and it is those shifted controls that most of the changed pixels belonged to.
+  Painting rectangles over the words was tried first and left 0.36% between two production
+  runs; replacing them with one fixed word takes two production runs to 0.077%, because now
+  every row lays out identically. `sample` is six characters, comfortably inside the 54px
+  below which the column stays at its 73px floor.
+
+  Nothing is painted over, so this costs less than the QR mask does: the name box, its font,
+  its size and its position all stay under comparison, and only which of the 64 ids was drawn
+  does not. What guards the region is `NAME_X`/`NAME_YS`/`NAME_H` in `capture.py`, asserted
+  *before* the replacement: the names' left edge, height and the three row tops are decided by
+  the layout and not by the words, and any of them moving stops the run with a message rather
+  than being normalised away. The widths are only sanity-checked against the range the 64 ids
+  can produce, `tap` to `electroclav`.
+
+  **`07-mixer-popup` keeps the same three names under test.** It draws them at device pixel
+  ratio 1 on the desktop, comes in an order of magnitude under the threshold, and is not
+  touched by any of this; so is the bottom bar's own instrument summary, on 08 and on 22.
 - **The first effect switch.** `19-effects-on` is the only screen with an effect on. The
   capture drags the first switch's thumb across, shoots, and drags it back off before
   anything else is photographed, because the sidebar is in frame on fifteen of the other
@@ -148,10 +183,11 @@ own. `capture.py` pins all of it:
   `/rounds` and would otherwise still be there when the round is re-entered at phone size.
 
 Two things are deliberately left alone because they are small enough to live inside the
-threshold: the three random instrument names on the rings, in the mixer, in the bottom bar
-and in the instrument popup (worth about 0.14% on `07-mixer-popup` and 0.27% on
-`21-mixer-popup-mobile`, which draws them at device pixel ratio 2), and the created-at time
-under the round in the rounds list.
+threshold: the random instrument names everywhere they are not pinned -- on the rings, on
+`07-mixer-popup`, in the bottom bar and in the instrument popup, worth about 0.17% on 07 --
+and the created-at time under the round in the rounds list. The instrument icons that go with
+those names are random too, and are left alone for the same reason: four glyphs of 14x16, and
+on 21 they are most of what is left after the names are pinned.
 
 ## What the baseline does not cover
 

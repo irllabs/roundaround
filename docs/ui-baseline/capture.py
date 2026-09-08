@@ -231,6 +231,112 @@ MIXER_CLOSE = """(() => {
   return true;
 })()""" % MIXER_POPUP
 
+# ---------------------------------------------------------------------------------------------
+# The mobile mixer's three layer names.
+#
+# 21-mixer-popup-mobile is the only screen that draws the random instrument names at device pixel
+# ratio 2, and it is the noisiest screen in the baseline: two captures of the same build land at
+# 0.31-0.46% against a 0.5% threshold. So the names are pinned here, the way the share dialog's
+# link is -- the capture cannot make either of them come out the same twice.
+#
+# Only screen 21. The desktop mixer, 07-mixer-popup, draws the same names at DPR 1, comes in an
+# order of magnitude under the threshold, and keeps them under test.
+#
+# **Measured deviation from "paint a rectangle over each name".** A rectangle was written first
+# and it did not close the gap: two masked production runs still differed by 0.36%, and the diff
+# showed why. The names are not the noise, they only cause it. Their column is shrink-to-fit --
+# `max(73px, 19px + the word)` -- so a longer word pushes that row's volume slider, its S and its
+# M to the right, and it is those shifted controls, not the glyphs, that most of the changed
+# pixels belong to. Painting the words out leaves every one of them moving.
+#
+# So the name is replaced with a fixed word instead, exactly the way SHARE_LINK replaces the
+# share link. `sample` is six characters, comfortably inside the 54px below which the column
+# stays at its 73px floor, so every row lays out identically on every run and the slider, the S
+# and the M land in the same place. Nothing is painted over: the name box, its font, its size and
+# its position all stay under comparison, and only which of the 64 sample ids was drawn does not.
+#
+# The names are found by position, not by class, so the same code works on this branch's markup
+# and on the Material UI build the baseline is captured from: the first leaf with text in each
+# row of the mixer's list is the layer's name, ahead of its step count, its slider and its S and
+# M. Checked against both.
+#
+# NAME_GEOMETRY is asserted before the replacement, and is what stops this hiding a layout change
+# instead of reporting it, the way QR_SIZES does for the QR code. The left edge, the height and
+# the three row tops are decided by the layout and not by the words -- measured identical on
+# production and on this branch -- so any of them moving aborts the run. Only the widths may
+# vary, and only inside the range the 64 sample ids can produce (`tap` at the short end,
+# `electroclav` at the long one).
+NAME_X = 63.5
+NAME_H = 16.0
+NAME_YS = (700.5, 765.5, 830.5)
+NAME_W_RANGE = (15.0, 90.0)
+NAME_TEXT = 'sample'
+
+# The list is the popup's second child; each of its children is one layer's row.
+MIXER_NAME_LEAF = """(row => [...row.querySelectorAll('*')].find(
+  e => e.children.length === 0 && e.textContent.trim()))"""
+
+MIXER_NAME_RECTS = """(() => {
+  const p = %s;
+  if (!p || !p.children[1]) return 'no mixer popup';
+  return [...p.children[1].children].map(row => {
+    const leaf = %s(row);
+    if (!leaf) return null;
+    const r = leaf.getBoundingClientRect();
+    return [Math.round(r.x * 100) / 100, Math.round(r.y * 100) / 100,
+            Math.round(r.width * 100) / 100, Math.round(r.height * 100) / 100, leaf.textContent.trim()];
+  });
+})()""" % (MIXER_POPUP, MIXER_NAME_LEAF)
+
+MASK_MIXER_NAMES = """(() => {
+  const p = %s;
+  if (!p || !p.children[1]) return false;
+  let n = 0;
+  for (const row of p.children[1].children) {
+    const leaf = %s(row);
+    if (!leaf) continue;
+    leaf.textContent = %s;
+    n += 1;
+  }
+  return n === 3;
+})()""" % (MIXER_POPUP, MIXER_NAME_LEAF, json.dumps(NAME_TEXT))
+
+MIXER_NAMES_MASKED = """(() => {
+  const p = %s;
+  if (!p || !p.children[1]) return false;
+  const rows = [...p.children[1].children];
+  if (rows.length !== 3) return false;
+  return rows.every(row => {
+    const leaf = %s(row);
+    return leaf !== undefined && leaf.textContent.trim() === %s;
+  });
+})()""" % (MIXER_POPUP, MIXER_NAME_LEAF, json.dumps(NAME_TEXT))
+
+
+def check_mixer_names(rects):
+    """Pin the mobile mixer's layout before the words in it are replaced."""
+    if not isinstance(rects, list) or len(rects) != len(NAME_YS):
+        raise Failed('the mobile mixer has %r rows, not %d' % (rects, len(NAME_YS)))
+    low, high = NAME_W_RANGE
+    for i, (rect, want_y) in enumerate(zip(rects, NAME_YS)):
+        if rect is None:
+            raise Failed('row %d of the mobile mixer has no name in it' % (i + 1))
+        x, y, w, h, text = rect
+        if (x, y, h) != (NAME_X, want_y, NAME_H):
+            raise Failed('the mobile mixer\'s row %d name %r is laid out at x=%s y=%s h=%s, not '
+                         'x=%s y=%s h=%s. Replacing it would hide that from the comparison '
+                         'instead of reporting it, so check what moved and update NAME_X / '
+                         'NAME_YS / NAME_H only if the new layout is intended.'
+                         % (i + 1, text, x, y, h, NAME_X, want_y, NAME_H))
+        if not low <= w <= high:
+            raise Failed('the mobile mixer\'s row %d name %r is %s wide, outside %s-%s. Sample '
+                         'ids run from `tap` to `electroclav`; a box outside that range is a font '
+                         'or a wrapping change, not a different word.'
+                         % (i + 1, text, w, low, high))
+    print('mobile mixer names', [r[4] for r in rects], '-> %r; layout pinned at x=%s h=%s'
+          % (NAME_TEXT, NAME_X, NAME_H))
+
+
 # The landing page's <video> has to reach a settled state before the shutter, or
 # the right-hand half of the shot depends on how far the media load had got.
 # networkState 3 is NO_SOURCE, which is where production sits today: the hosted
@@ -674,7 +780,10 @@ def capture(b, base, out):
     # The Mixer row closes its own popup on the way, because every toggle hides the rest first.
     # Assert it rather than assume it: the mixer is drawn over where the hamburger popup was.
     b.must(offscreen_text('Add round'), 'the hamburger popup closing behind it')
-    b.shot(out, '21-mixer-popup-mobile', verify="%s === '1'" % MIXER_OPACITY)
+    check_mixer_names(b.js(MIXER_NAME_RECTS))
+    b.run(MASK_MIXER_NAMES, 'replace the three layer names in the mobile mixer')
+    b.shot(out, '21-mixer-popup-mobile',
+           verify="(%s === '1') && (%s)" % (MIXER_OPACITY, MIXER_NAMES_MASKED))
     b.run(FIRST_LAYER_ROW, 'click the first layer in the mixer')
     b.must("[...document.querySelectorAll('*')].every(e => e.children.length !== 0 || !/Long Press/.test(e.textContent))",
            'the bottom bar hint giving way to the layer controls')
