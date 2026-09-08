@@ -32,7 +32,7 @@ const VolumePopup = ({
     isSoloed
 }) => {
     return (
-        <div className={showVolumePopup ? classes.root : classes.hidden}>
+        <div data-test="volume-popup" data-open={String(showVolumePopup)} className={showVolumePopup ? classes.root : classes.hidden}>
             <div className={classes.volumeSliderContainer}>
                 <VolumeSlider
                     sliderRef={volumeSliderRef}

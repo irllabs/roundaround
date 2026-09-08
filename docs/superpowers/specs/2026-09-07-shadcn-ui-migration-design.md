@@ -25,13 +25,13 @@ All values come from `src/App.jsx` (MUI palette), the JSS blocks, `src/App.css`/
 | `--primary` / `--primary-foreground` | `#EAEAEA` / `#1b1b1b` | light pill buttons |
 | `--secondary` / `--secondary-foreground` | `#474747` / `#EAEAEA` | grey pill buttons, S/M toggles |
 | `--muted-foreground` | `#AAAAAA` | palette primary.dark |
-| `--accent` (hover) | white at 20% | JSS `rgba(255,255,255,0.2)` |
-| `--border` | white at 10% | JSS |
+| `--accent` (selected) | white at 20% | JSS `rgba(255,255,255,0.2)`. This is the app's selected/open tint (`bg-white/20` on an open popup's trigger), not its hover: MUI's `IconButton`/`MenuItem` hover is white at 8%, spelled at the call site as `hover:bg-white/8` in `Button`'s `plain` variant and in `AppMenuItem`. |
+| `--border` | white at 10% | JSS. MUI's `Divider` is `divider`, white at 12%, which the app draws at the call site with `bg-white/12` on `Separator` and in `MUI_PRIMARY`/`MUI_SECONDARY`'s disabled fill rather than by moving this token, since `--border` paints every border in the app. |
 | `--input` | `#424242` field, outline white at 35% | text fields |
 | `--destructive` | `#F44336` | delete flows |
 | `--ring` | `#EAEAEA` | palette action.active |
 | `--radius` | 8px (dialogs, popovers, inputs' outer shape); buttons, icon buttons, avatars and toggles are full pills | shape.borderRadius 32, screenshots |
-| type | system stack unchanged (`-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, …`); body 14px, caption 12px, dialog title 20px, landing headline 30px bold; buttons keep sentence case | index.css, JSS, MUI typography |
+| type | `"Roboto", "Helvetica", "Arial", sans-serif`; body 14px, caption 12px, dialog title 20px, landing headline 30px bold; buttons keep sentence case | MUI `CssBaseline`, unlayered on `body`; every screen in `docs/ui-baseline/` was photographed with it, and no Roboto is served, so it renders as Helvetica. The spec originally named the system stack; keeping it would have changed every glyph on every screen, which is a redesign and not this migration. Also index.css, JSS, MUI typography |
 | breakpoints | `sm 500px`, `md 900px`, `lg 1200px`, `xl 1536px` | MUI theme |
 | motion | 200 ms ease for open/close (Radix `data-state` + Tailwind animation utilities), matching MUI Grow | MUI transitions |
 

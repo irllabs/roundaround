@@ -18,8 +18,6 @@
 		"cypress:run": "CYPRESS_BASE_URL=http://localhost:3000/ cypress run"
 	},
 	"dependencies": {
-		"@material-ui/core": "^4.11.3",
-		"@material-ui/icons": "^4.11.2",
 		"@reduxjs/toolkit": "2.12.0",
 		"@svgdotjs/svg.js": "^3.0.16",
 		"@svgdotjs/svg.panzoom.js": "^2.1.1",
@@ -29,12 +27,10 @@
 		"firebase": "^12.18.0",
 		"lodash": "^4.17.20",
 		"lucide-react": "^1.42.0",
-		"prop-types": "^15.8.1",
 		"qrcode": "^1.4.4",
 		"radix-ui": "^1.6.7",
 		"react": "18.3.1",
 		"react-dom": "18.3.1",
-		"react-loader-spinner": "^4.0.0",
 		"react-redux": "9.3.0",
 		"react-router-dom": "^5.2.0",
 		"redux": "^5.0.1",

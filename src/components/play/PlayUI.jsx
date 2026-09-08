@@ -9,8 +9,6 @@ import { getDefaultLayerData } from '../../utils/defaultData';
 import { SET_LAYER_MUTE, TOGGLE_STEP, ADD_LAYER, SET_SELECTED_LAYER_ID, SET_IS_SHOWING_LAYER_SETTINGS, UPDATE_STEP, SET_IS_SHOWING_ORIENTATION_DIALOG, UPDATE_LAYERS, SET_CURRENT_SEQUENCE_PATTERN } from '../../redux/actionTypes'
 import { FirebaseContext } from '../../firebase/'
 import * as Tone from 'tone';
-import { withStyles } from '@material-ui/styles';
-import PropTypes from 'prop-types';
 import { numberRange, layerWithStepsOff, patternLayersForRound } from '../../utils/index'
 import Instruments from '../../audio-engine/Instruments'
 import { getDefaultUserPatternSequence } from '../../utils/defaultData'
@@ -27,24 +25,10 @@ import {
 // How long after the last step edit the active pattern is saved. A run of toggles is one write.
 const PATTERN_SAVE_DEBOUNCE_MS = 1000
 
-const styles = theme => ({
-    button: {
-        cursor: 'pointer'
-    },
-    fadeIn: {
-        transition: "all 0.5s ease-in"
-    },
-    fadeOut: {
-        transition: "all 0.5s ease-out"
-    },
-    smallCross: {
-        width: 5,
-        height: 5
-    },
-    buttonIcon: {
-        pointerEvents: 'none'
-    }
-})
+// The two class names PlayUI puts on SVG.js nodes. They came from JSS; SVG.js only ever needed
+// the strings, and Tailwind emits both because they appear here as literals.
+const BUTTON_CLASS = 'cursor-pointer'
+const BUTTON_ICON_CLASS = 'pointer-events-none'
 
 export class PlayUI extends Component {
     static contextType = FirebaseContext
@@ -381,7 +365,7 @@ export class PlayUI extends Component {
         this.playbackToggle.x((this.containerWidth / 2) - (HTML_UI_Params.addNewLayerButtonDiameter / 2))
         this.playbackToggle.y((this.containerHeight / 2) - (HTML_UI_Params.addNewLayerButtonDiameter / 2))
         this.playbackToggle.click(this.onPlaybackToggle)
-        this.playbackToggle.addClass(this.props.classes.button)
+        this.playbackToggle.addClass(BUTTON_CLASS)
         // keyboard and screen-reader access to the only control that starts the round
         this.playbackToggle.attr({ role: 'button', tabindex: 0, 'aria-label': isPlaying ? 'Stop' : 'Play' })
         this.playbackToggle.on('keydown', (e) => {
@@ -404,7 +388,7 @@ export class PlayUI extends Component {
             <path class="st0" d="M34.9,30.8V8c0-4.1-3.3-7.4-7.4-7.4S20.1,3.9,20.1,8v22.8c0,4.1,3.3,7.4,7.4,7.4S34.9,34.9,34.9,30.8z M23.5,8 c0-2.2,1.8-4,4-4s4,1.8,4,4v22.8c0,2.2-1.8,4-4,4s-4-1.8-4-4V8z" /></svg>`)
         this.playbackToggleIcon.x((this.containerWidth / 2) - 17.5)
         this.playbackToggleIcon.y((this.containerHeight / 2) - 19.5)
-        this.playbackToggleIcon.addClass(this.props.classes.buttonIcon)
+        this.playbackToggleIcon.addClass(BUTTON_ICON_CLASS)
 
         this.stepModal = this.container.nested()
         this.stepModalBackground = this.stepModal.rect(HTML_UI_Params.stepModalDimensions, HTML_UI_Params.stepModalDimensions).fill({ color: '#000', opacity: 0.8 }).radius(HTML_UI_Params.stepModalThumbDiameter / 2)
@@ -631,7 +615,7 @@ export class PlayUI extends Component {
             layerGraphic.stroke({ opacity: HTML_UI_Params.layerStrokeOpacity })
         }
         if (layerGraphic.isAllowedInteraction) {
-            layerGraphic.addClass(this.props.classes.button)
+            layerGraphic.addClass(BUTTON_CLASS)
         }
         this.addLayerEventListeners(layerGraphic)
         this.layerGraphics.push(layerGraphic)
@@ -678,7 +662,7 @@ export class PlayUI extends Component {
             stepGraphic.isAllowedInteraction = !dim && layer.createdBy === this.props.user.id
             stepGraphic.userColor = this.userColors[layer.createdBy]
             if (layer.createdBy === this.props.user.id) {
-                stepGraphic.addClass(this.props.classes.button)
+                stepGraphic.addClass(BUTTON_CLASS)
             }
             this.stepGraphics.push(stepGraphic)
             this.updateStep(step)
@@ -2040,10 +2024,6 @@ export class PlayUI extends Component {
         )
     }
 }
-PlayUI.propTypes = {
-    classes: PropTypes.object.isRequired,
-};
-
 const mapStateToProps = state => {
     let selectedLayer = null;
     if (!_.isNil(state.display.selectedLayerId) && !_.isNil(state.round) && !_.isNil(state.round.layers)) {
@@ -2076,4 +2056,4 @@ const mapDispatchToProps = dispatch => ({
 export default connect(
     mapStateToProps,
     mapDispatchToProps
-)(withStyles(styles)(PlayUI));
+)(PlayUI);

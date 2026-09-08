@@ -45,7 +45,7 @@ function makeRound() {
 /** The component as React would build it, with props that follow a dispatch the way the store does. */
 function makeUI(round) {
     const dispatch = vi.fn(action => { ui.props = { ...ui.props, round: roundReducer(ui.props.round, action) } })
-    const ui = new PlayUI({ round, user, classes: {}, dispatch, saveUserPattern: vi.fn() })
+    const ui = new PlayUI({ round, user, dispatch, saveUserPattern: vi.fn() })
     ui.context = { updateLayer: vi.fn().mockResolvedValue(), saveUserPatterns: vi.fn().mockResolvedValue() }
     ui.round = _.cloneDeep(round)
     ui.activePatternId = 'p1'
@@ -150,7 +150,6 @@ describe('PlayUI loading a pattern from its button', () => {
         const ui = new PlayUI({
             round,
             user,
-            classes: {},
             display: { isRecordingSequence: false },
             dispatch: action => dispatched.push(action),
             saveUserPattern: vi.fn(),
@@ -214,7 +213,7 @@ describe('PlayUI keeping a layer selected', () => {
         const dispatched = []
         const round = makeRound()
         const ui = new PlayUI({
-            round, user, users: [user], classes: {}, display: { isRecordingSequence: false }, childRef: vi.fn(),
+            round, user, users: [user], display: { isRecordingSequence: false }, childRef: vi.fn(),
             selectedLayer: null, selectedLayerId: null, setIsRecordingSequence: vi.fn(),
             dispatch: action => dispatched.push(action), saveUserPattern: vi.fn()
         })
