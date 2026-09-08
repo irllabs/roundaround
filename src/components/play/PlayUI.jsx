@@ -138,6 +138,29 @@ export class PlayUI extends Component {
         }
     }
 
+    /**
+     * Takes over a selection made anywhere but a layer's own ring.
+     *
+     * `selectedLayerId` is this component's copy of the store's selection and the only thing
+     * `interfaceClicked` reads. Pressing a ring writes it through `onLayerClicked`; picking a layer
+     * in the mixer does not, because `LayerSettings.onLayerClicked` only dispatches. The copy then
+     * stayed null while the store held a layer, which is exactly the state `interfaceClicked`
+     * deselects in, so the first click that reached `window` -- the layer popup's own ms and %
+     * buttons among them, whose handlers do not stop propagation -- threw the pick away and closed
+     * the popup it was aimed at.
+     *
+     * Only a selection *arriving* is followed. A click on the round's background goes the other way:
+     * `onOutsideClick` nulls this copy while the store still holds the layer, and `interfaceClicked`
+     * is what clears the store a moment later. Nothing about the store's own selection changes
+     * between those two, so this leaves the copy null and the deselect still happens.
+     */
+    followStoreSelection(prevProps) {
+        const { selectedLayerId } = this.props
+        if (!_.isNil(selectedLayerId) && prevProps.selectedLayerId !== selectedLayerId) {
+            this.selectedLayerId = selectedLayerId
+        }
+    }
+
     async createRound() {
         this.round = _.cloneDeep(this.props.round)
         this.userColors = this.getUserColors()
@@ -162,6 +185,8 @@ export class PlayUI extends Component {
 
     componentDidUpdate(prevProps) {
         const { round, user, display, setIsRecordingSequence } = this.props
+
+        this.followStoreSelection(prevProps)
 
         this.isPlayingSequence = round.userPatterns[user.id].isPlayingSequence
 

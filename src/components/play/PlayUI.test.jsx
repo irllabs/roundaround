@@ -3,7 +3,7 @@ import _ from 'lodash'
 import { PlayUI } from './PlayUI'
 import AudioEngine from '../../audio-engine/AudioEngine'
 import roundReducer from '../../redux/reducers/round'
-import { TOGGLE_STEP, UPDATE_LAYERS } from '../../redux/actionTypes'
+import { SET_SELECTED_LAYER_ID, TOGGLE_STEP, UPDATE_LAYERS } from '../../redux/actionTypes'
 
 // PlayUI draws with SVG.js and cannot be mounted here (the pan/zoom plugin wants a global SVG), so
 // these tests build the component with `new` and exercise the saving it does around a toggle,
@@ -200,5 +200,73 @@ describe('PlayUI loading a pattern from its button', () => {
         const [recalculated] = AudioEngine.recalculateParts.mock.calls[0]
         expect(recalculated.id).toBe('r1')
         expect(recalculated.bpm).toBe(120)
+    })
+})
+
+describe('PlayUI keeping a layer selected', () => {
+    /**
+     * `selectedLayerId` is this component's own copy of the store's selection and the only thing
+     * `interfaceClicked` -- the listener on `window` -- reads. The ring's mousedown writes it
+     * through `onLayerClicked`; a layer picked in the mixer does not, because
+     * `LayerSettings.onLayerClicked` only dispatches.
+     */
+    function makeSelectionUI() {
+        const dispatched = []
+        const round = makeRound()
+        const ui = new PlayUI({
+            round, user, users: [user], classes: {}, display: { isRecordingSequence: false },
+            selectedLayer: null, selectedLayerId: null, setIsRecordingSequence: vi.fn(),
+            dispatch: action => dispatched.push(action), saveUserPattern: vi.fn()
+        })
+        ui.round = _.cloneDeep(round)
+        ui.activePatternId = 'p1'
+        ui.userColors = { me: user.color }
+        return { ui, dispatched, round }
+    }
+
+    /** The store delivering a new selection: the props PlayUI is re-rendered with. */
+    function selectionArrives(ui, round) {
+        const prevProps = ui.props
+        ui.props = { ...ui.props, selectedLayerId: 'l1', selectedLayer: round.layers[0] }
+        return prevProps
+    }
+
+    it('keeps a layer picked in the mixer through the next click on the page', () => {
+        const { ui, dispatched, round } = makeSelectionUI()
+
+        const prevProps = selectionArrives(ui, round)
+        ui.componentDidUpdate(prevProps)
+
+        // the click on the layer popup's own ms button, which nothing stops on its way to window
+        ui.interfaceClicked({})
+
+        expect(ui.selectedLayerId).toBe('l1')
+        expect(dispatched).toEqual([])
+    })
+
+    it('still lets a click on the round itself deselect', () => {
+        const { ui, dispatched, round } = makeSelectionUI()
+        ui.componentDidUpdate(selectionArrives(ui, round))
+
+        // the listener on #round runs first and gives up the selection, then the click reaches window
+        ui.onOutsideClick()
+        ui.interfaceClicked({})
+
+        expect(ui.selectedLayerId).toBeNull()
+        expect(dispatched).toContainEqual({ type: SET_SELECTED_LAYER_ID, payload: { layerId: null } })
+    })
+
+    it('does not take the selection back when that click re-renders it on the way out', () => {
+        const { ui, round } = makeSelectionUI()
+        ui.componentDidUpdate(selectionArrives(ui, round))
+
+        // onOutsideClick's own dispatch re-renders this component before the click reaches window;
+        // the store's selection has not changed, so the copy it just gave up must stay given up.
+        ui.onOutsideClick()
+        const prevProps = ui.props
+        ui.props = { ...ui.props, display: { ...ui.props.display, isShowingLayerSettings: false } }
+        ui.componentDidUpdate(prevProps)
+
+        expect(ui.selectedLayerId).toBeNull()
     })
 })

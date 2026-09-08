@@ -206,45 +206,6 @@ FIRST_THUMB_POINT = """(() => {
   return { x: Math.round(b.x + b.width / 2), y: Math.round(b.y + b.height / 2) };
 })()""" % THUMB_RECTS
 
-# A layer picked in the mixer survives only as long as no click reaches `window`.
-#
-# `PlayUI` keeps its own `selectedLayerId`, and only pressing a layer's ring sets it. Its
-# `window` click listener drops the Redux selection whenever that field is null and a layer is
-# selected, which is exactly the state the mixer leaves behind. Every control in the bottom bar
-# calls `stopPropagation` -- which is why screens 07 and 08 work -- except the two offset-mode
-# buttons in the layer popup, whose handlers only update local state. Clicking `ms` therefore
-# unmounts the popup being photographed before the shutter, and so does the click Chrome
-# synthesises at the end of an effect-switch drag.
-#
-# SHIELD adds a bubble-phase `click` listener on `document`: below React's root container, so
-# every React handler still runs, and above `window`, so the two listeners above see nothing.
-# It is on for screens 14-19 only and taken off again afterwards, so screens 09-13 are reached
-# in exactly the state they always were. The state it makes reachable is a real one: a layer
-# pressed on its own ring keeps its selection through exactly these clicks.
-#
-# Its reach is precisely "listeners on `window`", and that is all it has been verified against:
-# the Material UI build's play route has two, `PlayUI`'s `interfaceClicked` and
-# `LayerSettings`' click-away. It is **not** a general shield. A click-away registered on
-# `document` itself -- which is where Radix puts its dismiss handler -- is a sibling of this
-# listener, and `stopPropagation` does nothing to a sibling. So on a migrated build this can
-# become insufficient rather than a harmless no-op, and screen 15 fails loudly rather than
-# quietly photographing the wrong thing.
-#
-# It is not meant to be carried forward. Task 3 deletes it by fixing the cause: setting
-# `PlayUI`'s own `selectedLayerId` when a layer is picked in the mixer, so no click has to be
-# hidden from anything.
-SHIELD = """(() => {
-  window.__uiBaselineShield = e => e.stopPropagation();
-  document.addEventListener('click', window.__uiBaselineShield);
-  return true;
-})()"""
-UNSHIELD = """(() => {
-  if (!window.__uiBaselineShield) return false;
-  document.removeEventListener('click', window.__uiBaselineShield);
-  delete window.__uiBaselineShield;
-  return true;
-})()"""
-
 # The mixer popup is never unmounted; it is moved off-screen at opacity 0.
 MIXER_POPUP = """(() => {
   const label = [...document.querySelectorAll('*')].find(e => e.children.length === 0 && e.textContent.trim() === 'Mixer');
@@ -600,55 +561,58 @@ def capture(b, base, out):
     b.shot(out, '08-bottom-bar-click')
 
     # 14-19 are the layer-settings popups, all of them off the layer screen 08 selected.
-    b.run(SHIELD, 'shield the window click listeners')
-    try:
-        # 14, 15: the layer popup -- the steps counter and the offset slider -- and its ms mode.
-        b.run(STEP_PILL, 'click the steps pill')
-        b.must(onscreen('#step-count'), 'the layer popup opening')
-        b.shot(out, '14-layer-popup', verify=onscreen('#step-count'))
-        b.click('[aria-label="Offset in milliseconds"]', 'the ms offset mode')
-        b.must(pressed('Offset in milliseconds'), 'the ms offset mode being chosen')
-        b.shot(out, '15-layer-offset-ms', verify=pressed('Offset in milliseconds'))
-        b.click('[aria-label="Offset as a percentage of a step"]', 'the percentage offset mode')
-        b.must(pressed('Offset as a percentage of a step'), 'the offset mode going back to percentage')
-        b.run(STEP_PILL, 'click the steps pill again')
-        b.must(offscreen('#step-count'), 'the layer popup closing')
+    # 14, 15: the layer popup -- the steps counter and the offset slider -- and its ms mode.
+    b.run(STEP_PILL, 'click the steps pill')
+    b.must(onscreen('#step-count'), 'the layer popup opening')
+    b.shot(out, '14-layer-popup', verify=onscreen('#step-count'))
+    b.click('[aria-label="Offset in milliseconds"]', 'the ms offset mode')
+    b.must(pressed('Offset in milliseconds'), 'the ms offset mode being chosen')
+    b.shot(out, '15-layer-offset-ms', verify=pressed('Offset in milliseconds'))
+    b.click('[aria-label="Offset as a percentage of a step"]', 'the percentage offset mode')
+    b.must(pressed('Offset as a percentage of a step'), 'the offset mode going back to percentage')
+    b.run(STEP_PILL, 'click the steps pill again')
+    b.must(offscreen('#step-count'), 'the layer popup closing')
 
-        # 16, 17: the instrument popup and its instrument list.
-        b.click('#instrument-summary', 'the instrument summary')
-        b.must(onscreen('#instrument'), 'the instrument popup opening')
-        b.shot(out, '16-instrument-popup', verify=onscreen('#instrument'))
-        b.click('#instrument', 'the Instrument row')
-        b.must(onscreen('#instrument-0'), 'the instrument list opening')
-        b.shot(out, '17-instrument-list', verify=onscreen('#instrument-0'))
-        b.click('#instrument', 'the Instrument row again')
-        # `gone`, not `offscreen`: the popups are never unmounted but the rows inside them are,
-        # so a closed instrument list has no `#instrument-0` at all.
-        b.must(gone('#instrument-0'), 'the instrument list closing')
-        b.click('#instrument-summary', 'the instrument summary again')
-        b.must(offscreen('#instrument'), 'the instrument popup closing')
+    # 16, 17: the instrument popup and its instrument list.
+    b.click('#instrument-summary', 'the instrument summary')
+    b.must(onscreen('#instrument'), 'the instrument popup opening')
+    b.shot(out, '16-instrument-popup', verify=onscreen('#instrument'))
+    b.click('#instrument', 'the Instrument row')
+    b.must(onscreen('#instrument-0'), 'the instrument list opening')
+    b.shot(out, '17-instrument-list', verify=onscreen('#instrument-0'))
+    b.click('#instrument', 'the Instrument row again')
+    # `gone`, not `offscreen`: the popups are never unmounted but the rows inside them are,
+    # so a closed instrument list has no `#instrument-0` at all.
+    b.must(gone('#instrument-0'), 'the instrument list closing')
+    b.click('#instrument-summary', 'the instrument summary again')
+    b.must(offscreen('#instrument'), 'the instrument popup closing')
 
-        # 18: the volume popup, off the leftmost of the bar's three 32px buttons.
-        b.must('%s.length === 3' % SMALL_BAR, 'the bar\'s three small buttons')
-        b.run('%s[0].click(); true' % SMALL_BAR, 'click the volume button')
-        b.must(onscreen('[aria-label="Mute"]'), 'the volume popup opening')
-        b.shot(out, '18-volume-popup', verify=onscreen('[aria-label="Mute"]'))
-        b.run('%s[0].click(); true' % SMALL_BAR, 'click the volume button again')
-        b.must(offscreen('[aria-label="Mute"]'), 'the volume popup closing')
+    # 18: the volume popup, off the leftmost of the bar's three 32px buttons.
+    b.must('%s.length === 3' % SMALL_BAR, 'the bar\'s three small buttons')
+    b.run('%s[0].click(); true' % SMALL_BAR, 'click the volume button')
+    b.must(onscreen('[aria-label="Mute"]'), 'the volume popup opening')
+    b.shot(out, '18-volume-popup', verify=onscreen('[aria-label="Mute"]'))
+    b.run('%s[0].click(); true' % SMALL_BAR, 'click the volume button again')
+    b.must(offscreen('[aria-label="Mute"]'), 'the volume popup closing')
 
-        # 19: the first effect switched on, then switched back off so 09-13 are unaffected.
-        b.must('%s === "46"' % FIRST_THUMB_X, 'the first effect starting off')
-        b.drag(b.js(FIRST_THUMB_POINT), -46)
-        b.must('%s === "0"' % FIRST_THUMB_X, 'the first effect switching on')
-        b.shot(out, '19-effects-on', verify='%s === "0"' % FIRST_THUMB_X)
-        b.drag(b.js(FIRST_THUMB_POINT), 46)
-        b.must('%s === "46"' % FIRST_THUMB_X, 'the first effect switching back off')
-    finally:
-        # `js`, not `run`: a screen that failed inside the block has to reach the caller with
-        # its own message rather than be masked by the shield's own complaint on the way out.
-        # The success path is asserted on the next line instead.
-        b.js(UNSHIELD)
-    b.must('window.__uiBaselineShield === undefined', 'the shield coming back off')
+    # 19: the first effect switched on, then switched back off so 09-13 are unaffected.
+    b.must('%s === "46"' % FIRST_THUMB_X, 'the first effect starting off')
+    b.drag(b.js(FIRST_THUMB_POINT), -46)
+    b.must('%s === "0"' % FIRST_THUMB_X, 'the first effect switching on')
+    b.shot(out, '19-effects-on', verify='%s === "0"' % FIRST_THUMB_X)
+    b.drag(b.js(FIRST_THUMB_POINT), 46)
+    b.must('%s === "46"' % FIRST_THUMB_X, 'the first effect switching back off')
+
+    # The layer picked in the mixer is given up again before the screens that show the bar empty:
+    # 09-11 here, and 13 and 20-22 after the round is re-entered at phone size, since the selection
+    # lives in the store and outlives the route. Clicking the round's own background is how a user
+    # gives a layer up, and #round is where PlayUI listens for it. Until the fix this task carries,
+    # the same thing happened by accident -- a layer picked in the mixer was dropped by whatever
+    # click reached `window` next, which was the click on More options below -- and that is the
+    # state the baseline for those seven screens was taken in.
+    b.run("document.getElementById('round').click(); true", 'click the round background')
+    b.must('%s !== undefined' % leaf_with_text('Long Press a round to edit'),
+           'the bottom bar going back to its empty-selection hint')
 
     # 09: the header's More options menu.
     b.click('button[aria-label="More options"]', 'More options')

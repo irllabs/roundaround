@@ -133,28 +133,11 @@ own. `capture.py` pins all of it:
   capture drags the first switch's thumb across, shoots, and drags it back off before
   anything else is photographed, because the sidebar is in frame on fifteen of the other
   twenty-one screens and a switch left on would show up in every one of them.
-- **The window click listeners, for screens 14-19 only.** `PlayUI` keeps its own
-  `selectedLayerId` and only pressing a layer's ring sets it; its `window` click listener
-  drops the Redux selection whenever that field is null, which is the state a layer picked
-  in the mixer is in. Every bottom bar control calls `stopPropagation`, which is why
-  screens 07 and 08 work, except the two offset-mode buttons in the layer popup - so
-  clicking `ms` for `15-layer-offset-ms` unmounts the popup being photographed, and so does
-  the click Chrome synthesises at the end of the effect-switch drag. For those six screens
-  the capture adds a bubble-phase `click` listener on `document`, below React's root
-  container so every React handler still runs and above `window` so neither of those two
-  listeners sees the click, and takes it off again afterwards. The state it makes reachable
-  is a real one - a layer pressed on its own ring keeps its selection through exactly these
-  clicks - and screens 09-13 are reached in the state they always were.
-
-  Its reach is exactly "listeners on `window`", and the Material UI build is all it has been
-  verified against, where the play route's only two are the ones named above. **It is not a
-  general shield.** A click-away registered on `document` itself, which is where Radix puts
-  its dismiss handler, is a sibling of this listener, and `stopPropagation` does nothing to a
-  sibling - so on a migrated build the shield can become *insufficient* rather than a
-  harmless no-op. That fails loudly at `15-layer-offset-ms` rather than quietly photographing
-  the wrong thing, which is the point. It is not meant to be carried forward either: Task 3
-  removes it by fixing the cause, setting `PlayUI`'s own `selectedLayerId` when a layer is
-  picked in the mixer, so no click has to be hidden from anything.
+- **The layer picked in the mixer, after screen 19.** Screens 07-19 need a layer selected and
+  09-13 and 20-22 show the bottom bar with none, so the capture clicks the round's own
+  background - `#round`, where `PlayUI` listens for exactly that - and asserts the empty-selection
+  hint is back before it goes on. The selection lives in the store, so it outlives the trip to
+  `/rounds` and would otherwise still be there when the round is re-entered at phone size.
 
 Two things are deliberately left alone because they are small enough to live inside the
 threshold: the three random instrument names on the rings, in the mixer, in the bottom bar
