@@ -141,12 +141,20 @@ own. `capture.py` pins all of it:
   clicking `ms` for `15-layer-offset-ms` unmounts the popup being photographed, and so does
   the click Chrome synthesises at the end of the effect-switch drag. For those six screens
   the capture adds a bubble-phase `click` listener on `document`, below React's root
-  container so every React handler still runs and above `window` so neither `PlayUI` nor
-  `LayerSettings`' click-away sees the click, and takes it off again afterwards. The states
-  it makes reachable are real ones - a layer pressed on its own ring keeps its selection
-  through exactly these clicks - and screens 09-13 are reached in the state they always
-  were. If the play route ever stops dropping the selection, the shield becomes a no-op
-  rather than a lie.
+  container so every React handler still runs and above `window` so neither of those two
+  listeners sees the click, and takes it off again afterwards. The state it makes reachable
+  is a real one - a layer pressed on its own ring keeps its selection through exactly these
+  clicks - and screens 09-13 are reached in the state they always were.
+
+  Its reach is exactly "listeners on `window`", and the Material UI build is all it has been
+  verified against, where the play route's only two are the ones named above. **It is not a
+  general shield.** A click-away registered on `document` itself, which is where Radix puts
+  its dismiss handler, is a sibling of this listener, and `stopPropagation` does nothing to a
+  sibling - so on a migrated build the shield can become *insufficient* rather than a
+  harmless no-op. That fails loudly at `15-layer-offset-ms` rather than quietly photographing
+  the wrong thing, which is the point. It is not meant to be carried forward either: Task 3
+  removes it by fixing the cause, setting `PlayUI`'s own `selectedLayerId` when a layer is
+  picked in the mixer, so no click has to be hidden from anything.
 
 Two things are deliberately left alone because they are small enough to live inside the
 threshold: the three random instrument names on the rings, in the mixer, in the bottom bar
