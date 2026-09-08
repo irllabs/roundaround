@@ -95,20 +95,6 @@
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
   }
-  /* Every migrated screen now gives its bare headings and paragraphs explicit
-     Tailwind sizes, weights and margins, except one: HeaderAvatar's bare <h3>
-     (the user's email in the avatar menu) sets mx-4 and mt-0 but leans on the
-     browser's default ~1em margin-bottom for the gap above ColorGrid, per its
-     own comment. Pruning this rule left that gap collapsed and pushed
-     11-avatar-menu.png to 1.33% changed. h1, h2, h4-h6 no longer need it (h2
-     fully specifies its own margin; h4-h6 are unused), but the whole heading
-     set rides along rather than hand-carving a selector around one file's
-     missing utility class. Drop this once HeaderAvatar sets its own mb. */
-  h1, h2, h3, h4, h5, h6, p {
-    font-size: revert;
-    font-weight: revert;
-    margin: revert;
-  }
   /* The steps counter in the layer popup is the app's only bare <input>. Its JSS
      sets no font, so it used to take the browser's control font (13.33px Arial at
      normal line-height); preflight's

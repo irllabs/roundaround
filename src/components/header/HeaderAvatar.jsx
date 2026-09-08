@@ -90,9 +90,10 @@ function HeaderAvatar({ user, users, setUser, setRounds, shouldShowMenu, setUser
 					>
 						<h2 className="mx-4 mb-0 mt-0 pt-4 text-[1.5em] font-bold">{user.displayName}</h2>
 						{/* Rendered even for a guest, who has no email: the empty heading still
-						    contributes its 1em bottom margin, which is part of the gap between the
-						    name and the colour grid on 11-avatar-menu.png. */}
-						<h3 className="mx-4 mt-0 text-[1.17em] font-medium">{user.email}</h3>
+						    contributes its bottom margin, which is part of the gap between the
+						    name and the colour grid on 11-avatar-menu.png. That margin is now
+						    spelled out as mb-[1em] rather than leaning on the browser default. */}
+						<h3 className="mx-4 mt-0 mb-[1em] text-[1.17em] font-medium">{user.email}</h3>
 						<ColorGrid onChange={onColorChosen} />
 						<Separator className="bg-white/12" />
 						<div className="py-2">
