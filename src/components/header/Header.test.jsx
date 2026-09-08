@@ -1,7 +1,6 @@
 import { vi, describe, it, expect } from 'vitest'
 import React from 'react'
 import { act, screen, waitFor } from '@testing-library/react'
-import { createTheme, ThemeProvider } from '@material-ui/core/styles'
 import Header from './Header'
 import { renderWithProviders, makeStore, LocationProbe } from '../../test/test-utils'
 import { setUser, setUsers, setRound, setRedirectAfterSignIn } from '../../redux/actions'
@@ -31,8 +30,7 @@ function renderHeader(currentUsers) {
     store.dispatch(setRound({ id: 'r1', name: 'Jam', layers: [], currentUsers, contributors }))
     // The header watches for a sign-in; these tests are already signed in, so it never fires.
     const firebase = { onAuthStateChanged: vi.fn(() => vi.fn()) }
-    // Voice chat styles itself from the theme, which the app provides around the whole tree.
-    const ui = <ThemeProvider theme={createTheme({ palette: { type: 'dark' } })}><Header /></ThemeProvider>
+    const ui = <Header />
     return { store, ...renderWithProviders(ui, { store, firebase, route: '/play/r1' }) }
 }
 
@@ -65,10 +63,10 @@ function renderSignedOutHeader(firebase) {
     const store = makeStore()
     store.dispatch(setRedirectAfterSignIn('/rounds'))
     const ui = (
-        <ThemeProvider theme={createTheme({ palette: { type: 'dark' } })}>
+        <>
             <Header />
             <LocationProbe />
-        </ThemeProvider>
+        </>
     )
     return { store, ...renderWithProviders(ui, { store, firebase, route: '/' }) }
 }

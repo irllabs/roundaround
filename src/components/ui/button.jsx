@@ -35,6 +35,13 @@ const buttonVariants = cva(
         "icon-lg": "size-9",
         // MUI's IconButton: 12px padding around a 24px glyph.
         "icon-round": "size-12 rounded-full [&_svg:not([class*='size-'])]:size-6",
+        // The play route's buttons hold the app's own SVG resources, which carry their size in
+        // width/height attributes and take no className (16x4 for the ellipsis, 19.2x14 for the
+        // hamburger, 18x20 for the equaliser). Every other size forces size-4 or size-6 onto an
+        // unclassed svg, which would resize all of them. This one hands the attributes back and,
+        // because a chosen size replaces the default size's classes, leaves the height, padding
+        // and radius to the caller, the way MUI's IconButton did.
+        "icon-app": "[&_svg:not([class*='size-'])]:size-auto",
       },
     },
     defaultVariants: {

@@ -2,50 +2,8 @@ import React, { Component } from 'react'
 import { SVG } from '@svgdotjs/svg.js'
 //import { LockOpen, Lock } from '@material-ui/icons';
 import FX from '../../audio-engine/FX'
-import { Box } from '@material-ui/core';
 import OpenLock from './layer-settings/resources/svg/openLock.svg';
 import Lock from './layer-settings/resources/svg/lock.svg';
-import PropTypes from 'prop-types';
-import { withStyles } from '@material-ui/styles';
-
-const styles = theme => ({
-    button: {
-        cursor: 'pointer',
-    },
-    container: {
-        display: 'flex',
-        flexDirection: 'column',
-        width: '96px',
-        height: '48px',
-        borderRadius: '24px',
-        position: 'relative',
-        margin: '0.2rem',
-        border: '1px solid rgba(255,255,255,0.1)',
-        alignItems: 'center',
-        justifyContent: 'center',
-    },
-    lockContainer: {
-        display: 'flex',
-        flexDirection: 'row',
-        position: 'absolute',
-        height: '100%',
-        justifyContent: 'center',
-        alignItems: 'center'
-    },
-    open: {
-        display: 'flex',
-        color: '#474747',
-        zIndex: 1
-    },
-    locked: {
-        display: 'flex',
-        color: '#474747',
-        zIndex: 1
-    },
-    iconDark: {
-        color: '#474747'
-    }
-})
 
 const thumbWidth = 32;
 const thumbHeight = 32;
@@ -70,7 +28,8 @@ class EffectThumbControl extends Component {
         this.background = this.container.rect(thumbWidth + 46, thumbHeight).fill('none').radius(24)
         this.thumb = this.container.nested()
         this.thumb.x(containerWidth - thumbWidth)
-        this.thumb.addClass(this.props.classes.button)
+        // SVG.js only ever needed the string; this used to come from JSS as classes.button.
+        this.thumb.addClass('cursor-pointer')
         this.thumbBackground = this.thumb.rect(thumbWidth, thumbHeight).fill('#686868').radius(24)
         this.labelContainer = this.thumb.nested()
         this.label = this.labelContainer.svg(FX.getIcon(this.props.name))
@@ -203,23 +162,19 @@ class EffectThumbControl extends Component {
         this.props.switchOff(this.props.fxId)
     }
     render() {
-        const { classes } = this.props;
         return (
-            <Box className={classes.container}>
-                <Box className={classes.lockContainer} style={{ left: 16 }}>
-                    <img alt='open lock' src={OpenLock} className={classes.open} />
-                </Box>
-                <Box style={{ zIndex: 2, position: 'absolute' }}>
-                    <Box ref={this.thumbControlRef} style={{ display: 'flex', zIndex: 2 }}></Box>
-                </Box>
-                <Box className={classes.lockContainer} style={{ right: 16 }}>
-                    <img alt='locked' src={Lock} className={classes.locked} />
-                </Box>
-            </Box>
+            <div className="relative m-[0.2rem] flex h-12 w-24 flex-col items-center justify-center rounded-[24px] border border-white/10">
+                <div className="absolute left-4 flex h-full flex-row items-center justify-center">
+                    <img alt='open lock' src={OpenLock} className="z-[1] flex h-4 w-3" />
+                </div>
+                <div className="absolute z-[2]">
+                    <div ref={this.thumbControlRef} className="z-[2] flex"></div>
+                </div>
+                <div className="absolute right-4 flex h-full flex-row items-center justify-center">
+                    <img alt='locked' src={Lock} className="z-[1] flex h-4 w-3" />
+                </div>
+            </div>
         )
     }
 }
-EffectThumbControl.propTypes = {
-    classes: PropTypes.object.isRequired,
-};
-export default (withStyles(styles)(EffectThumbControl))
+export default EffectThumbControl

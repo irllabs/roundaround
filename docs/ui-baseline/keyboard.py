@@ -33,7 +33,7 @@ import time
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 from capture import (  # noqa: E402  (the path has to be set up first)
-    DESKTOP, GUEST_NAME_TYPED, SET_GUEST_NAME, Browser, Failed, discard, gone, has,
+    DESKTOP, GUEST_NAME_TYPED, SET_GUEST_NAME, SIDEBAR_RIGHT, Browser, Failed, discard, gone, has,
 )
 
 # The round-name menu's trigger is the one button in the header that opens a menu and is
@@ -65,6 +65,20 @@ MENU_ITEMS = "document.querySelectorAll('[role=\"menu\"] [data-menu-item]').leng
 # and did, one run in three. So it waits for the paper to actually be gone, the way capture.py
 # waits for a state instead of sleeping and hoping.
 MENU_GONE = 'document.querySelectorAll(\'[data-slot="popover-content"]\').length === 0'
+
+# PlayUI toggles playback from a `keydown` listener on `window`, and redraws the transport in
+# SVG.js rather than exposing any state, so "did Space reach it" is asked directly: a listener
+# registered on window in the bubble phase, exactly where PlayUI's is. React delegates to the
+# root container, which is below window, so a handler that calls stopPropagation stops this probe
+# and PlayUI's listener together, and one that does not stops neither.
+SPACE_PROBE = """(() => {
+  window.__spaceAtWindow = false;
+  if (!window.__spaceProbeInstalled) {
+    window.addEventListener('keydown', (e) => { if (e.key === ' ') window.__spaceAtWindow = true });
+    window.__spaceProbeInstalled = true;
+  }
+  return true;
+})()"""
 
 
 class Keyboard(Browser):
@@ -164,6 +178,31 @@ def signin_dialog(b, report):
     report('signin dialog: focus returns to Get started',
            closed and b.js("(document.activeElement || {}).getAttribute && document.activeElement.getAttribute('data-test') === 'button-get-started'"),
            b.js(WHERE))
+
+
+def effects_chevron(b, report):
+    """The sidebar's minimize control is a div with role=button, not a <button>.
+
+    capture.py's CHEVRON selector needs it to stay a 32x32 div holding an svg, so it cannot
+    become a real button, and the keyboard behaviour a real button would have come with is the
+    app's own code. Space is the case worth having: PlayUI listens for it on `window` to toggle
+    playback, so a handler that does not stopPropagation minimizes the sidebar *and* starts the
+    sequencer.
+    """
+    b.focus('[aria-label="Hide the effects"]')
+    report('effects sidebar: the chevron takes focus',
+           b.js('document.activeElement.getAttribute("aria-label") === "Hide the effects"'), b.js(WHERE))
+
+    b.enter()
+    report('effects sidebar: Enter minimizes it',
+           b.wait(has('[aria-label="Show the effects"]'), timeout=10), b.js(SIDEBAR_RIGHT))
+
+    b.run(SPACE_PROBE, 'install the window keydown probe')
+    b.type_key(' ', 'Space', 32, text=' ')
+    report('effects sidebar: Space restores it',
+           b.wait(has('[aria-label="Hide the effects"]'), timeout=10), b.js(SIDEBAR_RIGHT))
+    report('effects sidebar: Space does not reach PlayUI',
+           b.js('window.__spaceAtWindow === false'), 'reached window: %s' % b.js('window.__spaceAtWindow'))
 
 
 def avatar_menu(b, report):
@@ -294,6 +333,7 @@ def check(b, base):
     signin_dialog(b, report)
 
     sign_in_as_guest(b)
+    effects_chevron(b, report)
     avatar_menu(b, report)
     round_menu_to_rename(b, report)
 
