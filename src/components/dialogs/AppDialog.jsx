@@ -16,8 +16,18 @@ export const MUI_BUTTON = 'h-auto min-w-16 rounded-full border-0 px-4 py-1.5 tex
  * in the sheet. Left alone it caps every dialog at 24rem/384px from the sm breakpoint up, which
  * is every capture width; screen 02's paper measures 472px. The `sm:` copy here is in the same
  * group as `sm:max-w-sm` and does replace it.
+ *
+ * `inset-0 m-auto h-fit w-fit translate-x-0 translate-y-0` replaces the generated
+ * `top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2`, and tailwind-merge drops those four.
+ * MUI centres the paper with flexbox, so it lands on a fractional layout position that Chrome
+ * pixel-snaps as it paints. A -50% translate does not snap: the box is laid out on an integer
+ * and then shifted half its own height, so the whole layer rasterises off the pixel grid and
+ * every edge antialiases and every glyph softens. Centring by layout puts the fractional
+ * position back in the layout, where it snaps. `w-fit`, not `w-auto`: with left and right both
+ * 0 an auto width fills instead of shrinking to fit, and the paper's width is what makes screen
+ * 02 472px. `h-fit` keeps `max-h` and `overflow-y-auto` scrolling a tall dialog.
  */
-const PAPER = 'block w-auto max-w-[min(500px,calc(100%-64px))] sm:max-w-[min(500px,calc(100%-64px))] max-h-[calc(100%-64px)] overflow-y-auto gap-0 rounded-lg bg-popover p-0 text-sm text-popover-foreground ring-0 shadow-[0px_11px_15px_-7px_rgba(0,0,0,0.2),0px_24px_38px_3px_rgba(0,0,0,0.14),0px_9px_46px_8px_rgba(0,0,0,0.12)]'
+const PAPER = 'block inset-0 m-auto h-fit w-fit translate-x-0 translate-y-0 max-w-[min(500px,calc(100%-64px))] sm:max-w-[min(500px,calc(100%-64px))] max-h-[calc(100%-64px)] overflow-y-auto gap-0 rounded-lg bg-popover p-0 text-sm text-popover-foreground ring-0 shadow-[0px_11px_15px_-7px_rgba(0,0,0,0.2),0px_24px_38px_3px_rgba(0,0,0,0.14),0px_9px_46px_8px_rgba(0,0,0,0.12)]'
 
 export function AppDialog({ open, onOpenChange, titleId, title, titleClassName, onBack, backLabel = 'close', className, children }) {
     // Radix's modal DialogContent closes by calling `context.triggerRef.current?.focus()` and

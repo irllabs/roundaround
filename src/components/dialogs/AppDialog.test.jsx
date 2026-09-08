@@ -88,7 +88,19 @@ describe('AppDialog', () => {
         render(<Harness />)
         await user.click(screen.getByRole('button', { name: 'open' }))
         const dialog = await screen.findByRole('dialog')
-        expect(dialog).toHaveClass('w-auto', 'max-w-[min(500px,calc(100%-64px))]', 'sm:max-w-[min(500px,calc(100%-64px))]')
+        expect(dialog).toHaveClass('w-fit', 'max-w-[min(500px,calc(100%-64px))]', 'sm:max-w-[min(500px,calc(100%-64px))]')
         expect(dialog).not.toHaveClass('sm:max-w-sm', 'w-full', 'max-w-[calc(100%-2rem)]')
+    })
+
+    // MUI centres the paper with flexbox and Chrome pixel-snaps the fractional position it lands
+    // on; the generated -50% translate is applied after layout, so the layer rasterises off the
+    // grid and every edge and glyph softens. Centring has to stay in the layout.
+    it('is centred by layout, not by a translate', async () => {
+        const user = userEvent.setup()
+        render(<Harness />)
+        await user.click(screen.getByRole('button', { name: 'open' }))
+        const dialog = await screen.findByRole('dialog')
+        expect(dialog).toHaveClass('inset-0', 'm-auto', 'h-fit', 'translate-x-0', 'translate-y-0')
+        expect(dialog).not.toHaveClass('top-1/2', 'left-1/2', '-translate-x-1/2', '-translate-y-1/2')
     })
 })
