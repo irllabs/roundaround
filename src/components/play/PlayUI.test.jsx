@@ -214,7 +214,7 @@ describe('PlayUI keeping a layer selected', () => {
         const dispatched = []
         const round = makeRound()
         const ui = new PlayUI({
-            round, user, users: [user], classes: {}, display: { isRecordingSequence: false },
+            round, user, users: [user], classes: {}, display: { isRecordingSequence: false }, childRef: vi.fn(),
             selectedLayer: null, selectedLayerId: null, setIsRecordingSequence: vi.fn(),
             dispatch: action => dispatched.push(action), saveUserPattern: vi.fn()
         })
@@ -239,6 +239,30 @@ describe('PlayUI keeping a layer selected', () => {
 
         // the click on the layer popup's own ms button, which nothing stops on its way to window
         ui.interfaceClicked({})
+
+        expect(ui.selectedLayerId).toBe('l1')
+        expect(dispatched).toEqual([])
+    })
+
+    it('keeps a layer the store was already holding when it mounts', async () => {
+        const { ui, dispatched, round } = makeSelectionUI()
+        // the round is re-entered with the selection still in the store, as it is after a trip to
+        // /rounds: props carry the layer from the first render on, so no update ever announces it
+        ui.props = { ...ui.props, selectedLayerId: 'l1', selectedLayer: round.layers[0] }
+        // the drawing, the audio and the orientation check are not what this is about, and none of
+        // them runs here: PlayUI's SVG.js container cannot be built in jsdom
+        ui.createRound = vi.fn()
+        ui.loadSequence = vi.fn()
+        ui.setDefaultPattern = vi.fn()
+        ui.checkOrientation = vi.fn()
+
+        await ui.componentDidMount()
+        try {
+            // a real click, through the listener componentDidMount registered
+            window.dispatchEvent(new MouseEvent('click', { bubbles: true }))
+        } finally {
+            await ui.componentWillUnmount()
+        }
 
         expect(ui.selectedLayerId).toBe('l1')
         expect(dispatched).toEqual([])

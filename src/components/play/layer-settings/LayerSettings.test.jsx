@@ -85,8 +85,20 @@ describe('LayerSettings', () => {
         expect(store.getState().display.selectedLayerId).toBe('l1')
     })
 
+    it('opens only one popup at a time', async () => {
+        const user = userEvent.setup()
+        renderLayerSettings()
+        await user.click(screen.getByRole('button', { name: 'Open the mixer' }))
+        expect(screen.getByTestId('mixer-popup')).toHaveAttribute('data-open', 'true')
+        // More is the phone-size half of the add-layer pair; jsdom runs with css:false, so the
+        // class that hides it above 500px is not there to stop the click
+        await user.click(screen.getByRole('button', { name: 'More' }))
+        expect(screen.getByTestId('mixer-popup')).toHaveAttribute('data-open', 'false')
+        expect(screen.getByTestId('hamburger-popup')).toHaveAttribute('data-open', 'true')
+    })
+
     // The `layer-popup` hook is LayerPopup's, and LayerPopup is migrated in Task 4.
-    it.skip('opens only one popup at a time', async () => {
+    it.skip('opens only one popup at a time, from the bar\'s own steps pill', async () => {
         const user = userEvent.setup()
         renderLayerSettings()
         await user.click(screen.getByRole('button', { name: 'Open the mixer' }))

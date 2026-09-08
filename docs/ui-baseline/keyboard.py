@@ -220,6 +220,12 @@ def popup_open(name, want='true'):
             " return !!e && e.dataset.open === '%s' })()" % (name, want))
 
 
+def popup_state(name):
+    """What `data-open` actually says, for the detail column next to a failure."""
+    return ("(() => { const e = document.querySelector('[data-test=%s]');"
+            " return e ? '%s data-open=' + e.dataset.open : 'no %s' })()" % (name, name, name))
+
+
 def layer_popups(b, report):
     """Escape closes an open layer-settings popup. Material UI's had no keyboard escape at all.
 
@@ -232,13 +238,13 @@ def layer_popups(b, report):
     """
     b.click('button[aria-label="Open the mixer"]', 'the mixer button')
     opened = b.wait(popup_open('mixer-popup'), timeout=10)
-    report('layer settings: the mixer popup opens from the bar', opened, b.js(WHERE))
+    report('layer settings: the mixer popup opens from the bar', opened, b.js(popup_state('mixer-popup')))
     if not opened:
         raise Failed('the mixer popup never opened, so its Escape case cannot run')
 
     b.escape()
     report('layer settings: Escape closes the mixer popup',
-           b.wait(popup_open('mixer-popup', 'false'), timeout=10), b.js(WHERE))
+           b.wait(popup_open('mixer-popup', 'false'), timeout=10), b.js(popup_state('mixer-popup')))
 
 
 def avatar_menu(b, report):

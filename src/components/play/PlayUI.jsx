@@ -89,6 +89,13 @@ export class PlayUI extends Component {
         // register this component with parent so we can do some instant updates bypassing redux for speed
         this.props.childRef(this)
         this.isPlayingSequence = round.userPatterns[user.id].isPlayingSequence
+        // A selection made before this component existed -- the store keeps it across a trip to
+        // /rounds and back into the same round -- is taken over here for the same reason
+        // followStoreSelection takes over a later one: `interfaceClicked` reads this copy, and a
+        // null copy against a selected layer is the state it deselects in.
+        if (!_.isNil(this.props.selectedLayerId)) {
+            this.selectedLayerId = this.props.selectedLayerId
+        }
         window.addEventListener('click', this.interfaceClicked)
         window.addEventListener('resize', this.onWindowResizeThrottled)
         window.addEventListener('keydown', this.onKeypress)
@@ -139,7 +146,8 @@ export class PlayUI extends Component {
     }
 
     /**
-     * Takes over a selection made anywhere but a layer's own ring.
+     * Takes over a selection made anywhere but a layer's own ring, while this component is mounted.
+     * componentDidMount does the same for one made before it was.
      *
      * `selectedLayerId` is this component's copy of the store's selection and the only thing
      * `interfaceClicked` reads. Pressing a ring writes it through `onLayerClicked`; picking a layer

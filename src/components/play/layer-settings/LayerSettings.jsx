@@ -41,8 +41,8 @@ import {
 } from './resources'
 
 /**
- * Every popup's own state flag, which is what `hideAllLayerInspectorModals` clears one by one and
- * what says whether an Escape has anything to close.
+ * Every popup's own state flag: the single list `hideAllLayerInspectorModals` clears and
+ * `isShowingAPopup` reads, so a tenth popup cannot arrive in one and not the other.
  */
 const POPUP_FLAGS = [
     'showMixerPopup', 'showInstrumentsPopup', 'showInstrumentsList', 'showSoundsList',
@@ -203,6 +203,11 @@ class LayerSettings extends Component {
     /**
      * The popups are opened by pointer and were, until now, only closable by pointer.
      *
+     * An Escape another handler has already answered -- a Radix dialog or popover over the play
+     * route dismisses on Escape and marks it -- is left alone. `PlayUI.onKeypress`'s guards against
+     * a disabled key listener and against typing are not needed here, because Escape types nothing
+     * and no field on this route reads it.
+     *
      * Only an Escape that actually closes something is taken, and taking it means saying so with
      * `preventDefault`, the way every other Escape handler in the app (Radix's dismissable layers)
      * does. An Escape this component ignores stays the browser's: in Chrome that is Stop, and
@@ -212,30 +217,20 @@ class LayerSettings extends Component {
      * to do with.
      */
     onKeyDown = (e) => {
-        if (e.key !== 'Escape' || !this.isShowingAPopup()) {
+        if (e.key !== 'Escape' || e.defaultPrevented || !this.isShowingAPopup()) {
             return
         }
         e.preventDefault()
         this.hideAllLayerInspectorModals()
     }
 
-    /** Whether there is a popup for Escape to close: the same nine flags hideAll... clears. */
+    /** Whether there is a popup for Escape to close. */
     isShowingAPopup() {
         return POPUP_FLAGS.some(flag => this.state[flag])
     }
 
     hideAllLayerInspectorModals = () => {
-        this.setState({
-            showMixerPopup: false,
-            showInstrumentsPopup: false,
-            showInstrumentsList: false,
-            showSoundsList: false,
-            showArticulationOptions: false,
-            showLayerPopup: false,
-            showVolumePopup: false,
-            showDeleteClearPopup: false,
-            showHamburgerPopup: false
-        })
+        this.setState(Object.fromEntries(POPUP_FLAGS.map(flag => [flag, false])))
     }
 
     onCloseClick() {

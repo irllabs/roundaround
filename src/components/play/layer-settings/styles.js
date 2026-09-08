@@ -25,13 +25,16 @@ export const layerSettingsClasses = {
     instrumentSample: 'm-0 flex text-center text-base leading-none tracking-[0.00938em] capitalize [font-weight:bolder] max-sm:flex-1',
     addLayerContainer: 'm-0 flex h-full flex-row items-center justify-center rounded-[30px] bg-[#4D4D4D] p-0',
     iconButtons: 'size-12 rounded-full hover:bg-white/20',
-    rectButton: 'flex w-full flex-row rounded-none px-[15px] py-[5px]',
+    // Task 4 drops the ! flags when LayerInstrument leaves MUI: while it still renders Material UI
+    // IconButtons, MUI's own unlayered `padding: 12px` outranks a Tailwind utility (utilities are a
+    // layer, MUI's injected rules are not) and grows the instrument popup by 14px a row.
+    rectButton: 'flex w-full flex-row rounded-none !px-[15px] !py-[5px]',
     mixerButton: 'mx-[5px] flex size-8 flex-row items-center justify-center rounded-full bg-white/10 p-0',
     volumeSliderContainer: 'flex [flex:2] flex-row items-center justify-center',
     // 216x32 pill at 6px/15px. Measured on 08-bottom-bar-click.png at x 485-692, y 840-871.
     instrumentSummary: 'my-2.5 flex h-8 w-[216px] flex-row items-center justify-start rounded-[24px] bg-white/10 px-[15px] py-1.5 font-bold hover:bg-white/20 max-sm:w-[106px]',
     stepCount: 'my-2.5 flex h-8 w-[59px] flex-row items-center justify-center rounded-[24px] bg-white/10 px-3 py-1.5 hover:bg-white/20',
-    stepLength: 'm-0 flex items-start text-base leading-none tracking-[0.00938em]',
+    stepLength: 'm-0 flex items-start text-base font-normal leading-none tracking-[0.00938em]',
     actionButtonContainer: 'relative mx-2 flex items-center justify-center',
     hamburgerPopup: 'absolute -top-[108px] left-0 z-[100] flex h-[104px] w-[155px] flex-col justify-center overflow-hidden rounded-lg bg-[#333333] opacity-100 shadow-[0px_0px_2px_rgba(0,0,0,0.15),0px_4px_6px_rgba(0,0,0,0.15)] [transition:opacity_0.2s_ease-in]',
     deleteClearPopup: 'absolute -top-[100px] right-0 z-[100] flex h-[104px] w-[155px] flex-col justify-center overflow-hidden rounded-lg bg-[#333333] opacity-100 shadow-[0px_0px_2px_rgba(0,0,0,0.15),0px_4px_6px_rgba(0,0,0,0.15)] [transition:opacity_0.2s_ease-in]',
