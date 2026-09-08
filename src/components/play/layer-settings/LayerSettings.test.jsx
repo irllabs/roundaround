@@ -109,6 +109,34 @@ describe('LayerSettings', () => {
         expect(screen.getByTestId('hamburger-popup')).toHaveAttribute('data-open', 'true')
     })
 
+    // A closed popup is still laid out -- at top:200%, opacity 0 -- so everything in it stayed
+    // in the Tab order and tabbing off the bar walked into controls nobody could see. `inert`
+    // takes the whole subtree out of the tab order and off the hit-testing map for as long as
+    // the popup is closed, and gives it back the moment it opens.
+    it('keeps a closed popup out of reach and hands it back when it opens', async () => {
+        const user = userEvent.setup()
+        renderLayerSettings()
+        const mixer = screen.getByTestId('mixer-popup')
+        const close = screen.getByRole('button', { name: 'Close the mixer' })
+        expect(mixer).toContainElement(close)
+        expect(mixer).toHaveAttribute('inert')
+
+        await user.click(screen.getByRole('button', { name: 'Open the mixer' }))
+        expect(mixer).toHaveAttribute('data-open', 'true')
+        expect(mixer).not.toHaveAttribute('inert')
+    })
+
+    it('says which popup each bar trigger owns, and whether it is open', async () => {
+        const user = userEvent.setup()
+        renderLayerSettings()
+        const trigger = screen.getByRole('button', { name: 'Open the mixer' })
+        expect(trigger).toHaveAttribute('aria-controls', 'mixer-popup')
+        expect(screen.getByTestId('mixer-popup')).toHaveAttribute('id', 'mixer-popup')
+        expect(trigger).toHaveAttribute('aria-expanded', 'false')
+        await user.click(trigger)
+        expect(trigger).toHaveAttribute('aria-expanded', 'true')
+    })
+
     it('opens only one popup at a time, from the bar\'s own steps pill', async () => {
         const user = userEvent.setup()
         renderLayerSettings()

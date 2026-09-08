@@ -74,7 +74,7 @@ const LayerInstrument = ({
     };
 
     return (
-        <div data-test="instrument-popup" data-open={String(showInstrumentsPopup)} className={showInstrumentsPopup ? classes.instrumentPopup : classes.hidden}>
+        <div id="instrument-popup" data-test="instrument-popup" data-open={String(showInstrumentsPopup)} inert={!showInstrumentsPopup} className={showInstrumentsPopup ? classes.instrumentPopup : classes.hidden}>
             {!showArticulationOptions &&
                 <div>
                     <Button type="button" variant="plain" size="icon-app" ref={instrumentsButtonRef} id='instrument' onClick={toggleShowInstrumentList} className={cn(ICON_BUTTON, classes.rectButton, showInstrumentsList ? 'border-b border-white/10' : 'border-b-0')}>

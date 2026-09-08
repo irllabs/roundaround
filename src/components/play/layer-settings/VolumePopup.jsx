@@ -2,7 +2,7 @@ import React from 'react'
 import VolumeSlider from './VolumeSlider'
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
-import { layerSettingsClasses, ICON_BUTTON } from './styles'
+import { layerSettingsClasses, ICON_BUTTON, POPUP_SURFACE } from './styles'
 
 /**
  * What withStyles used to hand this popup, as Tailwind class strings. `down('xs')` and
@@ -11,7 +11,7 @@ import { layerSettingsClasses, ICON_BUTTON } from './styles'
  * so they are gone; `hidden` is the shared one.
  */
 const classes = {
-    root: 'absolute -top-[60px] right-[-100px] z-[100] flex h-16 w-[236px] flex-row items-center justify-start rounded-lg bg-[#333333] shadow-[0px_0px_2px_rgba(0,0,0,0.15),0px_4px_6px_rgba(0,0,0,0.15)] [transition:opacity_0.2s_ease-in] max-sm:right-[-55px]',
+    root: POPUP_SURFACE + ' -top-[60px] right-[-100px] flex h-16 w-[236px] flex-row items-center justify-start max-sm:right-[-55px]',
     mixerButton: 'mx-2 flex size-[30px] flex-row items-center justify-center rounded-full bg-white/10 p-0 max-md:size-8',
     containerSoloMute: 'ml-2 flex flex-1 flex-row items-center justify-between',
     // The rule sets no display, so its flexDirection and alignItems never applied.
@@ -32,7 +32,7 @@ const VolumePopup = ({
     isSoloed
 }) => {
     return (
-        <div data-test="volume-popup" data-open={String(showVolumePopup)} className={showVolumePopup ? classes.root : classes.hidden}>
+        <div id="volume-popup" data-test="volume-popup" data-open={String(showVolumePopup)} inert={!showVolumePopup} className={showVolumePopup ? classes.root : classes.hidden}>
             <div className={classes.volumeSliderContainer}>
                 <VolumeSlider
                     sliderRef={volumeSliderRef}

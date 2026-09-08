@@ -8,17 +8,20 @@ import _ from 'lodash'
 import { CloseIcon } from './resources'
 
 
+/**
+ * What to call a layer out loud. A layer with no sample yet -- one being created, or one whose
+ * instrument failed to load -- used to make the solo and mute buttons say "Solo undefined".
+ */
+const layerName = (layer) => layer?.instrument?.sample || layer?.instrument?.sampler || 'this layer'
+
 const LayerListPopup = ({
     classes,
     showMixerPopup,
-    height,
-    selectedInstrument,
     instrumentIcon,
     onMuteClick,
     onSoloClick,
     toggleShowMixerPopup,
     onLayerSelect,
-    ref,
     userColors,
     user,
     round
@@ -33,7 +36,7 @@ const LayerListPopup = ({
     }, [round])
 
     return (
-        <div data-test="mixer-popup" data-open={String(showMixerPopup)} className={showMixerPopup ? classes.mixerPopup : classes.hidden}>
+        <div id="mixer-popup" data-test="mixer-popup" data-open={String(showMixerPopup)} inert={!showMixerPopup} className={showMixerPopup ? classes.mixerPopup : classes.hidden}>
             <div className={classes.mixerPopupHeader}>
                 <Button type="button" variant="plain" size="icon-app" aria-label="Close the mixer" className={cn(ICON_BUTTON, classes.plainButton)} onClick={toggleShowMixerPopup}>
                     <CloseIcon />
@@ -67,10 +70,10 @@ const LayerListPopup = ({
                                 <VolumeSlider hideText={true} selectedLayer={layer} roundId={round.id} user={user} />
                             </div>
                             <div className={classes.containerSoloMute}>
-                                <Button type="button" variant="plain" size="icon-app" aria-label={`Solo ${layer.instrument?.sample}`} className={cn(ICON_BUTTON, classes.mixerButton)} onClick={() => onSoloClick(layer)}>
+                                <Button type="button" variant="plain" size="icon-app" aria-label={`Solo ${layerName(layer)}`} className={cn(ICON_BUTTON, classes.mixerButton)} onClick={() => onSoloClick(layer)}>
                                     <span className="text-base leading-6 font-bold tracking-[0.00938em]">S</span>
                                 </Button>
-                                <Button type="button" variant="plain" size="icon-app" aria-label={`Mute ${layer.instrument?.sample}`} className={cn(ICON_BUTTON, classes.mixerButton)} onClick={() => onMuteClick(layer)}>
+                                <Button type="button" variant="plain" size="icon-app" aria-label={`Mute ${layerName(layer)}`} className={cn(ICON_BUTTON, classes.mixerButton)} onClick={() => onMuteClick(layer)}>
                                     <span className="text-base leading-6 font-bold tracking-[0.00938em]">M</span>
                                 </Button>
                             </div>

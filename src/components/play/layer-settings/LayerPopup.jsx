@@ -3,7 +3,7 @@ import { useDispatch } from "react-redux";
 import LayerPercentOffset from './LayerPercentOffset'
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
-import { layerSettingsClasses, ICON_BUTTON } from './styles'
+import { layerSettingsClasses, ICON_BUTTON, POPUP_SURFACE } from './styles'
 
 import { SET_LAYER_STEPS } from '../../../redux/actionTypes'
 import { FirebaseContext } from '../../../firebase';
@@ -19,7 +19,7 @@ import Plus from './resources/svg/plus.svg'
  * 0.2s fades are and what capture.py reads to tell open from closed.
  */
 const classes = {
-    root: 'absolute -top-[253px] left-0 z-[100] flex h-[257px] min-h-[48px] w-[155px] flex-col items-center justify-start rounded-lg bg-[#333333] shadow-[0px_0px_2px_rgba(0,0,0,0.15),0px_4px_6px_rgba(0,0,0,0.15)] [transition:opacity_0.2s_ease-in]',
+    root: POPUP_SURFACE + ' -top-[253px] left-0 flex h-[257px] min-h-[48px] w-[155px] flex-col items-center justify-start',
     offsetSlider: 'w-full px-2.5 py-[5px]',
     stepCount: 'rounded-[4px] bg-white/10 px-2.5 py-[5px]',
     stepButtons: 'size-[30px] rounded-full bg-white/10 p-0',
@@ -93,7 +93,7 @@ const LayerPopup = ({
     msButtonRef,
 }) => {
     return (
-        <div data-test="layer-popup" data-open={String(showLayerPopup)} className={showLayerPopup ? classes.root : classes.hidden}>
+        <div id="layer-popup" data-test="layer-popup" data-open={String(showLayerPopup)} inert={!showLayerPopup} className={showLayerPopup ? classes.root : classes.hidden}>
             <div className="w-full">
                 <StepsDisplay
                     addStepsButtonRef={addStepsButtonRef}

@@ -14,7 +14,7 @@ export default function DeleteClearPopup({
     onDeleteLayerClick
 }) {
     return (
-        <div data-test="delete-clear-popup" data-open={String(showDeleteClearPopup)} className={showDeleteClearPopup ? classes.deleteClearPopup : classes.hidden}>
+        <div id="delete-clear-popup" data-test="delete-clear-popup" data-open={String(showDeleteClearPopup)} inert={!showDeleteClearPopup} className={showDeleteClearPopup ? classes.deleteClearPopup : classes.hidden}>
             <Button
                 type="button"
                 variant="plain"

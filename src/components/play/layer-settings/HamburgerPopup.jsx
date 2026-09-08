@@ -19,7 +19,7 @@ export default function HamburgerPopup({
     onAddLayerClick
 }) {
     return (
-        <div data-test="hamburger-popup" data-open={String(showHamburgerPopup)} className={showHamburgerPopup ? classes.hamburgerPopup : classes.hidden}>
+        <div id="hamburger-popup" data-test="hamburger-popup" data-open={String(showHamburgerPopup)} inert={!showHamburgerPopup} className={showHamburgerPopup ? classes.hamburgerPopup : classes.hidden}>
             <Button
                 type="button"
                 variant="plain"

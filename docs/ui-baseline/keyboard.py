@@ -33,7 +33,8 @@ import time
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 from capture import (  # noqa: E402  (the path has to be set up first)
-    DESKTOP, GUEST_NAME_TYPED, SET_GUEST_NAME, SIDEBAR_RIGHT, Browser, Failed, discard, gone, has,
+    BAR_ALL, DESKTOP, FIRST_LAYER_ROW, GUEST_NAME_TYPED, MIXER_CLOSE, MIXER_OPACITY,
+    SET_GUEST_NAME, SIDEBAR_RIGHT, Browser, Failed, discard, gone, has,
 )
 
 # The round-name menu's trigger is the one button in the header that opens a menu and is
@@ -247,6 +248,57 @@ def layer_popups(b, report):
            b.wait(popup_open('mixer-popup', 'false'), timeout=10), b.js(popup_state('mixer-popup')))
 
 
+# The steps pill, which is where a Tab off the bottom bar starts. capture.py's STEP_PILL clicks
+# it; this only wants it focused.
+FOCUS_STEP_PILL = """(() => {
+  const b = %s.find(e => /^\\d+$/.test(e.textContent.trim()));
+  if (!b) return false;
+  b.focus();
+  return true;
+})()""" % BAR_ALL
+
+# The play route's own root: the first ancestor of the round that clips. It must never be
+# scrolled, because nothing on this route scrolls back.
+ROUTE_ROOT_SCROLLTOP = """(() => {
+  let e = document.getElementById('round');
+  while (e) {
+    const o = getComputedStyle(e).overflow;
+    if (o === 'hidden' || o === 'clip') return e.scrollTop;
+    e = e.parentElement;
+  }
+  return 'no clipping root';
+})()"""
+
+FOCUS_LABEL = "(document.activeElement && document.activeElement.getAttribute('aria-label')) || 'none'"
+
+
+def tab_off_the_bar(b, report):
+    """Tab from the steps pill goes to the next control in the bar, not into a closed popup.
+
+    The layer-settings popups are never unmounted: a closed one sits at `top: 200%` at opacity 0,
+    still laid out and, until `inert` was put on each wrapper, still in the tab order. One Tab off
+    the pill landed on the closed volume popup's slider, and Chrome scrolled it into view -- which
+    scrolled the play route's own root down by 303px, with nothing on the route able to scroll it
+    back for the rest of the session. Both halves are checked here: where focus went, and that the
+    root did not move.
+    """
+    b.click('button[aria-label="Open the mixer"]', 'the mixer button')
+    if not b.wait("%s === '1'" % MIXER_OPACITY, timeout=10):
+        raise Failed('the mixer popup never opened, so the bar cannot be given a layer to show')
+    b.run(FIRST_LAYER_ROW, 'click the first layer in the mixer')
+    b.must("[...document.querySelectorAll('*')].every(e => e.children.length !== 0 || !/Long Press/.test(e.textContent))",
+           'the bottom bar hint giving way to the layer controls')
+    b.run(MIXER_CLOSE, "close the mixer popup with its own X")
+    b.must("%s === '0'" % MIXER_OPACITY, 'the mixer popup closing')
+
+    b.run(FOCUS_STEP_PILL, 'focus the steps pill')
+    b.tab()
+    b.settle()
+    report('layer settings: Tab off the steps pill stays in the bar',
+           b.js(FOCUS_LABEL) == 'Volume, solo and mute' and b.js(ROUTE_ROOT_SCROLLTOP) == 0,
+           '%s, root scrollTop %s' % (b.js(WHERE), b.js(ROUTE_ROOT_SCROLLTOP)))
+
+
 def avatar_menu(b, report):
     """Enter, the roving arrow keys, Escape, and focus coming back to the avatar."""
     b.focus('[data-test=button-sign-in-out]')
@@ -395,6 +447,7 @@ def check(b, base):
     sign_in_as_guest(b)
     effects_chevron(b, report)
     layer_popups(b, report)
+    tab_off_the_bar(b, report)
     avatar_menu(b, report)
     round_menu_to_rename(b, report)
 

@@ -526,7 +526,13 @@ class PlayRoute extends Component {
         const { round } = this.props;
         const { loadError } = this.state
         return (
-            <div className="relative h-full overflow-hidden">
+            // `overflow-clip`, not `overflow-hidden`: the two paint the same, but `hidden` makes
+            // this a scroll container, and the always-mounted layer-settings popups sit at
+            // `top: 200%` inside it. Anything that scrolls a focused descendant into view --
+            // Tab used to, before the popups were made `inert` -- scrolled the whole route down
+            // by ~303px with no way back, because nothing on this route is meant to scroll.
+            // `clip` is not a scroll container at all, so that cannot happen again.
+            <div className="relative h-full overflow-clip">
                 {!_.isNil(round) && <PlayUI childRef={ref => (this.playUIRef = ref)} />}
                 {_.isNil(round) && _.isNil(loadError) &&
                     <div className="absolute top-0 z-[9] flex h-full w-full items-center justify-center">

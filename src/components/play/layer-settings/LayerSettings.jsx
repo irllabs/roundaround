@@ -45,7 +45,7 @@ import {
  * `isShowingAPopup` reads, so a tenth popup cannot arrive in one and not the other.
  */
 const POPUP_FLAGS = [
-    'showMixerPopup', 'showInstrumentsPopup', 'showInstrumentsList', 'showSoundsList',
+    'showMixerPopup', 'showInstrumentsPopup', 'showInstrumentsList',
     'showArticulationOptions', 'showLayerPopup', 'showVolumePopup', 'showDeleteClearPopup',
     'showHamburgerPopup'
 ]
@@ -57,7 +57,6 @@ class LayerSettings extends Component {
             showMixerPopup: false,
             showInstrumentsPopup: false,
             showInstrumentsList: false,
-            showSoundsList: false,
             showArticulationOptions: false,
             showLayerPopup: false,
             showVolumePopup: false,
@@ -89,20 +88,15 @@ class LayerSettings extends Component {
         this.subtractStepsButton = React.createRef()
         this.percentageButton = React.createRef()
         this.msButton = React.createRef()
-        this.height = window.innerHeight;
     }
 
     static contextType = FirebaseContext;
 
-    resizeHeight = () => {
-        this.height = window.innerHeight;
-    }
     componentDidMount() {
         window.addEventListener('click', this.onClick)
         window.addEventListener('keydown', this.onKeyDown)
         window.addEventListener('resize', this.updateWindowWidth)
         this.updateWindowWidth();
-        window.addEventListener('resize', this.resizeHeight);
         if (this.props.round && this.props.selectedLayerId) {
             const selectedLayer = _.find(this.props.round.layers, { id: this.props.selectedLayerId })
             this.setSelectedInstrument(selectedLayer)
@@ -147,7 +141,6 @@ class LayerSettings extends Component {
         window.removeEventListener('click', this.onClick)
         window.removeEventListener('keydown', this.onKeyDown)
         window.removeEventListener('resize', this.updateWindowWidth)
-        window.removeEventListener('resize', this.resizeHeight)
     }
 
     updateWindowWidth = () => this.setState({ windowWidth: window.innerWidth })
@@ -242,10 +235,6 @@ class LayerSettings extends Component {
         this.props.dispatch({ type: SET_SELECTED_LAYER_ID, payload: { layerId } })
         //this.props.dispatch({ type: SET_IS_SHOWING_LAYER_SETTINGS, payload: { value: true } })
         //this.highlightLayer(_.find(this.layerGraphics, { id: layerId }))
-    }
-
-    onPreviewClick() {
-        // TODO: only audible to this user (mute for all others)
     }
 
     // Solo is local to this listener: it silences the other layers in this browser's audio graph
@@ -406,11 +395,14 @@ class LayerSettings extends Component {
             </div>
         }
 
+        // Each bar trigger says which popup it owns and whether that popup is open, the way the
+        // effects sidebar's chevron does: the popups are never unmounted, so the wrapper the
+        // `aria-controls` id sits on is always there to be pointed at. Six triggers, six popups --
+        // "More" and the ellipsis are the phone-size halves of the pair the desktop splits in two.
         const form = (
             <div className={classes.root}>
                 <LayerListPopup
                     instrumentIcon={instrumentIcon}
-                    height={this.height}
                     classes={classes}
                     round={this.props.round}
                     user={user}
@@ -450,6 +442,8 @@ class LayerSettings extends Component {
                             variant="plain"
                             size="icon-app"
                             aria-label="Open the mixer"
+                            aria-expanded={showMixerPopup}
+                            aria-controls="mixer-popup"
                             ref={this.mixerPopupButton}
                             className={cn(ICON_BUTTON, classes.iconButtons, showMixerPopup && 'bg-white/20')}
                             onClick={this.toggleShowMixerPopup}
@@ -463,6 +457,8 @@ class LayerSettings extends Component {
                             variant="plain"
                             size="icon-app"
                             aria-label="More"
+                            aria-expanded={showHamburgerPopup}
+                            aria-controls="hamburger-popup"
                             ref={this.hamburgerButton}
                             className={cn(ICON_BUTTON, classes.iconButtons)}
                             onClick={this.toggleShowHamburgerPop}
@@ -504,6 +500,8 @@ class LayerSettings extends Component {
                                     size="icon-app"
                                     ref={this.instrumentPopupButton}
                                     id='instrument-summary'
+                                    aria-expanded={showInstrumentsPopup}
+                                    aria-controls="instrument-popup"
                                     className={cn(ICON_BUTTON, classes.instrumentSummary, showInstrumentsPopup && 'bg-white/20')}
                                     onClick={this.toggleInstrumentPopup}
                                 >
@@ -541,6 +539,8 @@ class LayerSettings extends Component {
                                     variant="plain"
                                     size="icon-app"
                                     aria-label="Layer options"
+                                    aria-expanded={showLayerPopup}
+                                    aria-controls="layer-popup"
                                     ref={this.layerPopupButton}
                                     onClick={this.toggleLayerPopup}
                                     className={cn(ICON_BUTTON, classes.stepCount, showLayerPopup && 'bg-white/20')}
@@ -550,7 +550,7 @@ class LayerSettings extends Component {
                                             <circle cx="6" cy="6" r="5" stroke={user && user.id && userColors[user.id]} strokeWidth="2" />
                                         </svg>
                                     </div>
-                                    <p className={cn(classes.stepLength, '[font-weight:bolder]')}>{selectedLayer.steps.length}</p>
+                                    <p className={classes.stepLengthBold}>{selectedLayer.steps.length}</p>
                                 </Button>
                             </div>
                             <div className={classes.actionButtonContainer}>
@@ -572,6 +572,8 @@ class LayerSettings extends Component {
                                     variant="plain"
                                     size="icon-app"
                                     aria-label="Volume, solo and mute"
+                                    aria-expanded={showVolumePopup}
+                                    aria-controls="volume-popup"
                                     ref={this.volumePopupButton}
                                     onClick={this.toggleVolumePopup}
                                     className={cn(ICON_BUTTON, classes.actionButton, showVolumePopup && 'bg-white/20')}
@@ -592,6 +594,8 @@ class LayerSettings extends Component {
                                         variant="plain"
                                         size="icon-app"
                                         aria-label="Clear or delete this layer"
+                                        aria-expanded={showDeleteClearPopup}
+                                        aria-controls="delete-clear-popup"
                                         className={cn(ICON_BUTTON, classes.actionButton)}
                                         onClick={this.toggleShowDeleteClearPopup}
                                         ref={this.showDeleteClearPopupButton}
@@ -649,8 +653,7 @@ const mapStateToProps = state => {
         user: state.user,
         users: state.users,
         selectedLayerId: state.display.selectedLayerId,
-        selectedLayer,
-        isOpen: state.display.isShowingLayerSettings
+        selectedLayer
     };
 };
 

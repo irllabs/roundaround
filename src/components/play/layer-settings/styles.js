@@ -1,10 +1,27 @@
 /**
+ * The surface every layer-settings popup is drawn on: the same dark card, shadow, radius,
+ * stacking order and opacity fade in all six of them. Only the geometry -- where the card sits,
+ * how big it is, which way it lays its children out -- differs, so only that is left at each
+ * call site. `overflow-hidden` is deliberately not here: the mixer, instrument, hamburger and
+ * delete/clear popups clip their contents and the layer and volume popups do not, and this
+ * refactor is not allowed to change a single emitted class.
+ *
+ * Tailwind sorts the utilities it emits itself, so pulling these five out of each string
+ * changes the `class` attribute's order and nothing about the CSS.
+ */
+export const POPUP_SURFACE = 'absolute z-[100] rounded-lg bg-[#333333] shadow-[0px_0px_2px_rgba(0,0,0,0.15),0px_4px_6px_rgba(0,0,0,0.15)] [transition:opacity_0.2s_ease-in]'
+
+/**
  * What withStyles used to hand the bottom bar and its popups, as Tailwind class strings.
  *
  * Keys, and the ternaries that pick between a positioned key and `hidden`, are unchanged from
  * the JSS so the popups keep working the way capture.py reads them: always mounted, opacity 0
  * and top:200% when closed. `hidden` here is that rule, not Tailwind's `hidden` utility --
  * `display: none` would take the popups out of the layout and out of the fades.
+ *
+ * Being in the layout is why each wrapper also carries `inert` while it is closed: a closed
+ * popup is still a live subtree at `top: 200%`, and without `inert` every control in it stayed
+ * in the Tab order, so tabbing off the bottom bar walked into popups nobody could see.
  *
  * MUI's down(key) means "below the NEXT breakpoint", and this theme's are sm 500, md 900,
  * lg 1200: down('xs') is max-sm, down('sm') is max-md, down('md') is max-lg.
@@ -17,11 +34,11 @@ export const layerSettingsClasses = {
     // 547x48 with a 32px radius, 20px off the bottom. Measured on 05-round.png at x 376-923, y 832-879.
     root: 'relative mb-5 box-border flex h-12 w-[547px] flex-row items-center justify-start rounded-[32px] bg-[#333333] max-lg:mb-2.5 max-md:mb-[5px] max-sm:w-[341px]',
     // 499x243 above the bar, 48px in. Measured on 07-mixer-popup.png at x 425-923, y 585-827.
-    mixerPopup: 'absolute -top-[247px] left-12 right-0 z-[100] flex h-[243px] w-[499px] flex-col overflow-hidden rounded-lg bg-[#333333] opacity-100 shadow-[0px_0px_2px_rgba(0,0,0,0.15),0px_4px_6px_rgba(0,0,0,0.15)] [transition:opacity_0.2s_ease-in] max-md:-top-[163px] max-md:left-0 max-md:h-40 max-sm:w-[341px]',
+    mixerPopup: POPUP_SURFACE + ' -top-[247px] left-12 right-0 flex h-[243px] w-[499px] flex-col overflow-hidden opacity-100 max-md:-top-[163px] max-md:left-0 max-md:h-40 max-sm:w-[341px]',
     mixerPopupHeader: 'flex flex-1 items-center justify-start border-b border-white/10 px-[15px] py-2.5',
     mixerPopupHeaderText: 'm-0 ml-[13px] text-[18px] font-normal leading-[1.5] tracking-[0.00938em]',
     buttonText: 'm-0 text-base font-normal leading-none tracking-[0.00938em]',
-    instrumentPopup: 'absolute bottom-[47px] left-0 right-0 z-[100] overflow-hidden rounded-lg bg-[#333333] px-0 py-[5px] shadow-[0px_0px_2px_rgba(0,0,0,0.15),0px_4px_6px_rgba(0,0,0,0.15)] [transition:opacity_0.2s_ease-in] max-md:w-[216px]',
+    instrumentPopup: POPUP_SURFACE + ' bottom-[47px] left-0 right-0 overflow-hidden px-0 py-[5px] max-md:w-[216px]',
     instrumentSample: 'm-0 flex text-center text-base leading-none tracking-[0.00938em] capitalize [font-weight:bolder] max-sm:flex-1',
     addLayerContainer: 'm-0 flex h-full flex-row items-center justify-center rounded-[30px] bg-[#4D4D4D] p-0',
     iconButtons: 'size-12 rounded-full hover:bg-white/20',
@@ -32,9 +49,19 @@ export const layerSettingsClasses = {
     instrumentSummary: 'my-2.5 flex h-8 w-[216px] flex-row items-center justify-start rounded-[24px] bg-white/10 px-[15px] py-1.5 font-bold hover:bg-white/20 max-sm:w-[106px]',
     stepCount: 'my-2.5 flex h-8 w-[59px] flex-row items-center justify-center rounded-[24px] bg-white/10 px-3 py-1.5 hover:bg-white/20',
     stepLength: 'm-0 flex items-start text-base font-normal leading-none tracking-[0.00938em]',
+    // The bar's own steps pill says its number in bold. It cannot be `stepLength` plus a weight:
+    // two font-weight utilities on one element are decided by Tailwind's sheet order, and
+    // `.font-bold` is emitted *before* `.font-normal`, so the pill would come out at 400. The
+    // string the JSS left behind got away with `[font-weight:bolder]` only because an arbitrary
+    // property is emitted after both. 700 is what `bolder` resolved to: the pill's parent is the
+    // Button, which computes 400 or 500 depending on which of ICON_BUTTON's `font-normal` and the
+    // base's `font-medium` wins, and the CSS weight ladder maps both of those to 700.
+    // (Nothing in a comment may spell a utility on its own, either: Tailwind scans this file as
+    // plain text, and the word that used to stand where "ladder" does emitted a rule of its own.)
+    stepLengthBold: 'm-0 flex items-start text-base font-bold leading-none tracking-[0.00938em]',
     actionButtonContainer: 'relative mx-2 flex items-center justify-center',
-    hamburgerPopup: 'absolute -top-[108px] left-0 z-[100] flex h-[104px] w-[155px] flex-col justify-center overflow-hidden rounded-lg bg-[#333333] opacity-100 shadow-[0px_0px_2px_rgba(0,0,0,0.15),0px_4px_6px_rgba(0,0,0,0.15)] [transition:opacity_0.2s_ease-in]',
-    deleteClearPopup: 'absolute -top-[100px] right-0 z-[100] flex h-[104px] w-[155px] flex-col justify-center overflow-hidden rounded-lg bg-[#333333] opacity-100 shadow-[0px_0px_2px_rgba(0,0,0,0.15),0px_4px_6px_rgba(0,0,0,0.15)] [transition:opacity_0.2s_ease-in]',
+    hamburgerPopup: POPUP_SURFACE + ' -top-[108px] left-0 flex h-[104px] w-[155px] flex-col justify-center overflow-hidden opacity-100',
+    deleteClearPopup: POPUP_SURFACE + ' -top-[100px] right-0 flex h-[104px] w-[155px] flex-col justify-center overflow-hidden opacity-100',
     desktopDeleteClear: 'flex max-sm:hidden',
     mobileDeleteClear: 'hidden max-sm:flex',
     actionButton: 'my-2.5 flex size-8 flex-row items-center justify-center rounded-full bg-white/10 p-[5px] hover:bg-white/20',

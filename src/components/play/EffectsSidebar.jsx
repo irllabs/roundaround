@@ -2,22 +2,11 @@ import React, { Component } from 'react'
 import { connect } from "react-redux"
 import AudioEngine from "../../audio-engine/AudioEngine"
 import { FirebaseContext } from '../../firebase'
-import {
-    setUserBusFx,
-    setUserBusFxOverride
-} from "../../redux/actions"
+import { setUserBusFxOverride } from "../../redux/actions"
 import EffectThumbControl from './EffectThumbControl'
 import { ChevronRightIcon } from '@/components/icons'
 import { cn } from '@/lib/utils'
 import _ from 'lodash'
-
-/** Returns a new array with the element at `from` moved to `to`, leaving `array` untouched. */
-const moveItem = (array, from, to) => {
-    const result = [...array]
-    const [item] = result.splice(from, 1)
-    result.splice(to, 0, item)
-    return result
-}
 
 const toTitleCase = (str) => {
     return str.replace(
@@ -34,28 +23,12 @@ class EffectsSidebar extends Component {
     constructor(props) {
         super(props)
         this.state = {
-            menuAnchorElement: null,
             isMinimized: false
         }
         this.onSwitchOn = this.onSwitchOn.bind(this)
         this.onSwitchOff = this.onSwitchOff.bind(this)
         this.onMinimizeClick = this.onMinimizeClick.bind(this)
         this.onMinimizeKeyDown = this.onMinimizeKeyDown.bind(this)
-    }
-
-    onPlayClick() {
-        this.props.togglePlay()
-    }
-
-    onSortEnd = ({ oldIndex, newIndex }) => {
-        let userBus = _.cloneDeep(this.props.round.userBuses[this.props.user.id])
-        userBus.fx = moveItem(userBus.fx, oldIndex, newIndex)
-        for (let i = 0; i < userBus.fx.length; i++) {
-            userBus.fx[i].order = i
-        }
-        this.props.setUserBusFx(this.props.user.id, userBus.fx)
-        AudioEngine.busesByUser[this.props.user.id].setFxOrder(userBus.fx)
-        this.context.updateUserBus(this.props.round.id, this.props.user.id, userBus)
     }
 
     onSwitchOn(fxId) {
@@ -139,8 +112,5 @@ const mapStateToProps = state => {
 }
 
 export default connect(
-    mapStateToProps, {
-    setUserBusFx,
-    setUserBusFxOverride
-}
+    mapStateToProps, { setUserBusFxOverride }
 )(EffectsSidebar)

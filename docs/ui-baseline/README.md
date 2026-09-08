@@ -79,11 +79,19 @@ npx -y serve@14 -s build -l 3100 &
 python3 docs/ui-baseline/keyboard.py --base http://localhost:3100
 ```
 
+It also covers the play route PR 3 migrates: the effects sidebar's chevron, which is a `div`
+with `role=button` and so owns its own Enter and Space, and the layer-settings popups, which
+Escape now closes and which a Tab must not walk into. That last case is the one worth naming.
+The popups are never unmounted -- a closed one sits at `top: 200%` at opacity 0 -- so until
+each wrapper was given `inert`, every control inside a closed one was still in the tab order:
+one Tab off the steps pill landed on the closed volume popup's slider, and Chrome scrolling it
+into view scrolled the play route's root down by 303px, which nothing on the route could scroll
+back. The case checks both halves, where focus went and that the root did not move.
+
 It takes `--base` (default `http://localhost:3100`) and `--port` (default 9337, so it can run
 alongside a capture). It signs in as a guest the way `capture.py` does rather than seeding a
 session, so it runs against any host, `--base https://rounds.studio` included; that is how the
-baseline for it was recorded. PR 3 grows it with the play route's own cases as it migrates the
-sidebar chevron and the layer-settings popups.
+baseline for it was recorded.
 
 ## The 0.5% rule
 
