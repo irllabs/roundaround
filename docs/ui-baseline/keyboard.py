@@ -211,6 +211,36 @@ def effects_chevron(b, report):
            b.js('window.__spaceAtWindow === false'), 'reached window: %s' % b.js('window.__spaceAtWindow'))
 
 
+# The layer-settings popups are never unmounted -- a closed one sits at top:200% at opacity 0 --
+# so `data-open`, which LayerSettings writes on each wrapper for its own unit tests, is what says
+# open from closed. capture.py deliberately does not use it, because capture.py also has to drive
+# the pre-migration build; keyboard.py only ever runs against a build of this branch.
+def popup_open(name, want='true'):
+    return ("(() => { const e = document.querySelector('[data-test=%s]');"
+            " return !!e && e.dataset.open === '%s' })()" % (name, want))
+
+
+def layer_popups(b, report):
+    """Escape closes an open layer-settings popup. Material UI's had no keyboard escape at all.
+
+    The popup is open before Escape is pressed, and that matters beyond the case itself:
+    LayerSettings consumes an Escape that closes a popup and calls preventDefault on it. An
+    Escape nothing consumes is left to the browser, and Chrome answers Escape with Stop --
+    which in this headless setup stops the document's animation frames, so from then on no
+    popover's exit animation ever ends and every closed one stays in the DOM. Any case added
+    here that presses a key the app ignores can quietly break every case after it.
+    """
+    b.click('button[aria-label="Open the mixer"]', 'the mixer button')
+    opened = b.wait(popup_open('mixer-popup'), timeout=10)
+    report('layer settings: the mixer popup opens from the bar', opened, b.js(WHERE))
+    if not opened:
+        raise Failed('the mixer popup never opened, so its Escape case cannot run')
+
+    b.escape()
+    report('layer settings: Escape closes the mixer popup',
+           b.wait(popup_open('mixer-popup', 'false'), timeout=10), b.js(WHERE))
+
+
 def avatar_menu(b, report):
     """Enter, the roving arrow keys, Escape, and focus coming back to the avatar."""
     b.focus('[data-test=button-sign-in-out]')
@@ -340,6 +370,7 @@ def check(b, base):
 
     sign_in_as_guest(b)
     effects_chevron(b, report)
+    layer_popups(b, report)
     avatar_menu(b, report)
     round_menu_to_rename(b, report)
 

@@ -1,11 +1,11 @@
 import React from 'react'
-import Box from '@material-ui/core/Box'
-import IconButton from '@material-ui/core/IconButton'
+import { Button } from '@/components/ui/button'
+import { cn } from '@/lib/utils'
+import { ICON_BUTTON } from './styles'
 import {
     PlusIcon,
     EqualiserIcon
 } from './resources'
-import { Typography } from '@material-ui/core'
 
 export default function HamburgerPopup({
     classes,
@@ -19,26 +19,29 @@ export default function HamburgerPopup({
     onAddLayerClick
 }) {
     return (
-        <Box className={showHamburgerPopup ? classes.hamburgerPopup : classes.hidden}>
-            <IconButton
+        <div data-test="hamburger-popup" data-open={String(showHamburgerPopup)} className={showHamburgerPopup ? classes.hamburgerPopup : classes.hidden}>
+            <Button
+                type="button"
+                variant="plain"
+                size="icon-app"
                 ref={addLayerButtonRef}
                 onClick={onAddLayerClick}
-                className={classes.buttonWithText}
+                className={cn(ICON_BUTTON, classes.buttonWithText)}
             >
-                <Typography className={classes.buttonText}>Add round</Typography>
+                <p className={classes.buttonText}>Add round</p>
                 <PlusIcon width={16} height={16} user={user} userColors={userColors} />
-            </IconButton>
-            <IconButton
+            </Button>
+            <Button
+                type="button"
+                variant="plain"
+                size="icon-app"
                 ref={mixerPopupButtonRef}
                 onClick={toggleShowMixerPopup}
-                className={classes.buttonWithText}
-                style={{
-                    backgroundColor: showMixerPopup ? 'rgba(255, 255, 255, 0.2)' : ''
-                }}
+                className={cn(ICON_BUTTON, classes.buttonWithText, showMixerPopup && 'bg-white/20')}
             >
-                <Typography className={classes.buttonText}>Mixer</Typography>
+                <p className={classes.buttonText}>Mixer</p>
                 <EqualiserIcon width={12} height={16} user={user} userColors={userColors} />
-            </IconButton>
-        </Box>
+            </Button>
+        </div>
     )
 }
