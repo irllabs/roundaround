@@ -1,53 +1,19 @@
 import React, { useState, useEffect, useContext, useRef } from 'react';
 import { connect } from "react-redux";
 import { FirebaseContext } from '../../firebase';
-import DialogTitle from '@material-ui/core/DialogTitle';
-import Dialog from '@material-ui/core/Dialog';
-import Box from '@material-ui/core/Box';
-import Button from '@material-ui/core/Button';
-import TextField from '@material-ui/core/TextField';
-import { makeStyles } from '@material-ui/core/styles';
 import QRCode from 'qrcode'
 import { setIsShowingShareDialog, setRoundShortLink } from '../../redux/actions'
+import { AppDialog, AppDialogBody, MUI_BUTTON } from './AppDialog'
+import { OutlinedField } from '../fields/OutlinedField'
+import { Button } from '@/components/ui/button'
+import { cn } from '@/lib/utils'
 import _ from 'lodash'
-
-const styles = makeStyles({
-    title: {
-        textAlign: 'center'
-    },
-    body: {
-        padding: '1rem',
-        borderTop: 'solid 1px rgba(255,255,255,0.1)'
-    },
-    linkContainer: {
-        display: 'flex',
-    },
-    paper: {
-        borderRadius: 8,
-    },
-    QRCodeContainer: {
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        padding: '1rem'
-    },
-    textField: {
-        marginRight: '1rem',
-        [`& fieldset`]: {
-            borderRadius: 8,
-        },
-    },
-    copyButton: {
-        marginRight: '1rem',
-        minWidth: 100
-    }
-})
 
 const getFullUrl = (roundId) => window.location.origin + '/play/' + roundId
 
 const ShareDialog = ({ round, isShowingShareDialog, setIsShowingShareDialog, setRoundShortLink }) => {
     const firebase = useContext(FirebaseContext);
-    const inputRef = useRef(null)
+    const fieldRef = useRef(null)
     const canvasRef = useRef(null)
     const [link, setLink] = useState('')
     const [copied, setCopied] = useState(false)
@@ -112,11 +78,14 @@ const ShareDialog = ({ round, isShowingShareDialog, setIsShowingShareDialog, set
         try {
             if (navigator.clipboard && navigator.clipboard.writeText) {
                 await navigator.clipboard.writeText(link)
-            } else if (inputRef.current) {
-                inputRef.current.focus()
-                inputRef.current.select()
+            } else if (fieldRef.current) {
+                // OutlinedField hands its ref to the wrapper, which is where MUI's TextField put
+                // one; the <input> the fallback needs is the one inside it.
+                const input = fieldRef.current.querySelectorAll('input')[0]
+                input.focus()
+                input.select()
                 document.execCommand('copy')
-                inputRef.current.blur()
+                input.blur()
             }
             setCopied(true)
         } catch (error) {
@@ -124,31 +93,31 @@ const ShareDialog = ({ round, isShowingShareDialog, setIsShowingShareDialog, set
         }
     }
 
-    const classes = styles();
-
     return (
-        <Dialog classes={{ paper: classes.paper }} onClose={handleClose} aria-labelledby="share-dialog-title" open={isShowingShareDialog}>
-            <DialogTitle className={classes.title} id="share-dialog-title">Share project</DialogTitle>
-            <Box className={classes.body}>
-                <p>Use the QR code or link to join the collaboration.</p>
-                <Box className={classes.QRCodeContainer}>
+        <AppDialog open={isShowingShareDialog} onOpenChange={(next) => { if (!next) handleClose() }} titleId="share-dialog-title" title="Share project" titleClassName="text-center">
+            <AppDialogBody>
+                <p className="my-[14px]">Use the QR code or link to join the collaboration.</p>
+                <div className="flex items-center justify-center p-4">
+                    {/* No Tailwind width: the canvas keeps the intrinsic size QRCode gives it,
+                        which capture.py checks against QR_SIZES before it masks the code. */}
                     <canvas ref={canvasRef} id="QRCanvas" aria-label="QR code for this round's link" role="img"></canvas>
-                </Box>
-                <Box className={classes.linkContainer}>
-                    <TextField
-                        id="share-link"
-                        inputRef={inputRef}
-                        value={link}
-                        label="Link"
-                        variant="outlined"
-                        fullWidth
-                        InputProps={{ readOnly: true }}
-                        className={classes.textField}
-                    />
-                    <Button className={classes.copyButton} color="secondary" variant="contained" disableElevation onClick={onCopyClick}>{copied ? 'Copied' : 'Copy'}</Button>
-                </Box>
-            </Box>
-        </Dialog>
+                </div>
+                {/* The paper is 358px wide on 10-share-dialog.png because this row is: the
+                    194px field (a default 20-character input plus its 28px of padding), 16px, the
+                    100px Copy button, and the button's own 16px right margin. All four are
+                    load-bearing -- the JSS put marginRight on both children, and dropping the
+                    button's takes the paper to 342px.
+                    px-[13px]: MUI draws the outline on an absolutely positioned <legend>, which
+                    overlays the box and adds nothing to its width, while OutlinedField's border
+                    is on the input itself and does. 13 + the 1px border puts the text back at
+                    14px from the edge and the field back at 194px; without it the paper is 360.
+                    Only this dialog measures the field, so the fix stays local to it. */}
+                <div className="flex">
+                    <OutlinedField ref={fieldRef} className="mr-4" id="share-link" label="Link" value={link} onChange={() => {}} inputProps={{ readOnly: true, className: 'px-[13px]' }} />
+                    <Button className={cn(MUI_BUTTON, 'mr-4 min-w-[100px] shrink-0 bg-secondary text-white hover:bg-secondary/90')} onClick={onCopyClick}>{copied ? 'Copied' : 'Copy'}</Button>
+                </div>
+            </AppDialogBody>
+        </AppDialog>
     );
 }
 const mapStateToProps = state => {

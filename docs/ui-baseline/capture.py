@@ -377,7 +377,7 @@ def capture(b, base, out):
     b.shot(out, '03-signin-email')
 
     # 04: back out of the email step and into the guest step, with a name typed.
-    b.click('.MuiDialogTitle-root button[aria-label=close]', 'the dialog back button')
+    b.click('[data-test=dialog-back]', 'the dialog back button')
     b.must(has('[data-test=button-guest]'), 'the sign-in choices coming back')
     b.must(gone('[data-test=input-email] input'), 'the email form going away')
     b.click('[data-test=button-guest]', 'Use as guest')
@@ -439,7 +439,9 @@ def capture(b, base, out):
     check_qr_size(base, b.js(QR_RECT))
     b.run(MASK_SHARE, 'mask the QR code and the share link')
     b.shot(out, '10-share-dialog', verify=SHARE_MASKED)
-    b.click('.MuiBackdrop-root', 'the share dialog backdrop')
+    # Escape rather than a backdrop click: the Radix overlay is not a click-away target the way
+    # Material UI's Backdrop was, and Escape closes both implementations.
+    b.key('Escape', 'Escape', 27)
     b.must(gone('#share-dialog-title'), 'the share dialog closing')
 
     # 11: the avatar menu, showing the colour picker on the forced swatch.

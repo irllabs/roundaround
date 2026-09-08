@@ -1,16 +1,16 @@
 import React, { useContext, useState } from 'react';
-import Button from '@material-ui/core/Button';
-import Dialog from '@material-ui/core/Dialog';
-import DialogActions from '@material-ui/core/DialogActions';
-import DialogContent from '@material-ui/core/DialogContent';
-import DialogContentText from '@material-ui/core/DialogContentText';
-import DialogTitle from '@material-ui/core/DialogTitle';
 import { connect } from "react-redux";
 import { useHistory } from 'react-router-dom';
 import { FirebaseContext } from '../../firebase';
 import { setIsShowingDeleteRoundDialog, setRounds } from '../../redux/actions'
+import { AppDialog, AppDialogActions, AppDialogContent, MUI_BUTTON } from './AppDialog'
+import { Button } from '@/components/ui/button'
+import { Spinner } from '@/components/ui/spinner'
+import { cn } from '@/lib/utils'
 import _ from 'lodash'
-import CircularProgress from '@material-ui/core/CircularProgress';
+
+/** MUI's DialogContentText: body1 with 12px under it. */
+const CONTENT_TEXT = 'mb-3 mt-0 text-base leading-6 tracking-[0.00938em]'
 
 function DeleteRoundDialog ({ isShowingDeleteRoundDialog, selectedRoundId, rounds, setRounds, round, setIsShowingDeleteRoundDialog }) {
     const firebase = useContext(FirebaseContext);
@@ -46,32 +46,32 @@ function DeleteRoundDialog ({ isShowingDeleteRoundDialog, selectedRoundId, round
             setIsDeleting(false)
         }
     }
+    // rounded-[32px]: no JSS overrode Paper here, so the radius is the MUI theme's 32.
     return (
-        <Dialog open={isShowingDeleteRoundDialog} onClose={handleClose} aria-labelledby="delete-dialog-title">
-            <DialogTitle id="delete-dialog-title">Are you sure you want to delete this round?</DialogTitle>
-            <DialogContent>
-                <DialogContentText>This removes the round and all of its layers for everyone. It cannot be undone.</DialogContentText>
-                {errorMessage && <DialogContentText color="error" role="alert">{errorMessage}</DialogContentText>}
-            </DialogContent>
-            <DialogActions>
-                {/* disableFocusRipple: MUI 4's ButtonBase pulsates the ripple from an effect, and
-                    under React 18 the autoFocus lands before the ripple has mounted, so the
-                    pulsate throws on a null ref. The focus ring is unaffected. Goes away with MUI. */}
-                <Button onClick={handleClose} autoFocus disableFocusRipple disabled={isDeleting}>
+        <AppDialog open={isShowingDeleteRoundDialog} onOpenChange={(next) => { if (!next) handleClose() }} titleId="delete-dialog-title" title="Are you sure you want to delete this round?" className="rounded-[32px]">
+            <AppDialogContent>
+                <p className={cn(CONTENT_TEXT, 'text-white/70')}>This removes the round and all of its layers for everyone. It cannot be undone.</p>
+                {errorMessage && <p className={cn(CONTENT_TEXT, 'text-destructive')} role="alert">{errorMessage}</p>}
+            </AppDialogContent>
+            <AppDialogActions>
+                <Button type="button" variant="plain" className={cn(MUI_BUTTON, 'px-2')} onClick={handleClose} autoFocus disabled={isDeleting}>
                     Cancel
                 </Button>
-                <Button color="primary" variant="contained" disableElevation onClick={onOkClick} disabled={isDeleting}>
+                <Button className={cn(MUI_BUTTON, 'bg-primary text-primary-foreground hover:bg-primary/90')} onClick={onOkClick} disabled={isDeleting}>
                     {
                         !isDeleting &&
                         <span>Delete</span>
                     }
                     {
+                        // text-primary is the button's own fill, so the spinner is invisible while
+                        // it turns. That is what CircularProgress color="primary" does on a #EAEAEA
+                        // contained button today; it is not a bug to fix here.
                         isDeleting &&
-                        <CircularProgress size={24} />
+                        <Spinner className="size-6 text-primary" />
                     }
                 </Button>
-            </DialogActions>
-        </Dialog>
+            </AppDialogActions>
+        </AppDialog>
     )
 }
 const mapStateToProps = state => {

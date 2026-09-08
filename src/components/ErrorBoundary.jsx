@@ -1,8 +1,8 @@
 import React from 'react'
-import Box from '@material-ui/core/Box'
-import Button from '@material-ui/core/Button'
-import Typography from '@material-ui/core/Typography'
 import { FirebaseContext } from '../firebase'
+import { MUI_BUTTON } from './dialogs/AppDialog'
+import { Button } from '@/components/ui/button'
+import { cn } from '@/lib/utils'
 
 /**
  * Last line of defence: a render-time exception anywhere below shows a message with a way out
@@ -35,13 +35,14 @@ export default class ErrorBoundary extends React.Component {
         if (this.state.error) {
             const message = this.state.error && this.state.error.message ? this.state.error.message : String(this.state.error)
             return (
-                <Box role="alert" style={{ padding: '4rem 2rem', textAlign: 'center' }}>
-                    <Typography variant="h5" gutterBottom>Something went wrong.</Typography>
-                    <Typography color="textSecondary" gutterBottom>{message}</Typography>
-                    <Button variant="contained" color="primary" disableElevation onClick={() => window.location.assign('/rounds')}>
+                <div role="alert" className="px-8 py-16 text-center">
+                    {/* MUI's h5 and body1, and gutterBottom's 0.35em. */}
+                    <p className="mb-[0.35em] mt-0 text-2xl leading-[1.334]">Something went wrong.</p>
+                    <p className="mb-[0.35em] mt-0 text-base leading-6 tracking-[0.00938em] text-white/70">{message}</p>
+                    <Button className={cn(MUI_BUTTON, 'bg-primary text-primary-foreground hover:bg-primary/90')} onClick={() => window.location.assign('/rounds')}>
                         Back to my rounds
                     </Button>
-                </Box>
+                </div>
             )
         }
         return this.props.children

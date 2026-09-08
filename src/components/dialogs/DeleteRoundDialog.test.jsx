@@ -39,6 +39,15 @@ describe('DeleteRoundDialog', () => {
         expect(store.getState().rounds).toHaveLength(2)
     })
 
+    // Radix owns the dismiss the MUI Dialog's onClose handler used to; the flag is what proves
+    // it reached the store rather than only unmounting the paper.
+    it('closes on Escape without deleting anything', async () => {
+        const { store, firebase } = setup({ deleteRound: vi.fn().mockResolvedValue() })
+        await userEvent.keyboard('{Escape}')
+        await waitFor(() => expect(store.getState().display.isShowingDeleteRoundDialog).toBe(false))
+        expect(firebase.deleteRound).not.toHaveBeenCalled()
+    })
+
     it('leaves the round when the open round is deleted', async () => {
         setup({
             round: { id: 'r1', name: 'One', layers: [], currentUsers: [] },
