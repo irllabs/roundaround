@@ -1,58 +1,20 @@
 import React, { useContext } from 'react';
 import { connect } from "react-redux";
-import Button from '@material-ui/core/Button';
-import ClickAwayListener from '@material-ui/core/ClickAwayListener';
-import Grow from '@material-ui/core/Grow';
-import Paper from '@material-ui/core/Paper';
-import Popper from '@material-ui/core/Popper';
-import MenuItem from '@material-ui/core/MenuItem';
-import MenuList from '@material-ui/core/MenuList';
-import ExpandMoreIcon from '@material-ui/icons/ExpandMore';
-import { makeStyles } from '@material-ui/core/styles';
 import _ from 'lodash'
 import { useHistory } from 'react-router-dom';
 import { duplicateRound } from '../../utils/index';
 import { setRounds, setIsShowingRenameDialog, setIsShowingDeleteRoundDialog, setSelectedRoundId } from '../../redux/actions';
 import { FirebaseContext } from '../../firebase';
-import { Box } from '@material-ui/core';
-
-const useStyles = makeStyles((theme) => ({
-    root: {
-        display: 'flex',
-    },
-    paper: {
-        //marginRight: theme.spacing(2),
-        justifySelf: 'flex-start',
-        width: 130,
-        borderRadius: 8,
-        [theme.breakpoints.down('xs')]: {
-            width: 100,
-        }
-    },
-    menuList: {
-    }
-}));
+import { AppMenu, AppMenuItem } from './AppMenu'
+import { MUI_BUTTON } from '../dialogs/AppDialog'
+import { Button } from '@/components/ui/button'
+import { ExpandMoreIcon } from '@/components/icons'
+import { cn } from '@/lib/utils'
 
 function ProjectName({ name, setIsShowingRenameDialog, setIsShowingDeleteRoundDialog, round, rounds, user, setRounds, setSelectedRoundId }) {
-    const classes = useStyles();
     const history = useHistory();
     const [open, setOpen] = React.useState(false);
-    const anchorRef = React.useRef(null);
     const firebase = useContext(FirebaseContext);
-
-    const handleToggle = () => {
-        setOpen((prevOpen) => !prevOpen);
-        setSelectedRoundId(round.id)
-    };
-
-    const handleClose = (event) => {
-        if (anchorRef.current && anchorRef.current.contains(event.target)) {
-            return;
-        }
-        anchorRef.current.blur()
-        setSelectedRoundId(null)
-        setOpen(false);
-    };
 
     const onRenameClick = () => {
         setOpen(false);
@@ -80,55 +42,36 @@ function ProjectName({ name, setIsShowingRenameDialog, setIsShowingDeleteRoundDi
         }
     }
 
-    function handleListKeyDown(event) {
-        if (event.key === 'Tab') {
-            event.preventDefault();
-            setOpen(false);
-        }
-    }
-
-    // return focus to the button when we transitioned from !open -> open
-    const prevOpen = React.useRef(open);
-    React.useEffect(() => {
-        if (prevOpen.current === true && open === false) {
-            anchorRef.current.focus();
-        }
-
-        prevOpen.current = open;
-    }, [open]);
-
     return (
-        <Box className={classes.root}>
-            <Box style={{ display: 'flex', flexDirection: 'column' }}>
-                <Button
-                    ref={anchorRef}
-                    aria-controls={open ? 'project-name-menu' : undefined}
-                    aria-haspopup="true"
-                    endIcon={<ExpandMoreIcon />}
-                    onClick={handleToggle}
+        <div className="flex">
+            <div className="flex flex-col">
+                {/* Opening the menu selects the round, so the rename and delete dialogs know which
+                    one they are about; closing it by any route puts that back. Radix owns the
+                    click-away, the Escape and the focus return the Popper needed handlers for. */}
+                <AppMenu
+                    open={open}
+                    onOpenChange={(next) => { setOpen(next); setSelectedRoundId(next ? round.id : null) }}
+                    listId="project-name-menu"
+                    label="Round actions"
+                    align="start"
+                    contentClassName="w-[130px] max-sm:w-[100px]"
+                    trigger={
+                        // `shrink whitespace-normal` undoes the generated Button's `shrink-0
+                        // whitespace-nowrap`, which MUI's Button had neither of. On a phone the
+                        // header runs out of room and the round's name wraps onto two lines;
+                        // 13-round-mobile.png photographs it wrapped.
+                        <Button variant="plain" aria-haspopup="menu" className={cn(MUI_BUTTON, 'shrink gap-2 whitespace-normal pl-2 pr-1')}>
+                            {name}
+                            <ExpandMoreIcon className="size-5" />
+                        </Button>
+                    }
                 >
-                    {name}
-                </Button>
-                <Popper open={open} anchorEl={anchorRef.current} role={undefined} transition disablePortal>
-                    {({ TransitionProps, placement }) => (
-                        <Grow
-                            {...TransitionProps}
-                            style={{ display: 'flex' }}
-                        >
-                            <Paper className={classes.paper}>
-                                <ClickAwayListener onClickAway={handleClose}>
-                                    <MenuList style={{ width: '100%' }} autoFocusItem={open} id="project-name-menu" onKeyDown={handleListKeyDown}>
-                                        <MenuItem onClick={onDuplicateClick}>Duplicate</MenuItem>
-                                        <MenuItem onClick={onRenameClick}>Rename</MenuItem>
-                                        <MenuItem onClick={onDeleteClick}>Delete</MenuItem>
-                                    </MenuList>
-                                </ClickAwayListener>
-                            </Paper>
-                        </Grow>
-                    )}
-                </Popper>
-            </Box>
-        </Box>
+                    <AppMenuItem onClick={onDuplicateClick}>Duplicate</AppMenuItem>
+                    <AppMenuItem onClick={onRenameClick}>Rename</AppMenuItem>
+                    <AppMenuItem onClick={onDeleteClick}>Delete</AppMenuItem>
+                </AppMenu>
+            </div>
+        </div>
     );
 }
 const mapStateToProps = state => {

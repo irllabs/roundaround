@@ -117,8 +117,10 @@ VIDEO_SETTLED = """(() => {
   return v.networkState === 3 || v.readyState >= 1;
 })()"""
 
+# The avatar is Material UI's on the pre-migration build and shadcn's after it; the colour it
+# takes is the same either way, and that is what this asserts.
 AVATAR_IS_SWATCH = """(() => {
-  const a = document.querySelector('[data-test=button-sign-in-out] .MuiAvatar-root');
+  const a = document.querySelector('[data-test=button-sign-in-out] .MuiAvatar-root, [data-test=button-sign-in-out] [data-slot=avatar-fallback]');
   return a !== null && getComputedStyle(a).backgroundColor === %s;
 })()""" % json.dumps(SWATCH_RGB)
 
@@ -273,6 +275,16 @@ class Browser:
         if not clicked:
             raise Failed('could not click %s (%s)' % (what, selector))
 
+    def press(self, x, y):
+        """A real left click at a point, so both ClickAwayListener and Radix see it."""
+        for kind in ('mousePressed', 'mouseReleased'):
+            self.send('Input.dispatchMouseEvent', type=kind, x=x, y=y, button='left', clickCount=1)
+
+    def key(self, key, code, vk):
+        for kind in ('rawKeyDown', 'keyUp'):
+            self.send('Input.dispatchKeyEvent', type=kind, key=key, code=code,
+                      windowsVirtualKeyCode=vk, nativeVirtualKeyCode=vk)
+
     def run(self, expression, what):
         if not self.js(expression):
             raise Failed('could not %s' % what)
@@ -331,6 +343,19 @@ def check_qr_size(base, laid_out):
                                                           ' or '.join('%dx%d' % (n, n) for n in QR_SIZES)))
 
 
+def dismiss(b):
+    """Close whatever menu is open by clicking the empty middle of the header bar.
+
+    A dispatched mouse press and release, not element.click(): Material UI's
+    ClickAwayListener dismisses on `click` and Radix's Popover on `pointerdown`, and
+    only a real mouse event produces both. The blur afterwards is what stops Radix's
+    focus restore from leaving a focus ring on the trigger in the shot; it is a no-op
+    on the Material UI build.
+    """
+    b.press(400, 32)
+    b.js('document.activeElement && document.activeElement.blur()')
+
+
 def capture(b, base, out):
     # 01: the landing page.
     b.send('Page.navigate', url=base)
@@ -352,7 +377,7 @@ def capture(b, base, out):
     b.shot(out, '03-signin-email')
 
     # 04: back out of the email step and into the guest step, with a name typed.
-    b.click('.MuiDialogTitle-root button[aria-label=close]', 'the dialog back button')
+    b.click('[data-test=dialog-back], .MuiDialogTitle-root button[aria-label=close]', 'the dialog back button')
     b.must(has('[data-test=button-guest]'), 'the sign-in choices coming back')
     b.must(gone('[data-test=input-email] input'), 'the email form going away')
     b.click('[data-test=button-guest]', 'Use as guest')
@@ -373,7 +398,7 @@ def capture(b, base, out):
     b.click('.circle-picker [title="%s"]' % SWATCH, 'the first colour swatch')
     b.must(AVATAR_IS_SWATCH, 'the avatar taking the forced colour')
     b.must(RINGS_ARE_SWATCH, 'the rings taking the forced colour')
-    b.js('document.body.click()')
+    dismiss(b)
     b.must(gone('[data-test=button-sign-out]'), 'the avatar menu closing')
     b.shot(out, '05-round', verify=RINGS_ARE_SWATCH)
 
@@ -403,7 +428,7 @@ def capture(b, base, out):
     b.click('button[aria-label="More options"]', 'More options')
     b.must(has('#header-menu-list'), 'the header menu')
     b.shot(out, '09-header-menu', verify=has('#header-menu-list'))
-    b.js('document.body.click()')
+    dismiss(b)
     b.must(gone('#header-menu-list'), 'the header menu closing')
 
     # 10: the share dialog, with its per-round QR code and link masked.
@@ -414,14 +439,16 @@ def capture(b, base, out):
     check_qr_size(base, b.js(QR_RECT))
     b.run(MASK_SHARE, 'mask the QR code and the share link')
     b.shot(out, '10-share-dialog', verify=SHARE_MASKED)
-    b.click('.MuiBackdrop-root', 'the share dialog backdrop')
+    # Escape rather than a backdrop click: the Radix overlay is not a click-away target the way
+    # Material UI's Backdrop was, and Escape closes both implementations.
+    b.key('Escape', 'Escape', 27)
     b.must(gone('#share-dialog-title'), 'the share dialog closing')
 
     # 11: the avatar menu, showing the colour picker on the forced swatch.
     b.click('[data-test=button-sign-in-out]', 'the avatar')
     b.must(has('[data-test=button-sign-out]'), 'the avatar menu')
     b.shot(out, '11-avatar-menu', verify=has('[data-test=button-sign-out]'))
-    b.js('document.body.click()')
+    dismiss(b)
     b.must(gone('[data-test=button-sign-out]'), 'the avatar menu closing')
 
     # 12: the rounds list. A fresh guest owns exactly the one round.

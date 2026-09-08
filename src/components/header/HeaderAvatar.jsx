@@ -1,88 +1,19 @@
 import React, { useContext } from 'react'
 import { connect } from "react-redux";
-import Box from '@material-ui/core/Box';
-import Avatar from '@material-ui/core/Avatar';
-import ClickAwayListener from '@material-ui/core/ClickAwayListener';
-import Grow from '@material-ui/core/Grow';
-import Paper from '@material-ui/core/Paper';
-import Popper from '@material-ui/core/Popper';
-import MenuItem from '@material-ui/core/MenuItem';
-import MenuList from '@material-ui/core/MenuList';
-import Divider from '@material-ui/core/Divider';
-import { makeStyles } from '@material-ui/core/styles';
-import IconButton from '@material-ui/core/IconButton';
 import _ from 'lodash'
 import { FirebaseContext } from '../../firebase';
 import {
 	setUser, setRounds, setUsers, setRound, setUserColor
 } from '../../redux/actions'
-import { CirclePicker } from 'react-color'
-import { Colors } from '../../utils/constants'
-
-const useStyles = makeStyles((theme) => ({
-	root: {
-		display: 'flex',
-	},
-	paper: {
-		marginRight: theme.spacing(2),
-		borderRadius: 8
-	},
-	colorPicker: {
-		padding: '1rem'
-	},
-	menuList: {
-	},
-	menuListItem: {
-		paddingTop: '1rem',
-		paddingBottom: '1rem',
-		textAlign: 'center'
-	},
-	avatar: props => ({
-		border: 'solid 2px ' + props.userColor
-	}),
-	avatarInitialsOnly: props => ({
-		backgroundColor: props.userColor,
-		color: '#FFFFFF'
-	}),
-	userDisplayName: {
-		marginTop: 0,
-		marginBottom: '0rem',
-		paddingTop: '1rem',
-		marginLeft: '1rem',
-		marginRight: '1rem'
-	},
-	userEmail: {
-		marginLeft: '1rem',
-		marginRight: '1rem',
-		marginTop: 0,
-		fontWeight: 500
-	}
-
-}));
+import { AppMenu, AppMenuItem } from './AppMenu'
+import { ColorGrid } from './ColorGrid'
+import { Button } from '@/components/ui/button'
+import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar'
+import { Separator } from '@/components/ui/separator'
 
 function HeaderAvatar({ user, users, setUser, setRounds, shouldShowMenu, setUsers, setRound, setUserColor }) {
 	const firebaseContext = useContext(FirebaseContext)
 	const [open, setOpen] = React.useState(false);
-	const anchorRef = React.useRef(null);
-
-	const handleToggle = () => {
-		setOpen((prevOpen) => !prevOpen);
-	};
-
-	const handleClose = (event) => {
-		if (anchorRef.current && anchorRef.current.contains(event.target)) {
-			return;
-		}
-
-		setOpen(false);
-	};
-
-	function handleListKeyDown(event) {
-		if (event.key === 'Tab') {
-			event.preventDefault();
-			setOpen(false);
-		}
-	}
 
 	const onSignOutClick = () => {
 		firebaseContext.signOut()
@@ -117,98 +48,74 @@ function HeaderAvatar({ user, users, setUser, setRounds, shouldShowMenu, setUser
 		setUsers(usersClone)
 	}
 
-	// return focus to the button when we transitioned from !open -> open
-	const prevOpen = React.useRef(open);
-	React.useEffect(() => {
-		if (prevOpen.current === true && open === false) {
-			anchorRef.current.focus();
-		}
-
-		prevOpen.current = open;
-	}, [open]);
-
-	const classes = useStyles({ userColor: user.color });
+	// The user's own colour is the one value that cannot be a class: it comes out of the
+	// database. It is handed to Tailwind as a custom property instead of an inline background,
+	// so the border and the fill are still spelled in utilities.
+	//
+	// The fill carries #757575 as the var()'s fallback because a user can have no colour -- an
+	// account made before the picker existed, or a record that failed to write one -- and an
+	// unset custom property resolves to nothing at all, which paints the circle transparent and
+	// leaves white initials on the header. MUI's Avatar had a name for that case: without an
+	// image it added `colorDefault`, `palette.grey[600]` on a dark palette, which is #757575.
+	// It is the same grey the rounds-list rows already use for their placeholder avatar.
+	const avatar = (
+		<Avatar className="size-10 after:hidden" style={{ '--user-color': user.color }}>
+			{!_.isNil(user.avatar) && <AvatarImage className="border-2 border-(--user-color)" alt={user.displayName} src={user.avatar} />}
+			{/* font-normal because the Button around this one is font-medium and MUI's Avatar set
+			    no weight at all, so the initials came out at the body's 400. */}
+			<AvatarFallback className="bg-(--user-color,#757575) text-[20px] font-normal leading-none text-white">{getInitials(user.displayName)}</AvatarFallback>
+		</Avatar>
+	)
 
 	return (
-		<Box className={classes.root}>
-			<Box data-test="header">
+		<div className="flex">
+			<div data-test="header">
+				{/* `contentClassName` carries the 16px right margin the JSS gave every menu paper.
+				    That margin is the whole reason this menu sits 8px left of its trigger's centre:
+				    Radix centres the wrapper around the paper, and the wrapper is 16px the wider of
+				    the two. `alignOffset` cannot do it — floating-ui ignores the alignment axis when
+				    there is no alignment, which is exactly what align="center" is. */}
 				{
 					shouldShowMenu &&
-					<>
-						<IconButton
-							className="signed-in"
-							ref={anchorRef}
-							aria-controls={open ? 'menu-list-grow' : undefined}
-							aria-haspopup="true"
-							data-test="button-sign-in-out"
-							onClick={handleToggle}
-						>
-							{
-								!_.isNil(user.avatar) &&
-								<Avatar className={classes.avatar} alt={user.displayName} src={user.avatar} />
-							}
-							{
-								_.isNil(user.avatar) &&
-								<Avatar className={classes.avatarInitialsOnly} alt={user.displayName} >{getInitials(user.displayName)}</Avatar>
-							}
-						</IconButton>
-
-						<Popper open={open} anchorEl={anchorRef.current} role={undefined} transition disablePortal>
-							{({ TransitionProps, placement }) => (
-								<Grow
-									{...TransitionProps}
-									style={{ transformOrigin: placement === 'bottom' ? 'center top' : 'center bottom' }}
-								>
-									<Paper className={classes.paper} size="md">
-										<ClickAwayListener onClickAway={handleClose}>
-											<Box >
-
-												<h2 className={classes.userDisplayName}>{user.displayName}</h2>
-												<h3 className={classes.userEmail}>{user.email}</h3>
-												<CirclePicker className={classes.colorPicker} onChangeComplete={onColorChosen} colors={Colors} />
-												<Divider />
-												<MenuList
-													autoFocusItem={open}
-													id="menu-list-grow"
-													onKeyDown={handleListKeyDown}
-												>
-													<MenuItem
-														onClick={onSignOutClick}
-														className={classes.menuListItem}
-														data-test="button-sign-out"
-													>
-														Sign out
-													</MenuItem>
-												</MenuList>
-											</Box>
-										</ClickAwayListener>
-									</Paper>
-								</Grow>
-							)}
-						</Popper>
-
-					</>
+					<AppMenu
+						open={open}
+						onOpenChange={setOpen}
+						listId="menu-list-grow"
+						label="Account"
+						align="center"
+						trigger={
+							// 64px, not the 48px of `icon-round`: MUI's IconButton is 12px of padding
+							// around its content, and the content here is a 40px avatar, not a 24px
+							// glyph. The baseline puts the avatar at x 1104-1143 on 05-round.png,
+							// which only a 64px button produces.
+							<Button className="signed-in size-16" variant="plain" size="icon-round" aria-haspopup="menu" data-test="button-sign-in-out">
+								{avatar}
+							</Button>
+						}
+						listClassName="py-0"
+						contentClassName="mr-4 w-auto"
+					>
+						<h2 className="mx-4 mb-0 mt-0 pt-4 text-[1.5em] font-bold">{user.displayName}</h2>
+						{/* Rendered even for a guest, who has no email: the empty heading still
+						    contributes its bottom margin, which is part of the gap between the
+						    name and the colour grid on 11-avatar-menu.png. That margin is now
+						    spelled out as mb-[1em] rather than leaning on the browser default. */}
+						<h3 className="mx-4 mt-0 mb-[1em] text-[1.17em] font-medium">{user.email}</h3>
+						<ColorGrid onChange={onColorChosen} />
+						<Separator className="bg-white/12" />
+						<div className="py-2">
+							<AppMenuItem onClick={onSignOutClick} data-test="button-sign-out" className="py-4">Sign out</AppMenuItem>
+						</div>
+					</AppMenu>
 				}
 				{
 					!shouldShowMenu &&
-					<>
-						{
-							!_.isNil(user.avatar) &&
-							<IconButton disabled={true}>
-								<Avatar className={classes.avatar} alt={user.displayName} src={user.avatar} />
-							</IconButton>
-						}
-						{
-							_.isNil(user.avatar) &&
-							<IconButton disabled={true}>
-								<Avatar className={classes.avatarInitialsOnly} alt={user.displayName} >{getInitials(user.displayName)}</Avatar>
-							</IconButton>
-						}
-					</>
+					<Button variant="plain" size="icon-round" disabled className="size-16 disabled:text-white/30 disabled:opacity-100">
+						{avatar}
+					</Button>
 				}
-
-			</Box>
-		</Box>
+			</div>
+		</div>
 	);
 }
 export default connect(

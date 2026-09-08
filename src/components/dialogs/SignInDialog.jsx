@@ -1,63 +1,23 @@
 import React, { useState, useContext, useRef } from 'react';
 import { connect } from "react-redux";
-import DialogTitle from '@material-ui/core/DialogTitle';
-import Dialog from '@material-ui/core/Dialog';
-import IconButton from '@material-ui/core/IconButton';
-import TextField from '@material-ui/core/TextField';
-import Box from '@material-ui/core/Box';
-import Button from '@material-ui/core/Button';
-import { makeStyles } from '@material-ui/core/styles';
 import { setIsShowingSignInDialog, setSignUpDisplayName, setUser, setRounds, setRedirectAfterSignIn } from '../../redux/actions'
 import { FirebaseContext } from '../../firebase';
-import ArrowBackIcon from '@material-ui/icons/ArrowBack';
 import { getRandomColor } from '../../utils/index'
+import { AppDialog, AppDialogBody, MUI_BUTTON, MUI_PRIMARY, MUI_SECONDARY } from './AppDialog'
+import { OutlinedField } from '../fields/OutlinedField'
+import { Button } from '@/components/ui/button'
+import { cn } from '@/lib/utils'
 
 import _ from 'lodash'
 
-const styles = makeStyles({
-    paper: {
-        borderRadius: 8
-    },
-    title: {
-        textAlign: 'center'
-    },
-    body: {
-        padding: '1rem',
-        borderTop: 'solid 1px rgba(255,255,255,0.1)'
-    },
-    button: {
-        marginBottom: '1rem',
-        textAlign: 'center'
-    },
-    emailForm: {
-        display: 'flex',
-        flexDirection: 'column'
-    },
-    emailFormItem: {
-        marginBottom: '1rem',
-        minWidth: '300px',
-        [`& fieldset`]: {
-            borderRadius: 8,
-            backgroundColor: 'transparent',
-        },
-    },
-    input: {
-        borderRadius: 8,
-    },
-    signUpButton: {
-        fontWeight: 600
-    },
-    backButton: {
-        position: 'absolute',
-        left: 4,
-        top: 8
-    },
-    error: {
-        textAlign: 'center',
-        marginBottom: '2rem',
-        fontWeight: 600
-    }
-})
+/** The four choices: MUI's contained secondary Button, full width. */
+const CHOICE_BUTTON = cn(MUI_SECONDARY, 'mb-4 w-full')
+/** The submit of each of the three forms: MUI's contained primary Button, full width. */
+const SUBMIT_BUTTON = cn(MUI_PRIMARY, 'mb-4 w-full')
+/** The JSS `emailFormItem`: 1rem below, and the 300px that makes the form steps 332px wide. */
+const FORM_FIELD = 'mb-4 min-w-[300px]'
+/** The JSS `error`. */
+const ERROR = 'mb-8 text-center font-semibold'
 
 const SignInDialog = ({ isShowingSignInDialog, setIsShowingSignInDialog, setSignUpDisplayName, setUser, setRounds, redirectAfterSignIn, setRedirectAfterSignIn }) => {
     const firebaseContext = useContext(FirebaseContext);
@@ -187,159 +147,98 @@ const SignInDialog = ({ isShowingSignInDialog, setIsShowingSignInDialog, setSign
         setIsShowingUseAsGuestForm(false)
     }
 
-    const classes = styles();
+    const isShowingChoices = !isShowingEmailForm && !isShowingEmailSignupForm && !isShowingUseAsGuestForm
+    const title = isShowingChoices ? 'Sign in'
+        : isShowingEmailForm ? 'Sign in with email'
+            : isShowingUseAsGuestForm ? 'Continue as guest'
+                : 'Sign up with email'
 
+    // One AppDialog whose title and body change with the step, not one per step. MUI kept a
+    // single Dialog mounted and swapped its children, and so does this. Four separate AppDialogs
+    // would unmount and remount the paper on every step change, which runs Radix's close (focus
+    // back to the opener) and reopen (autofocus the first tabbable child, i.e. the back arrow)
+    // where MUI only swapped markup. Mounted once, focus stays where MUI left it: FocusScope's
+    // mutation observer moves it onto the paper when the clicked button goes away.
     return (
-        <Dialog classes={{ paper: classes.paper }} onClose={onClose} aria-labelledby="simple-dialog-title" open={isShowingSignInDialog}>
+        <AppDialog
+            open={isShowingSignInDialog}
+            onOpenChange={(next) => { if (!next) onClose() }}
+            titleId="simple-dialog-title"
+            title={title}
+            titleClassName="text-center"
+            onBack={isShowingChoices ? undefined : onBackClick}
+            backLabel="close"
+        >
             {
-                !isShowingEmailForm && !isShowingEmailSignupForm && !isShowingUseAsGuestForm &&
-                <>
-                    <DialogTitle className={classes.title} id="simple-dialog-title">
-                        Sign in
-                    </DialogTitle>
-                    <Box className={classes.body}>
-                        <Button className={classes.button} fullWidth color="secondary" variant="contained" disableElevation onClick={onGoogleSigninClick}>Continue with Google</Button>
-                        <Button
-                            className={classes.button}
-                            fullWidth
-                            color="secondary"
-                            variant="contained"
-                            disableElevation
-                            onClick={onShowEmailSigninClick}
-                            data-test="button-email"
-                        >Sign in with email</Button>
-                        <Button
-                            className={classes.button}
-                            fullWidth
-                            color="secondary"
-                            variant="contained"
-                            disableElevation
-                            onClick={onUseAsGuestClick}
-                            data-test="button-guest"
-                        >
-                            Use as guest
-                        </Button>
-                        <p style={{ textAlign: 'center' }}>Don't have an account yet?</p>
-                        <Button className={classes.signUpButton} fullWidth disableElevation onClick={onShowEmailSignupClick}>Sign up</Button>
-                    </Box>
-                </>
+                isShowingChoices &&
+                // A plain block, and the buttons are inline-flex siblings with no whitespace
+                // between them: the paper is shrink-to-fit, so its width is the sum of their
+                // max-content widths (472px on 02-signin-choice.png). A flex column would
+                // collapse it to the widest one, about 200px.
+                <AppDialogBody>
+                    <Button className={cn(MUI_BUTTON, CHOICE_BUTTON)} onClick={onGoogleSigninClick}>Continue with Google</Button>
+                    <Button className={cn(MUI_BUTTON, CHOICE_BUTTON)} onClick={onShowEmailSigninClick} data-test="button-email">Sign in with email</Button>
+                    <Button className={cn(MUI_BUTTON, CHOICE_BUTTON)} onClick={onUseAsGuestClick} data-test="button-guest">Use as guest</Button>
+                    <p className="my-[14px] text-center">Don&apos;t have an account yet?</p>
+                    {/* No mb-4: the JSS `signUpButton` is `{ fontWeight: 600 }` and nothing else.
+                        Measured on the shipped build, MUI's Sign up button has margin-bottom 0,
+                        and adding 16px here makes 02 355px tall against the baseline's 339. */}
+                    <Button type="button" variant="plain" className={cn(MUI_BUTTON, 'w-full font-semibold')} onClick={onShowEmailSignupClick}>Sign up</Button>
+                </AppDialogBody>
             }
             {
                 isShowingEmailForm &&
-                <>
-                    <DialogTitle className={classes.title} id="simple-dialog-title"><IconButton aria-label="close" className={classes.backButton} onClick={onBackClick}>
-                        <ArrowBackIcon />
-                    </IconButton>Sign in with email</DialogTitle>
-                    <Box className={classes.body}>
-                        <form className={classes.emailForm} noValidate autoComplete="off" onSubmit={(e) => { e.preventDefault(); onEmailSigninClick() }}>
-                            <TextField
-                                type="email"
-                                ref={emailAddressInput}
-                                className={classes.emailFormItem}
-                                label="Email address"
-                                variant="outlined"
-                                data-test="input-email"
-                                InputProps={{
-                                    className: classes.input
-                                }}
-                            />
-                            <TextField
-                                ref={passwordInput}
-                                className={classes.emailFormItem}
-                                label="Password"
-                                variant="outlined"
-                                type="password"
-                                data-test="input-password"
-                                InputProps={{
-                                    className: classes.input
-                                }}
-                            />
-                            {
-                                errorMessage &&
-                                <p className={classes.error}>{errorMessage}</p>
-                            }
-                            <Button
-                                className={classes.button}
-                                fullWidth color="primary"
-                                variant="contained"
-                                disableElevation
-                                onClick={onEmailSigninClick}
-                                data-test="button-sign-in"
-                            >
-
-                                <strong>Sign in</strong>
-                            </Button>
-                        </form>
-                    </Box>
-                </>
+                <AppDialogBody>
+                    {/* type="submit" rather than MUI's onClick: the generated Button is a bare
+                        <button>, whose type in a form defaults to submit, so an onClick here
+                        would run the handler twice. Enter and the click now share onSubmit. */}
+                    <form className="flex flex-col" noValidate autoComplete="off" onSubmit={(e) => { e.preventDefault(); onEmailSigninClick() }}>
+                        <OutlinedField ref={emailAddressInput} className={FORM_FIELD} id="signin-email" label="Email address" type="email" data-test="input-email" />
+                        <OutlinedField ref={passwordInput} className={FORM_FIELD} id="signin-password" label="Password" type="password" data-test="input-password" />
+                        {
+                            errorMessage &&
+                            <p className={ERROR}>{errorMessage}</p>
+                        }
+                        <Button type="submit" className={cn(MUI_BUTTON, SUBMIT_BUTTON)} data-test="button-sign-in">
+                            <strong>Sign in</strong>
+                        </Button>
+                    </form>
+                </AppDialogBody>
             }
             {
                 isShowingUseAsGuestForm &&
-                <>
-                    <DialogTitle className={classes.title} id="simple-dialog-title"><IconButton aria-label="close" className={classes.backButton} onClick={onBackClick}>
-                        <ArrowBackIcon />
-                    </IconButton>Continue as guest</DialogTitle>
-                    <Box className={classes.body}>
-                        <form className={classes.emailForm} noValidate autoComplete="off" onSubmit={(e) => { e.preventDefault(); onContinueAsGuestClick() }}>
-                            <TextField
-                                ref={displayNameGuestInput}
-                                className={classes.emailFormItem}
-                                label="Name"
-                                variant="outlined"
-                                data-test="input-name"
-                                InputProps={{
-                                    className: classes.input
-                                }}
-                            />
-                            {
-                                errorMessage &&
-                                <p className={classes.error}>{errorMessage}</p>
-                            }
-                            <Button
-                                className={classes.button}
-                                fullWidth color="primary"
-                                variant="contained"
-                                disableElevation
-                                onClick={onContinueAsGuestClick}
-                                data-test="button-name"
-                            >
-                                <strong>Continue as guest</strong>
-                            </Button>
-                            <p style={{ textAlign: 'center' }}>Don't have an account yet?</p>
-                            <Button className={classes.signUpButton} fullWidth disableElevation onClick={onShowEmailSignupClick}>Sign up</Button>
-                        </form>
-                    </Box>
-                </>
+                <AppDialogBody>
+                    <form className="flex flex-col" noValidate autoComplete="off" onSubmit={(e) => { e.preventDefault(); onContinueAsGuestClick() }}>
+                        <OutlinedField ref={displayNameGuestInput} className={FORM_FIELD} id="guest-name" label="Name" data-test="input-name" />
+                        {
+                            errorMessage &&
+                            <p className={ERROR}>{errorMessage}</p>
+                        }
+                        <Button type="submit" className={cn(MUI_BUTTON, SUBMIT_BUTTON)} data-test="button-name">
+                            <strong>Continue as guest</strong>
+                        </Button>
+                        <p className="my-[14px] text-center">Don&apos;t have an account yet?</p>
+                        {/* No mb-4, same as the choice step: 04's paper is 306px, not 322px. */}
+                        <Button type="button" variant="plain" className={cn(MUI_BUTTON, 'w-full font-semibold')} onClick={onShowEmailSignupClick}>Sign up</Button>
+                    </form>
+                </AppDialogBody>
             }
             {
                 isShowingEmailSignupForm &&
-                <>
-                    <DialogTitle className={classes.title} id="simple-dialog-title"><IconButton aria-label="close" className={classes.backButton} onClick={onBackClick}>
-                        <ArrowBackIcon />
-                    </IconButton>Sign up with email</DialogTitle>
-                    <Box className={classes.body}>
-                        <form className={classes.emailForm} noValidate autoComplete="off" onSubmit={(e) => { e.preventDefault(); onEmailSignupClick() }}>
-                            <TextField ref={displayNameSignupInput} className={classes.emailFormItem} label="Name" variant="outlined" InputProps={{
-                                className: classes.input
-                            }} />
-                            <TextField type="email" ref={emailAddressSignupInput} className={classes.emailFormItem} label="Email address" variant="outlined" InputProps={{
-                                className: classes.input
-                            }} />
-                            <TextField ref={passwordSignupInput} className={classes.emailFormItem} label="Password" variant="outlined" type="password" InputProps={{
-                                className: classes.input
-                            }} />
-                            {
-                                errorMessage &&
-                                <p className={classes.error}>{errorMessage}</p>
-                            }
-                            <Button className={classes.button} fullWidth color="primary" variant="contained" disableElevation onClick={onEmailSignupClick} ><strong>Sign up</strong></Button>
-                        </form>
-
-                    </Box>
-                </>
+                <AppDialogBody>
+                    <form className="flex flex-col" noValidate autoComplete="off" onSubmit={(e) => { e.preventDefault(); onEmailSignupClick() }}>
+                        <OutlinedField ref={displayNameSignupInput} className={FORM_FIELD} id="signup-name" label="Name" />
+                        <OutlinedField ref={emailAddressSignupInput} className={FORM_FIELD} id="signup-email" label="Email address" type="email" />
+                        <OutlinedField ref={passwordSignupInput} className={FORM_FIELD} id="signup-password" label="Password" type="password" />
+                        {
+                            errorMessage &&
+                            <p className={ERROR}>{errorMessage}</p>
+                        }
+                        <Button type="submit" className={cn(MUI_BUTTON, SUBMIT_BUTTON)}><strong>Sign up</strong></Button>
+                    </form>
+                </AppDialogBody>
             }
-
-        </Dialog>
+        </AppDialog>
     );
 }
 
@@ -361,4 +260,3 @@ export default connect(
         setRedirectAfterSignIn
     }
 )(SignInDialog);
-

@@ -89,21 +89,11 @@
     background-color: var(--background) !important;
     color: var(--foreground);
     font-family: var(--font-sans);
+    /* MUI's body2 tracking, which CssBaseline sets unlayered today and everything inherits.
+       Spelling it out here means PR 3 can delete CssBaseline without moving the type. */
+    letter-spacing: 0.01071em;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
-  }
-  /* The MUI screens still render bare headings and paragraphs: <h1> in
-     LandingPageRoute and RoundsListRoute, <h2>/<h3> in HeaderAvatar, <p> in
-     LandingPageRoute, SignInDialog, ShareDialog and OutlinedField. They lean on
-     the browser's default sizes, weights and margins, which preflight zeroes out.
-     Hand those defaults back in the base layer only, so utilities and the shadcn
-     components still win. h4-h6 are unused today and ride along to keep the
-     heading set whole. Drop selectors as their screens move to real typography
-     components. */
-  h1, h2, h3, h4, h5, h6, p {
-    font-size: revert;
-    font-weight: revert;
-    margin: revert;
   }
   /* The steps counter in the layer popup is the app's only bare <input>. Its JSS
      sets no font, so it used to take the browser's control font (13.33px Arial at
@@ -138,4 +128,22 @@
   button:not(:disabled), [role="button"]:not(:disabled) {
     cursor: pointer;
   }
+}
+
+/* The generated DialogContent renders its own DialogOverlay with no props, so its
+   `bg-black/10 supports-backdrop-filter:backdrop-blur-xs` cannot be overridden from JSX.
+   MUI's Backdrop is a flat 50% black with no blur, and every dialog screenshot is taken
+   over it. Drop this rule in PR 3 only if the backdrop is redesigned on purpose. */
+[data-slot="dialog-overlay"] {
+  background-color: rgba(0, 0, 0, 0.5);
+  backdrop-filter: none;
+}
+
+/* CssBaseline still owns the app's font: it sets Roboto/Helvetica/Arial on `body` unlayered,
+   so it beats `--font-sans` in the base layer and every glyph in the app is Helvetica today.
+   The generated DialogTitle asks for `--font-heading`, which is the system stack, and would
+   render the five dialog titles in a different typeface from the rest of the app. Until
+   CssBaseline goes in PR 3 the title inherits like everything else. */
+[data-slot="dialog-title"] {
+  font-family: inherit;
 }

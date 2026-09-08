@@ -1,60 +1,13 @@
 import React from 'react';
-import Box from '@material-ui/core/Box';
-import ClickAwayListener from '@material-ui/core/ClickAwayListener';
-import Grow from '@material-ui/core/Grow';
-import Paper from '@material-ui/core/Paper';
-import Popper from '@material-ui/core/Popper';
-import MenuItem from '@material-ui/core/MenuItem';
-import MenuList from '@material-ui/core/MenuList';
-import Divider from '@material-ui/core/Divider';
-import { makeStyles } from '@material-ui/core/styles';
-import IconButton from '@material-ui/core/IconButton';
-import MoreHorizIcon from '@material-ui/icons/MoreHoriz';
-import FullscreenIcon from '@material-ui/icons/Fullscreen';
-import TempoSlider from './TempoSlider'
-import ListItemIcon from '@material-ui/core/ListItemIcon';
 import _ from 'lodash'
+import { AppMenu, AppMenuItem } from './AppMenu'
+import TempoSlider from './TempoSlider'
+import { Button } from '@/components/ui/button'
+import { Separator } from '@/components/ui/separator'
+import { MoreHorizIcon, FullscreenIcon } from '@/components/icons'
 
-const useStyles = makeStyles((theme) => ({
-    root: {
-        display: 'flex',
-    },
-    paper: {
-        marginRight: theme.spacing(2),
-        borderRadius: 8
-    },
-    menuList: {
-    },
-    menuListItem: {
-        paddingTop: '1rem',
-        paddingBottom: '1rem',
-
-    }
-}));
-
-export default function HeaderMenu({ name }) {
-    const classes = useStyles();
+export default function HeaderMenu() {
     const [open, setOpen] = React.useState(false);
-    const anchorRef = React.useRef(null);
-
-    const handleToggle = () => {
-        setOpen((prevOpen) => !prevOpen);
-    };
-
-    const handleClose = (event) => {
-        if (anchorRef.current && anchorRef.current.contains(event.target)) {
-            return;
-        }
-
-        setOpen(false);
-    };
-
-    function handleListKeyDown(event) {
-        if (event.key === 'Tab') {
-            event.preventDefault();
-            setOpen(false);
-        }
-    }
 
     const onFullscreenClick = () => {
         var element = document.documentElement;
@@ -78,50 +31,35 @@ export default function HeaderMenu({ name }) {
         }
     }
 
-    // return focus to the button when we transitioned from !open -> open
-    const prevOpen = React.useRef(open);
-    React.useEffect(() => {
-        if (prevOpen.current === true && open === false) {
-            anchorRef.current.focus();
-        }
-
-        prevOpen.current = open;
-    }, [open]);
-
     return (
-        <Box className={classes.root}>
-            <Box>
-                <IconButton
-                    ref={anchorRef}
-                    aria-label="More options"
-                    aria-controls={open ? 'header-menu-list' : undefined}
-                    aria-haspopup="true"
-                    onClick={handleToggle}>
-                    <MoreHorizIcon />
-                </IconButton>
-                <Popper open={open} anchorEl={anchorRef.current} role={undefined} transition disablePortal>
-                    {({ TransitionProps, placement }) => (
-                        <Grow
-                            {...TransitionProps}
-                            style={{ transformOrigin: placement === 'bottom' ? 'center top' : 'center bottom' }}
-                        >
-                            <Paper className={classes.paper} size="md">
-                                <ClickAwayListener onClickAway={handleClose}>
-                                    <Box>
-                                        <MenuList autoFocusItem={open} id="header-menu-list" onKeyDown={handleListKeyDown}>
-                                            <MenuItem onClick={onFullscreenClick} className={classes.menuListItem}><ListItemIcon>
-                                                <FullscreenIcon fontSize="small" />
-                                            </ListItemIcon>Fullscreen</MenuItem>
-                                            <Divider />
-                                        </MenuList>
-                                        <TempoSlider />
-                                    </Box>
-                                </ClickAwayListener>
-                            </Paper>
-                        </Grow>
-                    )}
-                </Popper>
-            </Box>
-        </Box>
+        <div className="flex">
+            <div>
+                {/* aria-controls and aria-expanded are Radix's job now: PopoverTrigger writes both
+                    onto whatever it is given. aria-haspopup it writes as "dialog", which is what
+                    the trigger overrides here, because what opens is a menu.
+
+                    alignOffset 5: this menu is 391px wide against a trigger 16px from the right
+                    edge, so MUI never got to centre it. popper.js pushed it in from the viewport
+                    instead, by its own 5px preventOverflow padding on top of the paper's 16px
+                    right margin, landing the paper's right edge 5px inside the trigger's. Radix
+                    has no collision to resolve at this width, so the 5px is spelled out. */}
+                <AppMenu
+                    open={open}
+                    onOpenChange={setOpen}
+                    listId="header-menu-list"
+                    label="Round options"
+                    align="end"
+                    alignOffset={5}
+                    trigger={<Button variant="plain" size="icon-round" aria-label="More options" aria-haspopup="menu"><MoreHorizIcon /></Button>}
+                    footer={<TempoSlider />}
+                >
+                    <AppMenuItem onClick={onFullscreenClick} className="py-4">
+                        <span className="inline-flex w-14 shrink-0 items-center text-foreground"><FullscreenIcon className="size-5" /></span>
+                        Fullscreen
+                    </AppMenuItem>
+                    <Separator className="bg-white/12" />
+                </AppMenu>
+            </div>
+        </div>
     );
 }

@@ -1,9 +1,9 @@
 # UI baseline
 
-Thirteen reference screenshots of the app, and the two scripts that take them and
-compare against them. The shadcn migration is supposed to be invisible, so this is
-how we prove it: capture the same thirteen screens again and count the pixels that
-moved.
+Thirteen reference screenshots of the app, the two scripts that take them and compare
+against them, and a third that checks the behaviour a screenshot cannot hold still. The
+shadcn migration is supposed to be invisible, so this is how we prove it: capture the same
+thirteen screens again and count the pixels that moved.
 
 Twelve screens are 1300x900. `13-round-mobile` is a 390x844 phone viewport at
 device pixel ratio 2, so the file is 780x1688.
@@ -51,6 +51,27 @@ keeps them out of the repo.
 `diff-<name>.png` next to each candidate so you can see where the change is, and exits
 1 if any screen is over the threshold. The threshold is `--threshold` (default 0.5) and
 the per-channel noise floor is `--tolerance` (default 24).
+
+## Keyboard and focus
+
+`keyboard.py` covers the half of the migration a screenshot cannot see. Material UI's Menu,
+Popper and Dialog owned the focus trap, the roving arrow keys and the return of focus to
+whatever opened a menu or a dialog; Radix's Popover and Dialog do not do all of that on their
+own, so the app now owns it, and none of it is photographed. The script drives a served build
+over the same CDP plumbing as `capture.py` -- it imports Chrome, the browser class and the
+guest sign-in from it rather than copying them -- and prints one `PASS`/`FAIL` line per case,
+exiting non-zero if any failed. It covers the sign-in dialog's Escape, Tab trap and focus
+return, the avatar and rounds-list menus opening on Enter and walking on the arrow keys, and
+the two dialogs that are opened from a menu item, Rename and Delete, handing focus back to
+that menu's trigger rather than dropping it on `<body>`.
+
+```sh
+npx -y serve@14 -s build -l 3100 &
+python3 docs/ui-baseline/keyboard.py --base http://localhost:3100
+```
+
+It takes `--base` (default `http://localhost:3100`) and `--port` (default 9337, so it can run
+alongside a capture).
 
 ## The 0.5% rule
 

@@ -65,6 +65,15 @@ describe('ShareDialog', () => {
         expect(firebase.createShortLink).not.toHaveBeenCalled()
     })
 
+    // capture.py now dismisses this dialog with Escape rather than a backdrop click, so the
+    // key has to reach the store.
+    it('closes on Escape', async () => {
+        const store = openDialogWith({ id: 'r1', name: 'Jam', layers: [], currentUsers: [], shortLink: 'https://bit.ly/stored' })
+        renderWithProviders(<ShareDialog />, { store, firebase: { createShortLink: vi.fn() } })
+        await userEvent.keyboard('{Escape}')
+        await waitFor(() => expect(store.getState().display.isShowingShareDialog).toBe(false))
+    })
+
     it('copies the link with the clipboard API', async () => {
         const writeText = vi.fn().mockResolvedValue()
         Object.assign(navigator, { clipboard: { writeText } })
