@@ -48,6 +48,22 @@ describe('DeleteRoundDialog', () => {
         expect(firebase.deleteRound).not.toHaveBeenCalled()
     })
 
+    // Spinner ships role="status" aria-label="Loading", which would rename the button it replaces
+    // the label of; the button has to stay findable as "Delete" throughout.
+    it('keeps the Delete button named Delete while the round is being deleted', async () => {
+        let finish
+        const { store } = setup({ deleteRound: vi.fn(() => new Promise((resolve) => { finish = resolve })) })
+        await userEvent.click(screen.getByRole('button', { name: 'Delete' }))
+
+        const deleting = screen.getByRole('button', { name: 'Delete' })
+        expect(deleting).toBeDisabled()
+        expect(deleting).toHaveAttribute('aria-busy', 'true')
+        expect(screen.queryByRole('status')).toBeNull()
+
+        finish()
+        await waitFor(() => expect(store.getState().display.isShowingDeleteRoundDialog).toBe(false))
+    })
+
     // Cancel carries autoFocus, so Radix's FocusScope never dispatches its mount event -- the
     // paper already holds the active element. AppDialog therefore cannot learn the opener from
     // that event, and this is the dialog that proves it learns it anyway.

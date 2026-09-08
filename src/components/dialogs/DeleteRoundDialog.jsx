@@ -57,7 +57,12 @@ function DeleteRoundDialog ({ isShowingDeleteRoundDialog, selectedRoundId, round
                 <Button type="button" variant="plain" className={cn(MUI_BUTTON, 'px-2')} onClick={handleClose} autoFocus disabled={isDeleting}>
                     Cancel
                 </Button>
-                <Button className={cn(MUI_BUTTON, 'bg-primary text-primary-foreground hover:bg-primary/90')} onClick={onOkClick} disabled={isDeleting}>
+                {/* aria-label and aria-busy, which MUI did not need: the spinner replaces the
+                    label while the round is being deleted, and Spinner's own role="status"
+                    aria-label="Loading" would rename the button to "Loading". Hiding the spinner
+                    from the accessibility tree and naming the button keeps it "Delete" in both
+                    states, which is also what the tests and Cypress select on. */}
+                <Button aria-label="Delete" aria-busy={isDeleting} className={cn(MUI_BUTTON, 'bg-primary text-primary-foreground hover:bg-primary/90')} onClick={onOkClick} disabled={isDeleting}>
                     {
                         !isDeleting &&
                         <span>Delete</span>
@@ -67,7 +72,7 @@ function DeleteRoundDialog ({ isShowingDeleteRoundDialog, selectedRoundId, round
                         // it turns. That is what CircularProgress color="primary" does on a #EAEAEA
                         // contained button today; it is not a bug to fix here.
                         isDeleting &&
-                        <Spinner className="size-6 text-primary" />
+                        <Spinner aria-hidden className="size-6 text-primary" />
                     }
                 </Button>
             </AppDialogActions>

@@ -377,7 +377,7 @@ def capture(b, base, out):
     b.shot(out, '03-signin-email')
 
     # 04: back out of the email step and into the guest step, with a name typed.
-    b.click('[data-test=dialog-back]', 'the dialog back button')
+    b.click('[data-test=dialog-back], .MuiDialogTitle-root button[aria-label=close]', 'the dialog back button')
     b.must(has('[data-test=button-guest]'), 'the sign-in choices coming back')
     b.must(gone('[data-test=input-email] input'), 'the email form going away')
     b.click('[data-test=button-guest]', 'Use as guest')

@@ -42,16 +42,26 @@ describe('AppDialog', () => {
         expect(screen.getByRole('button', { name: 'inside' })).not.toHaveFocus()
     })
 
-    it('traps Tab inside the dialog', async () => {
+    it('traps Tab and Shift+Tab inside the dialog', async () => {
         const user = userEvent.setup()
-        render(<Harness />)
+        render(<Harness onBack={() => {}} />)
         // Take hold of the trigger before opening: Radix aria-hides everything outside the
         // dialog, so getByRole cannot see it again until the dialog closes.
         const trigger = screen.getByRole('button', { name: 'open' })
         await user.click(trigger)
-        await screen.findByRole('dialog')
-        await user.tab()
-        await user.tab()
+        const dialog = await screen.findByRole('dialog')
+        // asserting containment, not just "the trigger did not get it": a removed trap would put
+        // focus on the page behind the dialog, which is not the trigger either
+        // eslint-disable-next-line testing-library/no-node-access
+        const inside = () => dialog.contains(document.activeElement)
+        for (let i = 0; i < 4; i += 1) {
+            await user.tab()
+            expect(inside()).toBe(true)
+        }
+        for (let i = 0; i < 3; i += 1) {
+            await user.tab({ shift: true })
+            expect(inside()).toBe(true)
+        }
         expect(trigger).not.toHaveFocus()
     })
 

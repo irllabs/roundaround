@@ -29,6 +29,16 @@ describe('OrientationDialog', () => {
         await waitFor(() => expect(store.getState().display.isShowingOrientationDialog).toBe(false))
     })
 
+    // "Tap outside this message to continue anyway" is the dialog's own copy, so the overlay has
+    // to dismiss it.
+    it('closes when the overlay is tapped', async () => {
+        const { store } = setup(true)
+        // the overlay carries no role or text of its own
+        // eslint-disable-next-line testing-library/no-node-access
+        await userEvent.click(document.querySelector('[data-slot=dialog-overlay]'))
+        await waitFor(() => expect(store.getState().display.isShowingOrientationDialog).toBe(false))
+    })
+
     it('renders nothing while the flag is unset', () => {
         setup(false)
         expect(screen.queryByRole('dialog')).toBeNull()

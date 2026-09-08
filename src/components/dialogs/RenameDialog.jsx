@@ -1,4 +1,4 @@
-import React, { useContext, useEffect } from 'react';
+import React, { useContext, useEffect, useState } from 'react';
 import { connect } from "react-redux";
 import { setRoundName, setIsShowingRenameDialog, setRounds, setDisableKeyListener } from '../../redux/actions'
 import { FirebaseContext } from '../../firebase';
@@ -22,10 +22,14 @@ function RenameDialog ({ selectedRoundId, round, rounds, setRoundName, setIsShow
 
     // Controlled, where MUI's TextField was uncontrolled behind an inputRef: the generated Input
     // is a plain function component and cannot take a ref on React 18. The effect is what the
-    // old `key={selectedRoundId}` did -- seed the box from the round being renamed each time the
-    // dialog opens or the round changes -- without throwing the DOM node away.
-    const [name, setName] = React.useState(currentName)
-    React.useEffect(() => { setName(currentName) }, [currentName, isShowingRenameDialog])
+    // old `key={selectedRoundId}` plus defaultValue did -- seed the box from the round being
+    // renamed each time the dialog opens or the round changes -- without throwing the DOM node
+    // away. Deliberately keyed on the round and the flag rather than on currentName: a
+    // collaborator renaming this round while the dialog is open would otherwise wipe whatever
+    // is half typed into it.
+    const [name, setName] = useState(currentName)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    useEffect(() => { setName(currentName) }, [selectedRoundId, isShowingRenameDialog])
 
     const onOkClick = () => {
         const newName = name.trim()

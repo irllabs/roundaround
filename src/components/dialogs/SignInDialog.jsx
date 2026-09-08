@@ -183,7 +183,7 @@ const SignInDialog = ({ isShowingSignInDialog, setIsShowingSignInDialog, setSign
                     {/* No mb-4: the JSS `signUpButton` is `{ fontWeight: 600 }` and nothing else.
                         Measured on the shipped build, MUI's Sign up button has margin-bottom 0,
                         and adding 16px here makes 02 355px tall against the baseline's 339. */}
-                    <Button variant="plain" className={cn(MUI_BUTTON, 'w-full font-semibold')} onClick={onShowEmailSignupClick}>Sign up</Button>
+                    <Button type="button" variant="plain" className={cn(MUI_BUTTON, 'w-full font-semibold')} onClick={onShowEmailSignupClick}>Sign up</Button>
                 </AppDialogBody>
             }
             {

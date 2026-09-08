@@ -1,4 +1,4 @@
-import { vi, describe, it, expect, beforeEach, afterEach } from 'vitest'
+import { vi, describe, it, expect, afterEach } from 'vitest'
 import React from 'react'
 import { screen } from '@testing-library/react'
 import ErrorBoundary from './ErrorBoundary'
@@ -9,14 +9,14 @@ function Boom() {
 }
 
 describe('ErrorBoundary', () => {
-    beforeEach(() => {
-        // React logs the caught error and its component stack, and componentDidCatch logs the
-        // stack again; none of that is a failure and none of it belongs in the test output.
-        vi.spyOn(console, 'error').mockImplementation(() => {})
-    })
-    afterEach(() => console.error.mockRestore())
+    afterEach(() => vi.restoreAllMocks())
 
     it('shows the message and a way out instead of a blank page, and reports the error', () => {
+        // React logs the caught error and its component stack, and componentDidCatch logs the
+        // stack again; none of that is a failure and none of it belongs in the test output.
+        // Scoped to this test on purpose: a stray console.error out of the healthy-tree case
+        // below has to be able to reach the console.
+        vi.spyOn(console, 'error').mockImplementation(() => {})
         const firebase = { reportError: vi.fn() }
         renderWithProviders(<ErrorBoundary><Boom /></ErrorBoundary>, { firebase })
 

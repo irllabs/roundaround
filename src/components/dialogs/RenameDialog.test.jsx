@@ -1,6 +1,6 @@
 import { vi, describe, it, expect } from 'vitest'
 import React from 'react'
-import { screen, waitFor } from '@testing-library/react'
+import { act, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import RenameDialog from './RenameDialog'
 import { renderWithProviders, makeStore } from '../../test/test-utils'
@@ -47,6 +47,27 @@ describe('RenameDialog', () => {
 
         await waitFor(() => expect(firebase.updateRound).toHaveBeenCalledWith('mine', { name: 'New' }))
         expect(store.getState().rounds.map(r => r.name)).toEqual(['New', 'Other'])
+    })
+
+    it('keeps what is half typed when someone else renames the round underneath it', async () => {
+        const { store } = setup({ round: null, rounds: [{ id: 'mine', name: 'Old' }], selectedRoundId: 'mine' })
+        const input = screen.getByLabelText('Round name')
+        await userEvent.clear(input)
+        await userEvent.type(input, 'Mine')
+        // a collaborator's rename arriving over the wire while this dialog is open
+        act(() => { store.dispatch(setRounds([{ id: 'mine', name: 'Theirs' }])) })
+        expect(input).toHaveValue('Mine')
+    })
+
+    it('re-seeds the box when the dialog is opened on a different round', async () => {
+        const { store } = setup({ round: null, rounds: [{ id: 'mine', name: 'Old' }, { id: 'other', name: 'Other' }], selectedRoundId: 'mine' })
+        expect(screen.getByLabelText('Round name')).toHaveValue('Old')
+        act(() => {
+            store.dispatch(setIsShowingRenameDialog(false))
+            store.dispatch(setSelectedRoundId('other'))
+            store.dispatch(setIsShowingRenameDialog(true))
+        })
+        expect(await screen.findByLabelText('Round name')).toHaveValue('Other')
     })
 
     it('ignores an empty name', async () => {

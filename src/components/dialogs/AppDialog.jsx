@@ -36,13 +36,17 @@ export function AppDialog({ open, onOpenChange, titleId, title, titleClassName, 
     // close would leave focus on <body>. MUI's Dialog hands focus back to whatever opened it, so
     // remember that element as the dialog opens and put focus back on it as the dialog closes.
     //
-    // The opener is read during render, not from onOpenAutoFocus and not from an effect.
-    // FocusScope only dispatches its mount event when the paper does not already contain the
-    // active element (`container.contains(previouslyFocusedElement)`), so a dialog whose child
-    // carries autoFocus -- Rename's input, Delete's Cancel -- never fires it and would close
-    // dropping focus on <body>. A layout effect is no better: React applies a child's autoFocus
-    // during commit, before any parent effect runs, so by then the active element is the
-    // dialog's own control. The render pass is the last moment the opener is still focused.
+    // The opener is read during render rather than from onOpenAutoFocus. FocusScope only
+    // dispatches its mount event when the paper does not already contain the active element
+    // (`container.contains(previouslyFocusedElement)`), so a dialog whose child carries
+    // autoFocus -- Rename's input, Delete's Cancel -- never fires it and would close dropping
+    // focus on <body>. A layout effect does work today, because Radix's Portal defers mounting
+    // the content by a commit and the effect therefore runs while the opener still has focus,
+    // but that is an implementation detail of Radix's portal: a Radix bump or the React 19
+    // upgrade could reorder it and the restore would silently start pointing at the dialog's own
+    // control. Reading during render does not depend on it. Reopening inside the ~100ms close
+    // animation can capture a node in the outgoing content, which the guards below turn into no
+    // restore at all rather than a restore to something detached.
     const restoreFocusTo = React.useRef(null)
     const wasOpen = React.useRef(false)
     if (open && !wasOpen.current) {
@@ -60,7 +64,7 @@ export function AppDialog({ open, onOpenChange, titleId, title, titleClassName, 
                 // the share dialog's read-only link field with the focused outline. Take the
                 // paper (the FocusScope container, already tabIndex=-1) instead. Dialogs whose
                 // child has autoFocus never get here at all, so they keep their own behaviour.
-                onOpenAutoFocus={(event) => { event.preventDefault(); event.target.focus({ preventScroll: true }) }}
+                onOpenAutoFocus={(event) => { event.preventDefault(); event.currentTarget.focus({ preventScroll: true }) }}
                 onCloseAutoFocus={(event) => {
                     event.preventDefault()
                     const opener = restoreFocusTo.current
