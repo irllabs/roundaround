@@ -36,7 +36,6 @@ const StepsDisplay = ({
     steps,
     user,
     round,
-    classes,
     selectedLayer,
     addStepsButtonRef,
     subtractStepsButtonRef,
@@ -100,7 +99,6 @@ const LayerPopup = ({
                     addStepsButtonRef={addStepsButtonRef}
                     subtractStepsButtonRef={subtractStepsButtonRef}
                     steps={selectedLayer?.steps?.length}
-                    classes={classes}
                     user={user}
                     round={round}
                     selectedLayer={selectedLayer}

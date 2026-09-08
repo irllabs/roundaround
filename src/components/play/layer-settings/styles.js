@@ -89,6 +89,9 @@ export const ICON_BUTTON = 'border-0 text-base font-normal'
  * slider sits at 0 of -100..100, dead centre, where the two placements agree exactly, so 14 and
  * 15 come out identical. Correcting it would mean overriding the inline `left` Radix computes
  * from the thumb's measured width, which is the one thing the primitive owns.
+ *
+ * The keyboard is MUI's plus one: both give an arrow a step, PageUp/PageDown ten, Home the
+ * minimum and End the maximum, and Radix adds Shift with an arrow as a second way to take ten.
  */
 export const SLIDER_ROOT = 'relative flex h-7 w-full touch-none select-none items-center text-primary'
 export const SLIDER_TRACK = 'relative h-0.5 w-full grow rounded-[1px] bg-current/38'

@@ -39,7 +39,9 @@ describe('VolumeSlider', () => {
             expect(call[2]).toHaveProperty('gain')
         }
         const savedLayerB = store.getState().round.layers.find(l => l.id === 'layer-b')
-        expect(savedLayerB.gain).toBeGreaterThan(-6) // End is 100%, the top of the upper range
+        // Exactly +6dB, which is convertPercentToDB(100): anything less than the whole way to the
+        // top would pass a `> -6` and prove nothing about {End} having landed.
+        expect(savedLayerB.gain).toBe(6)
         expect(store.getState().round.layers.find(l => l.id === 'layer-a').gain).toBe(0)
     })
 })

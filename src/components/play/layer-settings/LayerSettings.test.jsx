@@ -85,6 +85,18 @@ describe('LayerSettings', () => {
         expect(store.getState().display.selectedLayerId).toBe('l1')
     })
 
+    // Material UI's slider only ever killed the mousedown it read the value from, so the click
+    // went on bubbling and a press on a row's volume slider picked that row's layer too. Radix
+    // gives the handler a value instead of an event, and nothing in VolumeSlider stops the click,
+    // which is what keeps this working.
+    it('selects a layer from the volume slider in its mixer row', async () => {
+        const user = userEvent.setup()
+        const { store } = renderLayerSettings({ selected: false })
+        await user.click(screen.getByRole('button', { name: 'Open the mixer' }))
+        await user.click(screen.getByRole('slider', { name: 'Volume' }))
+        expect(store.getState().display.selectedLayerId).toBe('l1')
+    })
+
     it('opens only one popup at a time', async () => {
         const user = userEvent.setup()
         renderLayerSettings()
