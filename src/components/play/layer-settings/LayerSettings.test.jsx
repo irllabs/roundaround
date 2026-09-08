@@ -97,8 +97,7 @@ describe('LayerSettings', () => {
         expect(screen.getByTestId('hamburger-popup')).toHaveAttribute('data-open', 'true')
     })
 
-    // The `layer-popup` hook is LayerPopup's, and LayerPopup is migrated in Task 4.
-    it.skip('opens only one popup at a time, from the bar\'s own steps pill', async () => {
+    it('opens only one popup at a time, from the bar\'s own steps pill', async () => {
         const user = userEvent.setup()
         renderLayerSettings()
         await user.click(screen.getByRole('button', { name: 'Open the mixer' }))

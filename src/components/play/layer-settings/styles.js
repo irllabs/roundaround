@@ -25,10 +25,7 @@ export const layerSettingsClasses = {
     instrumentSample: 'm-0 flex text-center text-base leading-none tracking-[0.00938em] capitalize [font-weight:bolder] max-sm:flex-1',
     addLayerContainer: 'm-0 flex h-full flex-row items-center justify-center rounded-[30px] bg-[#4D4D4D] p-0',
     iconButtons: 'size-12 rounded-full hover:bg-white/20',
-    // Task 4 drops the ! flags when LayerInstrument leaves MUI: while it still renders Material UI
-    // IconButtons, MUI's own unlayered `padding: 12px` outranks a Tailwind utility (utilities are a
-    // layer, MUI's injected rules are not) and grows the instrument popup by 14px a row.
-    rectButton: 'flex w-full flex-row rounded-none !px-[15px] !py-[5px]',
+    rectButton: 'flex w-full flex-row rounded-none px-[15px] py-[5px]',
     mixerButton: 'mx-[5px] flex size-8 flex-row items-center justify-center rounded-full bg-white/10 p-0',
     volumeSliderContainer: 'flex [flex:2] flex-row items-center justify-center',
     // 216x32 pill at 6px/15px. Measured on 08-bottom-bar-click.png at x 485-692, y 840-871.
@@ -64,6 +61,39 @@ export const layerSettingsClasses = {
  * button, and sets text-sm/font-medium on its whole subtree.
  */
 export const ICON_BUTTON = 'border-0 text-base font-normal'
+
+/**
+ * MUI's Slider, in the colour the theme gives it (primary, #EAEAEA): a 2px rail inside a 28px
+ * hit area (height 2 + 13px padding top and bottom, content-box), a full-opacity filled part
+ * and a 12px round thumb. Radix places the thumb itself, so MUI's -6/-5 margins are not needed.
+ *
+ * Same four strings as TempoSlider's, with `text-primary` + `bg-current` where it hard-codes
+ * white (its JSS repainted the root and thumb `#ffffff`; these two take the theme's default
+ * `color="primary"`, `#EAEAEA`) and `w-full` where it is 300px.
+ *
+ * The three `ring-*` utilities on the thumb are MUI's halo:
+ * `&$focusVisible,&:hover { boxShadow: 0 0 0 8px alpha(primary.main, 0.16) }` and
+ * `&$active { 0 0 0 14px }`, transitioned over 150ms. A Tailwind ring at width 8 compiles to
+ * exactly that box-shadow and the thumb carries no other, so there is nothing to fight with;
+ * `outline-none` stays because MUI's thumb sets `outline: 0` and drew the halo instead. Hover
+ * before focus-visible before active is the order the JSS object had them in, so a press wins.
+ * One measured deviation, the same one PR 2 accepted for the tempo slider: MUI lit `$active`
+ * for a drag started anywhere on the rail, and Radix exposes no dragging state on the thumb, so
+ * this is CSS `:active` and only fires for a press that started on the thumb.
+ *
+ * A second one comes from Radix's own placement, and it is visible: MUI put the thumb's centre
+ * at exactly `value%` of the rail, while Radix insets it so the thumb never overhangs either
+ * end -- `+6px` at the minimum sliding to `-6px` at the maximum. At the volume sliders' resting
+ * 80% that is 3.6px to the left, which is what `diff-07-mixer-popup.png` and
+ * `diff-18-volume-popup.png` show and all either of them shows of these sliders. The offset
+ * slider sits at 0 of -100..100, dead centre, where the two placements agree exactly, so 14 and
+ * 15 come out identical. Correcting it would mean overriding the inline `left` Radix computes
+ * from the thumb's measured width, which is the one thing the primitive owns.
+ */
+export const SLIDER_ROOT = 'relative flex h-7 w-full touch-none select-none items-center text-primary'
+export const SLIDER_TRACK = 'relative h-0.5 w-full grow rounded-[1px] bg-current/38'
+export const SLIDER_RANGE = 'absolute h-full rounded-[1px] bg-current'
+export const SLIDER_THUMB = 'relative block size-3 rounded-full bg-current outline-none ring-primary/16 transition-shadow duration-150 hover:ring-8 focus-visible:ring-8 active:ring-[14px]'
 
 /** The theme's `sm` breakpoint, which decided `isMobile` while MUI still provided a theme. */
 export const SM_BREAKPOINT = 500

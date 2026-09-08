@@ -1,89 +1,25 @@
 import React from 'react'
-import { Box, Typography } from '@material-ui/core'
-import { withStyles } from '@material-ui/core/styles'
 import VolumeSlider from './VolumeSlider'
-import IconButton from '@material-ui/core/IconButton'
+import { Button } from '@/components/ui/button'
+import { cn } from '@/lib/utils'
+import { layerSettingsClasses, ICON_BUTTON } from './styles'
 
-const styles = theme => ({
-    root: {
-        position: 'absolute',
-        display: "flex",
-        flexDirection: "row",
-        borderRadius: 8,
-        width: 236,
-        height: 64,
-        right: -100,
-        top: -60,
-        justifyContent: "flex-start",
-        alignItems: "center",
-        backgroundColor: '#333333',
-        transition: 'opacity 0.2s ease-in',
-        boxShadow: '0px 0px 2px rgba(0, 0, 0, 0.15), 0px 4px 6px rgba(0, 0, 0, 0.15)',
-        zIndex: 100,
-        [theme.breakpoints.down('xs')]: {
-            right: -55,
-        },
-    },
-    offsetSlider: {
-        width: '100%',
-        padding: 10,
-    },
-    stepCount: {
-        padding: 10,
-        borderRadius: 4,
-        backgroundColor: 'rgba(255, 255, 255, 0.1)'
-    },
-    stepButtons: {
-        backgroundColor: 'rgba(255, 255, 255, 0.1)',
-        width: 30,
-        height: 30
-    },
-    hidden: {
-        opacity: 0,
-        position: 'absolute',
-        top: '200%',
-        transition: 'opacity 0.2s ease-out'
-    },
-    stepControls: {
-        display: 'flex',
-        flexDirection: 'row',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-        marginTop: 10
-    },
-    mixerButton: {
-        display: 'flex',
-        flexDirection: 'row',
-        alignItems: 'center',
-        justifyContent: 'center',
-        backgroundColor: 'rgba(255, 255, 255, 0.1)',
-        marginLeft: 8,
-        marginRight: 8,
-        height: 30,
-        width: 30,
-        [theme.breakpoints.down('sm')]: {
-            width: 32,
-            height: 32,
-        },
-    },
-    containerSoloMute: {
-        flex: 1,
-        display: 'flex',
-        marginLeft: 8,
-        flexDirection: 'row',
-        alignItems: 'center',
-        justifyContent: 'space-between'
-    },
-    volumeSliderContainer: {
-        flex: 2,
-        marginLeft: 8,
-        flexDirection: 'row',
-        alignItems: 'center'
-    },
-})
+/**
+ * What withStyles used to hand this popup, as Tailwind class strings. `down('xs')` and
+ * `down('sm')` mean "below the next breakpoint", which this theme puts at 500 and 900. The
+ * four step-counter rules the JSS carried were copy-paste from LayerPopup and never referenced,
+ * so they are gone; `hidden` is the shared one.
+ */
+const classes = {
+    root: 'absolute -top-[60px] right-[-100px] z-[100] flex h-16 w-[236px] flex-row items-center justify-start rounded-lg bg-[#333333] shadow-[0px_0px_2px_rgba(0,0,0,0.15),0px_4px_6px_rgba(0,0,0,0.15)] [transition:opacity_0.2s_ease-in] max-sm:right-[-55px]',
+    mixerButton: 'mx-2 flex size-[30px] flex-row items-center justify-center rounded-full bg-white/10 p-0 max-md:size-8',
+    containerSoloMute: 'ml-2 flex flex-1 flex-row items-center justify-between',
+    // The rule sets no display, so its flexDirection and alignItems never applied.
+    volumeSliderContainer: 'ml-2 [flex:2]',
+    hidden: layerSettingsClasses.hidden
+}
 
 const VolumePopup = ({
-    classes,
     round,
     user,
     showVolumePopup,
@@ -96,8 +32,8 @@ const VolumePopup = ({
     isSoloed
 }) => {
     return (
-        <Box className={showVolumePopup ? classes.root : classes.hidden}>
-            <Box className={classes.volumeSliderContainer}>
+        <div className={showVolumePopup ? classes.root : classes.hidden}>
+            <div className={classes.volumeSliderContainer}>
                 <VolumeSlider
                     sliderRef={volumeSliderRef}
                     hideText={true}
@@ -105,17 +41,35 @@ const VolumePopup = ({
                     roundId={round.id}
                     user={user}
                 />
-            </Box>
-            <Box className={classes.containerSoloMute}>
-                <IconButton ref={soloRef} aria-label="Solo (only you hear this layer)" aria-pressed={Boolean(isSoloed)} onClick={() => onSolo(selectedLayer)} className={classes.mixerButton} style={isSoloed ? { backgroundColor: 'rgba(255, 255, 255, 0.35)' } : {}}>
-                    <Typography style={{ fontWeight: 'bold' }}>S</Typography>
-                </IconButton>
-                <IconButton ref={muteRef} aria-label="Mute" aria-pressed={Boolean(selectedLayer.isMuted)} onClick={() => onMute(selectedLayer)} className={classes.mixerButton} style={selectedLayer.isMuted ? { backgroundColor: 'rgba(255, 255, 255, 0.35)' } : {}}>
-                    <Typography style={{ fontWeight: 'bold' }}>M</Typography>
-                </IconButton>
-            </Box>
-        </Box>
+            </div>
+            <div className={classes.containerSoloMute}>
+                <Button
+                    type="button"
+                    variant="plain"
+                    size="icon-app"
+                    ref={soloRef}
+                    aria-label="Solo (only you hear this layer)"
+                    aria-pressed={Boolean(isSoloed)}
+                    onClick={() => onSolo(selectedLayer)}
+                    className={cn(ICON_BUTTON, classes.mixerButton, isSoloed && 'bg-white/35')}
+                >
+                    <span className="text-base leading-6 font-bold tracking-[0.00938em]">S</span>
+                </Button>
+                <Button
+                    type="button"
+                    variant="plain"
+                    size="icon-app"
+                    ref={muteRef}
+                    aria-label="Mute"
+                    aria-pressed={Boolean(selectedLayer.isMuted)}
+                    onClick={() => onMute(selectedLayer)}
+                    className={cn(ICON_BUTTON, classes.mixerButton, selectedLayer.isMuted && 'bg-white/35')}
+                >
+                    <span className="text-base leading-6 font-bold tracking-[0.00938em]">M</span>
+                </Button>
+            </div>
+        </div>
     )
 }
 
-export default withStyles(styles)(VolumePopup)
+export default VolumePopup
