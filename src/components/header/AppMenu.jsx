@@ -46,12 +46,13 @@ export function AppMenu({ open, onOpenChange, trigger, listId, label, align = 'c
                 aria-label={label}
                 onKeyDown={onKeyDown}
                 // Radix's FocusScope walks to the first tabbable control inside the content on
-                // open, and only falls back to the content itself when it finds none. Three of
-                // the four menus have none, so they land on the content by accident; the header
-                // menu's footer holds the tempo slider, whose thumb is tabIndex 0, so it opened
-                // with focus on the slider -- past every menu item, and on a control that takes
-                // the arrow keys for itself before the roving handler above sees them. MUI's
-                // TrapFocus parked focus on the MenuList, which the slider sits outside of.
+                // open, and only falls back to the content itself when it finds none. The project
+                // and round-row menus have none, so they landed on the content by accident; the
+                // avatar menu opened on its first colour swatch, and the header menu's footer
+                // holds the tempo slider, whose thumb is tabIndex 0, so it opened with focus on
+                // the slider -- past every menu item, and on a control that takes the arrow keys
+                // for itself before the roving handler above sees them. MUI's TrapFocus parked
+                // focus on the MenuList, which the slider and the swatches sit outside of.
                 // Taking the content (already tabIndex -1, and the element the arrow keys are
                 // handled on) is the same thing AppDialog does with the paper, and for the same
                 // reason. It is also what keeps the tempo thumb's focus halo out of

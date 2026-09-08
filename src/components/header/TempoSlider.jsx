@@ -77,19 +77,14 @@ function TempoSlider({ round, setRoundBpm }) {
                     three land in the sheet in that order, hover then focus-visible then active,
                     which is the order the JSS object had them in, so a press wins over a hover.
 
-                    Two measured deviations, both from what Radix and Tailwind give us:
+                    One measured deviation, from what Radix gives us: MUI set `$active` from its
+                    own pointer bookkeeping, so it lit up for a drag started anywhere on the rail.
+                    Radix exposes no dragging state on the thumb, so this is CSS `:active`, which
+                    only fires for a press that started on the thumb.
 
-                    MUI set `$active` from its own pointer bookkeeping, so it lit up for a drag
-                    started anywhere on the rail. Radix exposes no dragging state on the thumb, so
-                    this is CSS `:active`, which only fires for a press that started on the thumb.
-
-                    MUI reset the hover halo under `@media (hover: none)`, so it never stuck after
-                    a tap. Tailwind 4.3 emits a bare `:hover` -- the `@media (hover: hover)`
-                    wrapper was 4.0's and is gone -- and the way to put it back,
-                    `[@media(hover:hover)]:hover:ring-8`, sorts into the media-query block at the
-                    end of the sheet, after `active:`, which would let a mouse hover overrule the
-                    press halo. A halo that outstays a tap is the smaller of the two, so the plain
-                    `hover:` stands. */}
+                    MUI reset the hover halo under `@media (hover: none)` so it never stuck after
+                    a tap; Tailwind's `hover:` variant is emitted inside `@media (hover: hover)`,
+                    which is the same reset, so nothing extra is needed for touch. */}
                 <SliderPrimitive.Thumb aria-labelledby="tempo-slider-label" className="relative block size-3 rounded-full bg-white outline-none ring-primary/16 transition-shadow duration-150 hover:ring-8 focus-visible:ring-8 active:ring-[14px]">
                     {/* MUI's value label: a 32px teardrop 34px above the thumb, pulled up another
                         10px, with the number rotated back level. */}
