@@ -2,7 +2,7 @@ import React, { useContext, useEffect, useState } from 'react';
 import { connect } from "react-redux";
 import { setRoundName, setIsShowingRenameDialog, setRounds, setDisableKeyListener } from '../../redux/actions'
 import { FirebaseContext } from '../../firebase';
-import { AppDialog, AppDialogActions, AppDialogContent, MUI_BUTTON } from './AppDialog'
+import { AppDialog, AppDialogActions, AppDialogContent, MUI_BUTTON, MUI_PRIMARY } from './AppDialog'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -72,7 +72,7 @@ function RenameDialog ({ selectedRoundId, round, rounds, setRoundName, setIsShow
                     <Button type="button" variant="plain" className={cn(MUI_BUTTON, 'px-2')} onClick={handleClose}>
                         Cancel
                     </Button>
-                    <Button type="submit" className={cn(MUI_BUTTON, 'bg-primary text-primary-foreground hover:bg-primary/90')}>
+                    <Button type="submit" className={cn(MUI_BUTTON, MUI_PRIMARY)}>
                         Rename
                     </Button>
                 </AppDialogActions>

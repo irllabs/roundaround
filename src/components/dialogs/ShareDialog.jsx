@@ -3,7 +3,7 @@ import { connect } from "react-redux";
 import { FirebaseContext } from '../../firebase';
 import QRCode from 'qrcode'
 import { setIsShowingShareDialog, setRoundShortLink } from '../../redux/actions'
-import { AppDialog, AppDialogBody, MUI_BUTTON } from './AppDialog'
+import { AppDialog, AppDialogBody, MUI_BUTTON, MUI_SECONDARY } from './AppDialog'
 import { OutlinedField } from '../fields/OutlinedField'
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
@@ -109,7 +109,7 @@ const ShareDialog = ({ round, isShowingShareDialog, setIsShowingShareDialog, set
                     button's takes the paper to 342px. */}
                 <div className="flex">
                     <OutlinedField ref={fieldRef} className="mr-4" id="share-link" label="Link" value={link} onChange={() => {}} inputProps={{ readOnly: true }} />
-                    <Button className={cn(MUI_BUTTON, 'mr-4 min-w-[100px] shrink-0 bg-secondary text-white hover:bg-secondary/90')} onClick={onCopyClick}>{copied ? 'Copied' : 'Copy'}</Button>
+                    <Button className={cn(MUI_BUTTON, MUI_SECONDARY, 'mr-4 min-w-[100px] shrink-0')} onClick={onCopyClick}>{copied ? 'Copied' : 'Copy'}</Button>
                 </div>
             </AppDialogBody>
         </AppDialog>

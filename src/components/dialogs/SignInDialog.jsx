@@ -3,17 +3,17 @@ import { connect } from "react-redux";
 import { setIsShowingSignInDialog, setSignUpDisplayName, setUser, setRounds, setRedirectAfterSignIn } from '../../redux/actions'
 import { FirebaseContext } from '../../firebase';
 import { getRandomColor } from '../../utils/index'
-import { AppDialog, AppDialogBody, MUI_BUTTON } from './AppDialog'
+import { AppDialog, AppDialogBody, MUI_BUTTON, MUI_PRIMARY, MUI_SECONDARY } from './AppDialog'
 import { OutlinedField } from '../fields/OutlinedField'
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
 
 import _ from 'lodash'
 
-/** MUI's contained secondary Button, which this dialog uses for all four choices. */
-const CHOICE_BUTTON = 'mb-4 w-full bg-secondary text-white hover:bg-secondary/90'
-/** MUI's contained primary Button, which submits each of the three forms. */
-const SUBMIT_BUTTON = 'mb-4 w-full bg-primary text-primary-foreground hover:bg-primary/90'
+/** The four choices: MUI's contained secondary Button, full width. */
+const CHOICE_BUTTON = cn(MUI_SECONDARY, 'mb-4 w-full')
+/** The submit of each of the three forms: MUI's contained primary Button, full width. */
+const SUBMIT_BUTTON = cn(MUI_PRIMARY, 'mb-4 w-full')
 /** The JSS `emailFormItem`: 1rem below, and the 300px that makes the form steps 332px wide. */
 const FORM_FIELD = 'mb-4 min-w-[300px]'
 /** The JSS `error`. */

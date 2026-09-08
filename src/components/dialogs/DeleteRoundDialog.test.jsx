@@ -60,6 +60,14 @@ describe('DeleteRoundDialog', () => {
         expect(deleting).toHaveAttribute('aria-busy', 'true')
         expect(screen.queryByRole('status')).toBeNull()
 
+        // This is the app's only contained button that is ever disabled, so it is where MUI's
+        // disabled Button is held: rgba(255,255,255,0.3) on rgba(255,255,255,0.12) and no opacity
+        // change at all. The generated Button's `disabled:opacity-50` fades glyph and fill
+        // together and has to be turned back off, not merely overpainted, so its absence is what
+        // is asserted rather than only the presence of the three replacements.
+        expect(deleting).toHaveClass('disabled:opacity-100', 'disabled:bg-white/12', 'disabled:text-white/30')
+        expect(deleting).not.toHaveClass('disabled:opacity-50')
+
         finish()
         await waitFor(() => expect(store.getState().display.isShowingDeleteRoundDialog).toBe(false))
     })

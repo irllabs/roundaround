@@ -5,7 +5,7 @@ import { setIsShowingSignInDialog, setRedirectAfterSignIn, setRounds } from '../
 import { createRound } from '../../utils/index'
 import { FirebaseContext } from '../../firebase';
 import { Button } from '@/components/ui/button';
-import { MUI_BUTTON } from '../dialogs/AppDialog';
+import { MUI_BUTTON, MUI_PRIMARY } from '../dialogs/AppDialog';
 import { cn } from '@/lib/utils';
 
 class LandingPageRoute extends Component {
@@ -52,12 +52,8 @@ class LandingPageRoute extends Component {
                         <h1 className="my-[18.76px] text-[28px] font-bold leading-[1.43]">Gather around, make music, and have fun.</h1>
                         <p className="my-[14px]">Rounds is a multi-person live-sampling step-sequencer with social features.  It runs in the browser or as a Native iOS application, with the following steps: compose a pattern (or "Round"), make variations and save presets, share a link to have someone join you with additional layers.  Rounds is best on a recent iPad.</p>
                         <div className="mt-8 w-full text-center">
-                            {/* MUI's contained primary: #EAEAEA behind rgba(0,0,0,0.87) text.
-                                `--primary-foreground` is #1b1b1b, which measures 4/255 off the
-                                (31,31,31) the baseline photographs -- under the gate's own
-                                tolerance, and the token is what the rest of the app uses. */}
                             <Button
-                                className={cn(MUI_BUTTON, 'mt-4 bg-primary text-primary-foreground hover:bg-primary/90')}
+                                className={cn(MUI_BUTTON, MUI_PRIMARY, 'mt-4')}
                                 onClick={this.onGetStartedClick}
                                 data-test="button-get-started"
                             >

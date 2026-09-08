@@ -51,7 +51,6 @@ export default function HeaderMenu() {
                     align="end"
                     alignOffset={5}
                     trigger={<Button variant="plain" size="icon-round" aria-label="More options" aria-haspopup="menu"><MoreHorizIcon /></Button>}
-                    listClassName="py-2"
                     footer={<TempoSlider />}
                 >
                     <AppMenuItem onClick={onFullscreenClick} className="py-4">

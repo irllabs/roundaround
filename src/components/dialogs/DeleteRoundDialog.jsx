@@ -3,7 +3,7 @@ import { connect } from "react-redux";
 import { useHistory } from 'react-router-dom';
 import { FirebaseContext } from '../../firebase';
 import { setIsShowingDeleteRoundDialog, setRounds } from '../../redux/actions'
-import { AppDialog, AppDialogActions, AppDialogContent, MUI_BUTTON } from './AppDialog'
+import { AppDialog, AppDialogActions, AppDialogContent, MUI_BUTTON, MUI_PRIMARY } from './AppDialog'
 import { Button } from '@/components/ui/button'
 import { Spinner } from '@/components/ui/spinner'
 import { cn } from '@/lib/utils'
@@ -62,7 +62,7 @@ function DeleteRoundDialog ({ isShowingDeleteRoundDialog, selectedRoundId, round
                     aria-label="Loading" would rename the button to "Loading". Hiding the spinner
                     from the accessibility tree and naming the button keeps it "Delete" in both
                     states, which is also what the tests and Cypress select on. */}
-                <Button aria-label="Delete" aria-busy={isDeleting} className={cn(MUI_BUTTON, 'bg-primary text-primary-foreground hover:bg-primary/90')} onClick={onOkClick} disabled={isDeleting}>
+                <Button aria-label="Delete" aria-busy={isDeleting} className={cn(MUI_BUTTON, MUI_PRIMARY)} onClick={onOkClick} disabled={isDeleting}>
                     {
                         !isDeleting &&
                         <span>Delete</span>

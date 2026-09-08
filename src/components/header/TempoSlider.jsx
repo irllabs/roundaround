@@ -64,7 +64,33 @@ function TempoSlider({ round, setRoundBpm }) {
                 {/* aria-labelledby goes on the thumb, not on the root: Radix puts role="slider"
                     on the thumb, and MUI put the label on the element carrying that role. On the
                     root it would name a span with no role and the slider would stay unnamed. */}
-                <SliderPrimitive.Thumb aria-labelledby="tempo-slider-label" className="relative block size-3 rounded-full bg-white outline-none">
+                {/* The halo. MUI's Slider.thumb draws it as a box-shadow:
+                    `&$focusVisible,&:hover { boxShadow: 0px 0px 0px 8px alpha(palette.primary.main, 0.16) }`
+                    and `&$active { boxShadow: 0px 0px 0px 14px ... }`, transitioning box-shadow
+                    over `transitions.duration.shortest` (150ms) on the default easeInOut, which is
+                    Tailwind's own default timing function. This slider took MUI's default
+                    `color="primary"` -- the JSS only repainted the root and the thumb white -- so
+                    the halo is primary.main at 16%, `--primary` (#EAEAEA), not white. A Tailwind
+                    ring at width 8 compiles to exactly `0 0 0 8px <colour>` and the thumb carries
+                    no other box-shadow, so there is nothing for it to fight with; `outline-none`
+                    stays because MUI's thumb sets `outline: 0` and drew the halo instead. The
+                    three land in the sheet in that order, hover then focus-visible then active,
+                    which is the order the JSS object had them in, so a press wins over a hover.
+
+                    Two measured deviations, both from what Radix and Tailwind give us:
+
+                    MUI set `$active` from its own pointer bookkeeping, so it lit up for a drag
+                    started anywhere on the rail. Radix exposes no dragging state on the thumb, so
+                    this is CSS `:active`, which only fires for a press that started on the thumb.
+
+                    MUI reset the hover halo under `@media (hover: none)`, so it never stuck after
+                    a tap. Tailwind 4.3 emits a bare `:hover` -- the `@media (hover: hover)`
+                    wrapper was 4.0's and is gone -- and the way to put it back,
+                    `[@media(hover:hover)]:hover:ring-8`, sorts into the media-query block at the
+                    end of the sheet, after `active:`, which would let a mouse hover overrule the
+                    press halo. A halo that outstays a tap is the smaller of the two, so the plain
+                    `hover:` stands. */}
+                <SliderPrimitive.Thumb aria-labelledby="tempo-slider-label" className="relative block size-3 rounded-full bg-white outline-none ring-primary/16 transition-shadow duration-150 hover:ring-8 focus-visible:ring-8 active:ring-[14px]">
                     {/* MUI's value label: a 32px teardrop 34px above the thumb, pulled up another
                         10px, with the number rotated back level. */}
                     <span className="absolute -left-[10px] -top-[34px] z-10 block origin-bottom -translate-y-[10px] text-[12px] leading-[1.2]">

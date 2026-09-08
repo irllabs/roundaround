@@ -4,8 +4,50 @@ import { Button } from '@/components/ui/button'
 import { ArrowBackIcon } from '@/components/icons'
 import { cn } from '@/lib/utils'
 
-/** MUI's Button, which the theme's 32px radius turns into a pill. */
-export const MUI_BUTTON = 'h-auto min-w-16 rounded-full border-0 px-4 py-1.5 text-sm font-medium leading-[1.75] tracking-[0.02857em] shadow-none'
+/**
+ * MUI's Button, which the theme's 32px radius turns into a pill.
+ *
+ * The two `disabled:` utilities are MUI's disabled Button, which every variant shares through
+ * `Button.root`'s `&$disabled { color: theme.palette.action.disabled }`. On a dark palette that
+ * is a flat `rgba(255, 255, 255, 0.3)` -- MUI changes the colour and nothing else. The generated
+ * Button ships `disabled:opacity-50` instead, which fades the entire element, glyph and fill
+ * together, so it has to be turned back off rather than merely overpainted.
+ */
+export const MUI_BUTTON = 'h-auto min-w-16 rounded-full border-0 px-4 py-1.5 text-sm font-medium leading-[1.75] tracking-[0.02857em] shadow-none disabled:opacity-100 disabled:text-white/30'
+
+/**
+ * MUI's `contained` `color="primary"` Button: the pill with a fill.
+ *
+ * Read off `Button.js` against the theme in `src/App.jsx`:
+ *
+ * - background is `palette.primary.main`, `#EAEAEA`, which is the `--primary` token.
+ * - hover is `palette.primary.dark`. The theme sets `dark` itself, `#AAAAAA`, so there is no
+ *   `darken(main, tonalOffset)` to derive -- MUI only computes `dark` for a palette colour given
+ *   as a bare `main`. `--muted-foreground` is that same `#AAAAAA`, so the hover is a token too.
+ *   `hover:bg-primary/90` was `#EAEAEA` at 90% over whatever is behind the button, which is
+ *   lighter than the button itself on this app's dark ground; MUI's hover is darker.
+ * - text is `palette.primary.contrastText`, which the theme does not set, so MUI computed it:
+ *   `getContrastText('#EAEAEA')` measures the contrast ratio against white, gets 1.20, which is
+ *   under the default threshold of 3, and returns `light.text.primary`, `rgba(0, 0, 0, 0.87)`.
+ *   Composited on `#EAEAEA` that is (31,31,31); `--primary-foreground` is `#1b1b1b`, 4/255 away
+ *   and inside the pixel gate's own 24-per-channel tolerance, and it is the token the rest of the
+ *   app already uses, so the token stays.
+ * - disabled is `contained`'s own `&$disabled`: `palette.action.disabled` on
+ *   `palette.action.disabledBackground`, `rgba(255,255,255,0.3)` on `rgba(255,255,255,0.12)`,
+ *   with no opacity change anywhere.
+ */
+export const MUI_PRIMARY = 'bg-primary text-primary-foreground hover:bg-muted-foreground disabled:opacity-100 disabled:bg-white/12 disabled:text-white/30'
+
+/**
+ * MUI's `contained` `color="secondary"` Button, read the same way.
+ *
+ * Background is `palette.secondary.main`, `#474747`, the `--secondary` token; hover is
+ * `palette.secondary.dark`, which the theme sets to `#333333`. No token holds `#333333`, so it is
+ * spelled as a hex. Text is `palette.secondary.contrastText`, again computed:
+ * `getContrastText('#474747')` measures 9.29 against white, over the threshold of 3, so it is
+ * `dark.text.primary`, plain white. The disabled trio is the same shared `contained` rule.
+ */
+export const MUI_SECONDARY = 'bg-secondary text-white hover:bg-[#333333] disabled:opacity-100 disabled:bg-white/12 disabled:text-white/30'
 
 /**
  * MUI's Dialog paper: elevation 24, shrink-to-fit up to the sm breakpoint, 32px away from the edges.
@@ -29,6 +71,31 @@ export const MUI_BUTTON = 'h-auto min-w-16 rounded-full border-0 px-4 py-1.5 tex
  */
 const PAPER = 'block inset-0 m-auto h-fit w-fit translate-x-0 translate-y-0 max-w-[min(500px,calc(100%-64px))] sm:max-w-[min(500px,calc(100%-64px))] max-h-[calc(100%-64px)] overflow-y-auto gap-0 rounded-lg bg-popover p-0 text-sm text-popover-foreground ring-0 shadow-[0px_11px_15px_-7px_rgba(0,0,0,0.2),0px_24px_38px_3px_rgba(0,0,0,0.14),0px_9px_46px_8px_rgba(0,0,0,0.12)]'
 
+/**
+ * Who to hand focus back to, given whatever held it at the moment the dialog opened.
+ *
+ * Usually that is the element itself. The exception is a dialog opened from one of the app's
+ * menus: Rename and Delete are opened from a menu item, and that item's own click handler closes
+ * the popover and opens the dialog together, so React commits both in one pass and the item is
+ * unmounted by the time the dialog closes. The close-time guard below then finds a detached node,
+ * declines to focus it, and leaves focus on <body>. MUI landed on the round-name button, because
+ * MUI's Menu had already returned focus to its anchor before the dialog went up.
+ *
+ * So a menu item is resolved to the menu's own trigger here, at capture time. Radix keeps no
+ * back-reference from a popover's content to its trigger; what it does keep is `aria-controls` on
+ * the trigger, holding the content's id -- and only while the popover is open, which is exactly
+ * now: this runs during the render that closes it, so the DOM is still the previous commit's.
+ * If that lookup finds nothing the element itself is used, which is what the old code did.
+ */
+function openerFor(active) {
+    if (!active || active === document.body || !active.closest) return active
+    const popover = active.closest('[data-slot="popover-content"]')
+    if (!popover || !popover.id) return active
+    // The id comes from Radix's useId and reads `radix-«r1»`/`radix-:r1:`, so it has to be
+    // quoted in the attribute selector rather than pasted in bare.
+    return document.querySelector('[aria-controls="' + popover.id + '"]') || active
+}
+
 export function AppDialog({ open, onOpenChange, titleId, title, titleClassName, onBack, backLabel = 'close', className, children }) {
     // Radix's modal DialogContent closes by calling `context.triggerRef.current?.focus()` and
     // preventDefaulting FocusScope's own restore. Every dialog in this app is opened from Redux
@@ -47,10 +114,13 @@ export function AppDialog({ open, onOpenChange, titleId, title, titleClassName, 
     // control. Reading during render does not depend on it. Reopening inside the ~100ms close
     // animation can capture a node in the outgoing content, which the guards below turn into no
     // restore at all rather than a restore to something detached.
+    //
+    // Reading during render is also what lets `openerFor` resolve a menu item to the menu's own
+    // trigger: that lookup needs the popover still open, and during this render it still is.
     const restoreFocusTo = React.useRef(null)
     const wasOpen = React.useRef(false)
     if (open && !wasOpen.current) {
-        restoreFocusTo.current = document.activeElement
+        restoreFocusTo.current = openerFor(document.activeElement)
     }
     wasOpen.current = open
     return (

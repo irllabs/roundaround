@@ -51,12 +51,19 @@ function HeaderAvatar({ user, users, setUser, setRounds, shouldShowMenu, setUser
 	// The user's own colour is the one value that cannot be a class: it comes out of the
 	// database. It is handed to Tailwind as a custom property instead of an inline background,
 	// so the border and the fill are still spelled in utilities.
+	//
+	// The fill carries #757575 as the var()'s fallback because a user can have no colour -- an
+	// account made before the picker existed, or a record that failed to write one -- and an
+	// unset custom property resolves to nothing at all, which paints the circle transparent and
+	// leaves white initials on the header. MUI's Avatar had a name for that case: without an
+	// image it added `colorDefault`, `palette.grey[600]` on a dark palette, which is #757575.
+	// It is the same grey the rounds-list rows already use for their placeholder avatar.
 	const avatar = (
 		<Avatar className="size-10 after:hidden" style={{ '--user-color': user.color }}>
 			{!_.isNil(user.avatar) && <AvatarImage className="border-2 border-(--user-color)" alt={user.displayName} src={user.avatar} />}
 			{/* font-normal because the Button around this one is font-medium and MUI's Avatar set
 			    no weight at all, so the initials came out at the body's 400. */}
-			<AvatarFallback className="bg-(--user-color) text-[20px] font-normal leading-none text-white">{getInitials(user.displayName)}</AvatarFallback>
+			<AvatarFallback className="bg-(--user-color,#757575) text-[20px] font-normal leading-none text-white">{getInitials(user.displayName)}</AvatarFallback>
 		</Avatar>
 	)
 

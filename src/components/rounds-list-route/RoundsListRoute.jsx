@@ -8,7 +8,7 @@ import SignInDialog from '../dialogs/SignInDialog'
 import { createRound, duplicateRound } from '../../utils/index'
 import { FirebaseContext } from '../../firebase';
 import { AppMenu, AppMenuItem } from '../header/AppMenu'
-import { MUI_BUTTON } from '../dialogs/AppDialog'
+import { MUI_BUTTON, MUI_SECONDARY } from '../dialogs/AppDialog'
 import { Button } from '@/components/ui/button'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import { AddIcon, ImageIcon, MoreHorizIcon } from '@/components/icons'
@@ -96,9 +96,10 @@ class RoundsListRoute extends Component {
                             moving the heading. */}
                         <div><h1 className="my-[18.76px] text-[28px] font-bold leading-[1.43]">My rounds</h1></div>
                         <div>
-                            {/* MUI's contained secondary with a startIcon: #474747 behind white,
-                                6px/16px of padding with the icon's -4px left margin folded into
-                                `pl-3` and its 8px right margin into `gap-2`. The 20px of a medium
+                            {/* MUI's contained secondary with a startIcon: the fill and the
+                                hover come from MUI_SECONDARY, and the button adds the startIcon's
+                                geometry -- the icon's -4px left margin folded into `pl-3` and its
+                                8px right margin into `gap-2`, over the pill's own 6px/16px. The 20px of a medium
                                 SvgIcon is spelled on the icon itself, not as `[&_svg]:size-5` on
                                 the button: the generated Button already carries
                                 `[&_svg:not([class*='size-'])]:size-4`, and :not() takes its
@@ -106,7 +107,7 @@ class RoundsListRoute extends Component {
                                 `[&_svg]:` variant and the plus came out 16px -- which the shrink-
                                 to-fit pill then wore as a 4px-narrower left edge (x 1103 against
                                 the baseline's 1099). */}
-                            <Button data-test="button-new-round" onClick={this.onNewRoundClick} className={cn(MUI_BUTTON, 'gap-2 bg-secondary pl-3 pr-4 text-white hover:bg-secondary/90')}>
+                            <Button data-test="button-new-round" onClick={this.onNewRoundClick} className={cn(MUI_BUTTON, MUI_SECONDARY, 'gap-2 pl-3 pr-4')}>
                                 <AddIcon className="size-5" />New round
                             </Button>
                         </div>

@@ -42,6 +42,25 @@ describe('HeaderMenu', () => {
         expect(screen.getByText('Tempo')).toBeInTheDocument()
     })
 
+    // Radix's FocusScope walks to the first tabbable control inside a popover on open, and the
+    // tempo thumb is the only tabbable thing in this menu -- so it opened with focus on the
+    // slider, past every menu item and on a control that eats the arrow keys before the menu's
+    // roving handler sees them. It also lit the thumb's focus halo on 09-header-menu.png.
+    it('opens with focus on the paper, not on the tempo slider', async () => {
+        const user = userEvent.setup()
+        renderMenu()
+
+        await user.click(screen.getByRole('button', { name: 'More options' }))
+        const paper = await screen.findByRole('dialog', { name: 'Round options' })
+
+        expect(paper).toHaveFocus()
+        expect(screen.getByRole('slider')).not.toHaveFocus()
+
+        // and the arrow keys still reach the menu items rather than the slider
+        await user.keyboard('{ArrowDown}')
+        expect(screen.getByRole('menuitem', { name: 'Fullscreen' })).toHaveFocus()
+    })
+
     it('closes on Escape and gives focus back to its trigger', async () => {
         const user = userEvent.setup()
         renderMenu()

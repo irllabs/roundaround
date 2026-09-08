@@ -31,14 +31,34 @@ export function AppMenu({ open, onOpenChange, trigger, listId, label, align = 'c
         <Popover open={open} onOpenChange={onOpenChange}>
             <PopoverTrigger asChild>{trigger}</PopoverTrigger>
             {/* The arrow keys are handled on the content, not on the list: the items are
-                tabIndex -1, so Radix's FocusScope finds nothing tabbable to focus on open and
-                falls back to focusing the content element itself. A handler on the list would
-                sit below where the keydown starts and never see it. On the content it fires
-                exactly once whether the content or one of the items has focus. */}
+                tabIndex -1, so focus on open lands on the content element itself. A handler on
+                the list would sit below where the keydown starts and never see it. On the
+                content it fires exactly once whether the content or one of the items has
+                focus. */}
             {/* `label` names the popover. Radix's PopoverContent is a `role="dialog"`, and an
                 unnamed dialog is announced as nothing at all; MUI's Popper had no role to name.
                 Callers pass the menu's own name ("Round options", "Account"). */}
-            <PopoverContent side="bottom" align={align} alignOffset={alignOffset} sideOffset={sideOffset} aria-label={label} onKeyDown={onKeyDown} className={cn(PAPER, contentClassName)}>
+            <PopoverContent
+                side="bottom"
+                align={align}
+                alignOffset={alignOffset}
+                sideOffset={sideOffset}
+                aria-label={label}
+                onKeyDown={onKeyDown}
+                // Radix's FocusScope walks to the first tabbable control inside the content on
+                // open, and only falls back to the content itself when it finds none. Three of
+                // the four menus have none, so they land on the content by accident; the header
+                // menu's footer holds the tempo slider, whose thumb is tabIndex 0, so it opened
+                // with focus on the slider -- past every menu item, and on a control that takes
+                // the arrow keys for itself before the roving handler above sees them. MUI's
+                // TrapFocus parked focus on the MenuList, which the slider sits outside of.
+                // Taking the content (already tabIndex -1, and the element the arrow keys are
+                // handled on) is the same thing AppDialog does with the paper, and for the same
+                // reason. It is also what keeps the tempo thumb's focus halo out of
+                // 09-header-menu.png.
+                onOpenAutoFocus={(event) => { event.preventDefault(); event.currentTarget.focus({ preventScroll: true }) }}
+                className={cn(PAPER, contentClassName)}
+            >
                 <div id={listId} role="menu" className={cn('py-2', listClassName)}>
                     {children}
                 </div>
