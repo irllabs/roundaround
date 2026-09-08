@@ -1,11 +1,12 @@
 import React, { useContext, useEffect } from 'react'
-import { Box, Typography } from '@material-ui/core'
-import IconButton from '@material-ui/core/IconButton'
 import _ from 'lodash'
 import { useDispatch } from "react-redux";
 
 import Instruments from '../../../audio-engine/Instruments'
 import { UPDATE_LAYER_INSTRUMENT } from '../../../redux/actionTypes'
+import { Button } from '@/components/ui/button'
+import { cn } from '@/lib/utils'
+import { ICON_BUTTON } from './styles'
 
 /** SVGs */
 import RightArrow from './resources/svg/rightArrow.svg'
@@ -13,6 +14,13 @@ import Check from './resources/svg/check.svg'
 import LeftArrow from './resources/svg/leftArrow.svg'
 import { FirebaseContext } from '../../../firebase'
 
+// MUI's Typography, default variant: a <p> with margin 0 at body1's own 16/1.5/0.00938em. The
+// weight has to be spelled out too -- the generated Button puts text-sm/font-medium on its whole
+// subtree, and every one of these labels sits inside one. So is the wrapping: `whitespace-nowrap`
+// is on the Button as well, and the longest sample name (`Electro perc`) does not fit the 62px
+// the `[flex:3]` column gets in a 216px popup. MUI let it wrap onto a second line; nowrap would
+// make it the row's min-content width instead and squeeze `Sound` and the arrow.
+const LABEL = 'm-0 text-left text-base font-normal leading-6 tracking-[0.00938em] whitespace-normal'
 
 const LayerInstrument = ({
     showInstrumentsPopup,
@@ -66,31 +74,36 @@ const LayerInstrument = ({
     };
 
     return (
-        <Box className={showInstrumentsPopup ? classes.instrumentPopup : classes.hidden}>
+        <div id="instrument-popup" data-test="instrument-popup" data-open={String(showInstrumentsPopup)} inert={!showInstrumentsPopup} className={showInstrumentsPopup ? classes.instrumentPopup : classes.hidden}>
             {!showArticulationOptions &&
-                <Box>
-                    <IconButton ref={instrumentsButtonRef} id='instrument' onClick={toggleShowInstrumentList} style={{ borderBottom: showInstrumentsList ? 'thin solid rgba(255, 255, 255, 0.1)' : 'none' }} className={classes.rectButton}>
-                        {showInstrumentsList && <Box style={{ display: 'flex', justifyContent: 'flex-start', flex: 1 }}>
-                            <img alt='right arrow' src={LeftArrow} />
-                        </Box>}
-                        <Box style={{ flex: showInstrumentsList ? 7 : 5, display: 'flex', justifyContent: 'flex-start' }}>
-                            <Typography style={{ textAlign: 'left', textTransform: 'Capitalize' }}>Instrument</Typography>
-                        </Box>
+                <div>
+                    <Button type="button" variant="plain" size="icon-app" ref={instrumentsButtonRef} id='instrument' onClick={toggleShowInstrumentList} className={cn(ICON_BUTTON, classes.rectButton, showInstrumentsList ? 'border-b border-white/10' : 'border-b-0')}>
+                        {showInstrumentsList && <div className="flex flex-1 justify-start">
+                            <img alt='right arrow' src={LeftArrow} className="h-[14px] w-2" />
+                        </div>}
+                        <div className={cn('flex justify-start', showInstrumentsList ? '[flex:7]' : '[flex:5]')}>
+                            <p className={cn(LABEL, 'capitalize')}>Instrument</p>
+                        </div>
                         {!showInstrumentsList &&
                             <>
-                                <Typography style={{ flex: 3, textAlign: 'left', textTransform: 'Capitalize' }}>
+                                <p className={cn(LABEL, '[flex:3] capitalize')}>
                                     {selectedInstrumentLabel}
-                                </Typography>
-                                <Box style={{ display: 'flex', justifyContent: 'flex-end', flex: 1 }}>
-                                    <img alt='right arrow' src={RightArrow} />
-                                </Box>
+                                </p>
+                                <div className="flex flex-1 justify-end">
+                                    <img alt='right arrow' src={RightArrow} className="h-[14px] w-2" />
+                                </div>
                             </>
                         }
-                    </IconButton>
+                    </Button>
                     {showInstrumentsList &&
-                        <Box style={{ display: 'flex', flexDirection: 'column' }}>
+                        <div className="flex flex-col">
+                            {/* ref inside a map: it ends up on the last row, which is what it did
+                                before this migration and all the click-away needs. */}
                             {instrumentOptions.map((instrument, i) =>
-                                <IconButton
+                                <Button
+                                    type="button"
+                                    variant="plain"
+                                    size="icon-app"
                                     ref={instrumentsListRef}
                                     id={`instrument-${i}`}
                                     key={`instrument-${i}`}
@@ -98,42 +111,47 @@ const LayerInstrument = ({
                                         e.stopPropagation()
                                         onInstrumentSelect(instrument)
                                     }
-                                    } style={{ justifyContent: 'space-between' }} className={classes.rectButton}>
-                                    <Typography style={{ textAlign: 'left' }}>{instrument.label}</Typography>
-                                    {selectedInstrument === instrument.name && <img alt='checked' src={Check} />}
-                                </IconButton>
+                                    } className={cn(ICON_BUTTON, classes.rectButton, 'justify-between')}>
+                                    <p className={LABEL}>{instrument.label}</p>
+                                    {selectedInstrument === instrument.name && <img alt='checked' src={Check} className="h-[10px] w-[14px]" />}
+                                </Button>
                             )}
-                        </Box>
+                        </div>
                     }
-                </Box>
+                </div>
             }
             {!showInstrumentsList &&
-                <Box>
-                    <IconButton
+                <div>
+                    <Button
+                        type="button"
+                        variant="plain"
+                        size="icon-app"
                         id='sound'
                         ref={soundsButtonRef}
                         onClick={toggleArticulationOptions}
-                        style={{ borderBottom: showArticulationOptions ? 'thin solid rgba(255, 255, 255, 0.1)' : 'none' }}
-                        className={classes.rectButton}
+                        className={cn(ICON_BUTTON, classes.rectButton, showArticulationOptions ? 'border-b border-white/10' : 'border-b-0')}
                     >
                         {showArticulationOptions &&
-                            <Box style={{ display: 'flex', justifyContent: 'flex-start', flex: 1 }}>
-                                <img alt='right arrow' src={LeftArrow} />
-                            </Box>}
-                        <Typography style={{ flex: 5, textAlign: 'left', textTransform: 'Capitalize' }}>Sound</Typography>
+                            <div className="flex flex-1 justify-start">
+                                <img alt='right arrow' src={LeftArrow} className="h-[14px] w-2" />
+                            </div>}
+                        <p className={cn(LABEL, '[flex:5] capitalize')}>Sound</p>
                         {!showArticulationOptions &&
                             <>
-                                <Typography style={{ flex: 3, textAlign: 'left', textTransform: 'Capitalize' }}>
+                                <p className={cn(LABEL, '[flex:3] capitalize')}>
                                     {selectedLayer?.instrument?.sample}
-                                </Typography>
-                                <Box style={{ display: 'flex', justifyContent: 'flex-end', flex: 1 }}><img alt='right arrow' src={RightArrow} /></Box>
+                                </p>
+                                <div className="flex flex-1 justify-end"><img alt='right arrow' src={RightArrow} className="h-[14px] w-2" /></div>
                             </>
                         }
-                    </IconButton>
+                    </Button>
                     {showArticulationOptions &&
-                        <Box style={{ display: 'flex', flexDirection: 'column', maxHeight: 300, overflow: 'scroll' }}>
+                        <div className="flex max-h-[300px] flex-col overflow-scroll">
                             {articulationOptions.map((articulation, i) =>
-                                <IconButton
+                                <Button
+                                    type="button"
+                                    variant="plain"
+                                    size="icon-app"
                                     ref={articulationsListRef}
                                     id={`articulation-${i}`}
                                     key={`articulation-${i}`}
@@ -141,16 +159,16 @@ const LayerInstrument = ({
                                         e.stopPropagation()
                                         onArticulationSelect(articulation)
                                     }
-                                    } style={{ justifyContent: 'space-between' }} className={classes.rectButton}>
-                                    <Typography style={{ textAlign: 'left' }}>{articulation.name}</Typography>
-                                    {selectedArticulation === articulation.value && <img alt='checked' src={Check} />}
-                                </IconButton>
+                                    } className={cn(ICON_BUTTON, classes.rectButton, 'justify-between')}>
+                                    <p className={LABEL}>{articulation.name}</p>
+                                    {selectedArticulation === articulation.value && <img alt='checked' src={Check} className="h-[10px] w-[14px]" />}
+                                </Button>
                             )}
-                        </Box>
+                        </div>
                     }
-                </Box>
+                </div>
             }
-        </Box>
+        </div>
     )
 }
 

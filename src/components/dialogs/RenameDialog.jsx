@@ -2,7 +2,8 @@ import React, { useContext, useEffect, useState } from 'react';
 import { connect } from "react-redux";
 import { setRoundName, setIsShowingRenameDialog, setRounds, setDisableKeyListener } from '../../redux/actions'
 import { FirebaseContext } from '../../firebase';
-import { AppDialog, AppDialogActions, AppDialogContent, MUI_BUTTON, MUI_PRIMARY } from './AppDialog'
+import { AppDialog, AppDialogActions, AppDialogContent } from './AppDialog'
+import { MUI_BUTTON, MUI_PRIMARY } from '@/lib/mui'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'

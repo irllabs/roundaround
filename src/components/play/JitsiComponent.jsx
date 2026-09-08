@@ -2,34 +2,9 @@ import React, { Component } from 'react'
 import { connect } from "react-redux";
 import { FirebaseContext } from '../../firebase';
 import _ from 'lodash';
-import PropTypes from 'prop-types';
-import { withStyles } from '@material-ui/styles';
-import IconButton from '@material-ui/core/IconButton';
-import CircularProgress from '@material-ui/core/CircularProgress';
-import MicIcon from '@material-ui/icons/Mic';
-import MicOffIcon from '@material-ui/icons/MicOff';
-import CallIcon from '@material-ui/icons/Call';
-import CallEndIcon from '@material-ui/icons/CallEnd';
-
-const styles = theme => ({
-    root: {
-        position: 'absolute',
-        top: 0,
-        left: -600
-    },
-    micButton: {
-        backgroundColor: theme.palette.secondary.main,
-        marginRight: '1rem'
-    },
-    micButtonOn: {
-        color: theme.palette.secondary.main,
-        backgroundColor: theme.palette.primary.main,
-        marginRight: '1rem',
-        '&:hover': {
-            backgroundColor: theme.palette.primary.dark,
-        }
-    }
-})
+import { Button } from '@/components/ui/button';
+import { Spinner } from '@/components/ui/spinner';
+import { CallIcon, CallEndIcon, MicIcon, MicOffIcon } from '@/components/icons';
 
 class JitsiComponent extends Component {
     static contextType = FirebaseContext;
@@ -126,53 +101,45 @@ class JitsiComponent extends Component {
 
 
     render () {
-        const { classes } = this.props;
+        // `border-0` on every one of these, the way the header's share button carries it: the
+        // generated Button's base is `border border-transparent bg-clip-padding`, so a filled
+        // 48px IconButton paints its circle 46px across and 1px in from the box it lays out.
+        // `disabled:opacity-100 disabled:text-white/30` is MUI's `action.disabled`, which changes
+        // the glyph's colour and nothing else, against the base's `disabled:opacity-50`.
         return (
             <>
-                {
-                    !this.state.isEnabled &&
-                    <IconButton className={classes.micButton} onClick={this.join}>
+                {!this.state.isEnabled &&
+                    <Button type="button" variant="plain" size="icon-round" aria-label="Start voice chat" className="mr-4 border-0 bg-secondary hover:bg-secondary" onClick={this.join}>
                         <CallIcon />
-                    </IconButton>
-
+                    </Button>
                 }
-                {
-                    (this.state.isEnabled && this.state.isConnecting) &&
-                    <IconButton className={classes.micButton}>
-                        <CircularProgress size={24} />
-                    </IconButton>
+                {(this.state.isEnabled && this.state.isConnecting) &&
+                    <Button type="button" variant="plain" size="icon-round" disabled aria-label="Connecting to voice chat" className="mr-4 border-0 bg-secondary hover:bg-secondary disabled:opacity-100">
+                        <Spinner className="size-6 text-primary" />
+                    </Button>
                 }
-                {
-                    (this.state.isEnabled && !this.state.isConnecting) &&
-                    <IconButton className={classes.micButtonOn} onClick={this.leave}>
+                {(this.state.isEnabled && !this.state.isConnecting) &&
+                    <Button type="button" variant="plain" size="icon-round" aria-label="Leave voice chat" className="mr-4 border-0 bg-primary text-secondary hover:bg-[#AAAAAA]" onClick={this.leave}>
                         <CallEndIcon />
-                    </IconButton>
+                    </Button>
                 }
-                {
-                    this.state.micIsEnabled &&
-                    <IconButton className={classes.micButton} onClick={this.onMicClick} disabled={!this.state.isEnabled}>
+                {this.state.micIsEnabled &&
+                    <Button type="button" variant="plain" size="icon-round" aria-label="Mute the microphone" className="mr-4 border-0 bg-secondary hover:bg-secondary disabled:opacity-100 disabled:text-white/30" onClick={this.onMicClick} disabled={!this.state.isEnabled}>
                         <MicIcon />
-                    </IconButton>
-
+                    </Button>
                 }
-                {
-                    !this.state.micIsEnabled &&
-                    <IconButton className={classes.micButton} onClick={this.onMicClick} disabled={!this.state.isEnabled}>
+                {!this.state.micIsEnabled &&
+                    <Button type="button" variant="plain" size="icon-round" aria-label="Unmute the microphone" className="mr-4 border-0 bg-secondary hover:bg-secondary disabled:opacity-100 disabled:text-white/30" onClick={this.onMicClick} disabled={!this.state.isEnabled}>
                         <MicOffIcon />
-                    </IconButton>
-
+                    </Button>
                 }
-                <div className={classes.root} data-test="voice-chat">
-                    <div id="jaas-container" style={{ height: "100%" }}></div>
-                </div >
+                <div className="absolute left-[-600px] top-0" data-test="voice-chat">
+                    <div id="jaas-container" className="h-full"></div>
+                </div>
             </>
         )
     }
 }
-
-JitsiComponent.propTypes = {
-    classes: PropTypes.object.isRequired,
-};
 
 const mapStateToProps = state => {
     return {
@@ -187,4 +154,4 @@ export default connect(
     mapStateToProps, {
 
 }
-)(withStyles(styles)(JitsiComponent));
+)(JitsiComponent);

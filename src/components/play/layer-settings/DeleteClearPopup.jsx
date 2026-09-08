@@ -1,11 +1,11 @@
 import React from 'react'
-import Box from '@material-ui/core/Box'
-import IconButton from '@material-ui/core/IconButton'
+import { Button } from '@/components/ui/button'
+import { cn } from '@/lib/utils'
+import { ICON_BUTTON } from './styles'
 import {
     ErasorIcon,
     TrashIcon
 } from './resources'
-import { Typography } from '@material-ui/core'
 
 export default function DeleteClearPopup({
     classes,
@@ -14,20 +14,27 @@ export default function DeleteClearPopup({
     onDeleteLayerClick
 }) {
     return (
-        <Box className={showDeleteClearPopup ? classes.deleteClearPopup : classes.hidden}>
-            <IconButton
+        <div id="delete-clear-popup" data-test="delete-clear-popup" data-open={String(showDeleteClearPopup)} inert={!showDeleteClearPopup} className={showDeleteClearPopup ? classes.deleteClearPopup : classes.hidden}>
+            <Button
+                type="button"
+                variant="plain"
+                size="icon-app"
                 onClick={onClearStepsClick}
-                className={classes.buttonWithText}>
-                <Typography className={classes.buttonText}>Clear</Typography>
-                <ErasorIcon />
-            </IconButton>
-            <IconButton
-                onClick={onDeleteLayerClick}
-                className={classes.buttonWithText}
+                className={cn(ICON_BUTTON, classes.buttonWithText)}
             >
-                <Typography className={classes.buttonText}>Delete</Typography>
+                <p className={classes.buttonText}>Clear</p>
+                <ErasorIcon />
+            </Button>
+            <Button
+                type="button"
+                variant="plain"
+                size="icon-app"
+                onClick={onDeleteLayerClick}
+                className={cn(ICON_BUTTON, classes.buttonWithText)}
+            >
+                <p className={classes.buttonText}>Delete</p>
                 <TrashIcon />
-            </IconButton>
-        </Box>
+            </Button>
+        </div>
     )
 }

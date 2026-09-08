@@ -33,7 +33,8 @@ import time
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 from capture import (  # noqa: E402  (the path has to be set up first)
-    DESKTOP, GUEST_NAME_TYPED, SET_GUEST_NAME, Browser, Failed, discard, gone, has,
+    BAR_ALL, DESKTOP, FIRST_LAYER_ROW, GUEST_NAME_TYPED, MIXER_CLOSE, MIXER_OPACITY,
+    SET_GUEST_NAME, SIDEBAR_RIGHT, Browser, Failed, discard, gone, has,
 )
 
 # The round-name menu's trigger is the one button in the header that opens a menu and is
@@ -65,6 +66,20 @@ MENU_ITEMS = "document.querySelectorAll('[role=\"menu\"] [data-menu-item]').leng
 # and did, one run in three. So it waits for the paper to actually be gone, the way capture.py
 # waits for a state instead of sleeping and hoping.
 MENU_GONE = 'document.querySelectorAll(\'[data-slot="popover-content"]\').length === 0'
+
+# PlayUI toggles playback from a `keydown` listener on `window`, and redraws the transport in
+# SVG.js rather than exposing any state, so "did Space reach it" is asked directly: a listener
+# registered on window in the bubble phase, exactly where PlayUI's is. React delegates to the
+# root container, which is below window, so a handler that calls stopPropagation stops this probe
+# and PlayUI's listener together, and one that does not stops neither.
+SPACE_PROBE = """(() => {
+  window.__spaceAtWindow = false;
+  if (!window.__spaceProbeInstalled) {
+    window.addEventListener('keydown', (e) => { if (e.key === ' ') window.__spaceAtWindow = true });
+    window.__spaceProbeInstalled = true;
+  }
+  return true;
+})()"""
 
 
 class Keyboard(Browser):
@@ -166,6 +181,124 @@ def signin_dialog(b, report):
            b.js(WHERE))
 
 
+def effects_chevron(b, report):
+    """The sidebar's minimize control is a div with role=button, not a <button>.
+
+    capture.py's CHEVRON selector needs it to stay a 32x32 div holding an svg, so it cannot
+    become a real button, and the keyboard behaviour a real button would have come with is the
+    app's own code. Space is the case worth having: PlayUI listens for it on `window` to toggle
+    playback, so a handler that does not stopPropagation minimizes the sidebar *and* starts the
+    sequencer.
+    """
+    b.focus('[aria-label="Hide the effects"]')
+    report('effects sidebar: the chevron takes focus',
+           b.js('document.activeElement.getAttribute("aria-label") === "Hide the effects"'), b.js(WHERE))
+
+    # The name flips the moment the state does, so it is asked for first and the geometry
+    # second: `right` is transitioned over 0.4s and getComputedStyle reports the animated value,
+    # so waiting on the settled -120px/0px is what proves the sidebar actually moved rather than
+    # only relabelled itself, and it stops the detail column printing a mid-transition 0px.
+    b.enter()
+    report('effects sidebar: Enter minimizes it',
+           b.wait(has('[aria-label="Show the effects"]'), timeout=10)
+           and b.wait("%s === '-120px'" % SIDEBAR_RIGHT, timeout=10), b.js(SIDEBAR_RIGHT))
+
+    b.run(SPACE_PROBE, 'install the window keydown probe')
+    b.type_key(' ', 'Space', 32, text=' ')
+    report('effects sidebar: Space restores it',
+           b.wait(has('[aria-label="Hide the effects"]'), timeout=10)
+           and b.wait("%s === '0px'" % SIDEBAR_RIGHT, timeout=10), b.js(SIDEBAR_RIGHT))
+    report('effects sidebar: Space does not reach PlayUI',
+           b.js('window.__spaceAtWindow === false'), 'reached window: %s' % b.js('window.__spaceAtWindow'))
+
+
+# The layer-settings popups are never unmounted -- a closed one sits at top:200% at opacity 0 --
+# so `data-open`, which LayerSettings writes on each wrapper for its own unit tests, is what says
+# open from closed. capture.py deliberately does not use it, because capture.py also has to drive
+# the pre-migration build; keyboard.py only ever runs against a build of this branch.
+def popup_open(name, want='true'):
+    return ("(() => { const e = document.querySelector('[data-test=%s]');"
+            " return !!e && e.dataset.open === '%s' })()" % (name, want))
+
+
+def popup_state(name):
+    """What `data-open` actually says, for the detail column next to a failure."""
+    return ("(() => { const e = document.querySelector('[data-test=%s]');"
+            " return e ? '%s data-open=' + e.dataset.open : 'no %s' })()" % (name, name, name))
+
+
+def layer_popups(b, report):
+    """Escape closes an open layer-settings popup. Material UI's had no keyboard escape at all.
+
+    The popup is open before Escape is pressed, and that matters beyond the case itself:
+    LayerSettings consumes an Escape that closes a popup and calls preventDefault on it. An
+    Escape nothing consumes is left to the browser, and Chrome answers Escape with Stop --
+    which in this headless setup stops the document's animation frames, so from then on no
+    popover's exit animation ever ends and every closed one stays in the DOM. Any case added
+    here that presses a key the app ignores can quietly break every case after it.
+    """
+    b.click('button[aria-label="Open the mixer"]', 'the mixer button')
+    opened = b.wait(popup_open('mixer-popup'), timeout=10)
+    report('layer settings: the mixer popup opens from the bar', opened, b.js(popup_state('mixer-popup')))
+    if not opened:
+        raise Failed('the mixer popup never opened, so its Escape case cannot run')
+
+    b.escape()
+    report('layer settings: Escape closes the mixer popup',
+           b.wait(popup_open('mixer-popup', 'false'), timeout=10), b.js(popup_state('mixer-popup')))
+
+
+# The steps pill, which is where a Tab off the bottom bar starts. capture.py's STEP_PILL clicks
+# it; this only wants it focused.
+FOCUS_STEP_PILL = """(() => {
+  const b = %s.find(e => /^\\d+$/.test(e.textContent.trim()));
+  if (!b) return false;
+  b.focus();
+  return true;
+})()""" % BAR_ALL
+
+# The play route's own root: the first ancestor of the round that clips. It must never be
+# scrolled, because nothing on this route scrolls back.
+ROUTE_ROOT_SCROLLTOP = """(() => {
+  let e = document.getElementById('round');
+  while (e) {
+    const o = getComputedStyle(e).overflow;
+    if (o === 'hidden' || o === 'clip') return e.scrollTop;
+    e = e.parentElement;
+  }
+  return 'no clipping root';
+})()"""
+
+FOCUS_LABEL = "(document.activeElement && document.activeElement.getAttribute('aria-label')) || 'none'"
+
+
+def tab_off_the_bar(b, report):
+    """Tab from the steps pill goes to the next control in the bar, not into a closed popup.
+
+    The layer-settings popups are never unmounted: a closed one sits at `top: 200%` at opacity 0,
+    still laid out and, until `inert` was put on each wrapper, still in the tab order. One Tab off
+    the pill landed on the closed volume popup's slider, and Chrome scrolled it into view -- which
+    scrolled the play route's own root down by 303px, with nothing on the route able to scroll it
+    back for the rest of the session. Both halves are checked here: where focus went, and that the
+    root did not move.
+    """
+    b.click('button[aria-label="Open the mixer"]', 'the mixer button')
+    if not b.wait("%s === '1'" % MIXER_OPACITY, timeout=10):
+        raise Failed('the mixer popup never opened, so the bar cannot be given a layer to show')
+    b.run(FIRST_LAYER_ROW, 'click the first layer in the mixer')
+    b.must("[...document.querySelectorAll('*')].every(e => e.children.length !== 0 || !/Long Press/.test(e.textContent))",
+           'the bottom bar hint giving way to the layer controls')
+    b.run(MIXER_CLOSE, "close the mixer popup with its own X")
+    b.must("%s === '0'" % MIXER_OPACITY, 'the mixer popup closing')
+
+    b.run(FOCUS_STEP_PILL, 'focus the steps pill')
+    b.tab()
+    b.settle()
+    report('layer settings: Tab off the steps pill stays in the bar',
+           b.js(FOCUS_LABEL) == 'Volume, solo and mute' and b.js(ROUTE_ROOT_SCROLLTOP) == 0,
+           '%s, root scrollTop %s' % (b.js(WHERE), b.js(ROUTE_ROOT_SCROLLTOP)))
+
+
 def avatar_menu(b, report):
     """Enter, the roving arrow keys, Escape, and focus coming back to the avatar."""
     b.focus('[data-test=button-sign-in-out]')
@@ -259,6 +392,24 @@ def row_menu(b, report):
            closed and b.js("document.activeElement && document.activeElement.getAttribute('aria-label') === 'Round options'"),
            b.js(WHERE))
 
+    # ArrowUp with nothing pressed in the menu yet. Focus is still on the content, where
+    # onOpenAutoFocus parked it, so items.indexOf is -1: ArrowDown already reads that as "before
+    # the first item", and MUI's MenuList read ArrowUp as "after the last one", which the generic
+    # (at - 1 + n) % n does not -- it landed on the second-to-last. This is the menu to ask it on,
+    # not the avatar menu: that one has a single item, so its last item and its only item are the
+    # same element and the case would prove nothing.
+    b.focus(ROW_MENU_BUTTON)
+    b.enter()
+    if not b.wait('%s === 3' % MENU_ITEMS, timeout=10):
+        raise Failed('the rounds-list row menu did not reopen for its ArrowUp case')
+    b.arrow(down=False)
+    report('row menu: ArrowUp on a freshly opened menu lands on Delete',
+           b.js(MENU_ITEM_TEXT) == 'Delete', b.js(MENU_ITEM_TEXT))
+    b.escape()
+    if not b.wait('%s === 0' % MENU_ITEMS, timeout=10):
+        raise Failed('the rounds-list row menu did not close after its ArrowUp case')
+    b.settle()
+
     # And the same menu again, this time all the way to Delete, which is the other dialog
     # opened from a menu item that unmounts underneath it.
     b.focus(ROW_MENU_BUTTON)
@@ -294,6 +445,9 @@ def check(b, base):
     signin_dialog(b, report)
 
     sign_in_as_guest(b)
+    effects_chevron(b, report)
+    layer_popups(b, report)
+    tab_off_the_bar(b, report)
     avatar_menu(b, report)
     round_menu_to_rename(b, report)
 

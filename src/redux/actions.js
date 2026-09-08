@@ -3,8 +3,6 @@ import {
     SET_USER,
     SET_REDIRECT_AFTER_SIGN_IN,
     SET_ROUNDS,
-    SET_SIGNUP_DISPLAYNAME,
-    SET_USER_DISPLAYNAME,
     SET_ROUND,
     SET_IS_PLAYING,
     SET_USERS,
@@ -44,10 +42,6 @@ export const setUser = (value) => ({
     type: SET_USER,
     payload: { value }
 })
-export const setUserDisplayName = (value) => ({
-    type: SET_USER_DISPLAYNAME,
-    payload: { value }
-})
 export const setUserColor = (value) => ({
     type: SET_USER_COLOR,
     payload: { value }
@@ -72,10 +66,6 @@ export const setIsShowingSignInDialog = (value) => ({
 })
 export const setRedirectAfterSignIn = (value) => ({
     type: SET_REDIRECT_AFTER_SIGN_IN,
-    payload: { value }
-})
-export const setSignUpDisplayName = (value) => ({
-    type: SET_SIGNUP_DISPLAYNAME,
     payload: { value }
 })
 export const setIsUsingJitsi = (value) => ({

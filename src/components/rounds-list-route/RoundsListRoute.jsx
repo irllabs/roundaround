@@ -2,13 +2,12 @@ import React, { Component } from 'react'
 import { connect } from "react-redux";
 import _ from 'lodash';
 import {
-    setIsShowingSignInDialog, setRedirectAfterSignIn, setRounds, setIsShowingDeleteRoundDialog, setIsShowingRenameDialog, setSelectedRoundId
+    setRounds, setIsShowingDeleteRoundDialog, setIsShowingRenameDialog, setSelectedRoundId
 } from '../../redux/actions'
-import SignInDialog from '../dialogs/SignInDialog'
 import { createRound, duplicateRound } from '../../utils/index'
 import { FirebaseContext } from '../../firebase';
 import { AppMenu, AppMenuItem } from '../header/AppMenu'
-import { MUI_BUTTON, MUI_SECONDARY } from '../dialogs/AppDialog'
+import { MUI_BUTTON, MUI_SECONDARY } from '@/lib/mui'
 import { Button } from '@/components/ui/button'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import { AddIcon, ImageIcon, MoreHorizIcon } from '@/components/icons'
@@ -179,10 +178,6 @@ class RoundsListRoute extends Component {
                         </ul>
                     </div>
                 </div>
-                {/* App.jsx renders a SignInDialog of its own, so /rounds has two mounted today.
-                    Dropping one is a behaviour change; it belongs in PR 3, not in a no-visible-
-                    change shell migration. */}
-                <SignInDialog />
             </>
         )
     }
@@ -199,8 +194,6 @@ const mapStateToProps = state => {
 export default connect(
     mapStateToProps,
     {
-        setIsShowingSignInDialog,
-        setRedirectAfterSignIn,
         setRounds,
         setIsShowingDeleteRoundDialog,
         setIsShowingRenameDialog,

@@ -4,101 +4,47 @@ import {
   Switch,
   Route
 } from "react-router-dom";
-import { connect } from "react-redux";
-import { unstable_createMuiStrictModeTheme, ThemeProvider } from '@material-ui/core/styles';
-import CssBaseline from '@material-ui/core/CssBaseline';
 import PlayRoute from './components/play/PlayRoute';
 import LandingPageRoute from './components/landing-page/LandingPageRoute';
 import RoundsListRoute from './components/rounds-list-route/RoundsListRoute'
 import Header from './components/header/Header';
 import SignInDialog from './components/dialogs/SignInDialog'
-import { setUser, setRounds, setIsShowingSignInDialog } from './redux/actions'
 import RenameDialog from './components/dialogs/RenameDialog';
 import DeleteRoundDialog from './components/dialogs/DeleteRoundDialog';
 import ErrorBoundary from './components/ErrorBoundary';
 
 
 
-function App({ setUser, setRounds, setIsShowingSignInDialog }) {
-  const theme = React.useMemo(
-    () =>
-      unstable_createMuiStrictModeTheme({
-        palette: {
-          type: 'dark',
-          primary: {
-            dark: '#AAAAAA',
-            main: '#EAEAEA',
-            light: '#FFFFFF'
-          },
-          secondary: {
-            dark: '#333333',
-            main: '#474747',
-            light: '#C1C1C1'
-          },
-          text: {
-            primary: '#EAEAEA'
-          },
-          action: {
-            active: '#EAEAEA'
-          }
-        },
-        breakpoints: {
-          values: {
-            xs: 0,
-            sm: 500,
-            md: 900,
-            lg: 1200,
-            xl: 1536,
-          },
-        },
-        shape: {
-          borderRadius: 32
-        },
-        typography: {
-          button: {
-            textTransform: 'none'
-          }
-        }
-      }),
-    [],
-  );
-
-
-
+// No `connect`. App reads nothing out of the store and dispatches nothing -- every child that
+// needs the store is connected itself -- and a connected App only bought a subscription that
+// re-rendered the whole Router subtree whenever the sign-in state changed.
+//
+// The Material UI theme that used to live here is gone, but its four facts did not go with it:
+// the palette is src/index.css's `:root`, the breakpoints are its `@theme`, `shape.borderRadius:
+// 32` is `MUI_BUTTON`'s `rounded-full` and each dialog's own radius, and
+// `typography.button.textTransform: 'none'` is the absence of any `uppercase` utility.
+// CssBaseline's body type moved into src/index.css too; see the `body` rule there.
+//
+// The three dialogs sit outside the Switch on purpose: each is bound to a flag in
+// `state.display`, and every route can raise it. This is the app's only SignInDialog.
+function App() {
   return (
     <div className="App" data-test="app">
-      <ThemeProvider theme={theme}>
-        <CssBaseline />
-        <Router>
-          <ErrorBoundary>
-            <Header />
-            <Switch>
-              <Route path="/rounds" component={RoundsListRoute} />
-              <Route path="/play" component={PlayRoute} />
-              <Route path="/" component={LandingPageRoute} />
-            </Switch>
-            <SignInDialog />
-            <RenameDialog />
-            <DeleteRoundDialog />
-          </ErrorBoundary>
-        </Router>
-      </ThemeProvider>
+      <Router>
+        <ErrorBoundary>
+          <Header />
+          <Switch>
+            <Route path="/rounds" component={RoundsListRoute} />
+            <Route path="/play" component={PlayRoute} />
+            <Route path="/" component={LandingPageRoute} />
+          </Switch>
+          <SignInDialog />
+          <RenameDialog />
+          <DeleteRoundDialog />
+        </ErrorBoundary>
+      </Router>
     </div>
   );
 }
 
-const mapStateToProps = state => {
-  return {
-    user: state.user,
-    isShowingSignInDialog: state.display.isShowingSignInDialog
-  };
-};
-
-export default connect(
-  mapStateToProps,
-  {
-    setUser,
-    setRounds,
-    setIsShowingSignInDialog
-  }
-)(App);
+export default App;

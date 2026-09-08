@@ -45,6 +45,21 @@ describe('AppMenu', () => {
         expect(screen.getByRole('menuitem', { name: 'One' })).toHaveFocus()
     })
 
+    it('lands ArrowUp on the last item when the menu has only just opened', async () => {
+        const user = userEvent.setup()
+        render(<Harness />)
+        await user.click(screen.getByRole('button', { name: 'More options' }))
+        await screen.findByRole('menu')
+        // Focus is still on the content, so indexOf is -1. ArrowDown reads that as "before the
+        // first item"; ArrowUp has to read it as "after the last one", the way MUI's MenuList did.
+        await user.keyboard('{ArrowUp}')
+        expect(screen.getByRole('menuitem', { name: 'Two' })).toHaveFocus()
+        await user.keyboard('{ArrowUp}')
+        expect(screen.getByRole('menuitem', { name: 'One' })).toHaveFocus()
+        await user.keyboard('{ArrowUp}')
+        expect(screen.getByRole('menuitem', { name: 'Two' })).toHaveFocus()
+    })
+
     it('closes on Escape and gives focus back to its trigger', async () => {
         const user = userEvent.setup()
         render(<Harness />)

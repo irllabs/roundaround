@@ -8,13 +8,8 @@ import { cn } from '@/lib/utils'
  * onto the border once the field is filled or focused. Works controlled or uncontrolled; the
  * wrapper takes the ref, which is where MUI's TextField puts one, so callers can go on reading
  * the input with `ref.current.querySelectorAll('input')[0]`. onChange gets the native event.
- *
- * forwardRef is only needed on React 18; drop it with the React 19 upgrade in PR 3.
  */
-export const OutlinedField = React.forwardRef(function OutlinedField(
-    { id, label, value, defaultValue, onChange, onFocus, onBlur, type = 'text', placeholder, autoFocus, disabled, error = false, helperText, className, inputProps = {}, ...rest },
-    ref
-) {
+export function OutlinedField({ ref, id, label, value, defaultValue, onChange, onFocus, onBlur, type = 'text', placeholder, autoFocus, disabled, error = false, helperText, className, inputProps = {}, ...rest }) {
     const [focused, setFocused] = React.useState(false)
     const [filled, setFilled] = React.useState(() => !!(value ?? defaultValue))
     React.useEffect(() => {
@@ -75,4 +70,4 @@ export const OutlinedField = React.forwardRef(function OutlinedField(
             {helperText && <p id={helperId} className={cn('mt-1 px-3 text-xs', error ? 'text-destructive' : 'text-muted-foreground')}>{helperText}</p>}
         </div>
     )
-})
+}

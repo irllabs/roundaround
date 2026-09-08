@@ -42,9 +42,13 @@ function HeaderAvatar({ user, users, setUser, setRounds, shouldShowMenu, setUser
 	const onColorChosen = ({ hex }) => {
 		setUserColor(hex)
 		firebaseContext.updateUser(user.id, { color: hex })
-		let usersClone = _.cloneDeep(users)
-		let me = _.find(usersClone, { id: user.id })
-		me.color = hex
+		// state.users holds the people in the round being played, so it is empty on /rounds and
+		// on the landing page. The colour is already saved above; this only keeps the round's
+		// own copy of this user in step, and there is nothing to keep in step when it is absent.
+		const me = _.find(users, { id: user.id })
+		if (!me) return
+		const usersClone = _.cloneDeep(users)
+		_.find(usersClone, { id: user.id }).color = hex
 		setUsers(usersClone)
 	}
 

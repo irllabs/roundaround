@@ -1,4 +1,6 @@
 @import "tailwindcss";
+/* Plans and specs are prose, not markup: scanning them invents utilities nothing renders. */
+@source not "../docs";
 @import "tw-animate-css";
 @import "shadcn/tailwind.css";
 
@@ -14,7 +16,13 @@
   --breakpoint-md: 900px;
   --breakpoint-lg: 1200px;
   --breakpoint-xl: 1536px;
-  --font-sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif;
+  /* CssBaseline set "Roboto","Helvetica","Arial",sans-serif on the body, unlayered, which beat
+     the system stack that used to be here, so that is the stack every screen in
+     docs/ui-baseline was photographed with (no Roboto is served, so it renders as Helvetica).
+     The spec's token table names the system stack; keeping it would change every glyph on
+     every screen, which is a redesign and not this migration, so the value CssBaseline used is
+     copied verbatim and the deviation is written up in the PR body. */
+  --font-sans: "Roboto", "Helvetica", "Arial", sans-serif;
   --font-mono: source-code-pro, Menlo, Monaco, Consolas, 'Courier New', monospace;
 }
 
@@ -48,7 +56,9 @@
   --radius-4xl: calc(var(--radius) * 2.6);
 }
 
-/* Dark only. Values come from the MUI theme in App.jsx, the JSS blocks and docs/ui-baseline. */
+/* Dark only. The values were read off the MUI theme in App.jsx, the JSS blocks and
+   docs/ui-baseline; that theme was deleted in this PR, so these tokens are the palette
+   now, not a copy of one. */
 :root {
   --background: #1b1b1b;
   --foreground: #EAEAEA;
@@ -82,45 +92,17 @@
   }
   body {
     margin: 0;
-    /* CssBaseline injects an unlayered `body { background-color: #303030 }` at
-       runtime, and unlayered rules beat anything in a cascade layer whatever its
-       specificity, so this needs !important to hold. App.css used to win the same
-       fight the same way. Drop it once CssBaseline is gone. */
-    background-color: var(--background) !important;
+    background-color: var(--background);
     color: var(--foreground);
     font-family: var(--font-sans);
-    /* MUI's body2 tracking, which CssBaseline sets unlayered today and everything inherits.
-       Spelling it out here means PR 3 can delete CssBaseline without moving the type. */
+    /* MUI's body2 tracking, which CssBaseline used to set unlayered and everything inherits. */
     letter-spacing: 0.01071em;
+    /* The other two thirds of MUI's body2, which CssBaseline set on the body and everything in
+       the app inherits. */
+    font-size: 0.875rem;
+    line-height: 1.43;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
-  }
-  /* The steps counter in the layer popup is the app's only bare <input>. Its JSS
-     sets no font, so it used to take the browser's control font (13.33px Arial at
-     normal line-height); preflight's
-     `button,input,select,optgroup,textarea{font:inherit}` hands it the body's 14px
-     Roboto/1.43 instead, which changes the typeface, the size and the input's own
-     box, 15px tall to 20px. Give the browser's default back to inputs that nothing
-     else styles. The shadcn Input is exempt by its data-slot: it is drawn in
-     Tailwind and means to inherit. MUI's inputs set `font: inherit` themselves,
-     unlayered, so this cannot reach them either way, and they are named so the
-     intent is on the page. */
-  input:not([data-slot="input"]):not([class*="Mui"]) {
-    font: revert;
-  }
-  /* The play route's icons are bare <img> elements drawn at their file's own size,
-     inside MUI IconButtons whose content box is smaller than they are: the steps
-     counter's minus and plus in LayerPopup, the arrows and check in LayerInstrument,
-     the lock in EffectThumbControl. Preflight's `img,video{max-width:100%;height:auto}`
-     clamps them into that box, which took the 14x4 minus down to 6x1.7 and the 14x14
-     plus to 6x6. Give image sizing back to the browser. (LayerPercentOffset's
-     percentage icon writes its own inline width and height, so it was never affected
-     and is not affected now.) The shadcn AvatarImage, and any image a later PR
-     migrates, carries a data-slot and keeps preflight's behaviour; <video> is not
-     named here, so the landing page's player keeps it too. */
-  img:not([data-slot]) {
-    max-width: revert;
-    height: revert;
   }
   code {
     font-family: var(--font-mono);
@@ -137,13 +119,4 @@
 [data-slot="dialog-overlay"] {
   background-color: rgba(0, 0, 0, 0.5);
   backdrop-filter: none;
-}
-
-/* CssBaseline still owns the app's font: it sets Roboto/Helvetica/Arial on `body` unlayered,
-   so it beats `--font-sans` in the base layer and every glyph in the app is Helvetica today.
-   The generated DialogTitle asks for `--font-heading`, which is the system stack, and would
-   render the five dialog titles in a different typeface from the rest of the app. Until
-   CssBaseline goes in PR 3 the title inherits like everything else. */
-[data-slot="dialog-title"] {
-  font-family: inherit;
 }

@@ -6,7 +6,7 @@ import { duplicateRound } from '../../utils/index';
 import { setRounds, setIsShowingRenameDialog, setIsShowingDeleteRoundDialog, setSelectedRoundId } from '../../redux/actions';
 import { FirebaseContext } from '../../firebase';
 import { AppMenu, AppMenuItem } from './AppMenu'
-import { MUI_BUTTON } from '../dialogs/AppDialog'
+import { MUI_BUTTON } from '@/lib/mui'
 import { Button } from '@/components/ui/button'
 import { ExpandMoreIcon } from '@/components/icons'
 import { cn } from '@/lib/utils'

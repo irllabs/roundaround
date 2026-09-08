@@ -24,7 +24,10 @@ export function AppMenu({ open, onOpenChange, trigger, listId, label, align = 'c
             event.key === 'Home' ? 0 :
             event.key === 'End' ? items.length - 1 :
             event.key === 'ArrowDown' ? (at + 1) % items.length :
-            (at - 1 + items.length) % items.length
+            // at === -1 means focus is still parked on the content, where onOpenAutoFocus put
+            // it. ArrowDown already reads that as "before the first item"; ArrowUp has to read
+            // it as "after the last one", which the generic (at - 1 + n) % n does not.
+            at <= 0 ? items.length - 1 : at - 1
         items[next].focus()
     }
     return (

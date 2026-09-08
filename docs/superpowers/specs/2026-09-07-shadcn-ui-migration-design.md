@@ -25,13 +25,13 @@ All values come from `src/App.jsx` (MUI palette), the JSS blocks, `src/App.css`/
 | `--primary` / `--primary-foreground` | `#EAEAEA` / `#1b1b1b` | light pill buttons |
 | `--secondary` / `--secondary-foreground` | `#474747` / `#EAEAEA` | grey pill buttons, S/M toggles |
 | `--muted-foreground` | `#AAAAAA` | palette primary.dark |
-| `--accent` (hover) | white at 20% | JSS `rgba(255,255,255,0.2)` |
-| `--border` | white at 10% | JSS |
+| `--accent` (selected) | white at 20% | JSS `rgba(255,255,255,0.2)`. This is the app's selected/open tint (`bg-white/20` on an open popup's trigger), not its hover: MUI's `IconButton`/`MenuItem` hover is white at 8%, spelled at the call site as `hover:bg-white/8` in `Button`'s `plain` variant and in `AppMenuItem`. |
+| `--border` | white at 10% | JSS. MUI's `Divider` is `divider`, white at 12%, which the app draws at the call site with `bg-white/12` on `Separator` and in `MUI_PRIMARY`/`MUI_SECONDARY`'s disabled fill rather than by moving this token, since `--border` paints every border in the app. |
 | `--input` | `#424242` field, outline white at 35% | text fields |
 | `--destructive` | `#F44336` | delete flows |
 | `--ring` | `#EAEAEA` | palette action.active |
 | `--radius` | 8px (dialogs, popovers, inputs' outer shape); buttons, icon buttons, avatars and toggles are full pills | shape.borderRadius 32, screenshots |
-| type | system stack unchanged (`-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, …`); body 14px, caption 12px, dialog title 20px, landing headline 30px bold; buttons keep sentence case | index.css, JSS, MUI typography |
+| type | `"Roboto", "Helvetica", "Arial", sans-serif`; body 14px, caption 12px, dialog title 20px, landing headline 30px bold; buttons keep sentence case | MUI `CssBaseline`, unlayered on `body`; every screen in `docs/ui-baseline/` was photographed with it, and no Roboto is served, so it renders as Helvetica. The spec originally named the system stack; keeping it would have changed every glyph on every screen, which is a redesign and not this migration. Also index.css, JSS, MUI typography |
 | breakpoints | `sm 500px`, `md 900px`, `lg 1200px`, `xl 1536px` | MUI theme |
 | motion | 200 ms ease for open/close (Radix `data-state` + Tailwind animation utilities), matching MUI Grow | MUI transitions |
 
@@ -63,7 +63,7 @@ The Jitsi container keeps its markup and gets Tailwind classes. `PlayUI.jsx` kee
 ## Stack
 
 - React 17 → 18 in PR 1 (`createRoot` in `src/index.jsx`), react-redux 7 → 9, Redux Toolkit 1.9 → 2 (redux 5), @testing-library/react 11 → 16 with user-event 14. React 18 → 19 in PR 3, after Material UI is deleted: MUI 4 calls `findDOMNode` (ButtonBase, Modal, Popover, its transitions), which React 19 removed, so the two cannot coexist. Until then the generated `Button` carries a `forwardRef` so Radix's `asChild` works on React 18. react-router-dom 5 stays. Vite 7, Vitest 3, eslint 8 stay.
-- Tailwind 4 via `@tailwindcss/vite`; shadcn 4.21 CLI initialised with `-b radix -p nova --pointer` (`components.json`: style `radix-nova`, `tsx: false`, css `src/index.css`, alias `@/` → `src/`); components are JavaScript, import `cn` from the `cn` package and primitives from `radix-ui`; `lucide-react` and `tw-animate-css` come along as their internal dependencies (the app's own icons are the copied Material glyphs); the preset's Geist font is removed in favour of the system stack; `jsconfig.json` and the Vite alias for `@/`.
+- Tailwind 4 via `@tailwindcss/vite`; shadcn 4.21 CLI initialised with `-b radix -p nova --pointer` (`components.json`: style `radix-nova`, `tsx: false`, css `src/index.css`, alias `@/` → `src/`); components are JavaScript, import `cn` from the `cn` package and primitives from `radix-ui`; `lucide-react` and `tw-animate-css` come along as their internal dependencies (the app's own icons are the copied Material glyphs); the preset's Geist font is removed in favour of the `"Roboto", "Helvetica", "Arial", sans-serif` stack `--font-sans` carries, which is what Material UI's `CssBaseline` put on the body and what every screen in `docs/ui-baseline/` was photographed with (see the type row); `jsconfig.json` and the Vite alias for `@/`.
 - Removed at the end of PR 3: `@material-ui/core`, `@material-ui/icons`, `react-color`, `react-loader-spinner`.
 
 ## File layout

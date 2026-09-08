@@ -8,16 +8,16 @@ import { setUser, setUsers, setRound, setRounds } from '../../redux/actions'
 
 const me = { id: 'me', displayName: 'Ada Lovelace', color: '#f44336' }
 
-function renderAvatar({ shouldShowMenu = true } = {}) {
+function renderAvatar({ shouldShowMenu = true, users = [me], route = '/play/r1' } = {}) {
     const store = makeStore()
     store.dispatch(setUser(me))
-    store.dispatch(setUsers([me]))
+    store.dispatch(setUsers(users))
     store.dispatch(setRound({ id: 'r1', name: 'Jam', layers: [] }))
     store.dispatch(setRounds([{ id: 'r1', name: 'Jam' }]))
     const firebase = { signOut: vi.fn(), updateUser: vi.fn() }
     const view = renderWithProviders(
-        <HeaderAvatar user={me} users={[me]} shouldShowMenu={shouldShowMenu} />,
-        { store, firebase, route: '/play/r1' }
+        <HeaderAvatar user={me} users={users} shouldShowMenu={shouldShowMenu} />,
+        { store, firebase, route }
     )
     return { store, firebase, ...view }
 }
@@ -51,6 +51,27 @@ describe('HeaderAvatar', () => {
         expect(firebase.updateUser).toHaveBeenCalledWith('me', { color: '#2196f3' })
         expect(store.getState().user.color).toBe('#2196f3')
         expect(store.getState().users[0].color).toBe('#2196f3')
+    })
+
+    it('saves the colour on /rounds, where nobody has joined a round and state.users is empty', async () => {
+        const user = userEvent.setup()
+        // React reports a throw inside an event handler as an uncaught error on window rather
+        // than letting it out of the click, so the handler surviving has to be asserted directly.
+        const thrown = []
+        const onError = (event) => thrown.push(event.error || event.message)
+        window.addEventListener('error', onError)
+        const { store, firebase } = renderAvatar({ users: [], route: '/rounds' })
+        await user.click(screen.getByTestId('button-sign-in-out'))
+
+        await user.click(await screen.findByTitle('#2196f3'))
+        window.removeEventListener('error', onError)
+
+        // The write is the part that matters, and it used to throw on the line after it: the
+        // round's own copy of this user is what state.users holds, and there is none here.
+        expect(thrown).toEqual([])
+        expect(firebase.updateUser).toHaveBeenCalledWith('me', { color: '#2196f3' })
+        expect(store.getState().user.color).toBe('#2196f3')
+        expect(store.getState().users).toEqual([])
     })
 
     it('signs out and empties everything the signed-in session held', async () => {

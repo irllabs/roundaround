@@ -2,7 +2,6 @@ import { createReducer } from "@reduxjs/toolkit";
 import {
     SET_IS_SHOWING_SIGNIN_DIALOG,
     SET_REDIRECT_AFTER_SIGN_IN,
-    SET_SIGNUP_DISPLAYNAME,
     SET_SELECTED_LAYER_ID,
     SET_IS_SHOWING_LAYER_SETTINGS,
     SET_IS_USING_JITSI,
@@ -20,7 +19,6 @@ const initialState = {
     selectedLayerId: null,
     isShowingSignInDialog: false,
     redirectAfterSignIn: null,
-    signupDisplayName: null,
     isUsingJitsi: false,
     isShowingRenameDialog: false,
     isShowingDeleteRoundDialog: false,
@@ -39,9 +37,6 @@ export default createReducer(initialState, (builder) => {
         })
         .addCase(SET_REDIRECT_AFTER_SIGN_IN, (state, action) => {
             state.redirectAfterSignIn = action.payload.value
-        })
-        .addCase(SET_SIGNUP_DISPLAYNAME, (state, action) => {
-            state.signupDisplayName = action.payload.value
         })
         .addCase(SET_SELECTED_LAYER_ID, (state, action) => {
             state.selectedLayerId = action.payload.layerId

@@ -5,7 +5,7 @@ import { setIsShowingSignInDialog, setRedirectAfterSignIn, setRounds } from '../
 import { createRound } from '../../utils/index'
 import { FirebaseContext } from '../../firebase';
 import { Button } from '@/components/ui/button';
-import { MUI_BUTTON, MUI_PRIMARY } from '../dialogs/AppDialog';
+import { MUI_BUTTON, MUI_PRIMARY } from '@/lib/mui';
 import { cn } from '@/lib/utils';
 
 class LandingPageRoute extends Component {

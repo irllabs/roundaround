@@ -1,98 +1,12 @@
 import React, { Component } from 'react'
-import PropTypes from 'prop-types'
-import { withStyles } from '@material-ui/styles'
-import Box from '@material-ui/core/Box'
 import { connect } from "react-redux"
 import AudioEngine from "../../audio-engine/AudioEngine"
 import { FirebaseContext } from '../../firebase'
-import {
-    setUserBusFx,
-    setUserBusFxOverride
-} from "../../redux/actions"
+import { setUserBusFxOverride } from "../../redux/actions"
 import EffectThumbControl from './EffectThumbControl'
-import ChevronRightIcon from '@material-ui/icons/ChevronRight'
+import { ChevronRightIcon } from '@/components/icons'
+import { cn } from '@/lib/utils'
 import _ from 'lodash'
-
-/** Returns a new array with the element at `from` moved to `to`, leaving `array` untouched. */
-const moveItem = (array, from, to) => {
-    const result = [...array]
-    const [item] = result.splice(from, 1)
-    result.splice(to, 0, item)
-    return result
-}
-
-const styles = theme => ({
-    root: {
-        width: '120px',
-        height: 'calc(100% - 64px)',
-        position: 'absolute',
-        right: '0',
-        top: '64px',
-        borderTop: 'solid 1px rgba(255,255,255,0.1)',
-        display: 'flex',
-        flexDirection: 'column',
-        alignItems: 'center',
-        justifyContent: 'center',
-        transition: 'right 0.4s',
-    },
-    effectContainer: {
-        display: 'flex',
-        position: 'relative',
-        flexDirection: 'column',
-        height: 352,
-        width: 120,
-        borderTopLeftRadius: 8,
-        borderBottomLeftRadius: 8,
-        backgroundColor: 'rgba(47,47,47,0.9)',
-        alignItems: 'center',
-        justifyContent: 'center',
-    },
-    isMinimized: {
-        right: '-120px'
-    },
-    minimizeButton: {
-        backgroundColor: 'rgba(47,47,47,0.9)',
-        width: '32px',
-        height: '32px',
-        position: 'absolute',
-        left: '-40px',
-        top: '12px',
-        borderRadius: 8,
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        transition: 'transform 0.4s',
-        cursor: 'pointer'
-    },
-    minimizeButtonIsMinimized: {
-        transform: 'rotateY(180deg)'
-    },
-    thumbControl: {
-        marginBottom: '0.5rem'
-    },
-    effectsSidebarList: {
-        margin: '0',
-        padding: '0',
-        width: '100%'
-    },
-    effectsSidebarListItem: {
-        listStyleType: 'none',
-        padding: '1rem',
-        paddingLeft: '0',
-        backgroundColor: '',
-        color: 'white',
-        borderTop: 'solid 1px rgba(255, 255, 255, 0.1)',
-        display: 'flex',
-        alignItems: 'center',
-    },
-    effectsSidebarListItemDragHandle: {
-        paddingLeft: '1rem',
-        paddingRight: '1rem',
-        display: 'flex',
-        cursor: 'move',
-        color: '#ededed'
-    }
-})
 
 const toTitleCase = (str) => {
     return str.replace(
@@ -109,27 +23,12 @@ class EffectsSidebar extends Component {
     constructor(props) {
         super(props)
         this.state = {
-            menuAnchorElement: null,
             isMinimized: false
         }
         this.onSwitchOn = this.onSwitchOn.bind(this)
         this.onSwitchOff = this.onSwitchOff.bind(this)
         this.onMinimizeClick = this.onMinimizeClick.bind(this)
-    }
-
-    onPlayClick() {
-        this.props.togglePlay()
-    }
-
-    onSortEnd = ({ oldIndex, newIndex }) => {
-        let userBus = _.cloneDeep(this.props.round.userBuses[this.props.user.id])
-        userBus.fx = moveItem(userBus.fx, oldIndex, newIndex)
-        for (let i = 0; i < userBus.fx.length; i++) {
-            userBus.fx[i].order = i
-        }
-        this.props.setUserBusFx(this.props.user.id, userBus.fx)
-        AudioEngine.busesByUser[this.props.user.id].setFxOrder(userBus.fx)
-        this.context.updateUserBus(this.props.round.id, this.props.user.id, userBus)
+        this.onMinimizeKeyDown = this.onMinimizeKeyDown.bind(this)
     }
 
     onSwitchOn(fxId) {
@@ -151,8 +50,18 @@ class EffectsSidebar extends Component {
     onMinimizeClick() {
         this.setState({ isMinimized: !this.state.isMinimized })
     }
+    onMinimizeKeyDown(event) {
+        if (event.key !== 'Enter' && event.key !== ' ') return
+        event.preventDefault()
+        // PlayUI puts a keydown listener on `window` that toggles playback on Space for any
+        // target that is not an input, textarea, select or contenteditable
+        // (src/utils/constants.js: KEY_MAPPINGS.playToggle is ' '). React delegates to the root
+        // container, which is inside window, so without this the sequencer would start playing
+        // every time someone minimized the sidebar from the keyboard.
+        event.stopPropagation()
+        this.onMinimizeClick()
+    }
     render() {
-        const { classes } = this.props;
         let items = []
         if (!_.isNil(this.props.round) && !_.isNil(this.props.round.userBuses) && !_.isNil(this.props.round.userBuses[this.props.user.id])) {
             for (const fx of this.props.round.userBuses[this.props.user.id].fx) {
@@ -167,27 +76,33 @@ class EffectsSidebar extends Component {
                 items.push(item)
             }
         }
-        const isMinimizedClass = this.state.isMinimized ? classes.isMinimized : '';
-        const buttonIsMinimizedClass = this.state.isMinimized ? classes.minimizeButtonIsMinimized : '';
-
         return (
-            <Box className={classes.root + ' ' + isMinimizedClass}>
-                <Box className={classes.effectContainer}>
-                    <Box className={classes.minimizeButton + ' ' + buttonIsMinimizedClass} onClick={this.onMinimizeClick}>
-                        <ChevronRightIcon size="small" />
-                    </Box>
+            <div className={cn('absolute top-16 flex h-[calc(100%-64px)] w-[120px] flex-col items-center justify-center border-t border-white/10 [transition:right_0.4s]',
+                this.state.isMinimized ? '-right-[120px]' : 'right-0')}>
+                <div id="effects-sidebar-effects" className="relative flex h-[352px] w-[120px] flex-col items-center justify-center rounded-l-lg bg-[rgba(47,47,47,0.9)]">
+                    {/* A div, not a button: capture.py's CHEVRON finds this control as the only
+                        32x32 div holding an svg on the right-hand edge. */}
+                    <div
+                        className={cn('absolute -left-10 top-3 flex size-8 cursor-pointer items-center justify-center rounded-lg bg-[rgba(47,47,47,0.9)] [transition:transform_0.4s]',
+                            this.state.isMinimized && '[transform:rotateY(180deg)]')}
+                        role="button"
+                        tabIndex={0}
+                        aria-label={this.state.isMinimized ? 'Show the effects' : 'Hide the effects'}
+                        aria-expanded={!this.state.isMinimized}
+                        aria-controls="effects-sidebar-effects"
+                        onClick={this.onMinimizeClick}
+                        onKeyDown={this.onMinimizeKeyDown}
+                    >
+                        <ChevronRightIcon />
+                    </div>
                     {items.map((fx) => (
-                        <EffectThumbControl key={fx.id} isOn={fx.isOn} isOverride={fx.isOverride} className={classes.thumbControl} label={toTitleCase(fx.label)} fxId={fx.id} userId={fx.userId} switchOn={this.onSwitchOn} switchOff={this.onSwitchOff} name={fx.name} />
+                        <EffectThumbControl key={fx.id} isOn={fx.isOn} isOverride={fx.isOverride} label={toTitleCase(fx.label)} fxId={fx.id} userId={fx.userId} switchOn={this.onSwitchOn} switchOff={this.onSwitchOff} name={fx.name} />
                     ))}
-                </Box>
-            </Box>
+                </div>
+            </div>
         )
     }
 }
-EffectsSidebar.propTypes = {
-    classes: PropTypes.object.isRequired,
-}
-
 const mapStateToProps = state => {
     return {
         round: state.round,
@@ -197,8 +112,5 @@ const mapStateToProps = state => {
 }
 
 export default connect(
-    mapStateToProps, {
-    setUserBusFx,
-    setUserBusFxOverride
-}
-)(withStyles(styles)(EffectsSidebar))
+    mapStateToProps, { setUserBusFxOverride }
+)(EffectsSidebar)

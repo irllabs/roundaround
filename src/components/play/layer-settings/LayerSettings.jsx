@@ -1,7 +1,5 @@
 import React, { Component } from 'react'
 import { connect } from "react-redux";
-import { Typography } from '@material-ui/core';
-import IconButton from '@material-ui/core/IconButton';
 import _ from 'lodash'
 import {
     SET_LAYER_MUTE,
@@ -11,8 +9,6 @@ import {
     SET_SELECTED_LAYER_ID,
     ADD_LAYER
 } from '../../../redux/actionTypes'
-import Box from '@material-ui/core/Box';
-import { withStyles } from '@material-ui/core/styles';
 import AudioEngine from '../../../audio-engine/AudioEngine'
 import Instruments from '../../../audio-engine/Instruments'
 
@@ -25,6 +21,9 @@ import { soloMuteStates } from '../../../utils/index';
 import LayerListPopup from './LayerListPopup';
 import HamburgerPopup from './HamburgerPopup';
 import DeleteClearPopup from './DeleteClearPopup';
+import { Button } from '@/components/ui/button'
+import { cn } from '@/lib/utils'
+import { layerSettingsClasses as classes, ICON_BUTTON, SM_BREAKPOINT } from './styles'
 import {
     PlusIcon,
     EqualiserIcon,
@@ -41,399 +40,15 @@ import {
     ElipsisIcon
 } from './resources'
 
-const styles = (theme) => ({
-    container: {
-        position: 'absolute',
-        display: 'flex',
-        justifyContent: 'center',
-        alignItems: 'flex-start',
-        backgroundColor: 'transparent',
-        bottom: 0,
-        right: '25%',
-        left: '25%',
-        [theme.breakpoints.down('md')]: {
-            right: '20%',
-            left: '20%'
-        },
-        [theme.breakpoints.down('sm')]: {
-            right: '5%',
-            left: '5%'
-        },
-    },
-    addLayerMobile: {
-        display: 'none',
-        [theme.breakpoints.down('xs')]: {
-            display: 'flex'
-        },
-    },
-    addLayerDesktop: {
-        display: 'flex',
-        [theme.breakpoints.down('xs')]: {
-            display: 'none'
-        },
-    },
-    selectedInstrumentInfo: {
-        display: 'flex',
-        [theme.breakpoints.down('xs')]: {
-            display: 'none'
-        }
-    },
-    drawer: {
-        backgroundColor: '#2E2E2E',
-        '& .MuiPaper-root': {
-            backgroundColor: '#2E2E2E',
-        }
-    },
-    root: {
-        boxSizing: 'border-box',
-        position: 'relative',
-        display: "flex",
-        flexDirection: "row",
-        height: 48,
-        borderRadius: 32,
-        marginBottom: 20,
-        justifyContent: "flex-start",
-        alignItems: "center",
-        width: 547,
-        /*'& > *': {
-            marginBottom: '1rem'
-        },*/
-        backgroundColor: '#333333',
-        [theme.breakpoints.down('md')]: {
-            height: 48,
-            marginBottom: 10,
-        },
-        [theme.breakpoints.down('sm')]: {
-            marginBottom: 5,
-        },
-        [theme.breakpoints.down('xs')]: {
-            width: 341
-        },
-    },
-    mixerPopup: {
-        display: 'flex',
-        flexDirection: 'column',
-        position: 'absolute',
-        opacity: 1,
-        top: -247,
-        height: 243,
-        width: 499,
-        right: 0,
-        left: 48,
-        borderRadius: 8,
-        zIndex: 100,
-        boxShadow: '0px 0px 2px rgba(0, 0, 0, 0.15), 0px 4px 6px rgba(0, 0, 0, 0.15)',
-        backgroundColor: '#333333',
-        overflow: 'hidden',
-        transition: 'opacity 0.2s ease-in',
-        [theme.breakpoints.down('sm')]: {
-            top: -163,
-            height: 160,
-            left: 0,
-        },
-        [theme.breakpoints.down('xs')]: {
-            width: 341
-        }
-    },
-    mixerPopupHeader: {
-        display: 'flex',
-        flex: 1,
-        justifyContent: 'flex-start',
-        alignItems: 'center',
-        padding: '10px 15px',
-        borderBottom: 'thin solid rgba(255, 255, 255, 0.1)'
-    },
-    mixerPopupHeaderText: {
-        marginLeft: 13,
-        fontSize: 18
-    },
-    buttonText: { lineHeight: 1, fontSize: 16 },
-    instrumentPopup: {
-        position: 'absolute',
-        bottom: 47,
-        backgroundColor: '#333333',
-        right: 0,
-        left: 0,
-        borderRadius: 8,
-        padding: '5px 0',
-        zIndex: 100,
-        boxShadow: '0px 0px 2px rgba(0, 0, 0, 0.15), 0px 4px 6px rgba(0, 0, 0, 0.15)',
-        overflow: 'hidden',
-        transition: 'opacity 0.2s ease-in',
-        [theme.breakpoints.down('sm')]: {
-            width: 216,
-        },
-    },
-    instrumentSample: {
-        display: 'flex',
-        fontWeight: 'bolder',
-        lineHeight: 1,
-        textAlign: 'center',
-        textTransform: 'capitalize',
-        [theme.breakpoints.down('xs')]: {
-            flex: 1
-        }
-    },
-    addLayerContainer: {
-        display: 'flex',
-        flexDirection: 'row',
-        justifyContent: 'center',
-        alignItems: 'center',
-        padding: 0,
-        margin: 0,
-        backgroundColor: '#4D4D4D',
-        height: '100%',
-        borderRadius: 30
-    },
-    iconButtons: {
-        width: 48,
-        height: 48,
-        '&:hover': {
-            backgroundColor: 'rgba(255, 255, 255, 0.2)'
-        }
-    },
-    rectButton: {
-        display: 'flex',
-        flexDirection: 'row',
-        padding: '5px 15px',
-        width: '100%',
-        borderRadius: 0
-    },
-    mixerButton: {
-        display: 'flex',
-        flexDirection: 'row',
-        alignItems: 'center',
-        justifyContent: 'center',
-        backgroundColor: 'rgba(255, 255, 255, 0.1)',
-        height: 32,
-        width: 32,
-        marginLeft: 5,
-        marginRight: 5,
-        [theme.breakpoints.down('sm')]: {
-            width: 32,
-            height: 32,
-        },
-    },
-    volumeSliderContainer: {
-        display: 'flex',
-        flex: 2,
-        flexDirection: 'row',
-        alignItems: 'center',
-        justifyContent: 'center',
-    },
-    instrumentIcon: {
-        width: 13.5,
-        height: 16
-    },
-    instrumentSummary: {
-        display: 'flex',
-        flexDirection: 'row',
-        alignItems: 'center',
-        justifyContent: 'flex-start',
-        margin: '10px 0',
-        width: 216,
-        height: 32,
-        fontWeight: 'bold',
-        padding: '6px 15px',
-        borderRadius: 24,
-        backgroundColor: 'rgba(255,255,255, 0.1)',
-        '&:hover': {
-            backgroundColor: 'rgba(255, 255, 255, 0.2)'
-        },
-        [theme.breakpoints.down('xs')]: {
-            width: 106
-        }
-    },
-    stepCount: {
-        display: 'flex',
-        flexDirection: 'row',
-        alignItems: 'center',
-        margin: '10px 0',
-        width: 59,
-        height: 32,
-        padding: '6px 12px',
-        borderRadius: 24,
-        backgroundColor: 'rgba(255,255,255, 0.1)',
-        '&:hover': {
-            backgroundColor: 'rgba(255, 255, 255, 0.2)'
-        },
-    },
-    stepLength: {
-        display: 'flex',
-        alignItems: 'flex-start',
-        lineHeight: 1,
-    },
-    actionButtonContainer: {
-        position: 'relative',
-        display: 'flex',
-        justifyContent: 'center',
-        alignItems: 'center',
-        marginLeft: 8,
-        marginRight: 8
-        // [theme.breakpoints.down('sm')]: {
-        //     width: 106,
-        // },
-    },
-    hamburgerPopup: {
-        position: 'absolute',
-        display: 'flex',
-        flexDirection: 'column',
-        justifyContent: 'center',
-        opacity: 1,
-        top: -108,
-        height: 104,
-        width: 155,
-        left: 0,
-        borderRadius: 8,
-        zIndex: 100,
-        boxShadow: '0px 0px 2px rgba(0, 0, 0, 0.15), 0px 4px 6px rgba(0, 0, 0, 0.15)',
-        backgroundColor: '#333333',
-        overflow: 'hidden',
-        transition: 'opacity 0.2s ease-in',
-        [theme.breakpoints.down('sm')]: {
-            left: 0,
-        },
-    },
-    deleteClearPopup: {
-        position: 'absolute',
-        display: 'flex',
-        flexDirection: 'column',
-        justifyContent: 'center',
-        opacity: 1,
-        top: -100,
-        height: 104,
-        width: 155,
-        right: 0,
-        borderRadius: 8,
-        zIndex: 100,
-        boxShadow: '0px 0px 2px rgba(0, 0, 0, 0.15), 0px 4px 6px rgba(0, 0, 0, 0.15)',
-        backgroundColor: '#333333',
-        overflow: 'hidden',
-        transition: 'opacity 0.2s ease-in',
-        [theme.breakpoints.down('sm')]: {
-            right: 0,
-        },
-    },
-    desktopDeleteClear: {
-        display: 'flex',
-        [theme.breakpoints.down('xs')]: {
-            display: 'none'
-        }
-    },
-    mobileDeleteClear: {
-        display: 'none',
-        [theme.breakpoints.down('xs')]: {
-            display: 'flex'
-        },
-    },
-    actionButton: {
-        display: 'flex',
-        flexDirection: 'row',
-        alignItems: 'center',
-        padding: 5,
-        height: 32,
-        width: 32,
-        margin: '10px 0',
-        backgroundColor: 'rgba(255,255,255, 0.1)',
-        '&:hover': {
-            backgroundColor: 'rgba(255, 255, 255, 0.2)'
-        }
-    },
-    msg: {
-        flex: 1,
-        textAlign: 'center',
-        padding: '0 15px',
-        [theme.breakpoints.down('xs')]: {
-            fontSize: 14,
-            padding: '0 15px'
-        }
-    },
-    containerSoloMute: {
-        flex: 1,
-        display: 'flex',
-        paddingLeft: 20,
-        flexDirection: 'row',
-        alignItems: 'center',
-        justifyContent: 'space-between'
-    },
-    layerContainer: {
-        display: 'flex',
-        flex: 6,
-        overflowY: 'scroll',
-        height: '100%',
-        zIndex: 100,
-        flexDirection: 'column',
-    },
-    layerSubContainer: {
-        flex: 1,
-        display: 'flex',
-        flexDirection: 'row',
-        cursor: 'pointer',
-        '&:hover': {
-            backgroundColor: 'rgba(255, 255, 255, 0.1)'
-        }
-    },
-    layer: {
-        flex: 1,
-        display: 'flex',
-        flexDirection: 'row',
-        borderBottom: 'thin solid rgba(255, 255, 255, 0.1)',
-        paddingTop: 10,
-        paddingBottom: 10,
-        marginLeft: 20,
-        marginRight: 20
-    },
-    layerOptions: {
-        position: 'relative',
-        width: '90%',
-        display: 'flex',
-        justifyContent: 'flex-start',
-        alignItems: 'center'
-    },
-    plainButton: {
-        '&:hover': {
-            backgroundColor: 'transparent'
-        }
-    },
-    buttonWithText: {
-        display: 'flex',
-        flexDirection: 'row',
-        width: '100%',
-        height: 44,
-        alignItems: 'center',
-        borderRadius: 0,
-        justifyContent: 'space-between',
-    },
-    buttonContainer: {
-        width: '100%',
-        marginBottom: theme.spacing(2),
-        [theme.breakpoints.down('sm')]: {
-            flexDirection: "column"
-        },
-    },
-    containedButton: {
-        [theme.breakpoints.down('sm')]: {
-            marginBottom: theme.spacing(1)
-        },
-    },
-    soundTabs: {
-        marginBottom: theme.spacing(2),
-        '& .MuiTab-root': {
-            minWidth: 134
-        }
-    },
-    divider: {
-        width: '100%',
-        marginTop: theme.spacing(2),
-        marginBottom: theme.spacing(2),
-    },
-    hidden: {
-        opacity: 0,
-        position: 'absolute',
-        top: '200%',
-        transition: 'opacity 0.2s ease-out'
-    }
-})
+/**
+ * Every popup's own state flag: the single list `hideAllLayerInspectorModals` clears and
+ * `isShowingAPopup` reads, so a tenth popup cannot arrive in one and not the other.
+ */
+const POPUP_FLAGS = [
+    'showMixerPopup', 'showInstrumentsPopup', 'showInstrumentsList',
+    'showArticulationOptions', 'showLayerPopup', 'showVolumePopup', 'showDeleteClearPopup',
+    'showHamburgerPopup'
+]
 
 class LayerSettings extends Component {
     constructor(props) {
@@ -442,7 +57,6 @@ class LayerSettings extends Component {
             showMixerPopup: false,
             showInstrumentsPopup: false,
             showInstrumentsList: false,
-            showSoundsList: false,
             showArticulationOptions: false,
             showLayerPopup: false,
             showVolumePopup: false,
@@ -474,19 +88,15 @@ class LayerSettings extends Component {
         this.subtractStepsButton = React.createRef()
         this.percentageButton = React.createRef()
         this.msButton = React.createRef()
-        this.height = window.innerHeight;
     }
 
     static contextType = FirebaseContext;
 
-    resizeHeight = () => {
-        this.height = window.innerHeight;
-    }
     componentDidMount() {
         window.addEventListener('click', this.onClick)
+        window.addEventListener('keydown', this.onKeyDown)
         window.addEventListener('resize', this.updateWindowWidth)
         this.updateWindowWidth();
-        window.addEventListener('resize', this.resizeHeight);
         if (this.props.round && this.props.selectedLayerId) {
             const selectedLayer = _.find(this.props.round.layers, { id: this.props.selectedLayerId })
             this.setSelectedInstrument(selectedLayer)
@@ -529,8 +139,8 @@ class LayerSettings extends Component {
             this.applySolo(null)
         }
         window.removeEventListener('click', this.onClick)
+        window.removeEventListener('keydown', this.onKeyDown)
         window.removeEventListener('resize', this.updateWindowWidth)
-        window.removeEventListener('resize', this.resizeHeight)
     }
 
     updateWindowWidth = () => this.setState({ windowWidth: window.innerWidth })
@@ -583,18 +193,37 @@ class LayerSettings extends Component {
         }
     }
 
+    /**
+     * The popups are opened by pointer and were, until now, only closable by pointer.
+     *
+     * An Escape another handler has already answered -- a Radix dialog or popover over the play
+     * route dismisses on Escape and marks it -- is left alone. `PlayUI.onKeypress`'s guards against
+     * a disabled key listener and against typing are not needed here, because Escape types nothing
+     * and no field on this route reads it.
+     *
+     * Only an Escape that actually closes something is taken, and taking it means saying so with
+     * `preventDefault`, the way every other Escape handler in the app (Radix's dismissable layers)
+     * does. An Escape this component ignores stays the browser's: in Chrome that is Stop, and
+     * headless Chrome answers it by freezing the document's animation frames, after which no
+     * popover's exit animation ever ends and every closed one stays in the DOM. Consuming every
+     * Escape on the play route instead would take Stop away from keys this component has nothing
+     * to do with.
+     */
+    onKeyDown = (e) => {
+        if (e.key !== 'Escape' || e.defaultPrevented || !this.isShowingAPopup()) {
+            return
+        }
+        e.preventDefault()
+        this.hideAllLayerInspectorModals()
+    }
+
+    /** Whether there is a popup for Escape to close. */
+    isShowingAPopup() {
+        return POPUP_FLAGS.some(flag => this.state[flag])
+    }
+
     hideAllLayerInspectorModals = () => {
-        this.setState({
-            showMixerPopup: false,
-            showInstrumentsPopup: false,
-            showInstrumentsList: false,
-            showSoundsList: false,
-            showArticulationOptions: false,
-            showLayerPopup: false,
-            showVolumePopup: false,
-            showDeleteClearPopup: false,
-            showHamburgerPopup: false
-        })
+        this.setState(Object.fromEntries(POPUP_FLAGS.map(flag => [flag, false])))
     }
 
     onCloseClick() {
@@ -606,10 +235,6 @@ class LayerSettings extends Component {
         this.props.dispatch({ type: SET_SELECTED_LAYER_ID, payload: { layerId } })
         //this.props.dispatch({ type: SET_IS_SHOWING_LAYER_SETTINGS, payload: { value: true } })
         //this.highlightLayer(_.find(this.layerGraphics, { id: layerId }))
-    }
-
-    onPreviewClick() {
-        // TODO: only audible to this user (mute for all others)
     }
 
     // Solo is local to this listener: it silences the other layers in this browser's audio graph
@@ -749,14 +374,14 @@ class LayerSettings extends Component {
             windowWidth
         } = this.state;
 
-        const { classes, theme, user } = this.props
+        const { user } = this.props
         const selectedLayer = this.props.selectedLayer
         const userColors = this.getUserColors()
-        const isMobile = windowWidth < theme.breakpoints.values.sm
+        const isMobile = windowWidth < SM_BREAKPOINT
         const sample = selectedLayer?.instrument?.sample
 
         const instrumentIcon = (name) => {
-            let Icon = <svg></svg>;
+            let Icon = () => <svg></svg>;
             if (name === 'HiHats')
                 Icon = HiHatsIcon
             if (name === 'Kicks')
@@ -765,16 +390,19 @@ class LayerSettings extends Component {
                 Icon = SnareIcon
             if (name === 'Perc')
                 Icon = PercIcon
-            return <Box style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', margin: 0, padding: 0 }}>
+            return <div className="m-0 flex items-center justify-center p-0">
                 <Icon />
-            </Box>
+            </div>
         }
 
+        // Each bar trigger says which popup it owns and whether that popup is open, the way the
+        // effects sidebar's chevron does: the popups are never unmounted, so the wrapper the
+        // `aria-controls` id sits on is always there to be pointed at. Six triggers, six popups --
+        // "More" and the ellipsis are the phone-size halves of the pair the desktop splits in two.
         const form = (
-            <Box className={classes.root}>
+            <div className={classes.root}>
                 <LayerListPopup
                     instrumentIcon={instrumentIcon}
-                    height={this.height}
                     classes={classes}
                     round={this.props.round}
                     user={user}
@@ -796,42 +424,59 @@ class LayerSettings extends Component {
                     showMixerPopup={showMixerPopup}
                     showHamburgerPopup={showHamburgerPopup}
                 />
-                <Box className={classes.addLayerContainer}>
-                    <Box className={classes.addLayerDesktop}>
-                        <IconButton ref={this.addLayerButton} onClick={this.onAddLayerClick} className={classes.iconButtons}>
+                <div className={classes.addLayerContainer}>
+                    <div className={classes.addLayerDesktop}>
+                        <Button
+                            type="button"
+                            variant="plain"
+                            size="icon-app"
+                            aria-label="Add a layer"
+                            ref={this.addLayerButton}
+                            onClick={this.onAddLayerClick}
+                            className={cn(ICON_BUTTON, classes.iconButtons)}
+                        >
                             <PlusIcon user={user} userColors={userColors} />
-                        </IconButton>
-                        <IconButton
-                            style={showMixerPopup ? { backgroundColor: 'rgba(255, 255, 255, 0.2)' } : {}}
+                        </Button>
+                        <Button
+                            type="button"
+                            variant="plain"
+                            size="icon-app"
+                            aria-label="Open the mixer"
+                            aria-expanded={showMixerPopup}
+                            aria-controls="mixer-popup"
                             ref={this.mixerPopupButton}
-                            className={classes.iconButtons}
+                            className={cn(ICON_BUTTON, classes.iconButtons, showMixerPopup && 'bg-white/20')}
                             onClick={this.toggleShowMixerPopup}
                         >
                             <EqualiserIcon user={user} userColors={userColors} />
-                        </IconButton>
-                    </Box>
-                    <Box className={classes.addLayerMobile}>
-                        <IconButton
+                        </Button>
+                    </div>
+                    <div className={classes.addLayerMobile}>
+                        <Button
+                            type="button"
+                            variant="plain"
+                            size="icon-app"
+                            aria-label="More"
+                            aria-expanded={showHamburgerPopup}
+                            aria-controls="hamburger-popup"
                             ref={this.hamburgerButton}
-                            className={classes.iconButtons}
+                            className={cn(ICON_BUTTON, classes.iconButtons)}
                             onClick={this.toggleShowHamburgerPop}
                         >
                             {showHamburgerPopup ?
                                 <CloseIcon fill={user && userColors[user.id]} /> :
                                 <HamburgerMenuIcon user={user} userColors={userColors} />}
-                        </IconButton>
-                    </Box>
-                </Box>
-                <Box className={classes.layerOptions}>
+                        </Button>
+                    </div>
+                </div>
+                <div className={classes.layerOptions}>
                     {!selectedLayer &&
-                        <Typography
-                            className={classes.msg}
-                        >
+                        <p className={classes.msg}>
                             Long Press a round to edit
-                        </Typography>}
+                        </p>}
                     {selectedLayer &&
-                        <Box style={{ display: 'flex', flex: 1, flexDirection: 'row' }}>
-                            <Box className={classes.actionButtonContainer}>
+                        <div className="flex flex-1 flex-row">
+                            <div className={classes.actionButtonContainer}>
                                 <LayerInstrument
                                     key={selectedLayer.id}
                                     showInstrumentsPopup={showInstrumentsPopup}
@@ -849,33 +494,33 @@ class LayerSettings extends Component {
                                     soundsButtonRef={this.soundsButton}
                                     user={user}
                                 />
-                                <IconButton
+                                <Button
+                                    type="button"
+                                    variant="plain"
+                                    size="icon-app"
                                     ref={this.instrumentPopupButton}
                                     id='instrument-summary'
-                                    style={
-                                        showInstrumentsPopup ?
-                                            { backgroundColor: 'rgba(255, 255, 255, 0.2)', display: 'flex', flexDirection: 'row' } :
-                                            { display: 'flex', flexDirection: 'row' }
-                                    }
-                                    className={classes.instrumentSummary}
+                                    aria-expanded={showInstrumentsPopup}
+                                    aria-controls="instrument-popup"
+                                    className={cn(ICON_BUTTON, classes.instrumentSummary, showInstrumentsPopup && 'bg-white/20')}
                                     onClick={this.toggleInstrumentPopup}
                                 >
-                                    <Box style={{ display: 'flex', flexDirection: 'row', alignItems: 'center', justifyContent: 'center', paddingRight: 5 }}>
+                                    <div className="flex flex-row items-center justify-center pr-[5px]">
                                         {instrumentIcon(selectedLayer?.instrument?.sampler)}
-                                    </Box>
-                                    <Box className={classes.selectedInstrumentInfo}>
-                                        <Typography style={{ fontWeight: 'bolder', lineHeight: 1, textTransform: 'capitalize' }}>
+                                    </div>
+                                    <div className={classes.selectedInstrumentInfo}>
+                                        <p className="m-0 text-base leading-none tracking-[0.00938em] capitalize [font-weight:bolder]">
                                             {selectedInstrument}
-                                        </Typography>
-                                        <Typography style={{ fontSize: 30, marginLeft: 5, marginRight: 5, lineHeight: .5 }}>&#183;</Typography>
-                                    </Box>
-                                    <Typography className={classes.instrumentSample}>
+                                        </p>
+                                        <p className="m-0 mx-[5px] text-[30px] leading-[0.5]">&#183;</p>
+                                    </div>
+                                    <p className={classes.instrumentSample}>
                                         {`${selectedLayer?.instrument?.sample.substring(0, isMobile ? 6 : sample.length)}${isMobile &&
                                             selectedLayer?.instrument?.sample.length > 6 ? '...' : ''}`}
-                                    </Typography>
-                                </IconButton>
-                            </Box>
-                            <Box className={classes.actionButtonContainer}>
+                                    </p>
+                                </Button>
+                            </div>
+                            <div className={classes.actionButtonContainer}>
                                 <LayerPopup
                                     key={selectedLayer.id}
                                     addStepsButtonRef={this.addStepsButton}
@@ -889,21 +534,26 @@ class LayerSettings extends Component {
                                     user={user}
                                     playUIRef={this.props.playUIRef}
                                 />
-                                <IconButton
+                                <Button
+                                    type="button"
+                                    variant="plain"
+                                    size="icon-app"
+                                    aria-label="Layer options"
+                                    aria-expanded={showLayerPopup}
+                                    aria-controls="layer-popup"
                                     ref={this.layerPopupButton}
                                     onClick={this.toggleLayerPopup}
-                                    style={showLayerPopup ? { backgroundColor: 'rgba(255, 255, 255, 0.2)' } : {}}
-                                    className={classes.stepCount}
+                                    className={cn(ICON_BUTTON, classes.stepCount, showLayerPopup && 'bg-white/20')}
                                 >
-                                    <Box style={{ display: 'flex', flexDirection: 'row', alignItems: 'center' }}>
+                                    <div className="flex flex-row items-center">
                                         <svg width="12" height="12" viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg">
                                             <circle cx="6" cy="6" r="5" stroke={user && user.id && userColors[user.id]} strokeWidth="2" />
                                         </svg>
-                                    </Box>
-                                    <Typography className={classes.stepLength} style={{ fontWeight: 'bolder' }}>{selectedLayer.steps.length}</Typography>
-                                </IconButton>
-                            </Box>
-                            <Box className={classes.actionButtonContainer}>
+                                    </div>
+                                    <p className={classes.stepLengthBold}>{selectedLayer.steps.length}</p>
+                                </Button>
+                            </div>
+                            <div className={classes.actionButtonContainer}>
                                 <VolumePopup
                                     key={selectedLayer.id}
                                     onMute={this.onMuteClick}
@@ -917,47 +567,72 @@ class LayerSettings extends Component {
                                     round={this.props.round}
                                     user={user}
                                 />
-                                <IconButton
+                                <Button
+                                    type="button"
+                                    variant="plain"
+                                    size="icon-app"
+                                    aria-label="Volume, solo and mute"
+                                    aria-expanded={showVolumePopup}
+                                    aria-controls="volume-popup"
                                     ref={this.volumePopupButton}
                                     onClick={this.toggleVolumePopup}
-                                    style={showVolumePopup ? { backgroundColor: 'rgba(255, 255, 255, 0.2)' } : {}}
-                                    className={classes.actionButton}
+                                    className={cn(ICON_BUTTON, classes.actionButton, showVolumePopup && 'bg-white/20')}
                                 >
                                     {selectedLayer.isMuted ? <MutedIcon /> : <MuteIcon />}
-                                </IconButton>
-                            </Box>
-                            <Box className={classes.mobileDeleteClear}>
-                                <Box className={classes.actionButtonContainer}>
+                                </Button>
+                            </div>
+                            <div className={classes.mobileDeleteClear}>
+                                <div className={classes.actionButtonContainer}>
                                     <DeleteClearPopup
                                         showDeleteClearPopup={showDeleteClearPopup}
                                         classes={classes}
                                         onClearStepsClick={this.onClearStepsClick.bind(this)}
                                         onDeleteLayerClick={this.onDeleteLayerClick.bind(this)}
                                     />
-                                    <IconButton
-                                        className={classes.actionButton}
+                                    <Button
+                                        type="button"
+                                        variant="plain"
+                                        size="icon-app"
+                                        aria-label="Clear or delete this layer"
+                                        aria-expanded={showDeleteClearPopup}
+                                        aria-controls="delete-clear-popup"
+                                        className={cn(ICON_BUTTON, classes.actionButton)}
                                         onClick={this.toggleShowDeleteClearPopup}
                                         ref={this.showDeleteClearPopupButton}
                                     >
                                         <ElipsisIcon />
-                                    </IconButton>
-                                </Box>
-                            </Box>
-                            <Box className={classes.desktopDeleteClear}>
-                                <Box className={classes.actionButtonContainer}>
-                                    <IconButton onClick={this.onClearStepsClick.bind(this)} className={classes.actionButton}>
+                                    </Button>
+                                </div>
+                            </div>
+                            <div className={classes.desktopDeleteClear}>
+                                <div className={classes.actionButtonContainer}>
+                                    <Button
+                                        type="button"
+                                        variant="plain"
+                                        size="icon-app"
+                                        aria-label="Clear this layer"
+                                        onClick={this.onClearStepsClick.bind(this)}
+                                        className={cn(ICON_BUTTON, classes.actionButton)}
+                                    >
                                         <ErasorIcon />
-                                    </IconButton>
-                                </Box>
-                                <Box className={classes.actionButtonContainer}>
-                                    <IconButton onClick={this.onDeleteLayerClick.bind(this)} className={classes.actionButton}>
+                                    </Button>
+                                </div>
+                                <div className={classes.actionButtonContainer}>
+                                    <Button
+                                        type="button"
+                                        variant="plain"
+                                        size="icon-app"
+                                        aria-label="Delete this layer"
+                                        onClick={this.onDeleteLayerClick.bind(this)}
+                                        className={cn(ICON_BUTTON, classes.actionButton)}
+                                    >
                                         <TrashIcon />
-                                    </IconButton>
-                                </Box>
-                            </Box>
-                        </Box>}
-                </Box>
-            </Box>
+                                    </Button>
+                                </div>
+                            </div>
+                        </div>}
+                </div>
+            </div>
         )
 
         return (
@@ -978,12 +653,10 @@ const mapStateToProps = state => {
         user: state.user,
         users: state.users,
         selectedLayerId: state.display.selectedLayerId,
-        selectedLayer,
-        isOpen: state.display.isShowingLayerSettings
+        selectedLayer
     };
 };
 
-
 export default connect(
     mapStateToProps
-)(withStyles(styles, { withTheme: true })(LayerSettings))
+)(LayerSettings)

@@ -1,9 +1,10 @@
 import React, { useState, useContext, useRef } from 'react';
 import { connect } from "react-redux";
-import { setIsShowingSignInDialog, setSignUpDisplayName, setUser, setRounds, setRedirectAfterSignIn } from '../../redux/actions'
+import { setIsShowingSignInDialog, setUser, setRedirectAfterSignIn } from '../../redux/actions'
 import { FirebaseContext } from '../../firebase';
 import { getRandomColor } from '../../utils/index'
-import { AppDialog, AppDialogBody, MUI_BUTTON, MUI_PRIMARY, MUI_SECONDARY } from './AppDialog'
+import { AppDialog, AppDialogBody } from './AppDialog'
+import { MUI_BUTTON, MUI_PRIMARY, MUI_SECONDARY } from '@/lib/mui'
 import { OutlinedField } from '../fields/OutlinedField'
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
@@ -19,7 +20,7 @@ const FORM_FIELD = 'mb-4 min-w-[300px]'
 /** The JSS `error`. */
 const ERROR = 'mb-8 text-center font-semibold'
 
-const SignInDialog = ({ isShowingSignInDialog, setIsShowingSignInDialog, setSignUpDisplayName, setUser, setRounds, redirectAfterSignIn, setRedirectAfterSignIn }) => {
+const SignInDialog = ({ isShowingSignInDialog, setIsShowingSignInDialog, setUser, redirectAfterSignIn, setRedirectAfterSignIn }) => {
     const firebaseContext = useContext(FirebaseContext);
     const onClose = () => {
         setIsShowingEmailForm(false)
@@ -244,7 +245,6 @@ const SignInDialog = ({ isShowingSignInDialog, setIsShowingSignInDialog, setSign
 
 const mapStateToProps = state => {
     return {
-        user: state.user,
         isShowingSignInDialog: state.display.isShowingSignInDialog,
         redirectAfterSignIn: state.display.redirectAfterSignIn
     };
@@ -254,9 +254,7 @@ export default connect(
     mapStateToProps,
     {
         setIsShowingSignInDialog,
-        setSignUpDisplayName,
         setUser,
-        setRounds,
         setRedirectAfterSignIn
     }
 )(SignInDialog);

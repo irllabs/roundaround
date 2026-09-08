@@ -1,13 +1,11 @@
 import React, { Component } from 'react'
 import PlayUI from './PlayUI'
-import PropTypes from 'prop-types';
-import { withStyles } from '@material-ui/styles';
 import EffectsSidebar from './EffectsSidebar';
-import Box from '@material-ui/core/Box';
-import Button from '@material-ui/core/Button';
-import Typography from '@material-ui/core/Typography';
+import { Button } from '@/components/ui/button';
+import { Spinner } from '@/components/ui/spinner';
+import { MUI_BUTTON, MUI_PRIMARY } from '@/lib/mui';
+import { cn } from '@/lib/utils';
 import _ from 'lodash';
-import Loader from 'react-loader-spinner';
 import { connect } from "react-redux";
 import { FirebaseContext } from '../../firebase';
 import { setRound, setUsers, setIsPlaying, setUserBusFxOverride, addUserBus, setRoundCurrentUsers, setRoundContributors, setRoundBpm, setRoundSwing, setIsPlayingSequence, updateLayer, addLayer, removeLayer } from '../../redux/actions'
@@ -20,37 +18,6 @@ import { getDefaultUserBus, getDefaultUserPatterns } from '../../utils/defaultDa
 import { derivedContributors, normalizeLegacyFxOrder } from '../../utils/index'
 import LayerSettings from './layer-settings/LayerSettings';
 import CustomSamples from '../../audio-engine/CustomSamples';
-
-const styles = theme => ({
-    root: {
-        height: '100%',
-        position: 'relative',
-        overflow: 'hidden'
-    },
-    loader: {
-        position: 'absolute',
-        top: 0,
-        zIndex: 9,
-        width: '100%',
-        height: '100%',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center'
-    },
-    error: {
-        position: 'absolute',
-        top: 0,
-        zIndex: 9,
-        width: '100%',
-        height: '100%',
-        display: 'flex',
-        flexDirection: 'column',
-        alignItems: 'center',
-        justifyContent: 'center',
-        textAlign: 'center',
-        padding: '2rem'
-    }
-})
 
 // Events that count as the user gesture browsers require before audio may start.
 const AUDIO_UNLOCK_EVENTS = ['touchstart', 'pointerdown', 'keydown']
@@ -556,48 +523,46 @@ class PlayRoute extends Component {
     }
 
     render() {
-        const { classes, round } = this.props;
+        const { round } = this.props;
         const { loadError } = this.state
         return (
-            <Box className={classes.root}>
-                {
-                    !_.isNil(round) &&
-                    <PlayUI childRef={ref => (this.playUIRef = ref)} />
+            // `overflow-clip`, not `overflow-hidden`: the two paint the same, but `hidden` makes
+            // this a scroll container, and the always-mounted layer-settings popups sit at
+            // `top: 200%` inside it. Anything that scrolls a focused descendant into view --
+            // Tab used to, before the popups were made `inert` -- scrolled the whole route down
+            // by ~303px with no way back, because nothing on this route is meant to scroll.
+            // `clip` is not a scroll container at all, so that cannot happen again.
+            <div className="relative h-full overflow-clip">
+                {!_.isNil(round) && <PlayUI childRef={ref => (this.playUIRef = ref)} />}
+                {_.isNil(round) && _.isNil(loadError) &&
+                    <div className="absolute top-0 z-[9] flex h-full w-full items-center justify-center">
+                        <Spinner className="size-[100px] text-[#00BFFF]" />
+                    </div>
                 }
-                {
-                    _.isNil(round) && _.isNil(loadError) &&
-                    <Loader
-                        className={classes.loader}
-                        type="Puff"
-                        color="#00BFFF"
-                        height={100}
-                        width={100}
-                        visible={true}
-                    />
-                }
-                {
-                    !_.isNil(loadError) &&
-                    <Box className={classes.error} role="alert">
-                        <Typography variant="h5" gutterBottom>This round could not be loaded.</Typography>
-                        <Typography color="textSecondary" gutterBottom>{loadError.message || String(loadError)}</Typography>
-                        <Button variant="contained" color="primary" disableElevation onClick={this.onBackToRoundsClick} data-test="button-back-to-rounds-error">
+                {!_.isNil(loadError) &&
+                    <div role="alert" className="absolute top-0 z-[9] flex h-full w-full flex-col items-center justify-center p-8 text-center">
+                        <p className="m-0 mb-[0.35em] text-2xl leading-[1.334] tracking-normal">This round could not be loaded.</p>
+                        <p className="m-0 mb-[0.35em] text-base leading-6 tracking-[0.00938em] text-white/70">{loadError.message || String(loadError)}</p>
+                        <Button
+                            type="button"
+                            className={cn(MUI_BUTTON, MUI_PRIMARY)}
+                            onClick={this.onBackToRoundsClick}
+                            data-test="button-back-to-rounds-error"
+                        >
                             Back to my rounds
                         </Button>
-                    </Box>
+                    </div>
                 }
                 <EffectsSidebar />
                 <ShareDialog />
                 <OrientationDialog />
-                <Box style={{ position: 'relative', display: 'flex', justifyContent: 'center', width: '100%' }}>
+                <div className="relative flex w-full justify-center">
                     <LayerSettings playUIRef={this.playUIRef} />
-                </Box>
-            </Box>
+                </div>
+            </div>
         )
     }
 }
-PlayRoute.propTypes = {
-    classes: PropTypes.object.isRequired,
-};
 const mapStateToProps = state => {
     return {
         round: state.round,
@@ -624,4 +589,4 @@ export default connect(
         addLayer,
         removeLayer
     }
-)(withStyles(styles)(PlayRoute));
+)(PlayRoute);

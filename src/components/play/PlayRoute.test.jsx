@@ -400,6 +400,17 @@ describe('PlayRoute', () => {
         renderRoute(firebase)
         await waitFor(() => expect(screen.getByTestId('location')).toHaveTextContent('/rounds'))
     })
+
+    it('spins while the round is loading, then stops', async () => {
+        let resolveRound
+        const { firebase } = makeFirebase({ round: () => new Promise((resolve) => { resolveRound = resolve }) })
+        const { store } = renderRoute(firebase)
+
+        expect(await screen.findByRole('status', { name: 'Loading' })).toBeInTheDocument()
+        resolveRound(roundWithMembers(['me']))
+        await waitFor(() => expect(store.getState().round).not.toBeNull())
+        expect(screen.queryByRole('status')).toBeNull()
+    })
 })
 
 /** A layer document the way the layers listener delivers it: the body of the document, without its id. */
