@@ -340,6 +340,24 @@ def row_menu(b, report):
            closed and b.js("document.activeElement && document.activeElement.getAttribute('aria-label') === 'Round options'"),
            b.js(WHERE))
 
+    # ArrowUp with nothing pressed in the menu yet. Focus is still on the content, where
+    # onOpenAutoFocus parked it, so items.indexOf is -1: ArrowDown already reads that as "before
+    # the first item", and MUI's MenuList read ArrowUp as "after the last one", which the generic
+    # (at - 1 + n) % n does not -- it landed on the second-to-last. This is the menu to ask it on,
+    # not the avatar menu: that one has a single item, so its last item and its only item are the
+    # same element and the case would prove nothing.
+    b.focus(ROW_MENU_BUTTON)
+    b.enter()
+    if not b.wait('%s === 3' % MENU_ITEMS, timeout=10):
+        raise Failed('the rounds-list row menu did not reopen for its ArrowUp case')
+    b.arrow(down=False)
+    report('row menu: ArrowUp on a freshly opened menu lands on Delete',
+           b.js(MENU_ITEM_TEXT) == 'Delete', b.js(MENU_ITEM_TEXT))
+    b.escape()
+    if not b.wait('%s === 0' % MENU_ITEMS, timeout=10):
+        raise Failed('the rounds-list row menu did not close after its ArrowUp case')
+    b.settle()
+
     # And the same menu again, this time all the way to Delete, which is the other dialog
     # opened from a menu item that unmounts underneath it.
     b.focus(ROW_MENU_BUTTON)

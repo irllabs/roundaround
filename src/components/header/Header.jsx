@@ -8,7 +8,7 @@ import { MUI_BUTTON, MUI_SECONDARY } from '@/lib/mui';
 import { ShareIcon } from '@/components/icons';
 import { cn } from '@/lib/utils';
 import { BackButton } from '../play/layer-settings/resources';
-import { setUser, setIsShowingSignInDialog, setRedirectAfterSignIn, setRounds, setUserDisplayName, setSignUpDisplayName, setIsShowingShareDialog } from '../../redux/actions'
+import { setUser, setIsShowingSignInDialog, setRedirectAfterSignIn, setRounds, setIsShowingShareDialog } from '../../redux/actions'
 import _ from 'lodash'
 import HeaderAvatar from './HeaderAvatar'
 import JitsiComponent from '../play/JitsiComponent';
@@ -194,7 +194,6 @@ const mapStateToProps = state => {
 		user: state.user,
 		users: state.users,
 		redirectAfterSignIn: state.display.redirectAfterSignIn,
-		signupDisplayName: state.display.signupDisplayName,
 		rounds: state.rounds,
 		round: state.round
 	};
@@ -204,8 +203,6 @@ export default connect(
 	mapStateToProps,
 	{
 		setUser,
-		setUserDisplayName,
-		setSignUpDisplayName,
 		setIsShowingSignInDialog,
 		setRedirectAfterSignIn,
 		setRounds,

@@ -5,7 +5,7 @@ import userEvent from '@testing-library/user-event'
 import { Route } from 'react-router-dom'
 import RoundsListRoute from './RoundsListRoute'
 import { renderWithProviders, makeStore, LocationProbe } from '../../test/test-utils'
-import { setUser, setRounds } from '../../redux/actions'
+import { setUser, setRounds, setIsShowingSignInDialog } from '../../redux/actions'
 
 // "New round" builds a round out of the default round data, and that reaches Tone.js. No sound is
 // made here, and loading Tone only buys a banner on stdout.
@@ -62,6 +62,21 @@ describe('RoundsListRoute', () => {
         expect(rows[0]).toHaveTextContent(createdString(jam))
         expect(rows[1]).toHaveTextContent('Sketch')
         expect(rows[1]).toHaveTextContent(createdString(sketch))
+    })
+
+    it('mounts no sign-in dialog of its own: App.jsx owns the only one', () => {
+        const store = makeStore()
+        store.dispatch(setUser(me))
+        store.dispatch(setRounds([jam]))
+        // The route used to render a second SignInDialog on top of App.jsx's, both bound to this
+        // flag, so /rounds put two Radix dialogs on the same trap. App.jsx's copy sits outside the
+        // router's Switch, so it is mounted here too and nothing is lost.
+        store.dispatch(setIsShowingSignInDialog(true))
+
+        renderWithProviders(<Route path="/rounds" component={RoundsListRoute} />, { store, route: '/rounds' })
+
+        expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
+        expect(screen.queryByTestId('button-guest')).not.toBeInTheDocument()
     })
 
     it('opens the round a row is about', async () => {
