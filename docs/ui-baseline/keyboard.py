@@ -193,14 +193,20 @@ def effects_chevron(b, report):
     report('effects sidebar: the chevron takes focus',
            b.js('document.activeElement.getAttribute("aria-label") === "Hide the effects"'), b.js(WHERE))
 
+    # The name flips the moment the state does, so it is asked for first and the geometry
+    # second: `right` is transitioned over 0.4s and getComputedStyle reports the animated value,
+    # so waiting on the settled -120px/0px is what proves the sidebar actually moved rather than
+    # only relabelled itself, and it stops the detail column printing a mid-transition 0px.
     b.enter()
     report('effects sidebar: Enter minimizes it',
-           b.wait(has('[aria-label="Show the effects"]'), timeout=10), b.js(SIDEBAR_RIGHT))
+           b.wait(has('[aria-label="Show the effects"]'), timeout=10)
+           and b.wait("%s === '-120px'" % SIDEBAR_RIGHT, timeout=10), b.js(SIDEBAR_RIGHT))
 
     b.run(SPACE_PROBE, 'install the window keydown probe')
     b.type_key(' ', 'Space', 32, text=' ')
     report('effects sidebar: Space restores it',
-           b.wait(has('[aria-label="Hide the effects"]'), timeout=10), b.js(SIDEBAR_RIGHT))
+           b.wait(has('[aria-label="Hide the effects"]'), timeout=10)
+           and b.wait("%s === '0px'" % SIDEBAR_RIGHT, timeout=10), b.js(SIDEBAR_RIGHT))
     report('effects sidebar: Space does not reach PlayUI',
            b.js('window.__spaceAtWindow === false'), 'reached window: %s' % b.js('window.__spaceAtWindow'))
 

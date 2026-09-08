@@ -39,7 +39,7 @@ export default class ErrorBoundary extends React.Component {
                     {/* MUI's h5 and body1, and gutterBottom's 0.35em. */}
                     <p className="m-0 mb-[0.35em] text-2xl leading-[1.334] tracking-normal">Something went wrong.</p>
                     <p className="m-0 mb-[0.35em] text-base leading-6 tracking-[0.00938em] text-white/70">{message}</p>
-                    <Button className={cn(MUI_BUTTON, MUI_PRIMARY)} onClick={() => window.location.assign('/rounds')}>
+                    <Button type="button" className={cn(MUI_BUTTON, MUI_PRIMARY)} onClick={() => window.location.assign('/rounds')}>
                         Back to my rounds
                     </Button>
                 </div>

@@ -1,6 +1,6 @@
 import { vi, describe, it, expect } from 'vitest'
 import React from 'react'
-import { screen } from '@testing-library/react'
+import { fireEvent, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import EffectsSidebar from './EffectsSidebar'
 import { renderWithProviders, makeStore } from '../../test/test-utils'
@@ -40,5 +40,26 @@ describe('EffectsSidebar', () => {
         expect(root).toHaveClass('-right-[120px]')
         await user.click(screen.getByRole('button', { name: 'Show the effects' }))
         expect(root).toHaveClass('right-0')
+    })
+
+    it('minimizes on Space without letting the key reach PlayUI', () => {
+        // PlayUI toggles playback from a keydown listener on `window` (KEY_MAPPINGS.playToggle is
+        // ' '), and React delegates from the root container, which is below window. Without the
+        // stopPropagation in onMinimizeKeyDown, minimizing the sidebar from the keyboard would
+        // start the sequencer as well. Only a spy on window can see that; no screenshot can.
+        const atWindow = vi.fn()
+        window.addEventListener('keydown', atWindow)
+        try {
+            const { container } = mountSidebar()
+            // eslint-disable-next-line testing-library/no-node-access
+            const root = container.firstChild
+            fireEvent.keyDown(screen.getByRole('button', { name: 'Hide the effects' }), { key: ' ' })
+
+            expect(root).toHaveClass('-right-[120px]')
+            expect(screen.getByRole('button', { name: 'Show the effects' })).toBeInTheDocument()
+            expect(atWindow).not.toHaveBeenCalled()
+        } finally {
+            window.removeEventListener('keydown', atWindow)
+        }
     })
 })

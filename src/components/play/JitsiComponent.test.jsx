@@ -26,8 +26,13 @@ describe('JitsiComponent', () => {
 
     it('comes back to the start button when the Jitsi API is not on the page', async () => {
         const user = userEvent.setup()
-        mountJitsi({ getJitsiToken: vi.fn() })
+        const getJitsiToken = vi.fn()
+        mountJitsi({ getJitsiToken })
         await user.click(screen.getByRole('button', { name: 'Start voice chat' }))
+
         expect(await screen.findByRole('button', { name: 'Start voice chat' })).toBeInTheDocument()
+        // The join has to have got as far as the JitsiMeetExternalAPI check and turned back
+        // there: a `join` that did nothing at all would pass the assertion above too.
+        expect(getJitsiToken).not.toHaveBeenCalled()
     })
 })

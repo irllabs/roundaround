@@ -40,6 +40,7 @@ class EffectsSidebar extends Component {
         this.onSwitchOn = this.onSwitchOn.bind(this)
         this.onSwitchOff = this.onSwitchOff.bind(this)
         this.onMinimizeClick = this.onMinimizeClick.bind(this)
+        this.onMinimizeKeyDown = this.onMinimizeKeyDown.bind(this)
     }
 
     onPlayClick() {
@@ -76,6 +77,17 @@ class EffectsSidebar extends Component {
     onMinimizeClick() {
         this.setState({ isMinimized: !this.state.isMinimized })
     }
+    onMinimizeKeyDown(event) {
+        if (event.key !== 'Enter' && event.key !== ' ') return
+        event.preventDefault()
+        // PlayUI puts a keydown listener on `window` that toggles playback on Space for any
+        // target that is not an input, textarea, select or contenteditable
+        // (src/utils/constants.js: KEY_MAPPINGS.playToggle is ' '). React delegates to the root
+        // container, which is inside window, so without this the sequencer would start playing
+        // every time someone minimized the sidebar from the keyboard.
+        event.stopPropagation()
+        this.onMinimizeClick()
+    }
     render() {
         let items = []
         if (!_.isNil(this.props.round) && !_.isNil(this.props.round.userBuses) && !_.isNil(this.props.round.userBuses[this.props.user.id])) {
@@ -94,7 +106,7 @@ class EffectsSidebar extends Component {
         return (
             <div className={cn('absolute top-16 flex h-[calc(100%-64px)] w-[120px] flex-col items-center justify-center border-t border-white/10 [transition:right_0.4s]',
                 this.state.isMinimized ? '-right-[120px]' : 'right-0')}>
-                <div className="relative flex h-[352px] w-[120px] flex-col items-center justify-center rounded-l-lg bg-[rgba(47,47,47,0.9)]">
+                <div id="effects-sidebar-effects" className="relative flex h-[352px] w-[120px] flex-col items-center justify-center rounded-l-lg bg-[rgba(47,47,47,0.9)]">
                     {/* A div, not a button: capture.py's CHEVRON finds this control as the only
                         32x32 div holding an svg on the right-hand edge. */}
                     <div
@@ -104,19 +116,9 @@ class EffectsSidebar extends Component {
                         tabIndex={0}
                         aria-label={this.state.isMinimized ? 'Show the effects' : 'Hide the effects'}
                         aria-expanded={!this.state.isMinimized}
+                        aria-controls="effects-sidebar-effects"
                         onClick={this.onMinimizeClick}
-                        onKeyDown={(event) => {
-                            if (event.key !== 'Enter' && event.key !== ' ') return
-                            event.preventDefault()
-                            // PlayUI puts a keydown listener on `window` that toggles playback on
-                            // Space for any target that is not an input, textarea, select or
-                            // contenteditable (src/utils/constants.js: KEY_MAPPINGS.playToggle is
-                            // ' '). React delegates to the root container, which is inside window,
-                            // so without this the sequencer would start playing every time someone
-                            // minimized the sidebar from the keyboard.
-                            event.stopPropagation()
-                            this.onMinimizeClick()
-                        }}
+                        onKeyDown={this.onMinimizeKeyDown}
                     >
                         <ChevronRightIcon />
                     </div>

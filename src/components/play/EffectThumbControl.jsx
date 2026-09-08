@@ -1,6 +1,5 @@
 import React, { Component } from 'react'
 import { SVG } from '@svgdotjs/svg.js'
-//import { LockOpen, Lock } from '@material-ui/icons';
 import FX from '../../audio-engine/FX'
 import OpenLock from './layer-settings/resources/svg/openLock.svg';
 import Lock from './layer-settings/resources/svg/lock.svg';
