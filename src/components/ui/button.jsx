@@ -1,4 +1,3 @@
-import * as React from "react"
 import { cva } from "class-variance-authority";
 import { cn } from "cn"
 import { Slot } from "radix-ui"
@@ -51,15 +50,10 @@ const buttonVariants = cva(
   }
 )
 
-// forwardRef is only needed on React 18; drop it with the React 19 upgrade in PR 3.
-const Button = React.forwardRef(function Button(
-  { className, variant = "default", size = "default", asChild = false, ...props },
-  ref
-) {
+function Button({ className, variant = "default", size = "default", asChild = false, ...props }) {
   const Comp = asChild ? Slot.Root : "button"
   return (
     <Comp
-      ref={ref}
       data-slot="button"
       data-variant={variant}
       data-size={size}
@@ -67,6 +61,6 @@ const Button = React.forwardRef(function Button(
       {...props}
     />
   )
-})
+}
 
 export { Button, buttonVariants }

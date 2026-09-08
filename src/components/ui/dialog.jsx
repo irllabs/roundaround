@@ -1,6 +1,5 @@
 "use client"
 
-import * as React from "react"
 import { cn } from "cn"
 import { Dialog as DialogPrimitive } from "radix-ui"
 
@@ -31,17 +30,12 @@ function DialogClose({
   return <DialogPrimitive.Close data-slot="dialog-close" {...props} />
 }
 
-// forwardRef is only needed on React 18; drop it with the React 19 upgrade in PR 3.
-// DialogOverlay needs it (unlike other Dialog pieces) because DialogPrimitive.Portal wraps
-// each of DialogContent's children -- DialogOverlay included -- in its own asChild Slot, which
-// attaches a ref to whatever plain-function child it's given.
-const DialogOverlay = React.forwardRef(function DialogOverlay(
-  { className, ...props },
-  ref
-) {
+// DialogPrimitive.Portal wraps each of DialogContent's children -- DialogOverlay included -- in
+// its own asChild Slot, which attaches a ref to whatever child it is given. On React 19 that ref
+// arrives as an ordinary prop and rides `...props` down to the Overlay, so no wrapper is needed.
+function DialogOverlay({ className, ...props }) {
   return (
     <DialogPrimitive.Overlay
-      ref={ref}
       data-slot="dialog-overlay"
       className={cn(
         "fixed inset-0 isolate z-50 bg-black/10 duration-100 supports-backdrop-filter:backdrop-blur-xs data-open:animate-in data-open:fade-in-0 data-closed:animate-out data-closed:fade-out-0",
@@ -50,7 +44,7 @@ const DialogOverlay = React.forwardRef(function DialogOverlay(
       {...props}
     />
   )
-})
+}
 
 function DialogContent({
   className,
