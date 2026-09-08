@@ -1,12 +1,12 @@
 # UI baseline
 
-Thirteen reference screenshots of the app, the two scripts that take them and compare
+Twenty-two reference screenshots of the app, the two scripts that take them and compare
 against them, and a third that checks the behaviour a screenshot cannot hold still. The
 shadcn migration is supposed to be invisible, so this is how we prove it: capture the same
-thirteen screens again and count the pixels that moved.
+twenty-two screens again and count the pixels that moved.
 
-Twelve screens are 1300x900. `13-round-mobile` is a 390x844 phone viewport at
-device pixel ratio 2, so the file is 780x1688.
+Eighteen screens are 1300x900. `13-round-mobile` and `20`-`22` are a 390x844 phone viewport
+at device pixel ratio 2, so those four files are 780x1688.
 
 | screen | what it shows |
 | --- | --- |
@@ -23,6 +23,15 @@ device pixel ratio 2, so the file is 780x1688.
 | `11-avatar-menu` | the avatar menu, with the colour picker and Sign out |
 | `12-rounds-list` | the rounds list |
 | `13-round-mobile` | the same round at phone size |
+| `14-layer-popup` | the layer popup off the steps pill: the steps counter and the offset slider |
+| `15-layer-offset-ms` | the same popup with the offset switched from percent to milliseconds |
+| `16-instrument-popup` | the instrument popup off the instrument summary: Instrument and Sound |
+| `17-instrument-list` | the instrument list inside it, with the layer's own instrument ticked |
+| `18-volume-popup` | the volume popup off the bar's volume button, with solo and mute |
+| `19-effects-on` | the first effect switched on, so the sidebar shows a thumb in each state |
+| `20-hamburger-popup` | the hamburger popup at phone size, which replaces the add-layer pair |
+| `21-mixer-popup-mobile` | the mixer popup at phone size, opened from that popup |
+| `22-delete-clear-popup` | the delete/clear popup at phone size, off the ellipsis button |
 
 ## Capturing and comparing
 
@@ -71,14 +80,18 @@ python3 docs/ui-baseline/keyboard.py --base http://localhost:3100
 ```
 
 It takes `--base` (default `http://localhost:3100`) and `--port` (default 9337, so it can run
-alongside a capture).
+alongside a capture). It signs in as a guest the way `capture.py` does rather than seeding a
+session, so it runs against any host, `--base https://rounds.studio` included; that is how the
+baseline for it was recorded. PR 3 grows it with the play route's own cases as it migrates the
+sidebar chevron and the layer-settings popups.
 
 ## The 0.5% rule
 
 **Every screen must come in under 0.5% changed pixels.** That is the acceptance rule
 for a PR that is not supposed to change the look of anything. Two consecutive captures
-of the same build land between 0.00% and 0.15%, so anything above 0.5% is a real
-change, not anti-aliasing.
+of the same build land between 0.00% and 0.27%, so anything above 0.5% is a real
+change, not anti-aliasing. The top of that range is where the random instrument names are:
+`21-mixer-popup-mobile` draws three of them at device pixel ratio 2.
 
 **A PR that changes a screen on purpose has to re-capture the baseline in the same PR**,
 against the branch's own build, and the new PNGs go in the same commit as the change.
@@ -116,14 +129,43 @@ own. `capture.py` pins all of it:
   which is logged. The mask normalises it to 180px either way, which is what lets a
   preview capture be compared against the baseline at all.
 
+- **The first effect switch.** `19-effects-on` is the only screen with an effect on. The
+  capture drags the first switch's thumb across, shoots, and drags it back off before
+  anything else is photographed, because the sidebar is in frame on fifteen of the other
+  twenty-one screens and a switch left on would show up in every one of them.
+- **The window click listeners, for screens 14-19 only.** `PlayUI` keeps its own
+  `selectedLayerId` and only pressing a layer's ring sets it; its `window` click listener
+  drops the Redux selection whenever that field is null, which is the state a layer picked
+  in the mixer is in. Every bottom bar control calls `stopPropagation`, which is why
+  screens 07 and 08 work, except the two offset-mode buttons in the layer popup - so
+  clicking `ms` for `15-layer-offset-ms` unmounts the popup being photographed, and so does
+  the click Chrome synthesises at the end of the effect-switch drag. For those six screens
+  the capture adds a bubble-phase `click` listener on `document`, below React's root
+  container so every React handler still runs and above `window` so neither `PlayUI` nor
+  `LayerSettings`' click-away sees the click, and takes it off again afterwards. The states
+  it makes reachable are real ones - a layer pressed on its own ring keeps its selection
+  through exactly these clicks - and screens 09-13 are reached in the state they always
+  were. If the play route ever stops dropping the selection, the shield becomes a no-op
+  rather than a lie.
+
 Two things are deliberately left alone because they are small enough to live inside the
-threshold: the three random instrument names on the rings, in the mixer and in the bottom
-bar (worth about 0.15% on `07-mixer-popup`), and the created-at time under the round in
-the rounds list.
+threshold: the three random instrument names on the rings, in the mixer, in the bottom bar
+and in the instrument popup (worth about 0.14% on `07-mixer-popup` and 0.27% on
+`21-mixer-popup-mobile`, which draws them at device pixel ratio 2), and the created-at time
+under the round in the rounds list.
+
+## What the baseline does not cover
+
+`PlayRoute`'s load-error box is not photographed, because the capture cannot reach it.
+The box needs `getRound` to reject; `/play/<unknown id>` resolves to `null`, which
+redirects to `/rounds` instead of erroring (checked against production), and the only other
+way in is to break Firestore's transport, which produces a different message after a long,
+non-deterministic wait. It is covered by `src/components/play/PlayRoute.test.jsx` instead,
+through its `findByRole('alert')` test.
 
 ## When a screen fails to appear
 
 `capture.py` asserts every state before it shoots it, and aborts rather than photograph
-the wrong screen, so a run either produces thirteen correct files or stops with a message
+the wrong screen, so a run either produces twenty-two correct files or stops with a message
 naming the state that never happened. If it stops, fix the selector or the wait; do not
 commit a partial capture.

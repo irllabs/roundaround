@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Capture the thirteen UI baseline screenshots of rounds.studio.
+"""Capture the twenty-two UI baseline screenshots of rounds.studio.
 
     python3 capture.py [--base https://rounds.studio] [--out DIR] [--port 9336]
 
@@ -63,6 +63,64 @@ def gone(selector):
     return 'document.querySelector(%s) === null' % json.dumps(selector)
 
 
+def onscreen(selector):
+    """True when the element is laid out inside the viewport.
+
+    The layer-settings popups are never unmounted: a closed one is pushed to `top: 200%`
+    at opacity 0 and an open one is placed above the bar. A rect inside the viewport
+    therefore means "open" in the Material UI build this baseline is taken from and in the
+    migrated one, without either build's class names.
+    """
+    return """(() => {
+      const e = document.querySelector(%s);
+      if (!e) return false;
+      const r = e.getBoundingClientRect();
+      return r.width > 0 && r.height > 0 && r.top >= 0 && r.bottom <= innerHeight;
+    })()""" % json.dumps(selector)
+
+
+def offscreen(selector):
+    """True when the element is still in the DOM but pushed below the fold: a closed popup."""
+    return """(() => {
+      const e = document.querySelector(%s);
+      if (!e) return false;
+      return e.getBoundingClientRect().top >= innerHeight;
+    })()""" % json.dumps(selector)
+
+
+def leaf_with_text(text):
+    """The first element whose entire text is `text` and which has no children of its own."""
+    return ("[...document.querySelectorAll('*')].find(e => e.children.length === 0 "
+            "&& e.textContent.trim() === %s)" % json.dumps(text))
+
+
+def onscreen_text(text):
+    return """(() => {
+      const e = %s;
+      if (!e) return false;
+      const r = e.getBoundingClientRect();
+      return r.width > 0 && r.top >= 0 && r.bottom <= innerHeight;
+    })()""" % leaf_with_text(text)
+
+
+def click_text(text):
+    """Click the button whose own label is exactly `text`.
+
+    Deliberately not `leaf_with_text` plus `closest('button')`: the only label this is used
+    for is `Mixer`, and the first leaf with that text in the document is the mixer popup's
+    own header, which is rendered before the hamburger popup (MIXER_POPUP depends on that
+    order) and is not inside a button at all. Searching `<button>` elements first is what
+    picks the hamburger popup's Mixer row.
+    """
+    return """(() => {
+      const b = [...document.querySelectorAll('button')].find(
+        b => [...b.querySelectorAll('*')].some(e => e.children.length === 0 && e.textContent.trim() === %s));
+      if (!b) return false;
+      b.click();
+      return true;
+    })()""" % json.dumps(text)
+
+
 # The effects sidebar's minimize control is a plain div, so it is found by shape:
 # the only 32x32 box holding an icon over on the right-hand edge.
 CHEVRON = """(() => {
@@ -93,6 +151,67 @@ BAR = """[...document.querySelectorAll('button')].filter(e => {
   return r.width >= 40 && r.top > innerHeight - 120 && r.bottom <= innerHeight;
 }).sort((a, b) => a.getBoundingClientRect().x - b.getBoundingClientRect().x)"""
 
+# Every button of the bottom bar, left to right. The band filter is what excludes the popups:
+# a closed one sits at top:200%, an open one is above the bar.
+BAR_ALL = """[...document.querySelectorAll('button')].filter(e => {
+  const r = e.getBoundingClientRect();
+  return r.width >= 24 && r.height >= 24 && r.top > innerHeight - 120 && r.bottom <= innerHeight;
+}).sort((a, b) => a.getBoundingClientRect().x - b.getBoundingClientRect().x)"""
+
+# The steps pill is the only bar button whose whole text is a number.
+STEP_PILL = """(() => {
+  const b = %s.find(e => /^\\d+$/.test(e.textContent.trim()));
+  if (!b) return false;
+  b.click();
+  return true;
+})()""" % BAR_ALL
+
+# The 32px buttons at the right of the bar: volume, then clear and delete on the desktop and
+# the ellipsis on the phone.
+SMALL_BAR = "%s.filter(e => Math.round(e.getBoundingClientRect().width) === 32)" % BAR_ALL
+
+# The effect switches are SVG.js drawings, not inputs: a 78x32 background rect with a 32x32
+# thumb rect inside a nested <svg> that carries the thumb's x -- 46 when the effect is off,
+# 0 when it is on. They are dragged, never clicked. The effect icons draw a rect of their own,
+# but at width 32.0004, so the exact attribute is what tells the thumb from the icon.
+THUMB_RECTS = """[...document.querySelectorAll('svg rect')].filter(r =>
+  r.getAttribute('width') === '32' && r.getBoundingClientRect().x > 1000)"""
+FIRST_THUMB_X = '(() => { const r = %s[0]; return r ? r.parentElement.getAttribute("x") : "missing" })()' % THUMB_RECTS
+FIRST_THUMB_POINT = """(() => {
+  const r = %s[0];
+  if (!r) return null;
+  const b = r.getBoundingClientRect();
+  return { x: Math.round(b.x + b.width / 2), y: Math.round(b.y + b.height / 2) };
+})()""" % THUMB_RECTS
+
+# A layer picked in the mixer survives only as long as no click reaches `window`.
+#
+# `PlayUI` keeps its own `selectedLayerId`, and only pressing a layer's ring sets it. Its
+# `window` click listener drops the Redux selection whenever that field is null and a layer is
+# selected, which is exactly the state the mixer leaves behind. Every control in the bottom bar
+# calls `stopPropagation` -- which is why screens 07 and 08 work -- except the two offset-mode
+# buttons in the layer popup, whose handlers only update local state. Clicking `ms` therefore
+# unmounts the popup being photographed before the shutter, and so does the click Chrome
+# synthesises at the end of an effect-switch drag.
+#
+# SHIELD adds a bubble-phase `click` listener on `document`: below React's root container, so
+# every React handler still runs, and above `window`, so `PlayUI`'s listener and
+# `LayerSettings`' click-away never see the click. It is on for screens 14-19 only and taken
+# off again afterwards, so screens 09-13 are reached in exactly the state they always were.
+# The states it makes reachable are real ones -- a layer pressed on its ring keeps its
+# selection through the same clicks -- and it pins them the same way in both builds.
+SHIELD = """(() => {
+  window.__uiBaselineShield = e => e.stopPropagation();
+  document.addEventListener('click', window.__uiBaselineShield);
+  return true;
+})()"""
+UNSHIELD = """(() => {
+  if (!window.__uiBaselineShield) return false;
+  document.removeEventListener('click', window.__uiBaselineShield);
+  delete window.__uiBaselineShield;
+  return true;
+})()"""
+
 # The mixer popup is never unmounted; it is moved off-screen at opacity 0.
 MIXER_POPUP = """(() => {
   const label = [...document.querySelectorAll('*')].find(e => e.children.length === 0 && e.textContent.trim() === 'Mixer');
@@ -103,6 +222,18 @@ FIRST_LAYER_ROW = """(() => {
   const p = %s;
   if (!p || !p.children[1] || !p.children[1].children.length) return false;
   p.children[1].children[0].click();
+  return true;
+})()""" % MIXER_POPUP
+
+# The mixer popup's own X, the first button of its header. On the phone the mixer cannot be
+# closed the way it was opened: the hamburger button that carries the Mixer row closes every
+# popup on its way to opening its own, so a second click on that row re-opens the mixer
+# instead of closing it. The X is the control the popup itself offers.
+MIXER_CLOSE = """(() => {
+  const p = %s;
+  const b = p && p.querySelector('button');
+  if (!b) return false;
+  b.click();
   return true;
 })()""" % MIXER_POPUP
 
@@ -280,6 +411,17 @@ class Browser:
         for kind in ('mousePressed', 'mouseReleased'):
             self.send('Input.dispatchMouseEvent', type=kind, x=x, y=y, button='left', clickCount=1)
 
+    def drag(self, start, dx):
+        """Press, move and release. The move is split in two because the switch ignores
+        anything under 3px, and the release is what decides which side the thumb lands on."""
+        self.send('Input.dispatchMouseEvent', type='mousePressed', x=start['x'], y=start['y'],
+                  button='left', buttons=1, clickCount=1)
+        for x in (start['x'] + dx // 2, start['x'] + dx):
+            self.send('Input.dispatchMouseEvent', type='mouseMoved', x=x, y=start['y'],
+                      button='left', buttons=1)
+        self.send('Input.dispatchMouseEvent', type='mouseReleased', x=start['x'] + dx, y=start['y'],
+                  button='left', buttons=1, clickCount=1)
+
     def key(self, key, code, vk):
         for kind in ('rawKeyDown', 'keyUp'):
             self.send('Input.dispatchKeyEvent', type=kind, key=key, code=code,
@@ -424,6 +566,53 @@ def capture(b, base, out):
     b.must("%s === '0'" % MIXER_OPACITY, 'the mixer popup closing')
     b.shot(out, '08-bottom-bar-click')
 
+    # 14-19 are the layer-settings popups, all of them off the layer screen 08 selected.
+    b.run(SHIELD, 'shield the window click listeners')
+
+    # 14, 15: the layer popup -- the steps counter and the offset slider -- and its ms mode.
+    b.run(STEP_PILL, 'click the steps pill')
+    b.must(onscreen('#step-count'), 'the layer popup opening')
+    b.shot(out, '14-layer-popup', verify=onscreen('#step-count'))
+    b.click('[aria-label="Offset in milliseconds"]', 'the ms offset mode')
+    b.must('document.querySelector(\'[aria-label="Offset in milliseconds"]\').getAttribute("aria-pressed") === "true"',
+           'the ms offset mode being chosen')
+    b.shot(out, '15-layer-offset-ms')
+    b.click('[aria-label="Offset as a percentage of a step"]', 'the percentage offset mode')
+    b.run(STEP_PILL, 'click the steps pill again')
+    b.must(offscreen('#step-count'), 'the layer popup closing')
+
+    # 16, 17: the instrument popup and its instrument list.
+    b.click('#instrument-summary', 'the instrument summary')
+    b.must(onscreen('#instrument'), 'the instrument popup opening')
+    b.shot(out, '16-instrument-popup', verify=onscreen('#instrument'))
+    b.click('#instrument', 'the Instrument row')
+    b.must(onscreen('#instrument-0'), 'the instrument list opening')
+    b.shot(out, '17-instrument-list', verify=onscreen('#instrument-0'))
+    b.click('#instrument', 'the Instrument row again')
+    # `gone`, not `offscreen`: the popups are never unmounted but the rows inside them are, so a
+    # closed instrument list has no `#instrument-0` at all.
+    b.must(gone('#instrument-0'), 'the instrument list closing')
+    b.click('#instrument-summary', 'the instrument summary again')
+    b.must(offscreen('#instrument'), 'the instrument popup closing')
+
+    # 18: the volume popup, off the leftmost of the bar's three 32px buttons.
+    b.must('%s.length === 3' % SMALL_BAR, 'the bar\'s three small buttons')
+    b.run('%s[0].click(); true' % SMALL_BAR, 'click the volume button')
+    b.must(onscreen('[aria-label="Mute"]'), 'the volume popup opening')
+    b.shot(out, '18-volume-popup', verify=onscreen('[aria-label="Mute"]'))
+    b.run('%s[0].click(); true' % SMALL_BAR, 'click the volume button again')
+    b.must(offscreen('[aria-label="Mute"]'), 'the volume popup closing')
+
+    # 19: the first effect switched on, then switched back off so screens 09-13 are unaffected.
+    b.must('%s === "46"' % FIRST_THUMB_X, 'the first effect starting off')
+    b.drag(b.js(FIRST_THUMB_POINT), -46)
+    b.must('%s === "0"' % FIRST_THUMB_X, 'the first effect switching on')
+    b.shot(out, '19-effects-on', verify='%s === "0"' % FIRST_THUMB_X)
+    b.drag(b.js(FIRST_THUMB_POINT), 46)
+    b.must('%s === "46"' % FIRST_THUMB_X, 'the first effect switching back off')
+
+    b.run(UNSHIELD, 'take the shield back off')
+
     # 09: the header's More options menu.
     b.click('button[aria-label="More options"]', 'More options')
     b.must(has('#header-menu-list'), 'the header menu')
@@ -470,6 +659,29 @@ def capture(b, base, out):
     time.sleep(4)
     b.shot(out, '13-round-mobile',
            verify='(%s) && (%s)' % (RINGS_ARE_SWATCH, gone('#orientation-dialog-title')))
+
+    # 20: the hamburger popup, which replaces the add-layer pair below 500px.
+    b.must('%s.length >= 1' % BAR_ALL, 'the bottom bar at phone size')
+    b.run('%s[0].click(); true' % BAR_ALL, 'click the hamburger')
+    b.must(onscreen_text('Add round'), 'the hamburger popup opening')
+    b.shot(out, '20-hamburger-popup', verify=onscreen_text('Add round'))
+
+    # 21: the mixer at phone size, opened from that popup, and a layer picked in it so the bar
+    # has something to show. Picking a row leaves the mixer open; its own X closes it.
+    b.run(click_text('Mixer'), 'click Mixer in the hamburger popup')
+    b.must("%s === '1'" % MIXER_OPACITY, 'the mixer popup opening at phone size')
+    b.shot(out, '21-mixer-popup-mobile')
+    b.run(FIRST_LAYER_ROW, 'click the first layer in the mixer')
+    b.must("[...document.querySelectorAll('*')].every(e => e.children.length !== 0 || !/Long Press/.test(e.textContent))",
+           'the bottom bar hint giving way to the layer controls')
+    b.run(MIXER_CLOSE, 'close the mixer popup with its own X')
+    b.must("%s === '0'" % MIXER_OPACITY, 'the mixer popup closing')
+
+    # 22: the delete/clear popup, off the ellipsis that replaces the two buttons below 500px.
+    b.must('%s.length === 2' % SMALL_BAR, 'the volume and ellipsis buttons at phone size')
+    b.run('%s[1].click(); true' % SMALL_BAR, 'click the ellipsis')
+    b.must(onscreen_text('Clear'), 'the delete/clear popup opening')
+    b.shot(out, '22-delete-clear-popup', verify=onscreen_text('Clear'))
 
 
 def main():
