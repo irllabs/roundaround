@@ -4,25 +4,30 @@ import {
   Switch,
   Route
 } from "react-router-dom";
-import { connect } from "react-redux";
 import PlayRoute from './components/play/PlayRoute';
 import LandingPageRoute from './components/landing-page/LandingPageRoute';
 import RoundsListRoute from './components/rounds-list-route/RoundsListRoute'
 import Header from './components/header/Header';
 import SignInDialog from './components/dialogs/SignInDialog'
-import { setUser, setRounds, setIsShowingSignInDialog } from './redux/actions'
 import RenameDialog from './components/dialogs/RenameDialog';
 import DeleteRoundDialog from './components/dialogs/DeleteRoundDialog';
 import ErrorBoundary from './components/ErrorBoundary';
 
 
 
+// No `connect`. App reads nothing out of the store and dispatches nothing -- every child that
+// needs the store is connected itself -- and a connected App only bought a subscription that
+// re-rendered the whole Router subtree whenever the sign-in state changed.
+//
 // The Material UI theme that used to live here is gone, but its four facts did not go with it:
 // the palette is src/index.css's `:root`, the breakpoints are its `@theme`, `shape.borderRadius:
 // 32` is `MUI_BUTTON`'s `rounded-full` and each dialog's own radius, and
 // `typography.button.textTransform: 'none'` is the absence of any `uppercase` utility.
 // CssBaseline's body type moved into src/index.css too; see the `body` rule there.
-function App({ setUser, setRounds, setIsShowingSignInDialog }) {
+//
+// The three dialogs sit outside the Switch on purpose: each is bound to a flag in
+// `state.display`, and every route can raise it. This is the app's only SignInDialog.
+function App() {
   return (
     <div className="App" data-test="app">
       <Router>
@@ -42,18 +47,4 @@ function App({ setUser, setRounds, setIsShowingSignInDialog }) {
   );
 }
 
-const mapStateToProps = state => {
-  return {
-    user: state.user,
-    isShowingSignInDialog: state.display.isShowingSignInDialog
-  };
-};
-
-export default connect(
-  mapStateToProps,
-  {
-    setUser,
-    setRounds,
-    setIsShowingSignInDialog
-  }
-)(App);
+export default App;

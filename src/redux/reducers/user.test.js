@@ -43,11 +43,6 @@ describe('the user reducer', () => {
             assert: (next) => expect(next).toBeNull()
         },
         {
-            name: 'SET_USER_DISPLAYNAME renames the user and leaves the rest alone',
-            action: { type: types.SET_USER_DISPLAYNAME, payload: { value: 'Grace' } },
-            assert: (next) => expect(next).toEqual({ ...signedIn(), displayName: 'Grace' })
-        },
-        {
             name: 'SET_USER_COLOR recolours the user and leaves the rest alone',
             action: { type: types.SET_USER_COLOR, payload: { value: '#F44336' } },
             assert: (next) => expect(next).toEqual({ ...signedIn(), color: '#F44336' })
@@ -68,7 +63,7 @@ describe('the user reducer', () => {
     })
 
     it('covers every action type the user reducer handles', () => {
-        const handled = [types.SET_USER, types.SET_USER_DISPLAYNAME, types.SET_USER_COLOR, types.CLEAR_USER]
+        const handled = [types.SET_USER, types.SET_USER_COLOR, types.CLEAR_USER]
         const covered = new Set(cases.map(({ action }) => action.type))
         expect([...covered].sort()).toEqual([...handled].sort())
     })

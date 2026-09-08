@@ -56,7 +56,9 @@
   --radius-4xl: calc(var(--radius) * 2.6);
 }
 
-/* Dark only. Values come from the MUI theme in App.jsx, the JSS blocks and docs/ui-baseline. */
+/* Dark only. The values were read off the MUI theme in App.jsx, the JSS blocks and
+   docs/ui-baseline; that theme was deleted in this PR, so these tokens are the palette
+   now, not a copy of one. */
 :root {
   --background: #1b1b1b;
   --foreground: #EAEAEA;

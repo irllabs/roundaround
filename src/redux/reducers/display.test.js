@@ -21,7 +21,6 @@ describe('the display reducer', () => {
             selectedLayerId: null,
             isShowingSignInDialog: false,
             redirectAfterSignIn: null,
-            signupDisplayName: null,
             isUsingJitsi: false,
             isShowingRenameDialog: false,
             isShowingDeleteRoundDialog: false,
@@ -48,11 +47,6 @@ describe('the display reducer', () => {
             name: 'SET_REDIRECT_AFTER_SIGN_IN remembers where to go after signing in',
             action: { type: types.SET_REDIRECT_AFTER_SIGN_IN, payload: { value: '/play/round-1' } },
             assert: (next) => expect(next.redirectAfterSignIn).toBe('/play/round-1')
-        },
-        {
-            name: 'SET_SIGNUP_DISPLAYNAME keeps the name typed in the sign-up dialog',
-            action: { type: types.SET_SIGNUP_DISPLAYNAME, payload: { value: 'Ada' } },
-            assert: (next) => expect(next.signupDisplayName).toBe('Ada')
         },
         {
             name: 'SET_SELECTED_LAYER_ID selects a layer',
@@ -125,7 +119,7 @@ describe('the display reducer', () => {
 
     it('covers every action type the display reducer handles', () => {
         const handled = [
-            types.SET_IS_SHOWING_SIGNIN_DIALOG, types.SET_REDIRECT_AFTER_SIGN_IN, types.SET_SIGNUP_DISPLAYNAME,
+            types.SET_IS_SHOWING_SIGNIN_DIALOG, types.SET_REDIRECT_AFTER_SIGN_IN,
             types.SET_SELECTED_LAYER_ID, types.SET_IS_SHOWING_LAYER_SETTINGS, types.SET_IS_USING_JITSI,
             types.SET_IS_SHOWING_RENAME_DIALOG, types.SET_IS_SHOWING_DELETE_ROUND_DIALOG,
             types.SET_IS_SHOWING_SHARE_DIALOG, types.SET_DISABLE_KEY_LISTENER, types.SET_SELECTED_ROUND_ID,

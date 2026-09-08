@@ -4,8 +4,9 @@
  * icons.test.jsx compares the local components against this, which is what keeps the glyphs
  * identical now that there is nothing left to compare them to.
  *
- * Regenerate only by re-installing @material-ui/icons and re-running the script in
- * docs/superpowers/plans/2026-09-07-shadcn-migration-pr3-play-route.md, Task 5, Step 5.
+ * To regenerate: `yarn add -D @material-ui/icons`, then, for each name below,
+ * `[...fs.readFileSync('node_modules/@material-ui/icons/<Name>.js', 'utf8').matchAll(/d: "([^"]+)"/g)]`
+ * is that icon's array of `d` strings. Remove the package again afterwards.
  */
 export const MATERIAL_PATHS = {
     AddIcon: ["M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"],

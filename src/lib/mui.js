@@ -21,7 +21,10 @@ export const MUI_BUTTON = 'h-auto min-w-16 rounded-full border-0 px-4 py-1.5 tex
 /**
  * MUI's `contained` `color="primary"` Button: the pill with a fill.
  *
- * Read off `Button.js` against the theme in `src/App.jsx`:
+ * Read off `Button.js` against the theme this app used to build in `src/App.jsx`. That theme
+ * was deleted with Material UI; the palette it set is now the `:root` block in
+ * `src/index.css`, and the theme tokens are written up in
+ * `docs/superpowers/specs/2026-09-07-shadcn-ui-migration-design.md`:
  *
  * - background is `palette.primary.main`, `#EAEAEA`, which is the `--primary` token.
  * - hover is `palette.primary.dark`. The theme sets `dark` itself, `#AAAAAA`, so there is no
