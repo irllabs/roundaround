@@ -1,3 +1,6 @@
+// The reducer cases below are a table: each case's `assert` runs inside the `it` that consumes the
+// table, which vitest/no-standalone-expect cannot see through.
+/* eslint-disable vitest/no-standalone-expect */
 import { vi, describe, it, expect, beforeEach } from 'vitest'
 import _ from 'lodash'
 import round from './round'

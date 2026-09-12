@@ -25,6 +25,7 @@ describe('HeaderMenu', () => {
     it('opens from a programmatic click, the way capture.py opens it', async () => {
         renderMenu()
 
+        // eslint-disable-next-line testing-library/no-node-access -- a real element click, as the capture script makes it
         await act(async () => { screen.getByRole('button', { name: 'More options' }).click() })
 
         expect(await screen.findByRole('menu')).toHaveAttribute('id', 'header-menu-list')
@@ -34,6 +35,7 @@ describe('HeaderMenu', () => {
     it('keeps the tempo slider out of the menu list, where MUI had it', async () => {
         renderMenu()
 
+        // eslint-disable-next-line testing-library/no-node-access -- a real element click, as the capture script makes it
         await act(async () => { screen.getByRole('button', { name: 'More options' }).click() })
         const list = await screen.findByRole('menu')
 
