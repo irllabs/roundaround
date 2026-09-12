@@ -18,6 +18,7 @@ import { getDefaultUserBus, getDefaultUserPatterns } from '../../utils/defaultDa
 import { derivedContributors, normalizeLegacyFxOrder } from '../../utils/index'
 import LayerSettings from './layer-settings/LayerSettings';
 import CustomSamples from '../../audio-engine/CustomSamples';
+import withRouter from '../../utils/withRouter'
 
 // Events that count as the user gesture browsers require before audio may start.
 const AUDIO_UNLOCK_EVENTS = ['touchstart', 'pointerdown', 'keydown']
@@ -589,4 +590,4 @@ export default connect(
         addLayer,
         removeLayer
     }
-)(PlayRoute);
+)(withRouter(PlayRoute));

@@ -1,8 +1,7 @@
 import React, { Component } from 'react'
 import { connect } from "react-redux";
-import {
-	Link, withRouter
-} from "react-router-dom";
+import { Link } from "react-router-dom";
+import withRouter from '../../utils/withRouter';
 import { Button } from '@/components/ui/button';
 import { MUI_BUTTON, MUI_SECONDARY } from '@/lib/mui';
 import { ShareIcon } from '@/components/icons';

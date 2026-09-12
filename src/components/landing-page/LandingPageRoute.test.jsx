@@ -2,7 +2,7 @@ import { vi, describe, it, expect } from 'vitest'
 import React from 'react'
 import { screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
-import { Route } from 'react-router-dom'
+import { Routes, Route } from 'react-router-dom'
 import LandingPageRoute from './LandingPageRoute'
 import { renderWithProviders, makeStore, LocationProbe } from '../../test/test-utils'
 import { setUser } from '../../redux/actions'
@@ -26,7 +26,7 @@ function renderLandingPage(user) {
     }
     const firebase = { createRound: vi.fn().mockResolvedValue() }
     const view = renderWithProviders(
-        <><Route path="/" component={LandingPageRoute} /><LocationProbe /></>,
+        <><Routes><Route path="*" element={<LandingPageRoute />} /></Routes><LocationProbe /></>,
         { store, firebase, route: '/' }
     )
     return { store, firebase, ...view }
