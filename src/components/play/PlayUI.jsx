@@ -30,6 +30,15 @@ const PATTERN_SAVE_DEBOUNCE_MS = 1000
 const BUTTON_CLASS = 'cursor-pointer'
 const BUTTON_ICON_CLASS = 'pointer-events-none'
 
+const PLAY_ICON = `<svg data-icon="play" width="36" height="39" viewBox="0 0 36 39" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path fill-rule="evenodd" clip-rule="evenodd" d="M32.744 24.2206L8.57602 38.174C5.19566 40.1256 0.970215 37.6861 0.970215 33.7828L0.970215 5.87595C0.970215 1.97265 5.19567 -0.46691 8.57602 1.48474L32.744 15.4382C36.1244 17.3898 36.1244 22.2689 32.744 24.2206ZM31.0144 21.2247C32.0885 20.6046 32.0885 19.0542 31.0144 18.434L6.84635 4.48061C5.77222 3.86046 4.42955 4.63565 4.42955 5.87595L4.42955 33.7828C4.42955 35.0231 5.77222 35.7983 6.84635 35.1781L31.0144 21.2247Z" fill="#fff" width="38.06px" height="34.31px" fill-opacity="0.9" /></svg>`
+const PAUSE_ICON = `<svg data-icon="pause" width="36" height="39" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px" viewBox="0 0 36 39" style="enable-background:new 0 0 36 39;" xml:space="preserve">
+            <style type="text/css">
+                .st0{fill-rule:evenodd;clip-rule:evenodd;fill:#fff;fill-opacity:0.9;}
+            </style>
+            <path class="st0" d="M15.5,30.8V8c0-4.1-3.3-7.4-7.4-7.4S0.7,3.9,0.7,8v22.8c0,4.1,3.3,7.4,7.4,7.4S15.5,34.9,15.5,30.8z M4.1,8 c0-2.2,1.8-4,4-4c2.2,0,4,1.8,4,4v22.8c0,2.2-1.8,4-4,4c-2.2,0-4-1.8-4-4V8z" />
+            <path class="st0" d="M34.9,30.8V8c0-4.1-3.3-7.4-7.4-7.4S20.1,3.9,20.1,8v22.8c0,4.1,3.3,7.4,7.4,7.4S34.9,34.9,34.9,30.8z M23.5,8 c0-2.2,1.8-4,4-4s4,1.8,4,4v22.8c0,2.2-1.8,4-4,4s-4-1.8-4-4V8z" /></svg>`
+
 export class PlayUI extends Component {
     static contextType = FirebaseContext
     constructor(props) {
@@ -198,6 +207,11 @@ export class PlayUI extends Component {
             return
         }
 
+        // the play button shows the store's answer to its click (see drawPlaybackToggle)
+        if (prevProps.isPlaying !== this.props.isPlaying && !_.isNil(this.playbackToggleIcon)) {
+            this.drawPlaybackToggle()
+        }
+
         let redraw = !_.isEqual(display.isRecordingSequence, prevProps.display.isRecordingSequence)
 
         // User profile color changed
@@ -345,8 +359,6 @@ export class PlayUI extends Component {
     }
 
     async draw(shouldAnimate) {
-        const { isPlaying } = this.props
-
         this.clear()
 
         this.orderLayers()
@@ -367,7 +379,7 @@ export class PlayUI extends Component {
         this.playbackToggle.click(this.onPlaybackToggle)
         this.playbackToggle.addClass(BUTTON_CLASS)
         // keyboard and screen-reader access to the only control that starts the round
-        this.playbackToggle.attr({ role: 'button', tabindex: 0, 'aria-label': isPlaying ? 'Stop' : 'Play' })
+        this.playbackToggle.attr({ role: 'button', tabindex: 0 })
         this.playbackToggle.on('keydown', (e) => {
             if (e.key === 'Enter' || e.key === ' ') {
                 e.preventDefault()
@@ -376,19 +388,10 @@ export class PlayUI extends Component {
             }
         })
         this.playbackToggleIcon = this.container.nested()
-        if (!isPlaying)
-            this.playbackToggleIcon.svg(`<svg width="36" height="39" viewBox="0 0 36 39" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <path fill-rule="evenodd" clip-rule="evenodd" d="M32.744 24.2206L8.57602 38.174C5.19566 40.1256 0.970215 37.6861 0.970215 33.7828L0.970215 5.87595C0.970215 1.97265 5.19567 -0.46691 8.57602 1.48474L32.744 15.4382C36.1244 17.3898 36.1244 22.2689 32.744 24.2206ZM31.0144 21.2247C32.0885 20.6046 32.0885 19.0542 31.0144 18.434L6.84635 4.48061C5.77222 3.86046 4.42955 4.63565 4.42955 5.87595L4.42955 33.7828C4.42955 35.0231 5.77222 35.7983 6.84635 35.1781L31.0144 21.2247Z" fill="#fff" width="38.06px" height="34.31px" fill-opacity="0.9" /></svg>`)
-        if (isPlaying)
-            this.playbackToggleIcon.svg(`<svg width="36" height="39" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px" viewBox="0 0 36 39" style="enable-background:new 0 0 36 39;" xml:space="preserve">
-            <style type="text/css">
-                .st0{fill-rule:evenodd;clip-rule:evenodd;fill:#fff;fill-opacity:0.9;}
-            </style>
-            <path class="st0" d="M15.5,30.8V8c0-4.1-3.3-7.4-7.4-7.4S0.7,3.9,0.7,8v22.8c0,4.1,3.3,7.4,7.4,7.4S15.5,34.9,15.5,30.8z M4.1,8 c0-2.2,1.8-4,4-4c2.2,0,4,1.8,4,4v22.8c0,2.2-1.8,4-4,4c-2.2,0-4-1.8-4-4V8z" />
-            <path class="st0" d="M34.9,30.8V8c0-4.1-3.3-7.4-7.4-7.4S20.1,3.9,20.1,8v22.8c0,4.1,3.3,7.4,7.4,7.4S34.9,34.9,34.9,30.8z M23.5,8 c0-2.2,1.8-4,4-4s4,1.8,4,4v22.8c0,2.2-1.8,4-4,4s-4-1.8-4-4V8z" /></svg>`)
         this.playbackToggleIcon.x((this.containerWidth / 2) - 17.5)
         this.playbackToggleIcon.y((this.containerHeight / 2) - 19.5)
         this.playbackToggleIcon.addClass(BUTTON_ICON_CLASS)
+        this.drawPlaybackToggle()
 
         this.stepModal = this.container.nested()
         this.stepModalBackground = this.stepModal.rect(HTML_UI_Params.stepModalDimensions, HTML_UI_Params.stepModalDimensions).fill({ color: '#000', opacity: 0.8 }).radius(HTML_UI_Params.stepModalThumbDiameter / 2)
@@ -426,6 +429,19 @@ export class PlayUI extends Component {
 
         this.scheduleToneEvents()
         await this.renderPatternPresetsSequencer();
+    }
+
+    /**
+     * The play button's icon and label, from the store's `isPlaying`. Its click sends the new value
+     * to the store and this draws it when it comes back as a prop (componentDidUpdate): drawing
+     * from inside the click handler would use the props the handler still holds, the old ones,
+     * since React batches the store's update until the handler has returned.
+     */
+    drawPlaybackToggle() {
+        const { isPlaying } = this.props
+        this.playbackToggle.attr({ 'aria-label': isPlaying ? 'Stop' : 'Play' })
+        this.playbackToggleIcon.clear()
+        this.playbackToggleIcon.svg(isPlaying ? PAUSE_ICON : PLAY_ICON)
     }
 
     scheduleToneEvents() {
@@ -1281,7 +1297,6 @@ export class PlayUI extends Component {
             AudioEngine.play()
             setIsPlaying(true)
         }
-        this.draw()
     }
 
     isOverStep(initialStepGraphic, x, y) {

@@ -11,7 +11,7 @@ import { SET_SELECTED_LAYER_ID, TOGGLE_STEP, UPDATE_LAYERS } from '../../redux/a
 vi.mock('@svgdotjs/svg.js', () => ({ SVG: () => ({}) }))
 vi.mock('@svgdotjs/svg.panzoom.js', () => ({}))
 vi.mock('tone', () => ({}))
-vi.mock('../../audio-engine/AudioEngine', () => ({ default: { recalculateParts: vi.fn() } }))
+vi.mock('../../audio-engine/AudioEngine', () => ({ default: { recalculateParts: vi.fn(), play: vi.fn(), stop: vi.fn() } }))
 vi.mock('../../audio-engine/Instruments', () => ({ default: {} }))
 
 const user = { id: 'me', color: '#fff' }
@@ -291,5 +291,87 @@ describe('PlayUI keeping a layer selected', () => {
         ui.componentDidUpdate(prevProps)
 
         expect(ui.selectedLayerId).toBeNull()
+    })
+})
+
+describe('PlayUI showing whether the round is playing', () => {
+    /**
+     * The play button in the middle of the round shows `isPlaying`, which its click sends to the
+     * store through `setIsPlaying`. React batches the store's answer until the click handler has
+     * returned, so the props the handler holds are still the old ones: the button is drawn from the
+     * prop when it arrives (componentDidUpdate), never from inside the handler.
+     */
+    function makePlaybackUI(isPlaying) {
+        const round = makeRound()
+        const ui = new PlayUI({
+            round, user, users: [user], display: { isRecordingSequence: false }, isPlaying,
+            selectedLayer: null, selectedLayerId: null, setIsRecordingSequence: vi.fn(), setIsPlaying: vi.fn(),
+            dispatch: vi.fn(), saveUserPattern: vi.fn()
+        })
+        ui.round = _.cloneDeep(round)
+        ui.activePatternId = 'p1'
+        ui.userColors = { me: user.color }
+        // the SVG.js elements draw() would have made for the button and its icon
+        ui.playbackToggle = { attr: vi.fn() }
+        ui.playbackToggleIcon = { clear: vi.fn(), svg: vi.fn() }
+        ui.draw = vi.fn()
+        return ui
+    }
+
+    /** The store answering setIsPlaying: the props PlayUI is re-rendered with. */
+    function playingArrives(ui, isPlaying) {
+        const prevProps = ui.props
+        ui.props = { ...ui.props, isPlaying }
+        return prevProps
+    }
+
+    /** What the icon was last drawn as, and what the button was last labelled. */
+    const drawn = (ui) => ({
+        icon: _.last(ui.playbackToggleIcon.svg.mock.calls)?.[0].match(/data-icon="(\w+)"/)?.[1],
+        label: _.last(ui.playbackToggle.attr.mock.calls)?.[0]['aria-label']
+    })
+
+    beforeEach(() => vi.clearAllMocks())
+
+    it('starts the engine on a click and shows pause once the store says the round is playing', () => {
+        const ui = makePlaybackUI(false)
+
+        ui.onPlaybackToggle()
+
+        expect(AudioEngine.play).toHaveBeenCalledTimes(1)
+        expect(ui.props.setIsPlaying).toHaveBeenCalledWith(true)
+        // nothing is drawn from the props the handler still holds, which would show play
+        expect(ui.draw).not.toHaveBeenCalled()
+        expect(ui.playbackToggleIcon.svg).not.toHaveBeenCalled()
+
+        ui.componentDidUpdate(playingArrives(ui, true))
+
+        expect(drawn(ui)).toEqual({ icon: 'pause', label: 'Stop' })
+        expect(ui.draw).not.toHaveBeenCalled()
+    })
+
+    it('stops the engine on the next click and shows play once the store says the round stopped', () => {
+        const ui = makePlaybackUI(true)
+
+        ui.onPlaybackToggle()
+
+        expect(AudioEngine.stop).toHaveBeenCalledTimes(1)
+        expect(ui.props.setIsPlaying).toHaveBeenCalledWith(false)
+        expect(ui.playbackToggleIcon.svg).not.toHaveBeenCalled()
+
+        ui.componentDidUpdate(playingArrives(ui, false))
+
+        expect(drawn(ui)).toEqual({ icon: 'play', label: 'Play' })
+    })
+
+    it('leaves the button alone on an update that does not change isPlaying', () => {
+        const ui = makePlaybackUI(true)
+
+        const prevProps = ui.props
+        ui.props = { ...ui.props, display: { ...ui.props.display, isShowingLayerSettings: true } }
+        ui.componentDidUpdate(prevProps)
+
+        expect(ui.playbackToggleIcon.svg).not.toHaveBeenCalled()
+        expect(ui.playbackToggle.attr).not.toHaveBeenCalled()
     })
 })
