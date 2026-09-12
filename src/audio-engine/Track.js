@@ -242,7 +242,7 @@ export default class Track {
         }
     }
     convertStepsToNotes (steps, percentOffset, timeOffset) {
-        const PPQ = Tone.Transport.PPQ
+        const PPQ = Tone.getTransport().PPQ
         const totalTicks = PPQ * 4
         const ticksPerStep = Math.round(totalTicks / steps.length)
         if (_.isNil(percentOffset)) {
@@ -276,8 +276,8 @@ export default class Track {
         return notes
     }
     msToTicks (ms) {
-        const BPM = Tone.Transport.bpm.value
-        const PPQ = Tone.Transport.PPQ
+        const BPM = Tone.getTransport().bpm.value
+        const PPQ = Tone.getTransport().PPQ
         const msPerBeat = 60000 / BPM
         const msPerTick = msPerBeat / PPQ
         return Math.round(ms / msPerTick)
