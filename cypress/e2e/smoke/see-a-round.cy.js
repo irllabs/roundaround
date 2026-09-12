@@ -1,10 +1,14 @@
-const crypto = require('crypto');
+// Cypress 10+ bundles specs for the browser without Node's core modules, so the random suffix
+// comes from the Web Crypto API instead of require('crypto').
+import { testUser } from '../../support/users';
+
+const randomHex = (bytes) => Array.from(window.crypto.getRandomValues(new Uint8Array(bytes)), b => b.toString(16).padStart(2, '0')).join('');
 
 describe("Can see a round", () => {
 	let hash;
 
 	beforeEach(() => {
-		hash = crypto.randomBytes(3).toString('hex');
+		hash = randomHex(3);
 		cy.clearLocalStorage();
 		cy.clearCookies();
 		cy.resetAuth();
@@ -31,10 +35,12 @@ describe("Can see a round", () => {
 	});
 
 	it("As a registered user", function () {
-		if (!Cypress.env("TEST_EMAIL") || !Cypress.env("TEST_PASSWORD")) {
-			// No test account configured (see cypress/support/users.js); the guest test above still runs.
-			this.skip();
-		}
+		testUser().then(function (user) {
+			if (!user) {
+				// No test account configured (see cypress/support/users.js); the guest test above still runs.
+				this.skip();
+			}
+		});
 		cy.login();
 
 		// Get started takes a signed-in user to their rounds list. Wait for that route and for

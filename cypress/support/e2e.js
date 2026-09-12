@@ -13,7 +13,7 @@
 // https://on.cypress.io/configuration
 // ***********************************************************
 
-// Import commands.js using ES2015 syntax:
+// Import commands.js using ES2015 syntax (this file is Cypress 10+'s e2e support file):
 import './commands'
 
 // Alternatively you can use CommonJS syntax:
