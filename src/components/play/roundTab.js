@@ -58,20 +58,21 @@ export function tabLabel(name) {
  * @param {number} o.cy y of the round's centre
  * @param {number} o.ringRadius radius of the band's centreline
  * @param {number} o.bandWidth the band's stroke width
- * @param {number} o.gap pixels between this band's outer edge and the next band's inner edge
+ * @param {number} o.gap pixels between this ring's outer edge and the next ring's inner edge
  * @param {string} o.text what the tab says (see tabLabel)
+ * @param {number} [o.edge] how far the ring reaches out from its centreline: half the band, or half a dot where the dots are bigger than the band
  * @param {number} [o.textWidth] the text's measured width at `fontSize` (see tabFont), which sizes the pill exactly; guessed when absent
  * @param {number} [o.offsetDeg] how far the round's first step is turned from the top, in degrees
  * @param {boolean} [o.hasIcon] whether the instrument's icon goes before the name
  */
-export function tabGeometry({ cx, cy, ringRadius, bandWidth, gap, text, textWidth, offsetDeg = 0, hasIcon = false }) {
+export function tabGeometry({ cx, cy, ringRadius, bandWidth, gap, text, edge = bandWidth / 2, textWidth, offsetDeg = 0, hasIcon = false }) {
     if (!text) return null
     const font = tabFont(gap, bandWidth)
     if (!font) return null
     const { height, fontSize } = font
     const spacingPx = fontSize * LETTER_SPACING
-    // the tab grows out of the band: its bottom is the band's outer edge, its top a parallel arc
-    const inner = ringRadius + bandWidth / 2
+    // the tab grows out of the ring: its bottom is the ring's outer edge (the band's, or the dots' where they reach further), its top a parallel arc
+    const inner = ringRadius + edge
     const outer = inner + height
     const radius = (inner + outer) / 2
     // the browser draws tracking after every glyph, the last one included, so a measured width carries one spacing too many

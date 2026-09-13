@@ -1,8 +1,8 @@
 import { describe, it, expect } from 'vitest'
 import { tabFont, tabGeometry, tabLabel, TAB_MAX_CHARS } from './roundTab'
 
-// A round of this user's, at the app's numbers from the Figma: a 52px band, 48px steps, 76px between bands.
-const own = { cx: 500, cy: 500, ringRadius: 512, bandWidth: 52, gap: 76 }
+// A round of this user's, at the app's numbers: a 76px rail (the Figma's 52 grown with the 72px dots), 52px between rails.
+const own = { cx: 500, cy: 500, ringRadius: 512, bandWidth: 76, gap: 52 }
 // A collaborator's round: half size, a 26px band, 23px between bands: room for a small tab.
 const theirs = { cx: 500, cy: 500, ringRadius: 896, bandWidth: 26, gap: 23 }
 // A round with no room at all outside it.
@@ -128,5 +128,25 @@ describe('tabGeometry', () => {
 
     it('draws no tab for an empty name', () => {
         expect(tabGeometry({ ...own, text: '' })).toBeNull()
+    })
+})
+
+describe('tabGeometry on a ring whose dots reach past its band', () => {
+    // dots 8px bigger than a 52px band: they reach 30px out, the band 26px, and 60px is left before the next ring's dots
+    const thin = { ...own, bandWidth: 52, gap: 76 }
+    const dotted = { ...thin, edge: 30, gap: 60 }
+
+    it('stands on the dots\' outer edge rather than the band\'s, and still clears the next ring', () => {
+        const tab = tabGeometry({ ...dotted, text: 'KICK' })
+        expect(tab.radius - tab.height / 2).toBeCloseTo(own.ringRadius + 30, 5)
+        expect(tab.radius + tab.height / 2).toBeLessThanOrEqual(own.ringRadius + 30 + 60 - 2)
+    })
+
+    it('is the same tab as on the band, just further out', () => {
+        const before = tabGeometry({ ...thin, text: 'KICK' })
+        const after = tabGeometry({ ...dotted, text: 'KICK' })
+        expect(after.height).toBe(before.height)
+        expect(after.fontSize).toBe(before.fontSize)
+        expect(after.radius - before.radius).toBeCloseTo(4, 5)
     })
 })

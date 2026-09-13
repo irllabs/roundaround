@@ -19,6 +19,7 @@ import { stepTicks, msToTicks } from '../../audio-engine/grid'
 import { flashStep } from './stepFlash'
 import { METRONOME_ICON, applyMetronome } from './metronome'
 import { CENTRE_PANE, centrePaneLayout } from './centrePane'
+import { fitZoom, dotDiameter, hitSize, inHit, onDot, hitPolicy } from './touchTargets'
 import {
     setIsPlaying,
     setIsRecordingSequence,
@@ -34,6 +35,10 @@ const PATTERN_SAVE_DEBOUNCE_MS = 1000
 // The two class names PlayUI puts on SVG.js nodes. They came from JSS; SVG.js only ever needed
 // the strings, and Tailwind emits both because they appear here as literals.
 const BUTTON_CLASS = 'cursor-pointer'
+/** The header and the bottom bar, in screen pixels: what the round has to fit between. */
+const CHROME_HEIGHT = 150
+/** A collaborator's rail: as wide as one of their half-size dots with its stroke, as this user's is (layerStrokeMax). */
+const COLLABORATOR_RAIL = (HTML_UI_Params.stepDiameter + HTML_UI_Params.stepStrokeWidth) / HTML_UI_Params.otherUserLayerSizeDivisor
 const BUTTON_ICON_CLASS = 'pointer-events-none'
 // the tab's face; index.html loads Inter, and the pill is sized to what the browser measures for it
 const TAB_FONT = 'Inter, Roboto, Helvetica, Arial, sans-serif'
@@ -93,13 +98,20 @@ export class PlayUI extends Component {
      * Zooms the view so the whole round, every ring with room for its tab, fits between the header
      * and the bottom bar; the round is drawn at the design's size and shown scaled to the window.
      */
+    /** The zoom fitRoundToView shows the round at: screen pixels per one of the round's pixels. */
+    fitZoom() {
+        if (_.isNil(this.round) || _.isEmpty(this.round.layers)) {
+            return 1
+        }
+        const outer = this.getLayerDiameter(this.round.layers.length - 1) / 2 + HTML_UI_Params.layerStrokeMax / 2 + 40
+        return fitZoom({ width: this.containerWidth, height: this.containerHeight, outer, chrome: CHROME_HEIGHT })
+    }
+
     fitRoundToView() {
         if (_.isNil(this.container) || _.isNil(this.round) || _.isEmpty(this.round.layers)) {
             return
         }
-        const outer = this.getLayerDiameter(this.round.layers.length - 1) / 2 + HTML_UI_Params.layerStrokeMax / 2 + 40
-        const chrome = 150 // the header and the bottom bar, in screen pixels
-        const zoom = Math.min(1, (this.containerHeight - chrome) / (outer * 2), (this.containerWidth - 40) / (outer * 2))
+        const zoom = this.fitZoom()
         const width = this.containerWidth / zoom, height = this.containerHeight / zoom
         this.container.viewbox(this.containerWidth / 2 - width / 2, this.containerHeight / 2 - height / 2, width, height)
     }
@@ -415,6 +427,10 @@ export class PlayUI extends Component {
         // draw layers
         this.stepGraphics = []
         this.layerGraphics = []
+        // the dots and their hit areas are sized for the zoom the round is about to be shown at
+        this.zoom = this.fitZoom()
+        this.hitPolicy = hitPolicy()
+        this.showHits = typeof window !== 'undefined' && /[?&]hits(=|&|$)/.test(window.location.search)
         let i = 0
         for (const layer of this.round.layers) {
             // add order parameter so we can calculate offsets (todo: add this when we create a layer?)
@@ -442,7 +458,7 @@ export class PlayUI extends Component {
         this.playbackToggleIcon.addClass(BUTTON_ICON_CLASS)
         this.drawPlaybackToggle()
 
-        this.stepModal = this.container.nested()
+        this.stepModal = this.container.nested().attr({ 'data-test': 'step-modal' })
         this.stepModalBackground = this.stepModal.rect(HTML_UI_Params.stepModalDimensions, HTML_UI_Params.stepModalDimensions).fill({ color: '#000', opacity: 0.8 }).radius(HTML_UI_Params.stepModalThumbDiameter / 2)
 
         this.stepModalProbabilityText = this.stepModal.text('Probability')
@@ -721,7 +737,7 @@ export class PlayUI extends Component {
         const layerDiameter = this.getLayerDiameter(order)
         const xOffset = (this.containerWidth / 2) - (layerDiameter / 2)
         const yOffset = (this.containerHeight / 2) - (layerDiameter / 2)
-        let layerStrokeSize = HTML_UI_Params.layerStrokeMax / HTML_UI_Params.otherUserLayerSizeDivisor
+        let layerStrokeSize = COLLABORATOR_RAIL
         if (layer.createdBy === this.props.user.id) {
             layerStrokeSize = HTML_UI_Params.layerStrokeMax
         }
@@ -753,13 +769,18 @@ export class PlayUI extends Component {
 
         // draw steps
         const stepSize = (2 * Math.PI) / layer.steps.length;
+        const radius = layerDiameter / 2;
+        // a collaborator's dots are half the design's; this user's are sized for the screen, with a
+        // hit area a finger can land on (see touchTargets)
         let stepDiameter = HTML_UI_Params.stepDiameter / HTML_UI_Params.otherUserLayerSizeDivisor
         let stepStrokeWidth = HTML_UI_Params.stepStrokeWidth / HTML_UI_Params.otherUserLayerSizeDivisor
-        if (layer.createdBy === this.props.user.id) {
-            stepDiameter = HTML_UI_Params.stepDiameter
+        let hit = null
+        if (createdByThisUser) {
+            const sizing = this.stepSizing(order)
+            stepDiameter = sizing.dot
             stepStrokeWidth = HTML_UI_Params.stepStrokeWidth
+            hit = sizing.hit
         }
-        const radius = layerDiameter / 2;
         let angle = Math.PI / -2; // start at -90 degrees so first step is at top
         const anglePercentOffset = this.ticksToRadians(this.ticksPerStep(layer.steps.length) * (layer.percentOffset / 100))
         const angleTimeOffset = this.ticksToRadians(this.msToTicks(layer.timeOffset))
@@ -777,14 +798,15 @@ export class PlayUI extends Component {
             }).opacity(dim ? 0.1 : !createdByThisUser ? 0.5 : 1)
             stepGraphic.x(x)
             stepGraphic.y(y)
-            angle += stepSize
             stepGraphic.layerId = layer.id
             stepGraphic.id = step.id
-            stepGraphic.isAllowedInteraction = !dim && layer.createdBy === this.props.user.id
+            stepGraphic.diameter = stepDiameter
+            stepGraphic.isAllowedInteraction = !dim && createdByThisUser
             stepGraphic.userColor = this.userColors[layer.createdBy]
-            if (layer.createdBy === this.props.user.id) {
-                stepGraphic.addClass(BUTTON_CLASS)
+            if (!_.isNil(hit)) {
+                stepGraphic.hit = this.drawStepHit(stepGraphic, { ...hit, cx: x + stepDiameter / 2, cy: y + stepDiameter / 2, angle, dot: stepDiameter })
             }
+            angle += stepSize
             this.stepGraphics.push(stepGraphic)
             this.updateStep(step)
             this.addStepEventListeners(stepGraphic)
@@ -798,6 +820,7 @@ export class PlayUI extends Component {
             cy: yOffset + layerDiameter / 2,
             ringRadius: radius,
             bandWidth: layerStrokeSize,
+            edge: this.ringEdge(order),
             gap: this.gapAfterLayer(order),
             text: tabLabel(Instruments.getInstrumentLabel(layer.instrument.sampler)),
             sampler: layer.instrument.sampler,
@@ -812,14 +835,66 @@ export class PlayUI extends Component {
      * plenty outside the last one.
      */
     gapAfterLayer(order) {
-        const layer = this.round.layers[order]
-        const next = this.round.layers[order + 1]
-        const bandOf = (l) => (l.createdBy === this.props.user.id ? HTML_UI_Params.layerStrokeMax : HTML_UI_Params.layerStrokeMax / HTML_UI_Params.otherUserLayerSizeDivisor)
-        if (_.isNil(next)) {
+        if (_.isNil(this.round.layers[order + 1])) {
             return HTML_UI_Params.layerPadding * 4
         }
         const step = (this.getLayerDiameter(order + 1) - this.getLayerDiameter(order)) / 2
-        return step - bandOf(layer) / 2 - bandOf(next) / 2
+        return step - this.ringEdge(order) - this.ringEdge(order + 1)
+    }
+
+    /** How far the ring at `order` reaches out from its centreline: half its band, or half a dot where the dots are bigger. */
+    ringEdge(order) {
+        if (this.round.layers[order].createdBy !== this.props.user.id) {
+            return Math.max(COLLABORATOR_RAIL, HTML_UI_Params.stepDiameter / HTML_UI_Params.otherUserLayerSizeDivisor) / 2
+        }
+        return Math.max(HTML_UI_Params.layerStrokeMax, this.stepSizing(order).dot) / 2
+    }
+
+    /** The dot and the hit area of this user's steps on the ring at `order`, for the zoom the round is shown at (see touchTargets). */
+    stepSizing(order) {
+        const radius = this.getLayerDiameter(order) / 2
+        const arcSpacing = 2 * Math.PI * radius / this.round.layers[order].steps.length
+        const ringPitch = this.ownRingPitch(order)
+        const dot = dotDiameter({ zoom: this.zoom, arcSpacing, ringPitch })
+        return { dot, hit: hitSize({ zoom: this.zoom, arcSpacing, ringPitch, dot, policy: this.hitPolicy }) }
+    }
+
+    /**
+     * How far, in the round's pixels, the ring at `order` is from the nearest ring this user can
+     * also edit, or twice its distance to the presets in the middle, whichever is smaller: what
+     * bounds a step's hit area across the ring (see touchTargets). A lone ring is bounded by the
+     * presets alone.
+     */
+    ownRingPitch(order) {
+        const radius = this.getLayerDiameter(order) / 2
+        let pitch = 2 * (radius - (CENTRE_PANE.presets.radius + CENTRE_PANE.presets.diameter / 2))
+        this.round.layers.forEach((layer, i) => {
+            if (i !== order && layer.createdBy === this.props.user.id) {
+                pitch = Math.min(pitch, Math.abs(this.getLayerDiameter(i) / 2 - radius))
+            }
+        })
+        return pitch
+    }
+
+    /**
+     * The invisible ellipse a finger hits for a step (see touchTargets), laid along the ring over
+     * the dot; the step's pointer listeners live on it. `?hits` in the URL shows them.
+     */
+    drawStepHit(stepGraphic, hit) {
+        const shape = this.container.ellipse(hit.along, hit.across)
+            .attr({ fill: this.showHits ? 'rgba(255,255,255,0.12)' : 'none', 'pointer-events': 'all', 'data-step-hit': stepGraphic.id })
+        if (stepGraphic.isAllowedInteraction) {
+            shape.addClass(BUTTON_CLASS)
+        }
+        const placed = { ...hit, shape }
+        this.moveStepHit(placed, hit.cx, hit.cy, hit.angle)
+        return placed
+    }
+
+    /** Puts a step's hit ellipse over its dot at `cx, cy`, its short axis on the ring's radius at `angle`. */
+    moveStepHit(hit, cx, cy, angle) {
+        Object.assign(hit, { cx, cy, angle })
+        hit.shape.center(cx, cy).transform({ rotate: angle * 180 / Math.PI + 90, origin: 'center' })
     }
 
     getLayerDiameter(order) {
@@ -978,10 +1053,13 @@ export class PlayUI extends Component {
         angle += angleTimeOffset
         layerGraphic.firstStep = null
         for (let stepGraphic of stepGraphics) {
-            const x = Math.round(layerDiameter / 2 + radius * Math.cos(angle) - HTML_UI_Params.stepDiameter / 2) + xOffset;
-            const y = Math.round(layerDiameter / 2 + radius * Math.sin(angle) - HTML_UI_Params.stepDiameter / 2) + yOffset;
+            const x = Math.round(layerDiameter / 2 + radius * Math.cos(angle) - stepGraphic.diameter / 2) + xOffset;
+            const y = Math.round(layerDiameter / 2 + radius * Math.sin(angle) - stepGraphic.diameter / 2) + yOffset;
             stepGraphic.x(x)
             stepGraphic.y(y)
+            if (!_.isNil(stepGraphic.hit)) {
+                this.moveStepHit(stepGraphic.hit, x + stepGraphic.diameter / 2, y + stepGraphic.diameter / 2, angle)
+            }
             angle += stepSize
             if (_.isNil(layerGraphic.firstStep)) {
                 layerGraphic.firstStep = stepGraphic
@@ -1106,9 +1184,11 @@ export class PlayUI extends Component {
     addStepEventListeners(stepGraphic) {
         this.removeStepEventListeners(stepGraphic)
         const _this = this
-        if (stepGraphic.isAllowedInteraction) {
+        if (stepGraphic.isAllowedInteraction && !_.isNil(stepGraphic.hit)) {
+            // the listeners live on the hit area: the dot for a mouse, more than the dot for a finger
+            const target = stepGraphic.hit.shape
 
-            stepGraphic.on('mouseout', async (e) => {
+            target.on('mouseout', async (e) => {
                 if (!_.isNil(_this.stepMoveTimer)) {
                     // we've swiped / dragged out of the step, toggle this step and listen for mouseovers on all other steps
                     // add listener to layergraphic to cancel swiping
@@ -1119,10 +1199,11 @@ export class PlayUI extends Component {
                 }
             })
 
-            stepGraphic.on('mousedown', (e) => {
+            target.on('mousedown', (e) => {
                 e.stopPropagation()
                 e.preventDefault()
                 _this.swipeToggleActive = false
+                stepGraphic.ringHold = false
                 _this.startStepMoveTimer(stepGraphic, e.pageX, e.pageY)
 
                 _this.container.on('mouseup', (e) => {
@@ -1145,25 +1226,31 @@ export class PlayUI extends Component {
                 })
             })
 
-            stepGraphic.on('touchstart', (e) => {
+            target.on('touchstart', (e) => {
                 e.stopPropagation()
                 e.preventDefault()
                 _this.swipeToggleActive = false
-                _this.startStepMoveTimer(stepGraphic, e.touches[0].pageX, e.touches[0].pageY)
+                const touch = e.touches[0]
+                // a tap anywhere on the hit area toggles the step; a hold on the dot edits the step,
+                // and a hold on the rest of the hit area is a hold on the ring, which opens the round's settings
+                stepGraphic.ringHold = !onDot(_this.container.point(touch.pageX, touch.pageY), stepGraphic.hit, _this.zoom)
+                _this.startStepMoveTimer(stepGraphic, touch.pageX, touch.pageY)
                 _this.touchStartStepGraphic = stepGraphic
                 _this.isCurrentlyOverStepGraphic = stepGraphic
-                stepGraphic.on('touchmove', (e) => {
+                target.on('touchmove', (e) => {
                     e.stopPropagation()
                     e.preventDefault()
                     this.isScrolling = true;
-                    if (_.isNil(_this.stepMoveTimer) && !_this.swipeToggleActive) {
+                    if (stepGraphic.ringHold && _.isNil(_this.stepMoveTimer)) {
+                        // the hold went to the ring; the finger has nothing more to do here
+                    } else if (_.isNil(_this.stepMoveTimer) && !_this.swipeToggleActive) {
                         _this.onStepDragMove(stepGraphic, e.touches[0].pageX, e.touches[0].pageY)
                     } else {
                         _this.touchStartStepGraphic = stepGraphic
                         _this.isOverStep(stepGraphic, e.touches[0].pageX, e.touches[0].pageY)
                     }
                 })
-                stepGraphic.on('touchend', (e) => {
+                target.on('touchend', (e) => {
                     e.stopPropagation()
                     e.preventDefault()
                     _this.hideStepModal()
@@ -1173,11 +1260,11 @@ export class PlayUI extends Component {
                         if (!_this.swipeToggleActive) {
                             _this.onStepClick(stepGraphic)
                         }
-                    } else {
+                    } else if (!stepGraphic.ringHold) {
                         _this.onStepDragEnd(stepGraphic)
                     }
-                    stepGraphic.off('touchmove')
-                    stepGraphic.off('touchend')
+                    target.off('touchmove')
+                    target.off('touchend')
                     _this.touchStartStepGraphic = null
                     _this.isScrolling = false
                     clearInterval()
@@ -1186,13 +1273,22 @@ export class PlayUI extends Component {
         }
     }
     removeStepEventListeners(stepGraphic) {
-        stepGraphic.off('mousedown')
-        stepGraphic.off('touchstart')
+        if (_.isNil(stepGraphic.hit)) {
+            return
+        }
+        stepGraphic.hit.shape.off('mousedown')
+        stepGraphic.hit.shape.off('touchstart')
     }
     startStepMoveTimer(stepGraphic, x, y) {
         const _this = this
         this.clearShowStepModalTimer()
         this.stepMoveTimer = setTimeout(function () {
+            if (stepGraphic.ringHold && !_this.swipeToggleActive) {
+                // held on the ring beside the dot: the round's settings, and nothing on release
+                _this.clearShowStepModalTimer()
+                _this.onLayerClicked(stepGraphic.layerId)
+                return
+            }
             const step = _this.getStep(stepGraphic.id)
             if (step.isOn && !_this.swipeToggleActive) {
                 _this.showStepModal(stepGraphic, x, y)
@@ -1232,8 +1328,8 @@ export class PlayUI extends Component {
         this.removeStepSwipeListeners()
         const _this = this
         for (const stepGraphic of this.stepGraphics) {
-            if (stepGraphic.layerId === originalStepGraphic.layerId) {
-                stepGraphic.on('mouseover', (e) => {
+            if (stepGraphic.layerId === originalStepGraphic.layerId && !_.isNil(stepGraphic.hit)) {
+                stepGraphic.hit.shape.on('mouseover', (e) => {
                     _this.onStepClick(stepGraphic)
                 })
             }
@@ -1242,8 +1338,10 @@ export class PlayUI extends Component {
 
     removeStepSwipeListeners() {
         for (const stepGraphic of this.stepGraphics) {
-            stepGraphic.off('mouseout')
-            stepGraphic.off('mouseover')
+            if (!_.isNil(stepGraphic.hit)) {
+                stepGraphic.hit.shape.off('mouseout')
+                stepGraphic.hit.shape.off('mouseover')
+            }
         }
     }
 
@@ -1352,8 +1450,8 @@ export class PlayUI extends Component {
     }
 
     updateStepModal(stepGraphic) {
-        this.stepModal.x(stepGraphic.x() - ((HTML_UI_Params.stepModalDimensions / 2) - HTML_UI_Params.stepDiameter / 2))
-        this.stepModal.y(stepGraphic.y() - ((HTML_UI_Params.stepModalDimensions / 2) - HTML_UI_Params.stepDiameter / 2))
+        this.stepModal.x(stepGraphic.x() - ((HTML_UI_Params.stepModalDimensions / 2) - stepGraphic.diameter / 2))
+        this.stepModal.y(stepGraphic.y() - ((HTML_UI_Params.stepModalDimensions / 2) - stepGraphic.diameter / 2))
         this.stepModalThumb.x(stepGraphic.probability * (HTML_UI_Params.stepModalDimensions - HTML_UI_Params.stepModalThumbDiameter))
         this.stepModalThumb.y((1 - stepGraphic.velocity) * (HTML_UI_Params.stepModalDimensions - HTML_UI_Params.stepModalThumbDiameter))
     }
@@ -1418,7 +1516,7 @@ export class PlayUI extends Component {
                 let width = window.innerWidth
                 let height = window.innerHeight
                 _this.containerWidth = width
-                _this.containerheight = height
+                _this.containerHeight = height
                 const roundElement = document.getElementById('round')
                 roundElement.style.width = width + 'px'
                 roundElement.style.height = height + 'px'
@@ -1517,11 +1615,12 @@ export class PlayUI extends Component {
     isOverStep(initialStepGraphic, x, y) {
         const _this = this
         let isOver = false
+        // the finger's position in the round's own pixels, tested against each step's hit area
+        const point = this.container.point(x, y)
         for (const stepGraphic of this.stepGraphics) {
             if (stepGraphic.layerId === _this.touchStartStepGraphic.layerId) {
                 const step = this.getStep(stepGraphic.id);
-                const rect = stepGraphic.node.getBoundingClientRect()
-                if (x >= rect.x && x <= rect.x + rect.width && y >= rect.y && y <= rect.y + rect.height) {
+                if (!_.isNil(stepGraphic.hit) && inHit(point, stepGraphic.hit)) {
                     isOver = true
                     const now = new Date().getTime()
                     const difference = step.lastUpdated ? (now - step.lastUpdated) : 0
