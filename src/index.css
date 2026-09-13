@@ -90,6 +90,18 @@
   html, body, #root, .App {
     height: 100%;
   }
+  /* Nothing in this app is prose. Dragging on the round pans it and must never paint a
+     selection over the tabs, the preset letters or the pill labels, and the same goes for
+     every screen. Fields keep their text selectable, so a name or a link can still be
+     edited and copied. */
+  html {
+    -webkit-user-select: none;
+    user-select: none;
+  }
+  input, textarea, [contenteditable="true"] {
+    -webkit-user-select: text;
+    user-select: text;
+  }
   body {
     margin: 0;
     background-color: var(--background);
