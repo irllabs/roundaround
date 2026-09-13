@@ -9,14 +9,14 @@ export const CENTRE_PANE = {
     /** the play/stop button */
     play: { diameter: 128 },
     /** the pattern presets A to H, on a circle: a thick ring around a dark hole holding the letter; the active one gets an outline */
-    presets: { diameter: 144, radius: 360, labelSize: 40, ring: { outer: 128, width: 28, opacity: 0.3 }, hole: 72, outline: { diameter: 144, width: 4, opacity: 0.6 } },
+    presets: { diameter: 144, radius: 360, labelSize: 40, ring: { outer: 128, width: 28, opacity: 0.3 }, hole: 72, outline: { diameter: 144, width: 4, opacity: 0.6 }, miniature: { scale: 2.2, dot: 4 } },
     /** the sequence slots, on a smaller circle */
-    slots: { diameter: 72, radius: 180, labelSize: 14, ringWidth: 6, opacity: 0.25 },
+    slots: { diameter: 72, radius: 180, labelSize: 14, ringWidth: 6, opacity: 0.25, miniature: { dot: 3 } },
     /** the Sequence button, above the centre; the Stop variant while a sequence is being recorded */
     sequenceButton: { width: 143, height: 48, aboveCentre: 253, iconSize: 24, iconInset: 16, labelSize: 16, labelInset: 48, fillOpacity: 0.1 },
     stopButton: { width: 96, height: 48, iconSize: 16, iconInset: 18, labelInset: 44 },
     /** the A / sequence switch: a big circle with the pattern letter and a small one with the sequence dots */
-    switch: { width: 120, height: 64, aboveCentre: 96, borderOpacity: 0.1, disc: 44, discOpacity: 0.2, labelSize: 14, dotsDiameter: 24 },
+    switch: { width: 120, height: 64, aboveCentre: 96, borderOpacity: 0.1, disc: 48, discOpacity: 0.2, letterRing: 24, labelSize: 14, dotsDiameter: 30, dot: 5 },
     /** the tempo pill, below the centre */
     tempo: { width: 93, height: 48, belowCentre: 104, iconSize: 24, iconInset: 16, labelSize: 16, labelInset: 48 },
 }

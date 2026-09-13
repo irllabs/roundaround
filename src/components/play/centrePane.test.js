@@ -28,7 +28,7 @@ describe('centrePaneLayout', () => {
         expect(sw.disc.cx).toBe(sw.x + 32)
         expect(sw.dots.cx).toBe(sw.x + 64 + 8 + 24)
         expect(sw.disc.cy).toBe(sw.dots.cy)
-        expect(sw.disc.diameter).toBe(44)
+        expect(sw.disc.diameter).toBe(48)
     })
 
     it('places the presets on the outer circle and the slots on the inner one, the first of each at the top', () => {

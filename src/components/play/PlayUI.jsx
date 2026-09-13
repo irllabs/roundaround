@@ -1655,7 +1655,6 @@ export class PlayUI extends Component {
         const pill = layout.switch
         const spec = CENTRE_PANE.switch
         const isPlayingSequence = round.userPatterns[user.id].isPlayingSequence
-        const sequence = round.userPatterns[user.id].sequence
         const border = this.container.rect(pill.width, pill.height).radius(pill.height / 2).x(pill.x).y(pill.y)
             .fill('none').stroke({ color: user.color, width: 1, opacity: spec.borderOpacity }).attr({ id: 'sequence-switch' })
         // the lit disc marks the mode in use: the letter (one pattern) or the dots (the sequence)
@@ -1663,14 +1662,16 @@ export class PlayUI extends Component {
             .attr({ id: 'switch-letter-container', opacity: isPlayingSequence ? 0.08 : spec.discOpacity })
         const dotsDisc = this.container.circle(spec.disc).cx(pill.dots.cx).cy(pill.dots.cy).fill(user.color)
             .attr({ id: 'switch-dots-container', opacity: isPlayingSequence ? spec.discOpacity : 0 })
+        const letterRing = this.container.circle(spec.letterRing).cx(pill.disc.cx).cy(pill.disc.cy).fill('none')
+            .stroke({ color: user.color, width: 2 }).attr({ id: 'switch-letter-ring' })
         const switchLabel = this.centredText('A', pill.disc.cx, pill.disc.cy, spec.labelSize, user.color, { attrs: { id: 'switch-letter' } })
-        this.microLayerGraphics.push(border, letterDisc, dotsDisc, switchLabel)
+        this.microLayerGraphics.push(border, letterDisc, dotsDisc, letterRing, switchLabel)
         const dotsCx = pill.dots.cx, dotsCy = pill.dots.cy
         for (let i = 0; i < HTML_UI_Params.sequenceButtonDots; i++) {
-            const angle = -Math.PI / 2 + (i * 2 * Math.PI) / sequence.length
-            const dot = this.container.circle(HTML_UI_Params.dotDiameter)
-            dot.attr({ id: `${i}_sequence_dot`, fill: 'rgba(0,0,0,0.1)', opacity: 1 })
-            dot.stroke({ color: user.color, width: 1 })
+            const angle = -Math.PI / 2 + (i * 2 * Math.PI) / HTML_UI_Params.sequenceButtonDots
+            const dot = this.container.circle(spec.dot)
+            dot.attr({ id: `${i}_sequence_dot`, fill: 'none', opacity: 1 })
+            dot.stroke({ color: user.color, width: 1.5 })
             dot.cx(dotsCx + (spec.dotsDiameter / 2) * Math.cos(angle)).cy(dotsCy + (spec.dotsDiameter / 2) * Math.sin(angle))
             this.microLayerGraphics.push(dot)
         }
@@ -1721,10 +1722,10 @@ export class PlayUI extends Component {
                 this.microLayerGraphics.push(patternOutline)
             }
             if (layers && layers.length > 0) {
-                // the pattern's rounds in miniature, inside the hole
-                const scale = spec.hole / HTML_UI_Params.stepDiameter
-                const holeX = cx - spec.hole / 2, holeY = cy - spec.hole / 2
-                this.renderMicroRound({ x: holeX + 1.5 * scale, y: holeY + 1.5 * scale, pattern: currentPatternGraphic, isFilled: isSelected, layers, opacity, scale })
+                // the pattern's rounds in miniature ride on the ring, around the letter (a miniature is
+                // centred 22.5 units from its offset at scale 1, see addMicroLayer)
+                const { scale, dot } = spec.miniature
+                this.renderMicroRound({ x: cx - 22.5 * scale, y: cy - 22.5 * scale, pattern: currentPatternGraphic, isFilled: isSelected, layers, opacity, scale, dot })
             }
             const clickableButton = this.container.circle(diameter)
             clickableButton.fill({ color: '#000', opacity: 0.001 })
@@ -1770,7 +1771,7 @@ export class PlayUI extends Component {
             const layers = pattern && pattern.state && [...pattern.state.layers]
             if (layers) {
                 const scale = diameter / 33 // the slots were drawn 33px across when the micro sizes were tuned
-                this.renderMicroRound({ x: sX + 3.4 * scale, y: sY + 3.4 * scale, pattern: sequencePattern, layers, opacity, isFilled: isHighlighted, diameter, scale })
+                this.renderMicroRound({ x: sX + 3.4 * scale, y: sY + 3.4 * scale, pattern: sequencePattern, layers, opacity, isFilled: isHighlighted, diameter, scale, dot: spec.miniature.dot })
             }
             this.sequenceGraphics.push(sequencePattern)
             i++
@@ -1779,8 +1780,7 @@ export class PlayUI extends Component {
 
     /** The Sequence button above the centre, or Stop while a sequence is being recorded. */
     renderRecordSequenceButton = (layout) => {
-        const { round, user } = this.props
-        const sequence = round.userPatterns[user.id].sequence
+        const { user } = this.props
         if (!this.isRecordingSequence) {
             const pill = layout.sequenceButton
             const spec = CENTRE_PANE.sequenceButton
@@ -1789,10 +1789,10 @@ export class PlayUI extends Component {
             sequenceButton.x(pill.x).y(pill.y)
             const dotsCx = pill.x + spec.iconInset + spec.iconSize / 2, dotsCy = pill.cy
             for (let i = 0; i < HTML_UI_Params.sequenceButtonDots; i++) {
-                const angle = -Math.PI / 2 + (i * 2 * Math.PI) / sequence.length
-                const dot = this.container.circle(HTML_UI_Params.dotDiameter)
-                dot.attr({ id: `${i}-sbuttonDot`, fill: 'rgba(0,0,0,0.1)', opacity: 1 })
-                dot.stroke({ color: user.color, width: 1 })
+                const angle = -Math.PI / 2 + (i * 2 * Math.PI) / HTML_UI_Params.sequenceButtonDots
+                const dot = this.container.circle(4)
+                dot.attr({ id: `${i}-sbuttonDot`, fill: 'none', opacity: 1 })
+                dot.stroke({ color: user.color, width: 1.2 })
                 dot.cx(dotsCx + (spec.iconSize / 2 - 2) * Math.cos(angle)).cy(dotsCy + (spec.iconSize / 2 - 2) * Math.sin(angle))
                 this.microLayerGraphics.push(dot)
             }
@@ -1867,7 +1867,7 @@ export class PlayUI extends Component {
         return diameter * scale
     }
 
-    addMicroLayer = async (layer, order, { containerXOffset, containerYOffset, diameter, isFilled, scale = 1 }) => {
+    addMicroLayer = async (layer, order, { containerXOffset, containerYOffset, diameter, isFilled, scale = 1, dot }) => {
         const { user } = this.props
         const layerDiameter = this.getMicroLayerDiameter(order, diameter, scale)
         const xOffset = containerXOffset + (6 - (order * (diameter ? HTML_UI_Params.micro2LayerOffsetMultiplier : HTML_UI_Params.microLayerOffsetMultiplier))) * scale
@@ -1885,7 +1885,7 @@ export class PlayUI extends Component {
 
         // draw steps
         const stepSize = (2 * Math.PI) / layer.steps.length;
-        let stepDiameter = (HTML_UI_Params.microStepDiameter / HTML_UI_Params.otherUserLayerSizeDivisor) * scale
+        let stepDiameter = dot ?? (HTML_UI_Params.microStepDiameter / HTML_UI_Params.otherUserLayerSizeDivisor) * scale
         const radius = layerDiameter / 2
         let angle = Math.PI / -2
         const anglePercentOffset = this.ticksToRadians(this.ticksPerStep(layer.steps.length) * (layer.percentOffset / 100))
@@ -1916,11 +1916,11 @@ export class PlayUI extends Component {
         })
     }
 
-    renderMicroRound = async ({ x, y, pattern, layers, isFilled, diameter, scale = 1 }) => {
+    renderMicroRound = async ({ x, y, pattern, layers, isFilled, diameter, scale = 1, dot }) => {
         if (this.activePattern === pattern) return
         const sortedLayers = await this.orderAndReturnLayers(layers)
         sortedLayers && sortedLayers.map(async (layer, i) => {
-            return await this.addMicroLayer(layer, i++, { containerXOffset: x, containerYOffset: y, diameter, isFilled, scale })
+            return await this.addMicroLayer(layer, i++, { containerXOffset: x, containerYOffset: y, diameter, isFilled, scale, dot })
         })
         this.activePattern = pattern
     }
