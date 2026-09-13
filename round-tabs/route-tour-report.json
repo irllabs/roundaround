@@ -7,7 +7,7 @@
     },
     {
       "step": "guest round created",
-      "pathname": "/play/4604621e-e994-4380-9935-ce56427072dd",
+      "pathname": "/play/4809efb8-1647-4af2-a458-eeab87e91297",
       "ok": true
     },
     {
@@ -23,14 +23,14 @@
     },
     {
       "step": "new round from the list",
-      "pathname": "/play/f61511f6-d87f-4390-bdd6-29f4f67c371c",
+      "pathname": "/play/f43fa531-493b-4606-87bb-3540541fa193",
       "ok": true
     },
     {
       "step": "second round is a different round",
       "ok": true,
-      "first": "/play/4604621e-e994-4380-9935-ce56427072dd",
-      "second": "/play/f61511f6-d87f-4390-bdd6-29f4f67c371c"
+      "first": "/play/4809efb8-1647-4af2-a458-eeab87e91297",
+      "second": "/play/f43fa531-493b-4606-87bb-3540541fa193"
     },
     {
       "step": "back link from the second round",
@@ -49,7 +49,7 @@
     },
     {
       "step": "deep link into the first round",
-      "pathname": "/play/4604621e-e994-4380-9935-ce56427072dd",
+      "pathname": "/play/4809efb8-1647-4af2-a458-eeab87e91297",
       "ok": true
     }
   ],
