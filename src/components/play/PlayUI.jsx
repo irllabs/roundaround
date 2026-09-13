@@ -13,6 +13,7 @@ import { numberRange, layerWithStepsOff, patternLayersForRound } from '../../uti
 import Instruments from '../../audio-engine/Instruments'
 import { getDefaultUserPatternSequence } from '../../utils/defaultData'
 import { classifyRoundChange } from './roundDiff'
+import { tabGeometry, tabLabel } from './roundTab'
 import {
     setIsPlaying,
     setIsRecordingSequence,
@@ -653,14 +654,6 @@ export class PlayUI extends Component {
         //const angleOffset = (((Math.PI * 2) / layer.steps.length) * (layer.timeOffset / 100))
         angle += anglePercentOffset
         angle += angleTimeOffset
-        let layerLabelString = Instruments.getInstrumentLabel(layer.instrument.sampler)
-        if (layerLabelString.length > 5) {
-            layerLabelString = layerLabelString.substring(0, 5) + '...'
-        }
-        if (layer.createdBy !== this.props.user.id) {
-            layerLabelString = ""
-        }
-        layerGraphic.layerLabel = this.container.plain(layerLabelString)
         layerGraphic.firstStep = null;
         for (let step of layer.steps) {
             const x = Math.round(layerDiameter / 2 + radius * Math.cos(angle) - stepDiameter / 2) + xOffset;
@@ -687,8 +680,35 @@ export class PlayUI extends Component {
                 layerGraphic.firstStep = stepGraphic
             }
         }
-        layerGraphic.labelYOffset = 32 * (anglePercentOffset + angleTimeOffset)
+        // the instrument tab: what it needs to be drawn, then drawn (see drawLayerTab)
+        layerGraphic.tab = {
+            cx: xOffset + layerDiameter / 2,
+            cy: yOffset + layerDiameter / 2,
+            ringRadius: radius,
+            bandWidth: layerStrokeSize,
+            gap: this.gapAfterLayer(order),
+            text: tabLabel(Instruments.getInstrumentLabel(layer.instrument.sampler)),
+            offsetRadians: anglePercentOffset + angleTimeOffset,
+            color: this.userColors[layer.createdBy],
+            opacity: dim ? 0.1 : !createdByThisUser ? 0.5 : 1
+        }
         this.updateLayerLabel(layerGraphic)
+    }
+
+    /**
+     * Pixels between a layer's band and the next band out, which is what decides whether a tab
+     * fits: 16 between two of this user's rounds, more before a collaborator's smaller band, and
+     * plenty outside the last one.
+     */
+    gapAfterLayer(order) {
+        const layer = this.round.layers[order]
+        const next = this.round.layers[order + 1]
+        const bandOf = (l) => (l.createdBy === this.props.user.id ? HTML_UI_Params.layerStrokeMax : HTML_UI_Params.layerStrokeMax / HTML_UI_Params.otherUserLayerSizeDivisor)
+        if (_.isNil(next)) {
+            return HTML_UI_Params.layerPadding * 4
+        }
+        const step = (this.getLayerDiameter(order + 1) - this.getLayerDiameter(order)) / 2
+        return step - bandOf(layer) / 2 - bandOf(next) / 2
     }
 
     getLayerDiameter(order) {
@@ -704,17 +724,37 @@ export class PlayUI extends Component {
         return diameter
     }
 
+    /**
+     * Draws (or redraws) the round's instrument tab from `layerGraphic.tab`: a curved pill resting
+     * on the band's outer edge, centred over the first step, with the name along its arc. A
+     * collaborator's round, drawn at a third of the size, has no room between bands and gets none.
+     */
     updateLayerLabel(layerGraphic) {
-        layerGraphic.layerLabel?.x(layerGraphic.firstStep?.x() + HTML_UI_Params.stepDiameter + 8)
-        layerGraphic.layerLabel?.y(layerGraphic.firstStep?.y() + ((HTML_UI_Params.stepDiameter / 2) - 6) + layerGraphic.labelYOffset)
+        layerGraphic.layerLabel?.remove()
+        layerGraphic.layerLabel = null
+        const input = layerGraphic.tab
+        if (_.isNil(input)) {
+            return
+        }
+        const tab = tabGeometry({ ...input, offsetDeg: (input.offsetRadians * 180) / Math.PI })
+        if (_.isNil(tab)) {
+            return
+        }
+        const group = this.container.group().addClass(BUTTON_ICON_CLASS).opacity(input.opacity)
+        group.path(tab.pillPath).fill('none').stroke({ color: input.color, width: tab.height, linecap: 'round' })
+        const text = group.text(tab.text).font({ size: tab.fontSize, weight: 700, anchor: 'middle' }).fill('#101314')
+        text.attr({ 'letter-spacing': tab.letterSpacing, 'dominant-baseline': 'middle' })
+        text.path(tab.textPath).attr({ startOffset: '50%' })
+        layerGraphic.layerLabel = group
     }
 
-    updateLayerLabelText(layerId, text) {
-        if (text.length > 5) {
-            text = text.substring(0, 5) + '...'
+    /** The round changed instrument: the tab follows. `sampler` is the instrument's key, as on the layer. */
+    updateLayerLabelText(layerId, sampler) {
+        const layerGraphic = _.find(this.layerGraphics, { id: layerId })
+        if (_.isNil(layerGraphic) || _.isNil(layerGraphic.tab)) {
+            return
         }
-        let layerGraphic = _.find(this.layerGraphics, { id: layerId })
-        layerGraphic.layerLabel.text(text)
+        layerGraphic.tab.text = tabLabel(Instruments.getInstrumentLabel(sampler))
         this.updateLayerLabel(layerGraphic)
     }
 
@@ -794,7 +834,9 @@ export class PlayUI extends Component {
                 layerGraphic.firstStep = stepGraphic
             }
         }
-        layerGraphic.labelYOffset = 32 * (anglePercentOffset + angleTimeOffset)
+        if (!_.isNil(layerGraphic.tab)) {
+            layerGraphic.tab.offsetRadians = anglePercentOffset + angleTimeOffset
+        }
         this.updateLayerLabel(layerGraphic)
     }
 
@@ -2021,7 +2063,6 @@ export class PlayUI extends Component {
             }
             return null
         })
-        layerGraphic.labelYOffset = 32 * (anglePercentOffset + angleTimeOffset)
     }
 
     renderMicroRound = async ({ x, y, pattern, layers, isFilled, diameter }) => {
