@@ -135,6 +135,7 @@ export function createPlaybackEngineV2 ({ base, tone = Tone, library = null, sch
     const warned = new Set()
     let pendingServerStart = null
     let serverOffsetMs = 0
+    let clockSamples = null
     const playListeners = new Set()
 
     const engine = {
@@ -313,12 +314,18 @@ export function createPlaybackEngineV2 ({ base, tone = Tone, library = null, sch
 
         releaseAll () {},
 
-        setServerOffset (ms) {
+        setServerOffset (ms, samples = null) {
             serverOffsetMs = Number(ms) || 0
+            clockSamples = samples
         },
 
         serverOffset () {
             return serverOffsetMs
+        },
+
+        /** What the clock estimate came to: the offset used and how many round trips it rests on. */
+        clockSync () {
+            return { offsetMs: serverOffsetMs, samples: clockSamples }
         },
 
         /**

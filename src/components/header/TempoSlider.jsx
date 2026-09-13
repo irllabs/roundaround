@@ -1,7 +1,7 @@
 import React, { useContext, useEffect, useMemo, useRef } from 'react';
 import { connect } from "react-redux";
 import { Slider as SliderPrimitive } from 'radix-ui'
-import AudioEngine from '../../audio-engine/AudioEngine'
+import AudioEngine from '../../audio-engine/engine'
 import { setRoundBpm } from '../../redux/actions';
 import { FirebaseContext } from '../../firebase';
 import _ from 'lodash'

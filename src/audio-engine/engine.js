@@ -9,4 +9,9 @@ import { selectedEngine } from './v2/selection'
 
 const engine = selectedEngine() === 'v2' ? createPlaybackEngineV2({ base: AudioEngine }) : AudioEngine
 
+// for the QA probes and the console: which engine runs, and its state
+if (typeof window !== 'undefined') {
+    window.__roundaroundEngine = engine
+}
+
 export default engine

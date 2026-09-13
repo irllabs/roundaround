@@ -2,7 +2,7 @@ import React, { useState, useEffect, useContext, useMemo, useRef } from 'react'
 import { useDispatch } from "react-redux";
 import { Slider as SliderPrimitive } from 'radix-ui'
 import _ from 'lodash'
-import AudioEngine from '../../../audio-engine/AudioEngine'
+import AudioEngine from '../../../audio-engine/engine'
 import { convertPercentToDB, convertDBToPercent } from '../../../utils/index'
 import { SET_LAYER_GAIN } from '../../../redux/actionTypes'
 import { FirebaseContext } from '../../../firebase';

@@ -9,7 +9,7 @@ import _ from 'lodash';
 import { connect } from "react-redux";
 import { FirebaseContext } from '../../firebase';
 import { setRound, setUsers, setIsPlaying, setUserBusFxOverride, addUserBus, setRoundCurrentUsers, setRoundContributors, setRoundBpm, setRoundSwing, setIsPlayingSequence, updateLayer, addLayer, removeLayer } from '../../redux/actions'
-import AudioEngine from '../../audio-engine/AudioEngine'
+import AudioEngine from '../../audio-engine/engine'
 import Instruments from '../../audio-engine/Instruments'
 import FX from '../../audio-engine/FX'
 import ShareDialog from '../dialogs/ShareDialog'
@@ -19,6 +19,7 @@ import { derivedContributors, normalizeLegacyFxOrder } from '../../utils/index'
 import LayerSettings from './layer-settings/LayerSettings';
 import CustomSamples from '../../audio-engine/CustomSamples';
 import withRouter from '../../utils/withRouter'
+import { estimateServerOffset } from '../../audio-engine/v2/transport'
 
 // Events that count as the user gesture browsers require before audio may start.
 const AUDIO_UNLOCK_EVENTS = ['touchstart', 'pointerdown', 'keydown']
@@ -176,6 +177,9 @@ class PlayRoute extends Component {
             this.removeFirebaseListeners()
             this.addFirebaseListeners(round)
             this.addUsersListeners(users)
+            if (AudioEngine.isV2) {
+                await this.syncSharedTransport(round)
+            }
         } catch (error) {
             console.error('Could not load round', roundId, error)
             if (!this.isDisposing) {
@@ -270,6 +274,9 @@ class PlayRoute extends Component {
             if (!_.isEqual(currentRound.swing, updatedRound.swing)) {
                 AudioEngine.setSwing(updatedRound.swing)
                 _this.props.setRoundSwing(updatedRound.swing)
+            }
+            if (AudioEngine.isV2) {
+                _this.followSharedTransport(updatedRound.playback)
             }
         }, (error) => console.error('Round listener failed', error)))
 
@@ -436,6 +443,61 @@ class PlayRoute extends Component {
 
     handleUserPatternsChange(userPatterns) {
         this.props.setIsPlayingSequence(userPatterns.id, userPatterns.isPlayingSequence)
+    }
+
+    /**
+     * Playback engine v2, once the round has loaded: measures this client's offset to the
+     * server's clock (a few server-timestamp round trips on the user's own document), then falls
+     * in with a transport somebody else already started.
+     */
+    async syncSharedTransport(round) {
+        try {
+            const { offsetMs, samples } = await estimateServerOffset({ sample: () => this.context.sampleServerClock(this.props.user.id) })
+            AudioEngine.setServerOffset(offsetMs, samples)
+        } catch (error) {
+            console.warn('Could not estimate the server clock offset; the local clock is used', error)
+        }
+        if (this.isDisposing) {
+            return
+        }
+        this.followSharedTransport(round.playback)
+    }
+
+    /**
+     * The round's `playback` field, written by whoever pressed play or stop on v2. A start from
+     * somebody else joins their bar; the echo of this client's own start nudges bar 0 onto the
+     * server's stamp; a stop from anybody stops here. Nothing happens for a field still waiting
+     * for its server timestamp.
+     */
+    followSharedTransport(playback) {
+        if (_.isNil(playback)) {
+            return
+        }
+        // bar 0 in the server's clock: the number the starter worked out from its own offset
+        // estimate, else the server's stamp of the write (the older form, a write latency later)
+        const stamp = playback.startedAt && typeof playback.startedAt.toMillis === 'function' ? playback.startedAt.toMillis() : null
+        const startedAtMs = Number.isFinite(playback.startedAtMs) ? playback.startedAtMs : stamp
+        const mine = playback.by === this.props.user.id
+        const last = this.lastSharedPlayback || {}
+        this.lastSharedPlayback = { playing: playback.playing === true, startedAtMs, by: playback.by || null }
+        if (playback.playing === true) {
+            if (_.isNil(startedAtMs)) {
+                return
+            }
+            if (AudioEngine.isOn()) {
+                // somebody else's fresh start while this client already plays: fall in with theirs;
+                // this client's own start needs no nudge, it wrote the number
+                if (!mine && last.startedAtMs !== startedAtMs) {
+                    AudioEngine.alignToServer(startedAtMs)
+                }
+            } else {
+                AudioEngine.startAlignedToServer(startedAtMs)
+                this.props.setIsPlaying(true)
+            }
+        } else if (last.playing && AudioEngine.isOn()) {
+            AudioEngine.stop()
+            this.props.setIsPlaying(false)
+        }
     }
 
     // Browsers only start audio after a user gesture. The person who presses play gets one for free;

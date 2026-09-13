@@ -24,6 +24,7 @@ import {
     onSnapshot,
     orderBy,
     query,
+    serverTimestamp,
     setDoc,
     where,
     writeBatch
@@ -291,6 +292,34 @@ class Firebase {
 
     updateRound = async (roundId, data) => {
         await setDoc(doc(this.db, 'rounds', roundId), data, { merge: true })
+    }
+
+    /**
+     * The shared transport (playback engine v2): who pressed play, at what tempo, and when by the
+     * server's clock, so every client can land on the same bar. `startedAt` is only written on
+     * play; stop leaves it in place with `playing: false`.
+     */
+    setRoundPlayback = async (roundId, { playing, by, bpm, startedAtMs }) => {
+        const playback = { playing: playing === true, by: by || null, bpm: _.isNil(bpm) ? null : bpm }
+        if (playback.playing) {
+            playback.startedAt = serverTimestamp()
+            playback.startedAtMs = Number.isFinite(startedAtMs) ? startedAtMs : null
+        }
+        await setDoc(doc(this.db, 'rounds', roundId), { playback }, { merge: true })
+    }
+
+    /**
+     * One clock sample for estimating the offset to the server's clock: writes a server timestamp
+     * to the user's own document and reads it back. Resolves `{ t0, t1, serverMs }`: sent at t0,
+     * acknowledged at t1, stamped serverMs by the server.
+     */
+    sampleServerClock = async (userId) => {
+        const t0 = Date.now()
+        await setDoc(doc(this.db, 'users', userId), { clockSync: serverTimestamp() }, { merge: true })
+        const t1 = Date.now()
+        const snapshot = await getDoc(doc(this.db, 'users', userId))
+        const stamp = snapshot.exists() ? snapshot.data().clockSync : null
+        return { t0, t1, serverMs: stamp && typeof stamp.toMillis === 'function' ? stamp.toMillis() : null }
     }
 
     /**

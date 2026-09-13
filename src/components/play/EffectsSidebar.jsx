@@ -1,6 +1,6 @@
 import React, { Component } from 'react'
 import { connect } from "react-redux"
-import AudioEngine from "../../audio-engine/AudioEngine"
+import AudioEngine from "../../audio-engine/engine"
 import { FirebaseContext } from '../../firebase'
 import { setUserBusFxOverride } from "../../redux/actions"
 import EffectThumbControl from './EffectThumbControl'
