@@ -37,6 +37,8 @@ const PATTERN_SAVE_DEBOUNCE_MS = 1000
 const BUTTON_CLASS = 'cursor-pointer'
 /** The header and the bottom bar, in screen pixels: what the round has to fit between. */
 const CHROME_HEIGHT = 150
+/** A collaborator's rail: as wide as one of their half-size dots with its stroke, as this user's is (layerStrokeMax). */
+const COLLABORATOR_RAIL = (HTML_UI_Params.stepDiameter + HTML_UI_Params.stepStrokeWidth) / HTML_UI_Params.otherUserLayerSizeDivisor
 const BUTTON_ICON_CLASS = 'pointer-events-none'
 // the tab's face; index.html loads Inter, and the pill is sized to what the browser measures for it
 const TAB_FONT = 'Inter, Roboto, Helvetica, Arial, sans-serif'
@@ -735,7 +737,7 @@ export class PlayUI extends Component {
         const layerDiameter = this.getLayerDiameter(order)
         const xOffset = (this.containerWidth / 2) - (layerDiameter / 2)
         const yOffset = (this.containerHeight / 2) - (layerDiameter / 2)
-        let layerStrokeSize = HTML_UI_Params.layerStrokeMax / HTML_UI_Params.otherUserLayerSizeDivisor
+        let layerStrokeSize = COLLABORATOR_RAIL
         if (layer.createdBy === this.props.user.id) {
             layerStrokeSize = HTML_UI_Params.layerStrokeMax
         }
@@ -843,7 +845,7 @@ export class PlayUI extends Component {
     /** How far the ring at `order` reaches out from its centreline: half its band, or half a dot where the dots are bigger. */
     ringEdge(order) {
         if (this.round.layers[order].createdBy !== this.props.user.id) {
-            return Math.max(HTML_UI_Params.layerStrokeMax, HTML_UI_Params.stepDiameter) / HTML_UI_Params.otherUserLayerSizeDivisor / 2
+            return Math.max(COLLABORATOR_RAIL, HTML_UI_Params.stepDiameter / HTML_UI_Params.otherUserLayerSizeDivisor) / 2
         }
         return Math.max(HTML_UI_Params.layerStrokeMax, this.stepSizing(order).dot) / 2
     }

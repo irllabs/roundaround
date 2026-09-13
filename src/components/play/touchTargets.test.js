@@ -1,19 +1,27 @@
 import { describe, it, expect } from 'vitest'
 import { HIG, POINTER, DOT, DOT_SLACK, fitZoom, dotDiameter, hitSize, inHit, onDot, hitPolicy } from './touchTargets'
+import { HTML_UI_Params } from '../../utils/constants'
 
 // An iPad 10.9" in Safari, landscape: 1180 x 716 points; the round's rings are 128px apart and
-// 16 steps on the innermost ring (radius 512) are 201px apart along it.
+// 16 steps on the innermost ring (radius 512) are 201px apart along it. The outermost extent is
+// the last ring's radius, half its 76px rail and a 40px margin.
 const IPAD = { width: 1180, height: 716 }
-const outerOf = (rings) => (1024 + (rings - 1) * 256) / 2 + 26 + 40
+const outerOf = (rings) => (1024 + (rings - 1) * 256) / 2 + 38 + 40
 const arc16 = 2 * Math.PI * 512 / 16
 const pitch = 128
 
+describe('the rail', () => {
+    it('is as wide as a dot with its stroke, as the Figma\'s 52px rail was for its 48px dots', () => {
+        expect(HTML_UI_Params.layerStrokeMax).toBe(DOT.diameter + HTML_UI_Params.stepStrokeWidth)
+    })
+})
+
 describe('fitZoom', () => {
-    it('fits the round between the header and the bottom bar, as the measurements found', () => {
-        // measured on the iPad: 3 rings at 0.339, 5 at 0.260, 8 at 0.192
-        expect(fitZoom({ ...IPAD, outer: outerOf(3) })).toBeCloseTo(0.339, 3)
-        expect(fitZoom({ ...IPAD, outer: outerOf(5) })).toBeCloseTo(0.260, 3)
-        expect(fitZoom({ ...IPAD, outer: outerOf(8) })).toBeCloseTo(0.192, 3)
+    it('fits the round between the header and the bottom bar, near the values measured before the rail grew', () => {
+        // measured on the iPad with the 52px rail: 3 rings at 0.339, 5 at 0.260, 8 at 0.192; the 76px rail costs 12px of radius
+        expect(fitZoom({ ...IPAD, outer: outerOf(3) })).toBeCloseTo(0.3345, 3)
+        expect(fitZoom({ ...IPAD, outer: outerOf(5) })).toBeCloseTo(0.2568, 3)
+        expect(fitZoom({ ...IPAD, outer: outerOf(8) })).toBeCloseTo(0.1905, 3)
     })
 
     it('is bound by the width in portrait, and never enlarges the design', () => {

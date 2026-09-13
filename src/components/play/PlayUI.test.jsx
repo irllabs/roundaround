@@ -391,7 +391,8 @@ describe('PlayUI sizing the round for the screen', () => {
 
     it('fits three of this user\'s rings at the zoom measured on the iPad', () => {
         const ui = makeSizingUI([own('l1', 1), own('l2', 2), own('l3', 3)])
-        expect(ui.fitZoom()).toBeCloseTo(0.339, 3)
+        // 0.339 measured with the 52px rail; the 76px rail adds 12px to the outermost radius
+        expect(ui.fitZoom()).toBeCloseTo(0.3345, 3)
     })
 
     it('bounds a step\'s hit area by the nearest ring this user can edit, not by a collaborator\'s', () => {
@@ -419,12 +420,12 @@ describe('PlayUI placing the tabs outside the dots', () => {
     }
     const own = (id, createdAt, steps = 16) => ({ ...layer(_.range(steps).map(i => step(id + 's' + i))), id, createdAt })
 
-    it('measures a ring by its dots once they reach past the band', () => {
+    it('measures a ring by its rail, which is as wide as a dot with its stroke', () => {
         const ui = makeDottedUI([own('l1', 1), own('l2', 2), own('l3', 3)])
-        // the dots are 72px on these rings, the band 52px: the ring reaches 36px out, and 56px is left between rings
+        // 72px dots on a 76px rail: the ring reaches 38px out, and 52px is left between rings
         expect(ui.stepSizing(0).dot).toBe(72)
-        expect(ui.ringEdge(0)).toBe(36)
-        expect(ui.gapAfterLayer(0)).toBe(128 - 72)
+        expect(ui.ringEdge(0)).toBe(38)
+        expect(ui.gapAfterLayer(0)).toBe(128 - 76)
         expect(ui.gapAfterLayer(2)).toBe(320)
     })
 

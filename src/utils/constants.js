@@ -14,7 +14,8 @@ export const HTML_UI_Params = {
     // playback engine v2: how far ahead of the sound a step lights, ms (what Tone's Draw anticipated)
     stepLightLeadMs: 8,
     stepStrokeWidth: 4,
-    layerStrokeMax: 52,
+    // the rail a round's dots sit on: as wide as a dot with its stroke (the Figma's 52 for 48px dots; 76 for the 72px dots of touchTargets DOT)
+    layerStrokeMax: 76,
     layerStrokeOpacity: 0.1,
     stepModalDimensions: 200,
     stepModalThumbDiameter: 32,
