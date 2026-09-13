@@ -313,7 +313,7 @@ describe('PlayUI showing whether the round is playing', () => {
         ui.userColors = { me: user.color }
         // the SVG.js elements draw() would have made for the button and its icon
         ui.playbackToggle = { attr: vi.fn() }
-        ui.playbackToggleIcon = { clear: vi.fn(), svg: vi.fn() }
+        ui.playbackToggleIcon = { clear: vi.fn(), svg: vi.fn(), findOne: vi.fn(() => null) }
         ui.draw = vi.fn()
         return ui
     }

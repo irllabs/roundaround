@@ -22,7 +22,7 @@
      The spec's token table names the system stack; keeping it would change every glyph on
      every screen, which is a redesign and not this migration, so the value CssBaseline used is
      copied verbatim and the deviation is written up in the PR body. */
-  --font-sans: "Roboto", "Helvetica", "Arial", sans-serif;
+  --font-sans: "Inter", "Roboto", "Helvetica", "Arial", sans-serif;
   --font-mono: source-code-pro, Menlo, Monaco, Consolas, 'Courier New', monospace;
 }
 
@@ -89,6 +89,18 @@
   }
   html, body, #root, .App {
     height: 100%;
+  }
+  /* Nothing in this app is prose. Dragging on the round pans it and must never paint a
+     selection over the tabs, the preset letters or the pill labels, and the same goes for
+     every screen. Fields keep their text selectable, so a name or a link can still be
+     edited and copied. */
+  html {
+    -webkit-user-select: none;
+    user-select: none;
+  }
+  input, textarea, [contenteditable="true"] {
+    -webkit-user-select: text;
+    user-select: text;
   }
   body {
     margin: 0;
