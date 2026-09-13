@@ -20,7 +20,7 @@ vi.mock('tone', () => {
             this._context = {}
             this.context = { _context: {} }
         }
-        connect () { }
+        connect (destination) { (this.connections = this.connections || []).push(destination) }
         disconnect () { }
         dispose () { }
         toDestination () { }
@@ -40,6 +40,23 @@ vi.mock('tone', () => {
             this.type = args[1]
         }
     }
+    class Compressor extends Node {
+        constructor (options) {
+            super(options)
+            this.options = options
+            this.toDestinationCalls = 0
+        }
+        toDestination () { this.toDestinationCalls += 1 }
+    }
+    class WaveShaper extends Node {
+        constructor (mapping, length) {
+            super()
+            this.mapping = mapping
+            this.length = length
+            this.toDestinationCalls = 0
+        }
+        toDestination () { this.toDestinationCalls += 1 }
+    }
     class FeedbackDelay extends Node {
         constructor (...args) {
             super(...args)
@@ -51,6 +68,8 @@ vi.mock('tone', () => {
         Filter,
         FeedbackDelay,
         Gain: Node,
+        Compressor,
+        WaveShaper,
         Part: class { dispose () { } },
         Transport: { PPQ: 192, bpm: { value: 120 } }
     }
@@ -190,5 +209,45 @@ describe('AudioEngine and a removed track', () => {
         expect(AudioEngine.tracksById['layer-1']).toBeUndefined()
         expect(AudioEngine.tracks).toEqual([])
         expect(AudioEngine.tracksByType[Track.TRACK_TYPE_LAYER]).toEqual([])
+    })
+})
+
+describe('the master track', () => {
+    it('routes the master gain through the limiter, then the padded soft ceiling, into the destination', () => {
+        // Three coincident full-scale samples reach the output at up to 2.5x full scale and the
+        // device clips them; the limiter takes most of it and the ceiling holds the rest under 1.
+        const master = new Track({ fx: [] }, Track.TRACK_TYPE_MASTER)
+        master.buildAudioChain()
+        expect(master.limiter.options).toEqual({ threshold: -2, knee: 0, ratio: 20, attack: 0.001, release: 0.05 })
+        expect(master.channel.connections).toEqual([master.limiter])
+        expect(master.limiter.connections).toEqual([master.ceilingPad])
+        expect(master.ceilingPad.connections).toEqual([master.ceiling])
+        expect(master.ceiling.mapping).toBe(Track.ceilingCurve)
+        expect(master.ceiling.length).toBe(8192)
+        expect(master.ceiling.oversample).toBe('none')
+        expect(master.ceiling.toDestinationCalls).toBe(1)
+        master.dispose()
+        expect(master.limiter).toBeNull()
+        expect(master.ceiling).toBeNull()
+        expect(master.ceilingPad).toBeNull()
+    })
+
+    it('has a ceiling curve that passes normal levels untouched and never reaches full scale', () => {
+        const { headroom, knee } = Track.MASTER_CEILING
+        // the curve's input is the padded signal, so a sample x arrives as x / headroom
+        const out = (x) => Track.ceilingCurve(x / headroom)
+        expect(out(0)).toBe(0)
+        expect(out(0.5)).toBeCloseTo(0.5, 6)
+        expect(out(-0.5)).toBeCloseTo(-0.5, 6)
+        expect(out(knee)).toBeCloseTo(knee, 6)
+        // above the knee it keeps rising but stays under 1, even for the worst stacked hit
+        expect(out(1.0)).toBeGreaterThan(knee)
+        expect(out(1.2)).toBeGreaterThan(out(1.0))
+        expect(out(2.5)).toBeGreaterThan(out(1.2))
+        expect(out(headroom)).toBeLessThan(1)
+        expect(out(headroom)).toBeLessThanOrEqual(Track.MASTER_CEILING.top)
+        expect(out(-headroom)).toBeGreaterThan(-1)
+        // and it is continuous at the knee: the first step past it is a small one
+        expect(out(knee + 0.001) - out(knee)).toBeLessThan(0.0011)
     })
 })

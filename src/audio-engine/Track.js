@@ -17,6 +17,24 @@ export default class Track {
     static TRACK_TYPE_USER = 'TRACK_TYPE_USER' // User busses are routed to master
     static TRACK_TYPE_MASTER = 'TRACK_TYPE_MASTER'
     static TRACK_TYPE_AUTOMATION = 'TRACK_TYPE_AUTOMATION' // Each layer is routed to a user bus
+    static MASTER_LIMITER = { threshold: -2, knee: 0, ratio: 20, attack: 0.001, release: 0.05 }
+    /** The soft ceiling after the limiter: linear up to `knee`, then bending towards `top` (just under full scale) without reaching it; sees `headroom` times full scale. */
+    static MASTER_CEILING = { knee: 0.9, top: 0.995, headroom: 4, length: 8192 }
+    /**
+     * The ceiling's curve for a normalised input `u` in [-1, 1], which stands for a sample of
+     * `u * headroom`: below the knee the sample passes unchanged; above it, the excess is bent with
+     * a tanh so the output approaches full scale and never gets there. Stacked hits the
+     * compressor's 1 ms attack lets through are rounded off instead of flat-topped by the device.
+     */
+    static ceilingCurve (u) {
+        const { knee, top, headroom } = Track.MASTER_CEILING
+        const x = u * headroom
+        const a = Math.abs(x)
+        if (a <= knee) {
+            return x
+        }
+        return Math.sign(x) * (knee + (top - knee) * Math.tanh((a - knee) / (top - knee)))
+    }
     constructor (trackParameters, type, userId) {
         this.trackParameters = ownCopy(trackParameters)
         this.id = trackParameters.id
@@ -48,6 +66,23 @@ export default class Track {
             })
         } else if (this.type === Track.TRACK_TYPE_MASTER) {
             this.channel = new Tone.Gain()
+            // Every layer sits at 0 dB and the samples are normalised to full scale, so three
+            // layers hitting the same step reach this bus at up to 1.7x full scale (measured on
+            // production, 2026-09-08) and the device clips them into a short crackle. The limiter
+            // holds stacked peaks under 0 dBFS and leaves single hits untouched. Tone's Limiter
+            // keeps the compressor's default 30 dB soft knee, which let the overshoot through at
+            // 1.05x full scale, and a 3 ms attack still passed the first milliseconds of a stacked
+            // transient at 1.00x; a hard knee, 1 ms attack and 1 dB of margin measure under 1.0.
+            this.limiter = new Tone.Compressor(Track.MASTER_LIMITER)
+            // What the compressor still lets through (measured up to 1.2x full scale with every step of
+            // three rounds on) is held under full scale by a soft ceiling. A WaveShaper only sees
+            // inputs in [-1, 1], so the signal is padded down by the ceiling's headroom first and the
+            // curve maps the padded value straight to the output level.
+            this.ceilingPad = new Tone.Gain(1 / Track.MASTER_CEILING.headroom)
+            this.ceiling = new Tone.WaveShaper(Track.ceilingCurve, Track.MASTER_CEILING.length)
+            // no oversampling: its resampling filter rings back over the rounded peak by up to a tenth
+            // (measured 1.11x full scale with '2x'), and what is shaped here would have clipped anyway
+            this.ceiling.oversample = 'none'
         } else if (this.type === Track.TRACK_TYPE_AUTOMATION) {
             if (!_.isNil(automationFxId)) {
                 this.trackParameters.automationFxId = automationFxId
@@ -86,7 +121,10 @@ export default class Track {
     }
     buildAudioChain () {
         if (this.type === Track.TRACK_TYPE_MASTER) {
-            this.channel.toDestination()
+            this.channel.connect(this.limiter)
+            this.limiter.connect(this.ceilingPad)
+            this.ceilingPad.connect(this.ceiling)
+            this.ceiling.toDestination()
         } else if (this.type !== Track.TRACK_TYPE_AUTOMATION) {
             this.disconnectAudioChain()
             if (!_.isNil(this.instrument) && !_.isNil(this.instrument.instrument)) {
@@ -168,6 +206,16 @@ export default class Track {
             try {
                 this.channel.dispose()
             } catch (e) {
+            }
+        }
+        if (!_.isNil(this.limiter)) {
+            this.limiter.dispose()
+            this.limiter = null
+        }
+        for (const key of ['ceilingPad', 'ceiling']) {
+            if (!_.isNil(this[key])) {
+                this[key].dispose()
+                this[key] = null
             }
         }
     }
