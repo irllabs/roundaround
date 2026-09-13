@@ -83,6 +83,24 @@ describe('tabGeometry', () => {
         expect(tabWidth).toBeCloseTo(measured - fontSize * 0.12 + 28, 1)
     })
 
+    it('makes room for the instrument\'s icon before the name, upright at the start, and centres the name in what is left', () => {
+        const plain = tabGeometry({ ...own, text: 'KICK', textWidth: 40 })
+        const tab = tabGeometry({ ...own, text: 'KICK', textWidth: 40, hasIcon: true })
+        const widthOf = (t) => t.radius * ((t.endAngle - t.startAngle) * Math.PI / 180)
+        // a 16px icon and a 6px gap at full size
+        expect(widthOf(tab) - widthOf(plain)).toBeCloseTo(22, 1)
+        expect(tab.icon.size).toBe(16)
+        // the icon's centre is on the tab's centreline, 14 + 8 px in from the start
+        expect(Math.hypot(tab.icon.x - own.cx, tab.icon.y - own.cy)).toBeCloseTo(tab.radius, 0)
+        const iconAngle = Math.atan2(tab.icon.y - own.cy, tab.icon.x - own.cx) * 180 / Math.PI
+        expect(iconAngle - tab.startAngle).toBeCloseTo((22 / tab.radius) * 180 / Math.PI, 2)
+        // upright: rotated by its angle from the top, so at twelve o'clock it stands straight
+        expect(tab.icon.rotate).toBeCloseTo(iconAngle + 90, 1)
+        // the name's middle moves along by the icon's room
+        expect(tab.textOffset - plain.textOffset).toBeCloseTo(22 * (tab.radius - tab.fontSize * 0.36) / tab.radius, 0)
+        expect(plain.icon).toBeNull()
+    })
+
     it('sets the text on a baseline below the tab\'s centreline, so the capitals sit centred, with the middle of the text at the middle of its path', () => {
         const tab = tabGeometry({ ...own, text: 'SNARE', textWidth: 48 })
         const textRadius = Number(tab.textPath.match(/A([\d.]+) /)[1])

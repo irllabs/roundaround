@@ -14,6 +14,7 @@ import Instruments from '../../audio-engine/Instruments'
 import { getDefaultUserPatternSequence } from '../../utils/defaultData'
 import { classifyRoundChange } from './roundDiff'
 import { tabFont, tabGeometry, tabLabel } from './roundTab'
+import { instrumentIcon, ICON_BOX } from './instrumentIcons'
 import { CENTRE_PANE, centrePaneLayout } from './centrePane'
 import {
     setIsPlaying,
@@ -726,6 +727,7 @@ export class PlayUI extends Component {
             bandWidth: layerStrokeSize,
             gap: this.gapAfterLayer(order),
             text: tabLabel(Instruments.getInstrumentLabel(layer.instrument.sampler)),
+            sampler: layer.instrument.sampler,
             offsetRadians: anglePercentOffset + angleTimeOffset
         }
         this.updateLayerLabel(layerGraphic)
@@ -781,16 +783,25 @@ export class PlayUI extends Component {
         // the text first, so the tab can be sized to what the browser actually draws
         const text = group.text(input.text).font({ family: TAB_FONT, size: font.fontSize, weight: 700, anchor: 'middle' })
         text.attr({ 'letter-spacing': font.letterSpacing })
-        const tab = tabGeometry({ ...input, textWidth: text.length(), offsetDeg: (input.offsetRadians * 180) / Math.PI })
+        const iconPaths = instrumentIcon(input.sampler)
+        const tab = tabGeometry({ ...input, textWidth: text.length(), offsetDeg: (input.offsetRadians * 180) / Math.PI, hasIcon: !_.isNil(iconPaths) })
         if (_.isNil(tab)) {
             group.remove()
             return
         }
         const shape = group.path(tab.labelPath).back()
         text.path(tab.textPath).attr({ startOffset: tab.textOffset })
+        // the instrument's icon before the name: drawn in its 16px box, then moved to its spot on the arc, turned upright and scaled to the tab
+        const iconShapes = []
+        if (!_.isNil(tab.icon)) {
+            const icon = group.group()
+            iconPaths.forEach((p) => iconShapes.push(icon.path(p.d).attr(p.evenOdd ? { 'fill-rule': 'evenodd', 'clip-rule': 'evenodd' } : {})))
+            icon.attr('transform', `translate(${tab.icon.x} ${tab.icon.y}) rotate(${tab.icon.rotate}) scale(${tab.icon.size / ICON_BOX}) translate(${-ICON_BOX / 2} ${-ICON_BOX / 2})`)
+        }
         layerGraphic.layerLabel = group
         layerGraphic.layerLabelShape = shape
         layerGraphic.layerLabelText = text
+        layerGraphic.layerLabelIconShapes = iconShapes
         this.syncLayerLabelWithBand(layerGraphic)
     }
 
@@ -808,7 +819,9 @@ export class PlayUI extends Component {
         const strokeOpacity = Number(layerGraphic.attr('stroke-opacity') ?? 1)
         const muted = typeof color === 'string' && color.startsWith('rgba(255')
         shape.attr({ fill: color, 'fill-opacity': strokeOpacity })
-        layerGraphic.layerLabelText?.attr({ fill: muted ? '#ffffff' : color, 'fill-opacity': muted ? 0.35 : 1 })
+        const ink = { fill: muted ? '#ffffff' : color, 'fill-opacity': muted ? 0.35 : 1 }
+        layerGraphic.layerLabelText?.attr(ink)
+        for (const iconShape of layerGraphic.layerLabelIconShapes ?? []) iconShape.attr(ink)
         layerGraphic.layerLabel?.opacity(layerGraphic.opacity())
     }
 
@@ -819,6 +832,7 @@ export class PlayUI extends Component {
             return
         }
         layerGraphic.tab.text = tabLabel(Instruments.getInstrumentLabel(sampler))
+        layerGraphic.tab.sampler = sampler
         this.updateLayerLabel(layerGraphic)
     }
 

@@ -1,7 +1,7 @@
 /**
  * The instrument tab on a round: a bump of the band itself, growing out of its outer edge at the
  * top over the first step, with shoulders that flare into the band, straight sides, a fully arched
- * top, filled the way the band is filled, and the instrument's name along its arc. Pure geometry,
+ * top, filled the way the band is filled, and the instrument's icon and name along its arc. Pure geometry,
  * so PlayUI only has to draw what comes back and the tests can check it without SVG.js.
  *
  * Every measure is in the round's own pixels (the same the steps are drawn in): `ringRadius` is
@@ -26,6 +26,9 @@ const MIN_HEIGHT = 8
 const LETTER_SPACING = 0.12
 const PADDING = 14
 const CHAR_WIDTH = 0.7
+/** The instrument's icon before the name, at full size, and the gap between them; both scale with the tab. */
+const ICON = 16
+const ICON_GAP = 6
 /** Capitals sit on the baseline and reach about this far up, so the baseline goes this far below the pill's centreline. */
 const CAP_CENTRE = 0.36
 
@@ -59,8 +62,9 @@ export function tabLabel(name) {
  * @param {string} o.text what the tab says (see tabLabel)
  * @param {number} [o.textWidth] the text's measured width at `fontSize` (see tabFont), which sizes the pill exactly; guessed when absent
  * @param {number} [o.offsetDeg] how far the round's first step is turned from the top, in degrees
+ * @param {boolean} [o.hasIcon] whether the instrument's icon goes before the name
  */
-export function tabGeometry({ cx, cy, ringRadius, bandWidth, gap, text, textWidth, offsetDeg = 0 }) {
+export function tabGeometry({ cx, cy, ringRadius, bandWidth, gap, text, textWidth, offsetDeg = 0, hasIcon = false }) {
     if (!text) return null
     const font = tabFont(gap, bandWidth)
     if (!font) return null
@@ -72,14 +76,22 @@ export function tabGeometry({ cx, cy, ringRadius, bandWidth, gap, text, textWidt
     const radius = (inner + outer) / 2
     // the browser draws tracking after every glyph, the last one included, so a measured width carries one spacing too many
     const glyphs = (textWidth ?? text.length * fontSize * (CHAR_WIDTH + LETTER_SPACING)) - spacingPx
-    const width = glyphs + PADDING * 2
+    // the icon and its gap, in proportion to the tab
+    const iconSize = hasIcon ? ICON * (height / HEIGHT) : 0
+    const iconRoom = hasIcon ? iconSize + ICON_GAP * (height / HEIGHT) : 0
+    const width = PADDING + iconRoom + glyphs + PADDING
     const span = (width / radius) * (180 / Math.PI)
     const centre = -90 + offsetDeg
     const startAngle = centre - span / 2
     const endAngle = centre + span / 2
+    // pixels along the tab's centreline, as an angle from its start
+    const along = (px) => startAngle + (px / radius) * (180 / Math.PI)
     // the text's baseline runs below the tab's centreline, so the capitals end up centred in it
     const textRadius = radius - fontSize * CAP_CENTRE
-    const textLength = textRadius * (span * Math.PI / 180)
+    const textCentre = along(PADDING + iconRoom + glyphs / 2)
+    // the icon sits upright on the centreline at the start, its top pointing away from the round
+    const iconAngle = along(PADDING + iconSize / 2)
+    const [iconX, iconY] = point(cx, cy, radius, iconAngle)
     // a full arch on top; a small tab keeps its shoulders in proportion
     const corner = Math.min(height / 2, width / 4)
     const shoulder = Math.min(SHOULDER, height / 4)
@@ -95,8 +107,9 @@ export function tabGeometry({ cx, cy, ringRadius, bandWidth, gap, text, textWidt
         shoulder,
         labelPath: tagPath(cx, cy, inner, outer, startAngle, endAngle, corner, shoulder),
         textPath: arcPath(cx, cy, textRadius, startAngle, endAngle),
-        // where the middle of the text goes on its path: the path's middle, plus half the trailing spacing
-        textOffset: round1(textLength / 2 + spacingPx / 2),
+        // where the middle of the text goes on its path: the middle of its own room, plus half the trailing spacing
+        textOffset: round1(textRadius * ((textCentre - startAngle) * Math.PI / 180) + spacingPx / 2),
+        icon: hasIcon ? { x: iconX, y: iconY, size: round1(iconSize), rotate: round1(iconAngle + 90) } : null,
     }
 }
 
