@@ -17,6 +17,7 @@ import { tabFont, tabGeometry, tabLabel } from './roundTab'
 import { instrumentIcon, ICON_BOX } from './instrumentIcons'
 import { stepTicks, msToTicks } from '../../audio-engine/grid'
 import { flashStep } from './stepFlash'
+import { METRONOME_ICON, applyMetronome } from './metronome'
 import { CENTRE_PANE, centrePaneLayout } from './centrePane'
 import {
     setIsPlaying,
@@ -255,6 +256,7 @@ export class PlayUI extends Component {
         // the play button shows the store's answer to its click (see drawPlaybackToggle)
         if (prevProps.isPlaying !== this.props.isPlaying && !_.isNil(this.playbackToggleIcon)) {
             this.drawPlaybackToggle()
+            this.updateMetronome()
         }
 
         let redraw = !_.isEqual(display.isRecordingSequence, prevProps.display.isRecordingSequence)
@@ -324,6 +326,7 @@ export class PlayUI extends Component {
         }
         if (change.tempoChanged) {
             AudioEngine.setTempo(round.bpm)
+            this.updateMetronome()
             this.adjustAllLayerOffsets()
         }
         const layersToRecalculate = new Set(Object.keys(change.changedSteps))
@@ -1573,6 +1576,14 @@ export class PlayUI extends Component {
             .attr({ x, y: y + size * CAP_CENTRE, 'text-anchor': o.anchor ?? 'middle', opacity: o.opacity ?? 1, ...(o.attrs || {}) })
     }
 
+    /** The metronome's arm swings once per beat at the round's tempo while the round plays, and leans at rest otherwise. */
+    updateMetronome() {
+        if (_.isNil(this.metronomeArm) || _.isNil(this.props.round)) {
+            return
+        }
+        applyMetronome(this.metronomeArm, { bpm: this.props.round.bpm, playing: this.props.isPlaying === true })
+    }
+
     renderTempoButton = (layout, bpm) => {
         const { tempo } = layout
         const spec = CENTRE_PANE.tempo
@@ -1580,13 +1591,14 @@ export class PlayUI extends Component {
         tempoButton.x(tempo.x).y(tempo.y)
         tempoButton.fill('#fff').attr({ opacity: 0.1, id: 'tempo-button' })
         const tempoIcon = this.container.nested()
-        tempoIcon.svg(`<svg width="14" height="13" viewBox="0 0 14 13" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <path fill-rule="evenodd" clip-rule="evenodd" d="M9.53014 4.05693L8.2715 1.8769C7.62095 0.750117 5.99458 0.750118 5.34403 1.8769L0.692891 9.93291C0.0423411 11.0597 0.855527 12.4682 2.15663 12.4682H11.4589C12.76 12.4682 13.5732 11.0597 12.9226 9.93291L12.171 8.63102V8.47966H12.0836L10.1534 5.13645L12.5612 0.966028L11.6263 0.42627L9.53014 4.05693ZM9.48765 6.28956L8.2232 8.47966H10.7521L9.48765 6.28956ZM8.86439 5.21004L6.97668 8.47966H2.86342L6.34265 2.45346C6.54937 2.09542 7.06616 2.09542 7.27288 2.45346L8.86439 5.21004ZM11.4179 9.63277H2.19767L1.69152 10.5095C1.4848 10.8675 1.74319 11.3151 2.15663 11.3151H11.4589C11.8723 11.3151 12.1307 10.8675 11.924 10.5095L11.4179 9.63277Z" fill="white" fill-opacity="0.9"/>
-                </svg>`)
+        tempoIcon.svg(METRONOME_ICON)
         const iconHeight = spec.iconSize * 13 / 14
         tempoIcon.findOne('svg')?.size(spec.iconSize, iconHeight)
         tempoIcon.x(tempo.x + spec.iconInset).y(tempo.cy - iconHeight / 2)
         tempoIcon.attr({ id: 'tempIcon' })
+        // the arm swings at the tempo while the round plays
+        this.metronomeArm = tempoIcon.node.querySelector('.metronome-arm')
+        this.updateMetronome()
         const tempoButtonText = this.centredText(bpm, tempo.x + spec.labelInset, tempo.cy, spec.labelSize, '#fff', { anchor: 'start', opacity: spec.labelOpacity, attrs: { id: 'tempo-button-text' } })
         this.sequencerButtons.push(tempoButton, tempoIcon, tempoButtonText)
     }
