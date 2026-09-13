@@ -1,0 +1,213 @@
+{
+ "engine": "webkit 26.6",
+ "taps": [
+  {
+   "label": "tap on the dot",
+   "toggled": true,
+   "expected": true
+  },
+  {
+   "label": "tap 19 pt along the ring (inside)",
+   "toggled": true,
+   "expected": true
+  },
+  {
+   "label": "tap 16 pt out across (inside)",
+   "toggled": true,
+   "expected": true
+  },
+  {
+   "label": "tap 28 pt along the ring (outside)",
+   "toggled": false,
+   "expected": false
+  },
+  {
+   "label": "tap 22 pt out across (outside, in the gap)",
+   "toggled": true,
+   "expected": false
+  }
+ ],
+ "sweep": [
+  {
+   "deg": 0,
+   "between": [
+    0,
+    1
+   ]
+  },
+  {
+   "deg": 0,
+   "between": [
+    1,
+    2
+   ]
+  },
+  {
+   "deg": 30,
+   "between": [
+    0,
+    1
+   ]
+  },
+  {
+   "deg": 45,
+   "between": [
+    0,
+    1
+   ]
+  },
+  {
+   "deg": 45,
+   "between": [
+    1,
+    2
+   ]
+  },
+  {
+   "deg": 60,
+   "between": [
+    0,
+    1
+   ]
+  },
+  {
+   "deg": 90,
+   "between": [
+    0,
+    1
+   ]
+  },
+  {
+   "deg": 90,
+   "between": [
+    1,
+    2
+   ]
+  },
+  {
+   "deg": 105,
+   "between": [
+    0,
+    1
+   ]
+  },
+  {
+   "deg": 105,
+   "between": [
+    1,
+    2
+   ]
+  },
+  {
+   "deg": 180,
+   "between": [
+    0,
+    1
+   ]
+  },
+  {
+   "deg": 180,
+   "between": [
+    1,
+    2
+   ]
+  },
+  {
+   "deg": 195,
+   "between": [
+    0,
+    1
+   ]
+  },
+  {
+   "deg": 225,
+   "between": [
+    0,
+    1
+   ]
+  },
+  {
+   "deg": 225,
+   "between": [
+    1,
+    2
+   ]
+  },
+  {
+   "deg": 255,
+   "between": [
+    0,
+    1
+   ]
+  },
+  {
+   "deg": 270,
+   "between": [
+    0,
+    1
+   ]
+  },
+  {
+   "deg": 270,
+   "between": [
+    1,
+    2
+   ]
+  },
+  {
+   "deg": 345,
+   "between": [
+    0,
+    1
+   ]
+  },
+  {
+   "deg": 345,
+   "between": [
+    1,
+    2
+   ]
+  }
+ ],
+ "coarse": true,
+ "zoom": 0.3393285371702638,
+ "dot": 24.43170166015625,
+ "hitAlong": 44.00000000000001,
+ "hitAcross": 35.434052757793765,
+ "snap": [
+  [
+   0,
+   true
+  ],
+  [
+   2,
+   true
+  ],
+  [
+   4,
+   true
+  ],
+  [
+   6,
+   true
+  ],
+  [
+   8,
+   true
+  ],
+  [
+   10,
+   false
+  ],
+  [
+   12,
+   false
+  ],
+  [
+   16,
+   false
+  ]
+ ],
+ "sweepTotal": 48,
+ "sweepToggled": 20
+}
