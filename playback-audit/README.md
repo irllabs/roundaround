@@ -8,3 +8,8 @@ Probes (run from ~/.local/share/roundaround-qa, `QA_PORT=<port> python3 <probe>.
 - `peak_probe.py`: master-bus peaks, from the #316 work.
 
 Sample library (public/samples, 128 wav, 16-bit 44.1 kHz stereo): kicks and snares start within 3 ms, hi-hats up to 21 ms late, perc up to 40 ms late (Perc_Shake-12a/b); no file exceeds 0.99 peak.
+
+## Echo after pause (2026-09-13, later)
+
+- `tail_probe.py`: sparse pattern, stop after a downbeat, output measured for 3 s. Result on master: no periodic bumps, no delay tail (the default bus effects are bypassed); only the ring-out of the sounding hits (`tail-master-report.json`, `tail-master.mp4`).
+- `stop_probe.py`: dense pattern, six stop presses at different phases. Result on master: on every press 3 to 6 hits were already handed to Web Audio for after the press (up to 257 ms later), output audible up to 400 ms after the button. That is the echo. Fixed on both PR branches by silencing every voice at stop: see `playback-fix/stop/` and `playback-engine/stop/`.

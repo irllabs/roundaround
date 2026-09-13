@@ -1,0 +1,43 @@
+{
+ "trials": [
+  {
+   "phase in bar ms": 1403,
+   "hits landing after the press": 0,
+   "last of them ms after the press": 0,
+   "output above -40 dBFS until ms": 117
+  },
+  {
+   "phase in bar ms": 101,
+   "hits landing after the press": 0,
+   "last of them ms after the press": 0,
+   "output above -40 dBFS until ms": 112
+  },
+  {
+   "phase in bar ms": 949,
+   "hits landing after the press": 3,
+   "last of them ms after the press": 2.0,
+   "output above -40 dBFS until ms": 128
+  },
+  {
+   "phase in bar ms": 1952,
+   "hits landing after the press": 0,
+   "last of them ms after the press": 0,
+   "output above -40 dBFS until ms": 160
+  },
+  {
+   "phase in bar ms": 1104,
+   "hits landing after the press": 0,
+   "last of them ms after the press": 0,
+   "output above -40 dBFS until ms": 128
+  },
+  {
+   "phase in bar ms": 352,
+   "hits landing after the press": 0,
+   "last of them ms after the press": 0,
+   "output above -40 dBFS until ms": 128
+  }
+ ],
+ "presses with a hit still to come": 1,
+ "max lateness ms": 2.0,
+ "max audible ms": 160
+}
