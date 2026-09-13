@@ -2,6 +2,7 @@
 import * as Tone from 'tone';
 import _ from 'lodash'
 import AudioEngine from '../audio-engine/AudioEngine'
+import { stepTick, stepLength } from './grid'
 
 export default class Automation {
     constructor (fxId, userId) {
@@ -50,15 +51,16 @@ export default class Automation {
     convertStepsToNotes (steps) {
         const PPQ = Tone.getTransport().PPQ
         const totalTicks = PPQ * 4
-        const ticksPerStep = Math.round(totalTicks / steps.length)
+        const n = steps.length
         let notes = []
         let currentNote;
-        for (let i = 0; i < steps.length; i++) {
+        for (let i = 0; i < n; i++) {
             const step = steps[i]
+            const ticksPerStep = stepLength(i, n, totalTicks)
             if (step.isOn) {
                 if (_.isNil(currentNote)) {
                     currentNote = {
-                        time: i * ticksPerStep,
+                        time: stepTick(i, n, totalTicks),
                         duration: 0
                     }
                 }

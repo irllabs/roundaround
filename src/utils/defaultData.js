@@ -35,7 +35,8 @@ export const getDefaultLayerData = async (userId, instrument) => {
         "isActive": true,
         "isMuted": false,
         "isPreviewed": false,
-        "gain": 0,
+        // three layers at 0 dB with full-scale samples summed to 2.5x full scale on the same step; at -6 dB each they stay under it before the master limiter has to work
+        "gain": -6,
         "instrument": {
             "noteLength": "64n",
             "instrument": "Sampler",
