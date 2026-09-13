@@ -15,6 +15,7 @@ import { getDefaultUserPatternSequence } from '../../utils/defaultData'
 import { classifyRoundChange } from './roundDiff'
 import { tabFont, tabGeometry, tabLabel } from './roundTab'
 import { instrumentIcon, ICON_BOX } from './instrumentIcons'
+import { stepTicks, msToTicks } from '../../audio-engine/grid'
 import { flashStep } from './stepFlash'
 import { CENTRE_PANE, centrePaneLayout } from './centrePane'
 import {
@@ -492,7 +493,7 @@ export class PlayUI extends Component {
         this.toneParts = []
         for (const layer of this.round.layers) {
             const color = layer.isMuted ? '#FFFFFF' : this.userColors[layer.createdBy]
-            const notes = this.convertStepsToNotes(layer.steps, color)
+            const notes = this.convertStepsToNotes(layer, color)
             for (let note of notes) {
                 note.time += 'i';
             }
@@ -521,22 +522,15 @@ export class PlayUI extends Component {
         }
     }
 
-    convertStepsToNotes(steps, userColor) {
+    /** One note per step for the step lights, on the same grid as the sound, the layer's offsets included. */
+    convertStepsToNotes(layer, userColor) {
         const PPQ = Tone.getTransport().PPQ
-        const totalTicks = PPQ * 4
-        const ticksPerStep = Math.round(totalTicks / steps.length)
-        let notes = []
-        for (let i = 0; i < steps.length; i++) {
-            let step = steps[i]
-            const note = {
-                time: i * ticksPerStep,
-                id: step.id,
-                isOn: step.isOn,
-                color: userColor
-            }
-            notes.push(note)
-        }
-        return notes
+        const bpm = Tone.getTransport().bpm.value
+        const times = stepTicks(layer.steps.length, PPQ * 4, {
+            percentOffset: layer.percentOffset,
+            timeOffsetTicks: msToTicks(layer.timeOffset, bpm, PPQ)
+        })
+        return layer.steps.map((step, i) => ({ time: times[i], id: step.id, isOn: step.isOn, color: userColor }))
     }
 
     startSequence(userPatterns) {

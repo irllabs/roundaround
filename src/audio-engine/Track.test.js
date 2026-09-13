@@ -3,6 +3,7 @@ import Track from './Track'
 import AudioEngine from './AudioEngine'
 import FX from './FX'
 import { deepFreeze } from '../test/deep-freeze'
+import { stepTicks, stepLength } from './grid'
 
 vi.mock('tone', () => {
     class Signal {
@@ -291,5 +292,43 @@ describe('the bus chain and the bypass gates', () => {
         expect(delay.into.gain.value).toBe(1)
         expect(delay.outOf.gain.value).toBe(1)
         expect(delay.through.gain.value).toBe(0)
+    })
+})
+
+describe('Track.convertStepsToNotes', () => {
+    beforeEach(() => {
+        AudioEngine.busesByUser = { 'user-1': { channel: {} } }
+        AudioEngine.master = { channel: {} }
+    })
+    const steps = (pattern) => pattern.split('').map((c, i) => ({ id: 's' + i, order: i, isOn: c === 'x', velocity: 1, probability: 1 }))
+
+    it("takes every note's time from the shared grid, offsets included, so the step lights land with the sound", () => {
+        const track = new Track({ id: 'l', createdBy: 'user-1', fx: [] }, Track.TRACK_TYPE_LAYER, 'user-1')
+        const pattern = steps('x.x....x')
+        const notes = track.convertStepsToNotes(pattern, 25, -20)
+        // -20 ms at 120 bpm and 192 PPQ is -8 ticks; a quarter of an 8-step step is 24 ticks
+        const grid = stepTicks(8, 768, { percentOffset: 25, timeOffsetTicks: -8 })
+        expect(notes.map(n => n.time)).toEqual([grid[0], grid[2], grid[7]])
+        expect(grid[0]).toBe(16)
+    })
+
+    it('rounds each step from its exact place, so seven steps fill the bar and the last one is not short', () => {
+        const track = new Track({ id: 'l', createdBy: 'user-1', fx: [] }, Track.TRACK_TYPE_LAYER, 'user-1')
+        const notes = track.convertStepsToNotes(steps('xxxxxxx'), 0, 0)
+        expect(notes.map(n => n.time)).toEqual([0, 110, 219, 329, 439, 549, 658])
+        expect(notes.reduce((sum, n) => sum + n.duration, 0)).toBe(768)
+        expect(notes[6].duration).toBe(110)
+    })
+
+    it('stretches a note over the off steps after it, on the same grid', () => {
+        const track = new Track({ id: 'l', createdBy: 'user-1', fx: [] }, Track.TRACK_TYPE_LAYER, 'user-1')
+        const notes = track.convertStepsToNotes(steps('x..x'), 0, 0)
+        expect(notes.map(n => [n.time, n.duration])).toEqual([[0, stepLength(0, 4, 768) + stepLength(1, 4, 768) + stepLength(2, 4, 768)], [576, 192]])
+    })
+
+    it('wraps a negative offset to the end of the bar', () => {
+        const track = new Track({ id: 'l', createdBy: 'user-1', fx: [] }, Track.TRACK_TYPE_LAYER, 'user-1')
+        const notes = track.convertStepsToNotes(steps('x...'), 0, -125)
+        expect(notes[0].time).toBe(768 - 48)
     })
 })

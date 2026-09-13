@@ -118,10 +118,12 @@ export default class InstrumentBaseClass {
                     shouldPlayNote = randomBool(note.probability)
                 }
                 if (shouldPlayNote) {
-
-                    _this.instrument.triggerAttackRelease(
+                    // attack only: a drum hit plays to the end of its sample. The release that used to
+                    // come after one step cut every hit at the next step (125 ms at 120 bpm, then the
+                    // sampler's 100 ms fade) on samples of 0.6 to 2.2 s, which is what a busy round
+                    // sounded like. The note keeps its duration for the automation, which reads it.
+                    _this.instrument.triggerAttack(
                         Tone.Midi(note.midi),
-                        note.duration,
                         time,
                         note.velocity
                     )

@@ -2,6 +2,7 @@
 import * as Tone from 'tone';
 import Instruments from './Instruments';
 import _ from 'lodash'
+import { stepTicks, stepLength, msToTicks } from './grid'
 import FX from './FX';
 import AudioEngine from './AudioEngine';
 import Automation from './Automation';
@@ -234,7 +235,7 @@ export default class Track {
                     }
                     this.instrument.clearPart()
                     this.notes = this.convertStepsToNotes(layer.steps, layer.percentOffset, layer.timeOffset)
-                    _.sortBy(this.notes, 'time')
+                    this.notes = _.sortBy(this.notes, 'time')
                     this.instrument.loadPart(this.notes, 1)
                 }
             }
@@ -245,24 +246,18 @@ export default class Track {
     convertStepsToNotes (steps, percentOffset, timeOffset) {
         const PPQ = Tone.getTransport().PPQ
         const totalTicks = PPQ * 4
-        const ticksPerStep = Math.round(totalTicks / steps.length)
-        if (_.isNil(percentOffset)) {
-            percentOffset = 0
-        }
-        const percentOffsetTicks = Math.round((percentOffset / 100) * ticksPerStep)
-        const timeOffsetTicks = this.msToTicks(timeOffset)
+        const n = steps.length
+        // every step's tick comes from the shared grid, offsets included, so the step lights and the
+        // automation land exactly where the sound does
+        const times = stepTicks(n, totalTicks, { percentOffset, timeOffsetTicks: this.msToTicks(timeOffset) })
         let notes = []
         let previousNote = null;
-        for (let i = 0; i < steps.length; i++) {
+        for (let i = 0; i < n; i++) {
             let step = steps[i]
             if (step.isOn) {
-                let time = (i * ticksPerStep) + percentOffsetTicks + timeOffsetTicks
-                if (time < 0) {
-                    time += totalTicks
-                }
                 let note = {
-                    time,
-                    duration: ticksPerStep,
+                    time: times[i],
+                    duration: stepLength(i, n, totalTicks),
                     midi: 60,
                     velocity: Number(step.velocity),
                     probability: step.probability
@@ -271,17 +266,13 @@ export default class Track {
                 previousNote = note
             } else if (!_.isNil(previousNote)) {
                 // step not on so increase duration of previous note
-                previousNote.duration += ticksPerStep
+                previousNote.duration += stepLength(i, n, totalTicks)
             }
         }
         return notes
     }
     msToTicks (ms) {
-        const BPM = Tone.getTransport().bpm.value
-        const PPQ = Tone.getTransport().PPQ
-        const msPerBeat = 60000 / BPM
-        const msPerTick = msPerBeat / PPQ
-        return Math.round(ms / msPerTick)
+        return msToTicks(ms, Tone.getTransport().bpm.value, Tone.getTransport().PPQ)
     }
     /**
      * Swaps the layer's instrument. If the samples cannot be loaded the layer stays silent and

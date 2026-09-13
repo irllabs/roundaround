@@ -45,8 +45,9 @@ const AudioEngine = {
             resolve()
         })
     },
-    play () {
-        this.startAudioContext()
+    /** Starts the transport once the context is running: on a fresh context the first events used to be scheduled while it was still suspended. */
+    async play () {
+        await this.startAudioContext()
         Tone.getTransport().start("+0.1");
         Tone.getTransport().loop = false
         Tone.getTransport().loopEnd = '1:0:0'
@@ -54,10 +55,12 @@ const AudioEngine = {
     stop () {
         Tone.getTransport().stop()
     },
+    /** Resolves once the context is running (a resume needs a user gesture behind it, which play has). */
     startAudioContext () {
         if (Tone.getContext().state !== 'running') {
-            Tone.getContext().resume();
+            return Tone.getContext().resume()
         }
+        return Promise.resolve()
     },
     isOn () {
         return Tone.getTransport().state === 'started'
