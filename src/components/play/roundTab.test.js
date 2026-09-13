@@ -76,11 +76,19 @@ describe('tabGeometry', () => {
         expect(tab.textOffset).toBeCloseTo(textLength / 2 + tab.fontSize * 0.12 / 2, 0)
     })
 
+    it('leaves air above and below the capitals: the face is 0.55 of the tab, so the cap height is about 0.4 of it', () => {
+        const { height, fontSize } = tabFont(own.gap, own.bandWidth)
+        expect(height).toBe(28)
+        expect(fontSize).toBeCloseTo(15.4, 1)
+        const capHeight = fontSize * 0.727
+        expect((height - capHeight) / 2).toBeGreaterThan(8)
+    })
+
     it('gives a collaborator\'s smaller band a smaller tab, and draws none where there is no room', () => {
         const small = tabGeometry({ ...theirs, text: 'KICK' })
         const mine = tabGeometry({ ...own, text: 'KICK' })
         expect(small.height).toBeLessThan(mine.height)
-        expect(small.height).toBeCloseTo(theirs.bandWidth * 0.45, 5)
+        expect(small.height).toBeCloseTo(theirs.bandWidth * 0.55, 5)
         expect(tabGeometry({ ...cramped, text: 'KICK' })).toBeNull()
     })
 

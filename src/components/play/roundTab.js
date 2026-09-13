@@ -15,8 +15,10 @@ export const TAB_MAX_CHARS = 8
 /** Room the tab leaves to the next band, in pixels; it sits flush on its own band. */
 const CLEARANCE = 3
 /** Height of the tab at full size, its height as a share of the band it stands on (a collaborator's smaller band gets a smaller tab), the smallest tab still worth drawing, and the radius of its top corners. */
-const HEIGHT = 22
-const HEIGHT_OF_BAND = 0.45
+const HEIGHT = 28
+const HEIGHT_OF_BAND = 0.55
+/** The face as a share of the tab's height: the capitals take about 0.4 of the height, leaving 0.3 of air above and below. */
+const FONT_OF_HEIGHT = 0.55
 const MIN_HEIGHT = 8
 const CORNER = 4
 /** Tracked capitals: the tracking, the room at each end of the tab, and a width guess for when the text has not been measured. */
@@ -115,5 +117,5 @@ function tagPath(cx, cy, inner, outer, a0, a1, corner) {
 export function tabFont(gap, bandWidth = Infinity) {
     const height = Math.min(HEIGHT, gap - CLEARANCE, bandWidth * HEIGHT_OF_BAND)
     if (height < MIN_HEIGHT) return null
-    return { height, fontSize: round1(height * 0.7), letterSpacing: `${LETTER_SPACING}em` }
+    return { height, fontSize: round1(height * FONT_OF_HEIGHT), letterSpacing: `${LETTER_SPACING}em` }
 }
