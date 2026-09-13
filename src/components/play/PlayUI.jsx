@@ -15,6 +15,7 @@ import { getDefaultUserPatternSequence } from '../../utils/defaultData'
 import { classifyRoundChange } from './roundDiff'
 import { tabFont, tabGeometry, tabLabel } from './roundTab'
 import { instrumentIcon, ICON_BOX } from './instrumentIcons'
+import { flashStep } from './stepFlash'
 import { CENTRE_PANE, centrePaneLayout } from './centrePane'
 import {
     setIsPlaying,
@@ -499,8 +500,7 @@ export class PlayUI extends Component {
                 Tone.getDraw().schedule(function () {
                     const stepGraphic = _.find(_this.stepGraphics, { id: note.id })
                     if (!_.isNil(stepGraphic)) {
-                        stepGraphic.stroke({ color: '#FFFFFF', opacity: layer.isMuted ? 0.1 : 1 })
-                        stepGraphic.animate().stroke({ color: note.color, opacity: layer.isMuted ? 0.1 : 1 })
+                        flashStep(stepGraphic, note.color, layer.isMuted ? 0.1 : 1)
                     }
                 }, time)
             }, notes)
