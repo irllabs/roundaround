@@ -9,16 +9,19 @@ export const CENTRE_PANE = {
     /** the play/stop button */
     play: { diameter: 128 },
     /** the pattern presets A to H, on a circle: a thick ring around a dark hole holding the letter; the active one gets an outline */
-    presets: { diameter: 144, radius: 360, labelSize: 40, ring: { outer: 128, width: 28, opacity: 0.3 }, hole: 72, outline: { diameter: 144, width: 4, opacity: 0.6 }, miniature: { scale: 2.2, dot: 4 } },
+    // a preset that is not the active one is drawn at 60% as a whole; its miniature is one ring of 4px dots per round, spread between the radii 42 and 58
+    presets: { diameter: 144, radius: 360, labelSize: 40, ring: { outer: 128, width: 28, opacity: 0.3 }, hole: 72, outline: { diameter: 144, width: 4, opacity: 0.6 }, dim: 0.6, miniature: { inner: 42, outer: 58, dot: 4 } },
     /** the sequence slots, on a smaller circle */
-    slots: { diameter: 72, radius: 180, labelSize: 14, ringWidth: 6, opacity: 0.25, miniature: { dot: 3 } },
+    slots: { diameter: 72, radius: 180, labelSize: 14, ringWidth: 6, opacity: 0.25, miniature: { inner: 16, outer: 28, dot: 3 } },
     /** the Sequence button, above the centre; the Stop variant while a sequence is being recorded */
     sequenceButton: { width: 143, height: 48, aboveCentre: 253, iconSize: 24, iconInset: 16, labelSize: 16, labelInset: 48, fillOpacity: 0.1 },
     stopButton: { width: 96, height: 48, iconSize: 16, iconInset: 18, labelInset: 44 },
     /** the A / sequence switch: a big circle with the pattern letter and a small one with the sequence dots */
-    switch: { width: 120, height: 64, aboveCentre: 96, borderOpacity: 0.1, disc: 48, discOpacity: 0.2, letterRing: 24, labelSize: 14, dotsDiameter: 30, dot: 5 },
+    // Frame 244 in the file: a 120x64 pill with a 1px border at 10%; a 64px box on the left holding a 48px disc at 20% with a 20px ring (2px, 50%) and the letter (14px);
+    // a 48px box at x=64 holding the 24px sequence icon: twelve 4px hollow dots on a 10px radius
+    switch: { width: 120, height: 64, aboveCentre: 96, borderOpacity: 0.1, disc: 48, discOpacity: 0.2, letterRing: { diameter: 20, width: 2, opacity: 0.5 }, labelSize: 14, dots: { radius: 10, size: 4, width: 1 }, dotsCentre: 88 },
     /** the tempo pill, below the centre */
-    tempo: { width: 93, height: 48, belowCentre: 104, iconSize: 24, iconInset: 16, labelSize: 16, labelInset: 48 },
+    tempo: { width: 93, height: 48, belowCentre: 104, iconSize: 24, iconInset: 16, labelSize: 16, labelInset: 48, labelOpacity: 0.9 },
 }
 
 const rad = (deg) => (deg * Math.PI) / 180
@@ -43,7 +46,7 @@ export function centrePaneLayout(cx, cy) {
         switch: {
             ...box(s.switch.width, s.switch.height, switchCentreY),
             disc: { cx: switchLeft + s.switch.height / 2, cy: switchCentreY, diameter: s.switch.disc },
-            dots: { cx: switchLeft + s.switch.height + 8 + 24, cy: switchCentreY, diameter: s.switch.dotsDiameter },
+            dots: { cx: switchLeft + s.switch.dotsCentre, cy: switchCentreY },
         },
         tempo: box(s.tempo.width, s.tempo.height, cy + s.tempo.belowCentre),
         preset: (index, count) => ({ ...onCircle(cx, cy, s.presets.radius, index, count), diameter: s.presets.diameter }),

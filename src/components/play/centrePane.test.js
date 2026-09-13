@@ -26,7 +26,7 @@ describe('centrePaneLayout', () => {
         const { switch: sw } = centrePaneLayout(cx, cy)
         expect([sw.width, sw.height]).toEqual([120, 64])
         expect(sw.disc.cx).toBe(sw.x + 32)
-        expect(sw.dots.cx).toBe(sw.x + 64 + 8 + 24)
+        expect(sw.dots.cx).toBe(sw.x + 88)
         expect(sw.disc.cy).toBe(sw.dots.cy)
         expect(sw.disc.diameter).toBe(48)
     })
