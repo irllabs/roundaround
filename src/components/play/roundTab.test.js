@@ -39,10 +39,26 @@ describe('tabGeometry', () => {
         const nextBandInnerEdge = bandOuterEdge + own.gap
         expect(tab.radius - tab.height / 2).toBeCloseTo(bandOuterEdge, 5)
         expect(tab.radius + tab.height / 2).toBeLessThanOrEqual(nextBandInnerEdge - 2)
-        // the shape starts and ends on the band's edge and closes: flat bottom, not a pill
+        // the shape starts and ends on the band's edge and closes: it grows out of the band, not a pill
         expect(tab.labelPath.startsWith('M')).toBe(true)
         expect(tab.labelPath.endsWith('Z')).toBe(true)
         expect(tab.labelPath.match(/A[\d.]+ [\d.]+ 0 [01] 0 /)).not.toBeNull() // the bottom arc runs back along the band
+    })
+
+    it('arches its top and flares into the band: corners of half its height, 6px shoulders, in proportion on a small tab', () => {
+        const tab = tabGeometry({ ...own, text: 'KICK' })
+        expect(tab.corner).toBeCloseTo(tab.height / 2, 5)
+        expect(tab.shoulder).toBe(6)
+        // two shoulder fillets and two corners
+        expect(tab.labelPath.match(/Q/g)).toHaveLength(4)
+        // the base starts on the band's edge a shoulder before the side: further from the top than the side's foot
+        const [mx, my] = tab.labelPath.match(/^M([\d.-]+) ([\d.-]+)/).slice(1).map(Number)
+        const bandOuterEdge = own.ringRadius + own.bandWidth / 2
+        expect(Math.hypot(mx - own.cx, my - own.cy)).toBeCloseTo(bandOuterEdge, 0)
+        expect(mx).toBeLessThan(own.cx + bandOuterEdge * Math.sin(tab.startAngle * Math.PI / 180 + Math.PI / 2))
+        const small = tabGeometry({ ...theirs, text: 'KICK' })
+        expect(small.shoulder).toBeCloseTo(small.height / 4, 5)
+        expect(small.corner).toBeCloseTo(small.height / 2, 5)
     })
 
     it('turns with the round when its first step is offset', () => {
