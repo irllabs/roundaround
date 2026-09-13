@@ -15,10 +15,11 @@ describe('centrePaneLayout', () => {
 
     it('stacks the pills on the vertical axis: Sequence above, the switch nearer, tempo below', () => {
         const l = centrePaneLayout(cx, cy)
-        for (const pill of [l.sequenceButton, l.stopButton, l.switch, l.tempo]) {
+        for (const pill of [l.sequenceButton, l.switch, l.tempo]) {
             expect(pill.x + pill.width / 2).toBeCloseTo(cx, 5)
         }
         expect(l.sequenceButton.cy).toBe(cy - 253)
+        expect(l.stopButton.cy).toBe(cy - 253)
         expect(l.switch.cy).toBe(cy - 96)
         expect(l.tempo.cy).toBe(cy + 104)
         expect(l.sequenceButton.cy).toBeLessThan(l.switch.cy)

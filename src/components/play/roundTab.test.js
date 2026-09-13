@@ -59,12 +59,12 @@ describe('tabGeometry', () => {
         expect(long.labelPath.length).toBeGreaterThan(long.textPath.length)
     })
 
-    it('sizes the tab to the measured text plus a small pad at each end, dropping the trailing tracking', () => {
+    it('sizes the tab to the measured text plus 14px at each end, dropping the trailing tracking', () => {
         const { fontSize } = tabFont(own.gap)
         const measured = 40 // what the browser says 'KICK' takes at that size, tracking after every glyph included
         const tab = tabGeometry({ ...own, text: 'KICK', textWidth: measured })
         const tabWidth = tab.radius * ((tab.endAngle - tab.startAngle) * Math.PI / 180)
-        expect(tabWidth).toBeCloseTo(measured - fontSize * 0.12 + 8, 1)
+        expect(tabWidth).toBeCloseTo(measured - fontSize * 0.12 + 28, 1)
     })
 
     it('sets the text on a baseline below the tab\'s centreline, so the capitals sit centred, with the middle of the text at the middle of its path', () => {

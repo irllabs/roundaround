@@ -1,7 +1,7 @@
 /**
- * The instrument tab on a round: a tag that grows out of the band's outer edge, centred at the
- * top over the first step, flat on the band, straight sides, rounded top corners, and the
- * instrument's name along its arc. Pure geometry,
+ * The instrument tab on a round: a bump of the band itself, growing out of its outer edge at the
+ * top over the first step, flat on the band, straight sides, rounded top corners, filled the way
+ * the band is filled, and the instrument's name along its arc. Pure geometry,
  * so PlayUI only has to draw what comes back and the tests can check it without SVG.js.
  *
  * Every measure is in the round's own pixels (the same the steps are drawn in): `ringRadius` is
@@ -19,9 +19,9 @@ const HEIGHT = 22
 const HEIGHT_OF_BAND = 0.45
 const MIN_HEIGHT = 8
 const CORNER = 4
-/** Tracked capitals: the tracking, the room at each end of the pill, and a width guess for when the text has not been measured. */
+/** Tracked capitals: the tracking, the room at each end of the tab, and a width guess for when the text has not been measured. */
 const LETTER_SPACING = 0.12
-const PADDING = 4
+const PADDING = 14
 const CHAR_WIDTH = 0.7
 /** Capitals sit on the baseline and reach about this far up, so the baseline goes this far below the pill's centreline. */
 const CAP_CENTRE = 0.36

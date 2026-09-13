@@ -33,6 +33,8 @@ const BUTTON_CLASS = 'cursor-pointer'
 const BUTTON_ICON_CLASS = 'pointer-events-none'
 // the tab's face; index.html loads Inter, and the pill is sized to what the browser measures for it
 const TAB_FONT = 'Inter, Roboto, Helvetica, Arial, sans-serif'
+// half of Inter's cap height, as a share of the font size: the baseline sits this far below a letter's visual centre
+const CAP_CENTRE = 0.36
 
 const PLAY_ICON = `<svg data-icon="play" width="36" height="39" viewBox="0 0 36 39" fill="none" xmlns="http://www.w3.org/2000/svg">
             <path fill-rule="evenodd" clip-rule="evenodd" d="M32.744 24.2206L8.57602 38.174C5.19566 40.1256 0.970215 37.6861 0.970215 33.7828L0.970215 5.87595C0.970215 1.97265 5.19567 -0.46691 8.57602 1.48474L32.744 15.4382C36.1244 17.3898 36.1244 22.2689 32.744 24.2206ZM31.0144 21.2247C32.0885 20.6046 32.0885 19.0542 31.0144 18.434L6.84635 4.48061C5.77222 3.86046 4.42955 4.63565 4.42955 5.87595L4.42955 33.7828C4.42955 35.0231 5.77222 35.7983 6.84635 35.1781L31.0144 21.2247Z" fill="#fff" width="38.06px" height="34.31px" fill-opacity="0.9" /></svg>`
@@ -724,9 +726,7 @@ export class PlayUI extends Component {
             bandWidth: layerStrokeSize,
             gap: this.gapAfterLayer(order),
             text: tabLabel(Instruments.getInstrumentLabel(layer.instrument.sampler)),
-            offsetRadians: anglePercentOffset + angleTimeOffset,
-            color: this.userColors[layer.createdBy],
-            opacity: dim ? 0.1 : !createdByThisUser ? 0.5 : 1
+            offsetRadians: anglePercentOffset + angleTimeOffset
         }
         this.updateLayerLabel(layerGraphic)
     }
@@ -777,18 +777,39 @@ export class PlayUI extends Component {
         if (_.isNil(font) || !input.text) {
             return
         }
-        const group = this.container.group().addClass(BUTTON_ICON_CLASS).opacity(input.opacity)
-        // the text first, so the pill can be sized to what the browser actually draws
-        const text = group.text(input.text).font({ family: TAB_FONT, size: font.fontSize, weight: 700, anchor: 'middle' }).fill('#101314')
+        const group = this.container.group().addClass(BUTTON_ICON_CLASS)
+        // the text first, so the tab can be sized to what the browser actually draws
+        const text = group.text(input.text).font({ family: TAB_FONT, size: font.fontSize, weight: 700, anchor: 'middle' })
         text.attr({ 'letter-spacing': font.letterSpacing })
         const tab = tabGeometry({ ...input, textWidth: text.length(), offsetDeg: (input.offsetRadians * 180) / Math.PI })
         if (_.isNil(tab)) {
             group.remove()
             return
         }
-        group.path(tab.labelPath).fill(input.color).back()
+        const shape = group.path(tab.labelPath).back()
         text.path(tab.textPath).attr({ startOffset: tab.textOffset })
         layerGraphic.layerLabel = group
+        layerGraphic.layerLabelShape = shape
+        layerGraphic.layerLabelText = text
+        this.syncLayerLabelWithBand(layerGraphic)
+    }
+
+    /**
+     * The tab is part of the band: it takes the band's colour and opacity as they are right now,
+     * so it dims, lights up on hover or selection, and goes white when the layer is muted, exactly
+     * with the band. The name is set in the band's colour at full strength.
+     */
+    syncLayerLabelWithBand(layerGraphic) {
+        const shape = layerGraphic.layerLabelShape
+        if (_.isNil(shape) || _.isNil(layerGraphic.node)) {
+            return
+        }
+        const color = layerGraphic.attr('stroke')
+        const strokeOpacity = Number(layerGraphic.attr('stroke-opacity') ?? 1)
+        const muted = typeof color === 'string' && color.startsWith('rgba(255')
+        shape.attr({ fill: color, 'fill-opacity': strokeOpacity })
+        layerGraphic.layerLabelText?.attr({ fill: muted ? '#ffffff' : color, 'fill-opacity': muted ? 0.35 : 1 })
+        layerGraphic.layerLabel?.opacity(layerGraphic.opacity())
     }
 
     /** The round changed instrument: the tab follows. `sampler` is the instrument's key, as on the layer. */
@@ -823,12 +844,14 @@ export class PlayUI extends Component {
     highlightLayer(layerGraphic, unhighlightExceptLayerId) {
         this.unhighlightAllLayers(unhighlightExceptLayerId)
         layerGraphic.stroke({ opacity: HTML_UI_Params.layerStrokeOpacity * 2 })
+        this.syncLayerLabelWithBand(layerGraphic)
     }
 
     unhighlightAllLayers(exceptLayerId) {
         for (const layerGraphic of this.layerGraphics) {
             if (layerGraphic.id !== exceptLayerId) {
                 layerGraphic.stroke({ opacity: HTML_UI_Params.layerStrokeOpacity })
+                this.syncLayerLabelWithBand(layerGraphic)
             }
         }
     }
@@ -1430,12 +1453,16 @@ export class PlayUI extends Component {
         this.renderRecordSequenceButton(layout)
     }
 
-    /** Text placed by its centre, in the round's face. */
+    /**
+     * Text placed by its centre, in the round's face. Capitals and figures are centred on their
+     * cap height (Inter's is 0.727em), which is where the eye puts the middle of a letter; centring
+     * the em box instead leaves them sitting high.
+     */
     centredText(text, x, y, size, color, o = {}) {
         return this.container.plain(String(text))
             .font({ family: TAB_FONT, size, weight: o.weight ?? 700 })
             .fill(color)
-            .attr({ x, y, 'text-anchor': o.anchor ?? 'middle', 'dominant-baseline': 'middle', opacity: o.opacity ?? 1, ...(o.attrs || {}) })
+            .attr({ x, y: y + size * CAP_CENTRE, 'text-anchor': o.anchor ?? 'middle', opacity: o.opacity ?? 1, ...(o.attrs || {}) })
     }
 
     renderTempoButton = (layout, bpm) => {
@@ -1831,19 +1858,25 @@ export class PlayUI extends Component {
         }
 
         if (this.isRecordingSequence) {
-            const pill = layout.stopButton
             const spec = CENTRE_PANE.stopButton
+            const labelSize = CENTRE_PANE.sequenceButton.labelSize
+            // measure the word first, then size the pill around icon + gap + word with 16px each side
+            const sequenceText = this.centredText('Stop', 0, layout.stopButton.cy, labelSize, user.color, { anchor: 'start', attrs: { id: 'sequence-text', cursor: 'pointer' } })
+            const textWidth = sequenceText.length()
+            const width = spec.padding + spec.iconSize + spec.gap + textWidth + spec.padding
+            const pill = { x: layout.stopButton.cx - width / 2, y: layout.stopButton.cy - spec.height / 2, width, height: spec.height, cy: layout.stopButton.cy }
+            sequenceText.attr({ x: pill.x + spec.padding + spec.iconSize + spec.gap })
             const sequenceButton = this.container.nested().rect(pill.width, pill.height).radius(pill.height / 2)
-            sequenceButton.attr({ id: 'sequence-button', fill: user.color, opacity: 0.2 })
+            sequenceButton.attr({ id: 'sequence-button', fill: user.color, opacity: CENTRE_PANE.sequenceButton.fillOpacity })
             sequenceButton.x(pill.x).y(pill.y)
-            const sequenceStop = this.container.nested().svg(`<svg width="16" height="16" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+            const sequenceStop = this.container.nested().svg(`<svg width="16" height="16" viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg">
                                                                 <path d="M2.05155 0.35199C1.58223 -0.11733 0.82131 -0.11733 0.35199 0.35199C-0.11733 0.82131 -0.117329 1.58223 0.351991 2.05155L6.30044 8L0.35199 13.9485C-0.11733 14.4178 -0.11733 15.1787 0.35199 15.648C0.82131 16.1173 1.58223 16.1173 2.05155 15.648L8 9.69956L13.9485 15.648C14.4178 16.1173 15.1787 16.1173 15.648 15.648C16.1173 15.1787 16.1173 14.4178 15.648 13.9485L9.69956 8L15.648 2.05155C16.1173 1.58223 16.1173 0.82131 15.648 0.35199C15.1787 -0.11733 14.4178 -0.11733 13.9485 0.351991L8 6.30044L2.05155 0.35199Z" />
                                                             </svg>`)
             sequenceStop.findOne('svg')?.size(spec.iconSize, spec.iconSize)
             sequenceStop.attr({ id: 'sequence-stop', fill: user.color, opacity: 1 })
             sequenceStop.stroke({ color: user.color, width: 1 })
-            sequenceStop.x(pill.x + spec.iconInset).y(pill.cy - spec.iconSize / 2)
-            const sequenceText = this.centredText('Stop', pill.x + spec.labelInset, pill.cy, CENTRE_PANE.sequenceButton.labelSize, user.color, { anchor: 'start', attrs: { id: 'sequence-text', cursor: 'pointer' } })
+            sequenceStop.x(pill.x + spec.padding).y(pill.cy - spec.iconSize / 2)
+            sequenceText.front()
             const clickableSequenceButton = this.container.nested().rect(pill.width, pill.height).radius(pill.height / 2)
             clickableSequenceButton.on('click', this.onToggleRecordSequence)
             clickableSequenceButton.attr({ id: 'sequence-button', fill: '#000', opacity: 0.00001, cursor: 'pointer' })

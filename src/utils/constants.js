@@ -4,8 +4,9 @@ export const HTML_UI_Params = {
     stepDiameter: 48,
     sequenceButtonDots: 12,
     addNewLayerButtonDiameter: 128,
-    playIconWidth: 60,
-    playIconHeight: 67,
+    // the icon's outline is inset in its own box; these give the 60x66 triangle the file draws
+    playIconWidth: 63,
+    playIconHeight: 70,
     layerPadding: 80,
     otherUserLayerPadding: 23,
     firstLayerDiameter: 1024,

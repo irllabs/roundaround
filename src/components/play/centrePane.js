@@ -16,7 +16,8 @@ export const CENTRE_PANE = {
     slots: { diameter: 72, radius: 180, labelSize: 14, ringWidth: 6, opacity: 0.25, miniature: { inner: 16, outer: 28, dot: 3 } },
     /** the Sequence button, above the centre; the Stop variant while a sequence is being recorded */
     sequenceButton: { width: 143, height: 48, aboveCentre: 253, iconSize: 24, iconInset: 16, labelSize: 16, labelInset: 48, fillOpacity: 0.1 },
-    stopButton: { width: 96, height: 48, iconSize: 16, iconInset: 18, labelInset: 44 },
+    // the Stop variant is not in the file; it is built the way the file builds the Sequence pill: 16px padding, an 8px gap, the text measured
+    stopButton: { height: 48, iconSize: 16, padding: 16, gap: 8 },
     /** the A / sequence switch: a big circle with the pattern letter and a small one with the sequence dots */
     // Frame 244 in the file: a 120x64 pill with a 1px border at 10%; a 64px box on the left holding a 48px disc at 20% with a 20px ring (2px, 50%) and the letter (14px);
     // a 48px box at x=64 holding the 24px sequence icon: twelve 4px hollow dots on a 10px radius
@@ -42,7 +43,8 @@ export function centrePaneLayout(cx, cy) {
     return {
         play: box(s.play.diameter, s.play.diameter, cy + s.play.belowCentre),
         sequenceButton: box(s.sequenceButton.width, s.sequenceButton.height, cy - s.sequenceButton.aboveCentre),
-        stopButton: box(s.stopButton.width, s.stopButton.height, cy - s.sequenceButton.aboveCentre),
+        // the Stop pill's width follows its text; it is sized where it is drawn
+        stopButton: { cx, cy: cy - s.sequenceButton.aboveCentre, height: s.stopButton.height },
         // a bordered pill: the letter's disc sits in the left half (a 64px square), the dots in the right (48px)
         switch: {
             ...box(s.switch.width, s.switch.height, switchCentreY),
