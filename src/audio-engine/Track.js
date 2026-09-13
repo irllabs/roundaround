@@ -142,24 +142,25 @@ export default class Track {
             if (onFx.length > 0) {
                 for (let i = 0; i < onFx.length; i++) {
                     let fx = onFx[i]
+                    // the chain goes through each effect's gates (fx-base-class), never straight into the Tone node
                     // connect channel to first fx
                     if (i === 0) {
-                        this.channel.connect(fx.fx)
+                        this.channel.connect(fx.input)
                     }
 
                     // connect previous fx to this one
                     if (i > 0) {
-                        onFx[i - 1].fx.connect(fx.fx)
+                        onFx[i - 1].output.connect(fx.input)
                     }
 
                     // connect last fx to user bus or master
                     if (i === onFx.length - 1) {
                         if (this.type === Track.TRACK_TYPE_LAYER) {
-                            fx.fx.connect(AudioEngine.busesByUser[this.userId].channel)
+                            fx.output.connect(AudioEngine.busesByUser[this.userId].channel)
                         } else if (this.type === Track.TRACK_TYPE_USER) {
-                            fx.fx.connect(AudioEngine.master.channel)
+                            fx.output.connect(AudioEngine.master.channel)
                         } else {
-                            fx.fx.toDestination()
+                            fx.output.toDestination()
                         }
                     }
                 }
@@ -182,8 +183,8 @@ export default class Track {
 
         if (!_.isNil(this.sortedFx)) {
             for (let fx of this.sortedFx) {
-                if (!_.isNil(fx.fx) && !_.isNil(fx.fx.context._context)) {
-                    fx.fx.disconnect(0)
+                if (!_.isNil(fx.output) && !_.isNil(fx.output.context._context)) {
+                    fx.output.disconnect(0)
                 }
             }
         }
