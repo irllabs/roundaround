@@ -17,10 +17,12 @@ const CLEARANCE = 3
 /** Height of the pill at full size, and the smallest pill still worth drawing. */
 const HEIGHT = 12
 const MIN_HEIGHT = 8
-/** Tracked capitals: how wide one character is, as a share of the font size, plus the padding at each end. */
-const CHAR_WIDTH = 0.86
-const LETTER_SPACING = 0.14
-const PADDING = 6
+/** Tracked capitals: the tracking, the room at each end of the pill, and a width guess for when the text has not been measured. */
+const LETTER_SPACING = 0.12
+const PADDING = 4
+const CHAR_WIDTH = 0.7
+/** Capitals sit on the baseline and reach about this far up, so the baseline goes this far below the pill's centreline. */
+const CAP_CENTRE = 0.36
 
 const rad = (deg) => (deg * Math.PI) / 180
 const round1 = (x) => Math.round(x * 10) / 10
@@ -50,22 +52,29 @@ export function tabLabel(name) {
  * @param {number} o.bandWidth the band's stroke width
  * @param {number} o.gap pixels between this band's outer edge and the next band's inner edge
  * @param {string} o.text what the tab says (see tabLabel)
+ * @param {number} [o.textWidth] the text's measured width at `fontSize` (see tabFont), which sizes the pill exactly; guessed when absent
  * @param {number} [o.offsetDeg] how far the round's first step is turned from the top, in degrees
  */
-export function tabGeometry({ cx, cy, ringRadius, bandWidth, gap, text, offsetDeg = 0 }) {
+export function tabGeometry({ cx, cy, ringRadius, bandWidth, gap, text, textWidth, offsetDeg = 0 }) {
     if (!text) return null
-    const height = Math.min(HEIGHT, gap - REST - CLEARANCE)
-    if (height < MIN_HEIGHT) return null
-    const fontSize = round1(height * 0.68)
+    const font = tabFont(gap)
+    if (!font) return null
+    const { height, fontSize } = font
+    const spacingPx = fontSize * LETTER_SPACING
     // the pill's inner edge rests on the band's outer edge, a hair off it
     const radius = ringRadius + bandWidth / 2 + REST + height / 2
-    const width = text.length * fontSize * CHAR_WIDTH + text.length * fontSize * LETTER_SPACING + PADDING * 2
+    // the browser draws tracking after every glyph, the last one included, so a measured width carries one spacing too many
+    const glyphs = (textWidth ?? text.length * fontSize * (CHAR_WIDTH + LETTER_SPACING)) - spacingPx
+    const width = glyphs + PADDING * 2
     const span = (width / radius) * (180 / Math.PI)
     const centre = -90 + offsetDeg
     const startAngle = centre - span / 2
     const endAngle = centre + span / 2
     // a stroked arc with round caps reaches half its height past each end, so the pill's own arc is shorter
     const capDeg = (height / 2 / radius) * (180 / Math.PI)
+    // the text's baseline runs below the centreline, so the capitals end up centred in the pill
+    const textRadius = radius - fontSize * CAP_CENTRE
+    const textLength = textRadius * (span * Math.PI / 180)
     return {
         text,
         height,
@@ -75,6 +84,15 @@ export function tabGeometry({ cx, cy, ringRadius, bandWidth, gap, text, offsetDe
         startAngle,
         endAngle,
         pillPath: arcPath(cx, cy, radius, startAngle + capDeg, endAngle - capDeg),
-        textPath: arcPath(cx, cy, radius, startAngle, endAngle),
+        textPath: arcPath(cx, cy, textRadius, startAngle, endAngle),
+        // where the middle of the text goes on its path: the path's middle, plus half the trailing spacing
+        textOffset: round1(textLength / 2 + spacingPx / 2),
     }
+}
+
+/** The pill's height and face for a gap, or null when the gap cannot hold a tab. Measure the text at this size first. */
+export function tabFont(gap) {
+    const height = Math.min(HEIGHT, gap - REST - CLEARANCE)
+    if (height < MIN_HEIGHT) return null
+    return { height, fontSize: round1(height * 0.7), letterSpacing: `${LETTER_SPACING}em` }
 }

@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { tabGeometry, tabLabel, TAB_MAX_CHARS } from './roundTab'
+import { tabFont, tabGeometry, tabLabel, TAB_MAX_CHARS } from './roundTab'
 
 // A round of this user's, at the app's own numbers: 48px band and steps, 16px between bands.
 const own = { cx: 500, cy: 500, ringRadius: 256, bandWidth: 48, gap: 16 }
@@ -54,6 +54,23 @@ describe('tabGeometry', () => {
         // the pill is drawn with round caps that reach past its own arc, so the text arc is the longer one
         expect(long.pillPath).not.toBe(long.textPath)
         expect(long.pillPath.startsWith('M')).toBe(true)
+    })
+
+    it('sizes the pill to the measured text plus a small pad at each end, dropping the trailing tracking', () => {
+        const { fontSize } = tabFont(own.gap)
+        const measured = 40 // what the browser says 'KICK' takes at that size, tracking after every glyph included
+        const tab = tabGeometry({ ...own, text: 'KICK', textWidth: measured })
+        const pillWidth = tab.radius * ((tab.endAngle - tab.startAngle) * Math.PI / 180)
+        expect(pillWidth).toBeCloseTo(measured - fontSize * 0.12 + 8, 1)
+    })
+
+    it('sets the text on a baseline below the pill\'s centreline, so the capitals sit centred, with the middle of the text at the middle of its path', () => {
+        const tab = tabGeometry({ ...own, text: 'SNARE', textWidth: 48 })
+        const textRadius = Number(tab.textPath.match(/A([\d.]+) /)[1])
+        expect(textRadius).toBeLessThan(tab.radius)
+        expect(tab.radius - textRadius).toBeCloseTo(tab.fontSize * 0.36, 1)
+        const textLength = textRadius * ((tab.endAngle - tab.startAngle) * Math.PI / 180)
+        expect(tab.textOffset).toBeCloseTo(textLength / 2 + tab.fontSize * 0.12 / 2, 0)
     })
 
     it('draws no tab where there is no room for one, as on a collaborator\'s round', () => {

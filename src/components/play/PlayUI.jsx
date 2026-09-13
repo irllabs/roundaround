@@ -13,7 +13,7 @@ import { numberRange, layerWithStepsOff, patternLayersForRound } from '../../uti
 import Instruments from '../../audio-engine/Instruments'
 import { getDefaultUserPatternSequence } from '../../utils/defaultData'
 import { classifyRoundChange } from './roundDiff'
-import { tabGeometry, tabLabel } from './roundTab'
+import { tabFont, tabGeometry, tabLabel } from './roundTab'
 import {
     setIsPlaying,
     setIsRecordingSequence,
@@ -30,6 +30,8 @@ const PATTERN_SAVE_DEBOUNCE_MS = 1000
 // the strings, and Tailwind emits both because they appear here as literals.
 const BUTTON_CLASS = 'cursor-pointer'
 const BUTTON_ICON_CLASS = 'pointer-events-none'
+// the tab's face; index.html loads Inter, and the pill is sized to what the browser measures for it
+const TAB_FONT = 'Inter, Roboto, Helvetica, Arial, sans-serif'
 
 const PLAY_ICON = `<svg data-icon="play" width="36" height="39" viewBox="0 0 36 39" fill="none" xmlns="http://www.w3.org/2000/svg">
             <path fill-rule="evenodd" clip-rule="evenodd" d="M32.744 24.2206L8.57602 38.174C5.19566 40.1256 0.970215 37.6861 0.970215 33.7828L0.970215 5.87595C0.970215 1.97265 5.19567 -0.46691 8.57602 1.48474L32.744 15.4382C36.1244 17.3898 36.1244 22.2689 32.744 24.2206ZM31.0144 21.2247C32.0885 20.6046 32.0885 19.0542 31.0144 18.434L6.84635 4.48061C5.77222 3.86046 4.42955 4.63565 4.42955 5.87595L4.42955 33.7828C4.42955 35.0231 5.77222 35.7983 6.84635 35.1781L31.0144 21.2247Z" fill="#fff" width="38.06px" height="34.31px" fill-opacity="0.9" /></svg>`
@@ -78,6 +80,19 @@ export class PlayUI extends Component {
         this.sequencerParts = {}
     }
 
+    /** Tabs are sized to measured text: once the web font arrives, measure again. */
+    redrawTabsWhenFontsLoad() {
+        if (typeof document === 'undefined' || _.isNil(document.fonts) || _.isNil(document.fonts.ready)) {
+            return
+        }
+        document.fonts.ready.then(() => {
+            if (this.isDisposing) return
+            for (const layerGraphic of this.layerGraphics) {
+                this.updateLayerLabel(layerGraphic)
+            }
+        }).catch(() => {})
+    }
+
     async componentDidMount() {
         const { round, user } = this.props
         // register this component with parent so we can do some instant updates bypassing redux for speed
@@ -103,6 +118,7 @@ export class PlayUI extends Component {
     }
 
     async componentWillUnmount() {
+        this.isDisposing = true
         // a toggle made in the last second is still waiting to be saved into the pattern
         this.savePatternDebounced.flush()
         window.removeEventListener('click', this.interfaceClicked)
@@ -183,6 +199,7 @@ export class PlayUI extends Component {
         })
         this.container.viewbox(0, 0, this.containerWidth, this.containerHeight)
         this.draw()
+        this.redrawTabsWhenFontsLoad()
     }
 
     componentDidUpdate(prevProps) {
@@ -736,15 +753,21 @@ export class PlayUI extends Component {
         if (_.isNil(input)) {
             return
         }
-        const tab = tabGeometry({ ...input, offsetDeg: (input.offsetRadians * 180) / Math.PI })
-        if (_.isNil(tab)) {
+        const font = tabFont(input.gap)
+        if (_.isNil(font) || !input.text) {
             return
         }
         const group = this.container.group().addClass(BUTTON_ICON_CLASS).opacity(input.opacity)
-        group.path(tab.pillPath).fill('none').stroke({ color: input.color, width: tab.height, linecap: 'round' })
-        const text = group.text(tab.text).font({ size: tab.fontSize, weight: 700, anchor: 'middle' }).fill('#101314')
-        text.attr({ 'letter-spacing': tab.letterSpacing, 'dominant-baseline': 'middle' })
-        text.path(tab.textPath).attr({ startOffset: '50%' })
+        // the text first, so the pill can be sized to what the browser actually draws
+        const text = group.text(input.text).font({ family: TAB_FONT, size: font.fontSize, weight: 700, anchor: 'middle' }).fill('#101314')
+        text.attr({ 'letter-spacing': font.letterSpacing })
+        const tab = tabGeometry({ ...input, textWidth: text.length(), offsetDeg: (input.offsetRadians * 180) / Math.PI })
+        if (_.isNil(tab)) {
+            group.remove()
+            return
+        }
+        group.path(tab.pillPath).fill('none').stroke({ color: input.color, width: tab.height, linecap: 'round' }).back()
+        text.path(tab.textPath).attr({ startOffset: tab.textOffset })
         layerGraphic.layerLabel = group
     }
 
