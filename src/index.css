@@ -132,3 +132,31 @@
   background-color: rgba(0, 0, 0, 0.5);
   backdrop-filter: none;
 }
+
+/* The metronome in the tempo pill. The arm leans at rest and swings once per beat while the
+   round plays; the beat and its phase come from the round's tempo (see play/metronome.js).
+   A pendulum is simple harmonic motion, so the curve is a sine ease-in-out. The swing starts from
+   the rest lean on the first beat (a positive delay, held at the first keyframe until then) and
+   settles back to rest on stop through the transition, from wherever it was. */
+@keyframes metronome-swing {
+  from { transform: rotate(26deg); }
+  to { transform: rotate(-26deg); }
+}
+@keyframes metronome-pulse {
+  from { opacity: 0.9; }
+  to { opacity: 0.5; }
+}
+.metronome-arm {
+  transform-box: view-box;
+  transform: rotate(26deg);
+  transition: transform 260ms cubic-bezier(0.19, 1, 0.22, 1);
+}
+.metronome-arm.is-playing {
+  animation: metronome-swing var(--beat, 0.5s) cubic-bezier(0.37, 0, 0.63, 1) var(--beat-delay, 0.1s) infinite alternate both;
+}
+@media (prefers-reduced-motion: reduce) {
+  /* gentler, not gone: the arm stays put and breathes on the beat instead */
+  .metronome-arm.is-playing {
+    animation: metronome-pulse var(--beat, 0.5s) ease-in-out var(--beat-delay, 0.1s) infinite alternate both;
+  }
+}
