@@ -24,21 +24,21 @@ Before: `before-3-rings.png`, `before-5-rings.png`, `before-8-rings.png`; the nu
 - **The dot** is 72 px instead of 48 px, made smaller only where dots would come within 8 pt of each other (a 32-step ring in a big round), never below 24 px.
 - **The hit area** of a step is an invisible ellipse laid along the ring: 44 pt along the arc and 44 pt across it, each cut back so that neighbouring hit areas, on the same ring and on the rings either side, stay 8 pt apart. It is never smaller than the dot. On a fine pointer it is exactly the dot.
 - **Forgiving tap, precise hold.** A tap anywhere on the hit area toggles the step. A hold on the dot edits the step (velocity and probability), as before. A hold on the rest of the hit area is a hold on the ring: it opens the round's settings and does not toggle the step, so "long press a round to edit" still works on a ring whose band is now mostly covered by hit areas.
-- **The tabs** (the instrument name over the first step) grow out of the dots' outer edge where the dots are bigger than the band, so the bigger dot does not cover them.
-- The zoom is the same as before; the whole round still fits. (Rotating an iPad now refits the round: the resize handler wrote `containerheight` and never updated the height.)
+- **The rail** (the band a round's dots sit on) is 76 px instead of 52: as wide as a dot with its stroke, which is the Figma's own relation (52 for 48 px dots). A first cut left the rail at 52 and the dots overflowed it; the tabs grow out of whichever reaches further, the rail or the dots.
+- The layout is otherwise unchanged; the whole round still fits. (Rotating an iPad now refits the round: the resize handler wrote `containerheight` and never updated the height.)
 
 ## The same iPad after the change
 
-Production build of the branch, same emulation. `touch-3-rings.png` and the `-hits` variants (loaded with `?hits`, which paints the hit areas) show what the numbers describe; `touch-3-rings-tabs-crop.png` is the tabs on the bigger dots.
+Production build of the branch, same emulation. `touch-3-rings.png` and the `-hits` variants (loaded with `?hits`, which paints the hit areas) show what the numbers describe; `touch-3-rings-tabs-crop.png` is the tabs on the wider rail with the dots inside it.
 
 | 10.9" Safari, landscape | rings | dot | hit area, along x across | clear between hit areas along / across |
 |---|---|---|---|---|
-| 16-step rings | 3 | 24.4 pt (was 16.3) | 44.0 x 35.4 pt (was 16.3 x 16.3) | 23.8 / 8.1 pt |
-| 16-step rings | 5 | 18.7 pt (was 12.5) | 44.0 x 25.2 pt (was 12.5 x 12.5) | 7.8 / 8.1 pt |
-| 16-step rings | 8 | 13.8 pt (was 9.2) | 30.3 x 16.6 pt (was 9.2 x 9.2) | 8.0 / 8.0 pt |
-| a 32-step ring, in the 8-ring round | 8 | 11.3 pt | 11.3 x 16.6 pt | 7.8 / 8.0 pt |
+| 16-step rings | 3 | 24.1 pt (was 16.3) | 44.0 x 34.8 pt (was 16.3 x 16.3) | 22.8 / 8.0 pt |
+| 16-step rings | 5 | 18.5 pt (was 12.5) | 43.6 x 24.9 pt (was 12.5 x 12.5) | 7.7 / 8.0 pt |
+| 16-step rings | 8 | 13.7 pt (was 9.2) | 30.3 x 16.4 pt (was 9.2 x 9.2) | 8.0 / 8.0 pt |
+| a 32-step ring, in the 8-ring round | 8 | 11.1 pt | 11.1 x 16.4 pt | 7.8 / 8.0 pt |
 
-Eight rings on a 10.9" iPad are a geometric limit: the rings are 24.6 pt apart and no hit area can be taller than that minus the clearance. Pinch-zoom is the answer there, as it always was.
+The wider rail costs 12 px of radius, so the zooms are 1% smaller than before (0.335, 0.257, 0.190). Eight rings on a 10.9" iPad are a geometric limit: the rings are 24.4 pt apart and no hit area can be taller than that minus the clearance. Pinch-zoom is the answer there, as it always was.
 
 Desktop, 1440 x 900 with a mouse (`desktop-1440x900.png`, `-hits.png`): dots 32 px, hit area 32 x 32 px, a click 8 px past the dot's edge does nothing.
 
@@ -67,4 +67,4 @@ The same taps on Playwright's WebKit (`webkit-report.json`): all as expected exc
 
 ## Tests
 
-`touchTargets.test.js` (16): the fit zoom at the measured values, the dot's size and its floor, the hit area's 44 pt target and 8 pt clearances, the ellipse test along the ring and round it, the hold-on-the-dot slack, the pointer policy. `PlayUI.test.jsx` (+5): the fit zoom, the nearest editable ring and the presets as bounds, the ring's edge and the gap between rings with 72 px dots, a collaborator's ring unchanged. `roundTab.test.js` (+2): the tab on the dots' edge, the same tab otherwise. Whole suite green, lint clean.
+`touchTargets.test.js` (17): the rail as wide as a dot with its stroke, the fit zoom at the measured values, the dot's size and its floor, the hit area's 44 pt target and 8 pt clearances, the ellipse test along the ring and round it, the hold-on-the-dot slack, the pointer policy. `PlayUI.test.jsx` (+5): the fit zoom, the nearest editable ring and the presets as bounds, the ring's edge and the gap between rings with 72 px dots, a collaborator's ring unchanged. `roundTab.test.js` (+2): the tab on the dots' edge when they reach past the rail, the same tab otherwise. Whole suite green, lint clean.
