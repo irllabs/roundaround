@@ -4,11 +4,13 @@ import { CENTRE_PANE, centrePaneLayout, onCircle } from './centrePane'
 const cx = 1000, cy = 800
 
 describe('centrePaneLayout', () => {
-    it('puts the play button on the centre at the design\'s size', () => {
-        const { play } = centrePaneLayout(cx, cy)
-        expect(play.width).toBe(128)
-        expect(play.x + play.width / 2).toBe(cx)
-        expect(play.y + play.height / 2).toBe(cy)
+    it('puts the play button 8px below the centre, so the switch and the tempo sit 8px from it', () => {
+        const l = centrePaneLayout(cx, cy)
+        expect(l.play.width).toBe(128)
+        expect(l.play.x + l.play.width / 2).toBe(cx)
+        expect(l.play.cy).toBe(cy + 8)
+        expect(l.play.y - (l.switch.y + l.switch.height)).toBe(8)
+        expect(l.tempo.y - (l.play.y + l.play.height)).toBe(8)
     })
 
     it('stacks the pills on the vertical axis: Sequence above, the switch nearer, tempo below', () => {

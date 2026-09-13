@@ -6,8 +6,9 @@
  * depends on how many rings the player has.
  */
 export const CENTRE_PANE = {
-    /** the play/stop button */
-    play: { diameter: 128 },
+    /** the play/stop button: in the file the switch (64), the play (128) and the tempo (48) are one column with 8px gaps,
+     *  centred as a block, which puts the play button 8px below the rings' centre */
+    play: { diameter: 128, belowCentre: 8 },
     /** the pattern presets A to H, on a circle: a thick ring around a dark hole holding the letter; the active one gets an outline */
     // a preset that is not the active one is drawn at 60% as a whole; its miniature is one ring of 4px dots per round, spread between the radii 42 and 58
     presets: { diameter: 144, radius: 360, labelSize: 40, ring: { outer: 128, width: 28, opacity: 0.3 }, hole: 72, outline: { diameter: 144, width: 4, opacity: 0.6 }, dim: 0.6, miniature: { inner: 42, outer: 58, dot: 4 } },
@@ -39,7 +40,7 @@ export function centrePaneLayout(cx, cy) {
     const switchCentreY = cy - s.switch.aboveCentre
     const switchLeft = cx - s.switch.width / 2
     return {
-        play: box(s.play.diameter, s.play.diameter, cy),
+        play: box(s.play.diameter, s.play.diameter, cy + s.play.belowCentre),
         sequenceButton: box(s.sequenceButton.width, s.sequenceButton.height, cy - s.sequenceButton.aboveCentre),
         stopButton: box(s.stopButton.width, s.stopButton.height, cy - s.sequenceButton.aboveCentre),
         // a bordered pill: the letter's disc sits in the left half (a 64px square), the dots in the right (48px)

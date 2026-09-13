@@ -408,9 +408,10 @@ export class PlayUI extends Component {
             this.addLayer(layer, i++, shouldAnimate)
         }
         // add layer button
-        this.playbackToggle = this.container.circle(HTML_UI_Params.addNewLayerButtonDiameter).stroke({ width: 1, color: 'rgba(0,0,0,0)' }).fill('white').opacity('0.1')
-        this.playbackToggle.x((this.containerWidth / 2) - (HTML_UI_Params.addNewLayerButtonDiameter / 2))
-        this.playbackToggle.y((this.containerHeight / 2) - (HTML_UI_Params.addNewLayerButtonDiameter / 2))
+        const play = centrePaneLayout(this.containerWidth / 2, this.containerHeight / 2).play
+        this.playbackToggle = this.container.circle(play.width).stroke({ width: 1, color: 'rgba(0,0,0,0)' }).fill('white').opacity('0.1')
+        this.playbackToggle.x(play.x)
+        this.playbackToggle.y(play.y)
         this.playbackToggle.click(this.onPlaybackToggle)
         this.playbackToggle.addClass(BUTTON_CLASS)
         // keyboard and screen-reader access to the only control that starts the round
@@ -423,8 +424,8 @@ export class PlayUI extends Component {
             }
         })
         this.playbackToggleIcon = this.container.nested()
-        this.playbackToggleIcon.x((this.containerWidth / 2) - HTML_UI_Params.playIconWidth / 2)
-        this.playbackToggleIcon.y((this.containerHeight / 2) - HTML_UI_Params.playIconHeight / 2)
+        this.playbackToggleIcon.x(play.cx - HTML_UI_Params.playIconWidth / 2)
+        this.playbackToggleIcon.y(play.cy - HTML_UI_Params.playIconHeight / 2)
         this.playbackToggleIcon.addClass(BUTTON_ICON_CLASS)
         this.drawPlaybackToggle()
 
@@ -641,7 +642,6 @@ export class PlayUI extends Component {
         const dim = this.isRecordingSequence
         // let animateTime = shouldAnimate ? 600 : 0
         const createdByThisUser = layer.createdBy === this.props.user.id;
-        //const layerDiameter = HTML_UI_Params.addNewLayerButtonDiameter + HTML_UI_Params.initialLayerPadding + ((HTML_UI_Params.stepDiameter + HTML_UI_Params.layerPadding + HTML_UI_Params.layerPadding + HTML_UI_Params.stepDiameter) * (order + 1))
         const layerDiameter = this.getLayerDiameter(order)
         const xOffset = (this.containerWidth / 2) - (layerDiameter / 2)
         const yOffset = (this.containerHeight / 2) - (layerDiameter / 2)
