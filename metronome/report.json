@@ -1,0 +1,25 @@
+{
+  "before": {
+    "label": "Play",
+    "paths": 1,
+    "icon": "play",
+    "bufferStarts": 11,
+    "ctx": "running"
+  },
+  "after_first_click": {
+    "label": "Stop",
+    "paths": 2,
+    "icon": "pause",
+    "bufferStarts": 47,
+    "ctx": "running"
+  },
+  "after_second_click": {
+    "label": "Play",
+    "paths": 1,
+    "icon": "play",
+    "bufferStarts": 71,
+    "ctx": "running",
+    "newStartsAfterStop": 0
+  },
+  "console": []
+}
