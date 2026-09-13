@@ -18,16 +18,17 @@ describe('centrePaneLayout', () => {
         }
         expect(l.sequenceButton.cy).toBe(cy - 253)
         expect(l.switch.cy).toBe(cy - 96)
-        expect(l.tempo.cy).toBe(cy + 112)
+        expect(l.tempo.cy).toBe(cy + 104)
         expect(l.sequenceButton.cy).toBeLessThan(l.switch.cy)
     })
 
-    it('draws the switch as a big circle and a small one side by side with a gap', () => {
+    it('draws the switch as a bordered pill with the letter\'s disc on the left and the dots on the right', () => {
         const { switch: sw } = centrePaneLayout(cx, cy)
-        expect(sw.big.diameter).toBe(64)
-        expect(sw.small.diameter).toBe(48)
-        expect(sw.small.x - (sw.big.x + sw.big.diameter)).toBe(8)
-        expect(sw.big.y + sw.big.diameter / 2).toBeCloseTo(sw.small.y + sw.small.diameter / 2, 5)
+        expect([sw.width, sw.height]).toEqual([120, 64])
+        expect(sw.disc.cx).toBe(sw.x + 32)
+        expect(sw.dots.cx).toBe(sw.x + 64 + 8 + 24)
+        expect(sw.disc.cy).toBe(sw.dots.cy)
+        expect(sw.disc.diameter).toBe(44)
     })
 
     it('places the presets on the outer circle and the slots on the inner one, the first of each at the top', () => {

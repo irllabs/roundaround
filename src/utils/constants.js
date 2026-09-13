@@ -22,7 +22,7 @@ export const HTML_UI_Params = {
     layerStrokeMax: 52,
     microLayerStrokeMax: 3,
     micro2LayerStrokeMax: 2,
-    layerStrokeOpacity: 0.2,
+    layerStrokeOpacity: 0.1,
     stepModalDimensions: 200,
     stepModalThumbDiameter: 32,
     otherUserLayerSizeDivisor: 2,

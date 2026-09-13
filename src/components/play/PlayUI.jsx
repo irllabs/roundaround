@@ -1652,17 +1652,20 @@ export class PlayUI extends Component {
      */
     renderPlayingSequenceIndicator = (layout) => {
         const { user, round } = this.props
-        const { big, small } = layout.switch
+        const pill = layout.switch
         const spec = CENTRE_PANE.switch
         const isPlayingSequence = round.userPatterns[user.id].isPlayingSequence
         const sequence = round.userPatterns[user.id].sequence
-        const bigCircle = this.container.circle(big.diameter).x(big.x).y(big.y).fill(user.color)
-            .attr({ id: 'switch-letter-container', opacity: isPlayingSequence ? 0.08 : 0.2 })
-        const smallCircle = this.container.circle(small.diameter).x(small.x).y(small.y).fill(user.color)
-            .attr({ id: 'switch-dots-container', opacity: isPlayingSequence ? 0.2 : 0.08 })
-        const switchLabel = this.centredText('A', big.x + big.diameter / 2, big.y + big.diameter / 2, spec.labelSize, user.color, { attrs: { id: 'switch-letter' } })
-        this.microLayerGraphics.push(bigCircle, smallCircle, switchLabel)
-        const dotsCx = small.x + small.diameter / 2, dotsCy = small.y + small.diameter / 2
+        const border = this.container.rect(pill.width, pill.height).radius(pill.height / 2).x(pill.x).y(pill.y)
+            .fill('none').stroke({ color: user.color, width: 1, opacity: spec.borderOpacity }).attr({ id: 'sequence-switch' })
+        // the lit disc marks the mode in use: the letter (one pattern) or the dots (the sequence)
+        const letterDisc = this.container.circle(spec.disc).cx(pill.disc.cx).cy(pill.disc.cy).fill(user.color)
+            .attr({ id: 'switch-letter-container', opacity: isPlayingSequence ? 0.08 : spec.discOpacity })
+        const dotsDisc = this.container.circle(spec.disc).cx(pill.dots.cx).cy(pill.dots.cy).fill(user.color)
+            .attr({ id: 'switch-dots-container', opacity: isPlayingSequence ? spec.discOpacity : 0 })
+        const switchLabel = this.centredText('A', pill.disc.cx, pill.disc.cy, spec.labelSize, user.color, { attrs: { id: 'switch-letter' } })
+        this.microLayerGraphics.push(border, letterDisc, dotsDisc, switchLabel)
+        const dotsCx = pill.dots.cx, dotsCy = pill.dots.cy
         for (let i = 0; i < HTML_UI_Params.sequenceButtonDots; i++) {
             const angle = -Math.PI / 2 + (i * 2 * Math.PI) / sequence.length
             const dot = this.container.circle(HTML_UI_Params.dotDiameter)
@@ -1671,8 +1674,8 @@ export class PlayUI extends Component {
             dot.cx(dotsCx + (spec.dotsDiameter / 2) * Math.cos(angle)).cy(dotsCy + (spec.dotsDiameter / 2) * Math.sin(angle))
             this.microLayerGraphics.push(dot)
         }
-        const clickableSwitch = this.container.rect(layout.switch.width, layout.switch.height).radius(big.diameter / 2)
-        clickableSwitch.x(layout.switch.x).y(layout.switch.y)
+        const clickableSwitch = this.container.rect(pill.width, pill.height).radius(pill.height / 2)
+        clickableSwitch.x(pill.x).y(pill.y)
         clickableSwitch.fill({ color: '#000', opacity: 0.001 }).attr({ id: 'clickable-switch', cursor: 'pointer' })
         clickableSwitch.on('click', this.toggleIsPlayingSequence)
         this.microLayerGraphics.push(clickableSwitch)
@@ -1696,35 +1699,37 @@ export class PlayUI extends Component {
         for (const pattern of patterns) {
             const { state: { layers }, id } = pattern
             const { x: cx, y: cy, diameter } = layout.preset(pattern.order, patterns.length)
-            const x = cx - diameter / 2, y = cy - diameter / 2
             const isSelected = id === this.activePatternId
             const opacity = isSelected ? 1 : 0.2
             const letter = PRESET_LETTERS[pattern.order]
 
-            const currentPatternGraphic = this.container.nested().circle(diameter)
-            currentPatternGraphic.attr({ id: `${i}_pattern`, opacity: isSelected ? 0.3 : 0.15, cursor: 'pointer' })
-            currentPatternGraphic.fill(user.color)
-            currentPatternGraphic.x(x).y(y)
+            // a thick ring around a dark hole (the ring's stroke reaches from the hole to the outer edge)
+            const ringDiameter = spec.ring.outer - spec.ring.width
+            const currentPatternGraphic = this.container.circle(ringDiameter)
+            currentPatternGraphic.attr({ id: `${i}_pattern`, cursor: 'pointer' })
+            currentPatternGraphic.fill('none').stroke({ color: user.color, width: spec.ring.width, opacity: spec.ring.opacity })
+            currentPatternGraphic.cx(cx).cy(cy)
             this.microPatternGraphics.push(currentPatternGraphic)
-            const label = this.centredText(letter, cx, cy, spec.labelSize, user.color, { opacity: isSelected ? 1 : 0.6, attrs: { id: `${i}_pattern_label`, cursor: 'pointer' } })
+            const label = this.centredText(letter, cx, cy, spec.labelSize, user.color, { attrs: { id: `${i}_pattern_label`, cursor: 'pointer' } })
             this.microLayerGraphics.push(label)
 
             if (isSelected) {
-                const patternOutline = this.container.nested().circle(diameter + spec.outlineGap * 2)
-                patternOutline.stroke({ color: user.color, width: 2 }).fill('none').opacity(1)
-                patternOutline.x(x - spec.outlineGap).y(y - spec.outlineGap)
+                const patternOutline = this.container.circle(spec.outline.diameter - spec.outline.width)
+                patternOutline.stroke({ color: user.color, width: spec.outline.width, opacity: spec.outline.opacity }).fill('none')
+                patternOutline.cx(cx).cy(cy)
                 patternOutline.attr({ id: `${i}-pattern-outline` })
                 this.microLayerGraphics.push(patternOutline)
             }
             if (layers && layers.length > 0) {
-                const scale = diameter / HTML_UI_Params.stepDiameter
-                this.renderMicroRound({ x: x + 1.5 * scale, y: y + 1.5 * scale, pattern: currentPatternGraphic, isFilled: isSelected, layers, opacity, scale })
+                // the pattern's rounds in miniature, inside the hole
+                const scale = spec.hole / HTML_UI_Params.stepDiameter
+                const holeX = cx - spec.hole / 2, holeY = cy - spec.hole / 2
+                this.renderMicroRound({ x: holeX + 1.5 * scale, y: holeY + 1.5 * scale, pattern: currentPatternGraphic, isFilled: isSelected, layers, opacity, scale })
             }
-            const clickableButtonDiameter = diameter + spec.outlineGap * 2
-            const clickableButton = this.container.nested().circle(clickableButtonDiameter)
+            const clickableButton = this.container.circle(diameter)
             clickableButton.fill({ color: '#000', opacity: 0.001 })
             clickableButton.attr({ cursor: 'pointer', id: `${i}_pattern_clickable_button` })
-            clickableButton.x(x - spec.outlineGap).y(y - spec.outlineGap)
+            clickableButton.cx(cx).cy(cy)
             this.microLayerGraphics.push(clickableButton)
             clickableButton.on('click', () => this.onPatternClick(id, layers))
             i++
@@ -1759,7 +1764,7 @@ export class PlayUI extends Component {
                 sequenceBackground.x(sX + spec.ringWidth).y(sY + spec.ringWidth)
             }
             sequencePattern.attr({ id: `${i}_sequence_pattern` })
-            sequencePattern.stroke({ color: user.color, width: 1, opacity: isHighlighted || this.isRecordingSequence ? 1 : 0.2 })
+            sequencePattern.stroke({ color: user.color, width: 1, opacity: isHighlighted || this.isRecordingSequence ? 1 : spec.opacity })
             sequencePattern.fill('none')
             sequencePattern.x(sX).y(sY)
             const layers = pattern && pattern.state && [...pattern.state.layers]
@@ -1780,7 +1785,7 @@ export class PlayUI extends Component {
             const pill = layout.sequenceButton
             const spec = CENTRE_PANE.sequenceButton
             const sequenceButton = this.container.nested().rect(pill.width, pill.height).radius(pill.height / 2)
-            sequenceButton.attr({ id: 'sequence-button', fill: user.color, opacity: 0.2 })
+            sequenceButton.attr({ id: 'sequence-button', fill: user.color, opacity: spec.fillOpacity })
             sequenceButton.x(pill.x).y(pill.y)
             const dotsCx = pill.x + spec.iconInset + spec.iconSize / 2, dotsCy = pill.cy
             for (let i = 0; i < HTML_UI_Params.sequenceButtonDots; i++) {
