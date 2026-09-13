@@ -47,20 +47,20 @@ const AudioEngine = {
     },
     play () {
         this.startAudioContext()
-        Tone.Transport.start("+0.1");
-        Tone.Transport.loop = false
-        Tone.Transport.loopEnd = '1:0:0'
+        Tone.getTransport().start("+0.1");
+        Tone.getTransport().loop = false
+        Tone.getTransport().loopEnd = '1:0:0'
     },
     stop () {
-        Tone.Transport.stop()
+        Tone.getTransport().stop()
     },
     startAudioContext () {
-        if (Tone.context.state !== 'running') {
-            Tone.context.resume();
+        if (Tone.getContext().state !== 'running') {
+            Tone.getContext().resume();
         }
     },
     isOn () {
-        return Tone.Transport.state === 'started'
+        return Tone.getTransport().state === 'started'
     },
     // assumes tracks haven't changed, just the steps
     recalculateParts (round, layerId = null) {
@@ -129,15 +129,15 @@ const AudioEngine = {
         }
     },
     getPositionMilliseconds () {
-        return Math.round(Tone.Transport.seconds * 1000)
+        return Math.round(Tone.getTransport().seconds * 1000)
     },
     setTempo (bpm) {
-        Tone.Transport.bpm.value = bpm
+        Tone.getTransport().bpm.value = bpm
         // need to recalculate parts because absolute time offset needs to be recalculated
         this.recalculateParts(this.round)
     },
     setSwing (swing) {
-        Tone.Transport.swing = swing / 100
+        Tone.getTransport().swing = swing / 100
     }
 
 }

@@ -12,6 +12,7 @@ import { Button } from '@/components/ui/button'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import { AddIcon, ImageIcon, MoreHorizIcon } from '@/components/icons'
 import { cn } from '@/lib/utils'
+import withRouter from '../../utils/withRouter'
 
 class RoundsListRoute extends Component {
     static contextType = FirebaseContext;
@@ -199,4 +200,4 @@ export default connect(
         setIsShowingRenameDialog,
         setSelectedRoundId
     }
-)(RoundsListRoute);
+)(withRouter(RoundsListRoute));

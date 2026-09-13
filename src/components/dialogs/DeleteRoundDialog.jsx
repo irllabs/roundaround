@@ -1,6 +1,6 @@
 import React, { useContext, useState } from 'react';
 import { connect } from "react-redux";
-import { useHistory } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { FirebaseContext } from '../../firebase';
 import { setIsShowingDeleteRoundDialog, setRounds } from '../../redux/actions'
 import { AppDialog, AppDialogActions, AppDialogContent } from './AppDialog'
@@ -15,7 +15,7 @@ const CONTENT_TEXT = 'mb-3 mt-0 text-base leading-6 tracking-[0.00938em]'
 
 function DeleteRoundDialog ({ isShowingDeleteRoundDialog, selectedRoundId, rounds, setRounds, round, setIsShowingDeleteRoundDialog }) {
     const firebase = useContext(FirebaseContext);
-    const history = useHistory();
+    const navigate = useNavigate();
     const [isDeleting, setIsDeleting] = useState(false)
     const [errorMessage, setErrorMessage] = useState(null)
     const handleClose = () => {
@@ -38,7 +38,7 @@ function DeleteRoundDialog ({ isShowingDeleteRoundDialog, selectedRoundId, round
             setIsShowingDeleteRoundDialog(false)
             if (!_.isNil(round) && round.id === selectedRoundId) {
                 // we deleted the round we are looking at
-                history.push('/rounds')
+                navigate('/rounds')
             }
         } catch (error) {
             console.error('Could not delete round', error)

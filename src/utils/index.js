@@ -1,4 +1,3 @@
-/* eslint-disable eqeqeq */
 import { getDefaultRoundData, getDefaultStepData } from './defaultData'
 import _ from 'lodash'
 import { randomInt, uuid, numberRange, randomBool, randomItem, getRandomColor, arraymove } from './helpers'

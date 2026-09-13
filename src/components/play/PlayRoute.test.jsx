@@ -2,7 +2,7 @@ import { vi, describe, it, expect, beforeEach, afterEach } from 'vitest'
 import React from 'react'
 import _ from 'lodash'
 import { act, screen, waitFor } from '@testing-library/react'
-import { Route } from 'react-router-dom'
+import { Routes, Route } from 'react-router-dom'
 import PlayRoute from './PlayRoute'
 import AudioEngine from '../../audio-engine/AudioEngine'
 import { renderWithProviders, makeStore, LocationProbe } from '../../test/test-utils'
@@ -89,7 +89,7 @@ function pageShow(persisted) {
 function renderRoute(firebase) {
     const store = makeStore()
     store.dispatch(setUser(me))
-    return { store, ...renderWithProviders(<><Route path="/play" component={PlayRoute} /><LocationProbe /></>, { store, firebase, route: '/play/r1' }) }
+    return { store, ...renderWithProviders(<><Routes><Route path="/play/*" element={<PlayRoute />} /></Routes><LocationProbe /></>, { store, firebase, route: '/play/r1' }) }
 }
 
 describe('PlayRoute', () => {
@@ -129,7 +129,7 @@ describe('PlayRoute', () => {
         const { firebase } = makeFirebase({ round: roundWithMembers(['me']) })
         const store = makeStore()
         store.dispatch(setUser(me))
-        const route = <><Route path="/play" component={PlayRoute} /><LocationProbe /></>
+        const route = <><Routes><Route path="/play/*" element={<PlayRoute />} /></Routes><LocationProbe /></>
         renderWithProviders(<React.StrictMode>{route}</React.StrictMode>, { store, firebase, route: '/play/r1' })
 
         await waitFor(() => expect(store.getState().round).not.toBeNull())

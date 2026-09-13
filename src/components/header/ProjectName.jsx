@@ -1,7 +1,7 @@
 import React, { useContext } from 'react';
 import { connect } from "react-redux";
 import _ from 'lodash'
-import { useHistory } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { duplicateRound } from '../../utils/index';
 import { setRounds, setIsShowingRenameDialog, setIsShowingDeleteRoundDialog, setSelectedRoundId } from '../../redux/actions';
 import { FirebaseContext } from '../../firebase';
@@ -12,7 +12,7 @@ import { ExpandMoreIcon } from '@/components/icons'
 import { cn } from '@/lib/utils'
 
 function ProjectName({ name, setIsShowingRenameDialog, setIsShowingDeleteRoundDialog, round, rounds, user, setRounds, setSelectedRoundId }) {
-    const history = useHistory();
+    const navigate = useNavigate();
     const [open, setOpen] = React.useState(false);
     const firebase = useContext(FirebaseContext);
 
@@ -36,7 +36,7 @@ function ProjectName({ name, setIsShowingRenameDialog, setIsShowingDeleteRoundDi
             await firebase.createRound(clonedRound)
             setRounds([clonedRound, ...rounds])
             // open the copy; the original keeps its listeners until PlayRoute unmounts
-            history.push('/play/' + clonedRound.id)
+            navigate('/play/' + clonedRound.id)
         } catch (error) {
             console.error('Could not duplicate round', error)
         }

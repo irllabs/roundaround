@@ -496,7 +496,7 @@ export class PlayUI extends Component {
                 note.time += 'i';
             }
             let part = new Tone.Part(function (time, note) {
-                Tone.Draw.schedule(function () {
+                Tone.getDraw().schedule(function () {
                     const stepGraphic = _.find(_this.stepGraphics, { id: note.id })
                     if (!_.isNil(stepGraphic)) {
                         stepGraphic.stroke({ color: '#FFFFFF', opacity: layer.isMuted ? 0.1 : 1 })
@@ -522,7 +522,7 @@ export class PlayUI extends Component {
     }
 
     convertStepsToNotes(steps, userColor) {
-        const PPQ = Tone.Transport.PPQ
+        const PPQ = Tone.getTransport().PPQ
         const totalTicks = PPQ * 4
         const ticksPerStep = Math.round(totalTicks / steps.length)
         let notes = []
@@ -540,7 +540,7 @@ export class PlayUI extends Component {
     }
 
     startSequence(userPatterns) {
-        const PPQ = Tone.Transport.PPQ
+        const PPQ = Tone.getTransport().PPQ
         const ticksPerBar = PPQ * 4
         const notes = []
         const _this = this
@@ -568,7 +568,7 @@ export class PlayUI extends Component {
         let part = new Tone.Part(function (time, note) {
             _this.loadPatternPriority(userPatterns.id, note.id, note.order)
             //  if (shouldUpdateGraphics) {
-            Tone.Draw.schedule(function () {
+            Tone.getDraw().schedule(function () {
                 _this.loadPattern(userPatterns.id, note.id, note.order)
             })
             // }
@@ -921,20 +921,20 @@ export class PlayUI extends Component {
     }
 
     ticksPerStep(numberOfSteps) {
-        const PPQ = Tone.Transport.PPQ
+        const PPQ = Tone.getTransport().PPQ
         const totalTicks = PPQ * 4
         return Math.round(totalTicks / numberOfSteps)
     }
 
     ticksToRadians(ticks) {
-        const PPQ = Tone.Transport.PPQ
+        const PPQ = Tone.getTransport().PPQ
         const totalTicks = PPQ * 4
         return ((Math.PI * 2) / totalTicks) * ticks
     }
 
     msToTicks(ms) {
-        const BPM = Tone.Transport.bpm.value
-        const PPQ = Tone.Transport.PPQ
+        const BPM = Tone.getTransport().bpm.value
+        const PPQ = Tone.getTransport().PPQ
         const msPerBeat = 60000 / BPM
         const msPerTick = msPerBeat / PPQ
         return Math.round(ms / msPerTick)

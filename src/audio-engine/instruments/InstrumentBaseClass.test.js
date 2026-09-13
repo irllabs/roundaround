@@ -19,7 +19,7 @@ vi.mock('tone', () => {
         Sampler,
         Part: class { dispose() {} },
         Midi: (n) => n,
-        Transport: { PPQ: 192, bpm: { value: 120 } }
+        getTransport: () => ({ PPQ: 192, bpm: { value: 120 } })
     }
 })
 

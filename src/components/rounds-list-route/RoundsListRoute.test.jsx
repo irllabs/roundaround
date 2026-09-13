@@ -2,7 +2,7 @@ import { vi, describe, it, expect } from 'vitest'
 import React from 'react'
 import { screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
-import { Route } from 'react-router-dom'
+import { Routes, Route } from 'react-router-dom'
 import RoundsListRoute from './RoundsListRoute'
 import { renderWithProviders, makeStore, LocationProbe } from '../../test/test-utils'
 import { setUser, setRounds, setIsShowingSignInDialog } from '../../redux/actions'
@@ -38,7 +38,7 @@ function renderRoundsList(rounds = [jam, sketch]) {
         getRound: vi.fn().mockImplementation(async (id) => rounds.find(round => round.id === id))
     }
     const view = renderWithProviders(
-        <><Route path="/rounds" component={RoundsListRoute} /><LocationProbe /></>,
+        <><Routes><Route path="/rounds" element={<RoundsListRoute />} /></Routes><LocationProbe /></>,
         { store, firebase, route: '/rounds' }
     )
     return { store, firebase, ...view }
@@ -73,7 +73,7 @@ describe('RoundsListRoute', () => {
         // router's Switch, so it is mounted here too and nothing is lost.
         store.dispatch(setIsShowingSignInDialog(true))
 
-        renderWithProviders(<Route path="/rounds" component={RoundsListRoute} />, { store, route: '/rounds' })
+        renderWithProviders(<Routes><Route path="/rounds" element={<RoundsListRoute />} /></Routes>, { store, route: '/rounds' })
 
         expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
         expect(screen.queryByTestId('button-guest')).not.toBeInTheDocument()

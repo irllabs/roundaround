@@ -35,6 +35,7 @@ describe('HeaderAvatar', () => {
     it('opens its menu from a programmatic click, the way capture.py opens it', async () => {
         renderAvatar()
 
+        // eslint-disable-next-line testing-library/no-node-access -- a real element click, as the capture script makes it
         await act(async () => { screen.getByTestId('button-sign-in-out').click() })
 
         expect(await screen.findByRole('menu')).toHaveAttribute('id', 'menu-list-grow')

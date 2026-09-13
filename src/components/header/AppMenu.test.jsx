@@ -18,6 +18,7 @@ function Harness({ onPick = vi.fn(), footer }) {
 describe('AppMenu', () => {
     it('opens from a programmatic click, the way capture.py opens it', async () => {
         render(<Harness />)
+        // eslint-disable-next-line testing-library/no-node-access -- a real element click, the way capture.py opens it
         screen.getByRole('button', { name: 'More options' }).click()
         expect(await screen.findByRole('menu')).toHaveAttribute('id', 'menu-list-grow')
     })
@@ -73,6 +74,7 @@ describe('AppMenu', () => {
 
     it('puts a footer below the list rather than inside it', async () => {
         render(<Harness footer={<div data-test="tempo">Tempo</div>} />)
+        // eslint-disable-next-line testing-library/no-node-access -- a real element click, the way capture.py opens it
         screen.getByRole('button', { name: 'More options' }).click()
         const list = await screen.findByRole('menu')
         const footer = screen.getByTestId('tempo')

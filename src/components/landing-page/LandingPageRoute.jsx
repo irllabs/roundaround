@@ -7,6 +7,7 @@ import { FirebaseContext } from '../../firebase';
 import { Button } from '@/components/ui/button';
 import { MUI_BUTTON, MUI_PRIMARY } from '@/lib/mui';
 import { cn } from '@/lib/utils';
+import withRouter from '../../utils/withRouter'
 
 class LandingPageRoute extends Component {
     static contextType = FirebaseContext;
@@ -86,4 +87,4 @@ export default connect(
         setRedirectAfterSignIn,
         setRounds
     }
-)(LandingPageRoute);
+)(withRouter(LandingPageRoute));

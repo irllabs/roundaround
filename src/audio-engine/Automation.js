@@ -48,7 +48,7 @@ export default class Automation {
         this.part.start(0)
     }
     convertStepsToNotes (steps) {
-        const PPQ = Tone.Transport.PPQ
+        const PPQ = Tone.getTransport().PPQ
         const totalTicks = PPQ * 4
         const ticksPerStep = Math.round(totalTicks / steps.length)
         let notes = []

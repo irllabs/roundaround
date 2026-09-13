@@ -49,14 +49,15 @@ Cypress.Commands.add("logout", () => {
 });
 
 Cypress.Commands.add("login", () => {
-	const user = requireTestUser();
 	cy.logout();
 
-	cy.get("[data-test=button-sign-in-out]").click();
-	cy.get("[data-test=button-email]").click();
-	cy.get("[data-test=input-email]").type(user.username);
-	cy.get("[data-test=input-password]").type(user.password, { log: false });
-	cy.get("[data-test=button-sign-in]").click();
+	requireTestUser().then((user) => {
+		cy.get("[data-test=button-sign-in-out]").click();
+		cy.get("[data-test=button-email]").click();
+		cy.get("[data-test=input-email]").type(user.username);
+		cy.get("[data-test=input-password]").type(user.password, { log: false });
+		cy.get("[data-test=button-sign-in]").click();
+	});
 	// Signing in only starts the work: the header's auth listener then loads the profile, the
 	// rounds list and the samples before it dispatches the user, which under React 18 and a real
 	// network is regularly more than the second this used to wait. Get started reads that user,

@@ -71,7 +71,7 @@ vi.mock('tone', () => {
         Compressor,
         WaveShaper,
         Part: class { dispose () { } },
-        Transport: { PPQ: 192, bpm: { value: 120 } }
+        getTransport: () => ({ PPQ: 192, bpm: { value: 120 } })
     }
 })
 

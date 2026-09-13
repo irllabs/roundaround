@@ -2,7 +2,7 @@ import React from 'react'
 import { render } from '@testing-library/react'
 import { Provider } from 'react-redux'
 import { configureStore } from '@reduxjs/toolkit'
-import { MemoryRouter, Route } from 'react-router-dom'
+import { MemoryRouter, useLocation } from 'react-router-dom'
 import rootReducer from '../redux/reducers'
 import { FirebaseContext } from '../firebase'
 
@@ -12,7 +12,8 @@ export function makeStore() {
 
 /** Shows the current router location so tests can assert on navigation. */
 export function LocationProbe() {
-    return <Route path="*" render={({ location }) => <div data-test="location">{location.pathname}</div>} />
+    const location = useLocation()
+    return <div data-test="location">{location.pathname}</div>
 }
 
 /**

@@ -1,7 +1,7 @@
 import React from 'react';
 import {
   BrowserRouter as Router,
-  Switch,
+  Routes,
   Route
 } from "react-router-dom";
 import PlayRoute from './components/play/PlayRoute';
@@ -25,7 +25,7 @@ import ErrorBoundary from './components/ErrorBoundary';
 // `typography.button.textTransform: 'none'` is the absence of any `uppercase` utility.
 // CssBaseline's body type moved into src/index.css too; see the `body` rule there.
 //
-// The three dialogs sit outside the Switch on purpose: each is bound to a flag in
+// The three dialogs sit outside the Routes on purpose: each is bound to a flag in
 // `state.display`, and every route can raise it. This is the app's only SignInDialog.
 function App() {
   return (
@@ -33,11 +33,13 @@ function App() {
       <Router>
         <ErrorBoundary>
           <Header />
-          <Switch>
-            <Route path="/rounds" component={RoundsListRoute} />
-            <Route path="/play" component={PlayRoute} />
-            <Route path="/" component={LandingPageRoute} />
-          </Switch>
+          {/* React Router 6+: routes are elements, /play/* keeps matching every round under it the
+              way the non-exact /play did, and the landing page is the catch-all the non-exact / was. */}
+          <Routes>
+            <Route path="/rounds" element={<RoundsListRoute />} />
+            <Route path="/play/*" element={<PlayRoute />} />
+            <Route path="*" element={<LandingPageRoute />} />
+          </Routes>
           <SignInDialog />
           <RenameDialog />
           <DeleteRoundDialog />
