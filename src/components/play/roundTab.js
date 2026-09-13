@@ -14,10 +14,11 @@
 export const TAB_MAX_CHARS = 8
 /** Room the tab leaves to the next band, in pixels; it sits flush on its own band. */
 const CLEARANCE = 3
-/** Height of the tab at full size, the smallest tab still worth drawing, and the radius of its top corners. */
-const HEIGHT = 13
+/** Height of the tab at full size, its height as a share of the band it stands on (a collaborator's smaller band gets a smaller tab), the smallest tab still worth drawing, and the radius of its top corners. */
+const HEIGHT = 22
+const HEIGHT_OF_BAND = 0.45
 const MIN_HEIGHT = 8
-const CORNER = 3
+const CORNER = 4
 /** Tracked capitals: the tracking, the room at each end of the pill, and a width guess for when the text has not been measured. */
 const LETTER_SPACING = 0.12
 const PADDING = 4
@@ -58,7 +59,7 @@ export function tabLabel(name) {
  */
 export function tabGeometry({ cx, cy, ringRadius, bandWidth, gap, text, textWidth, offsetDeg = 0 }) {
     if (!text) return null
-    const font = tabFont(gap)
+    const font = tabFont(gap, bandWidth)
     if (!font) return null
     const { height, fontSize } = font
     const spacingPx = fontSize * LETTER_SPACING
@@ -110,9 +111,9 @@ function tagPath(cx, cy, inner, outer, a0, a1, corner) {
     ].join(' ')
 }
 
-/** The tab's height and face for a gap, or null when the gap cannot hold a tab. Measure the text at this size first. */
-export function tabFont(gap) {
-    const height = Math.min(HEIGHT, gap - CLEARANCE)
+/** The tab's height and face for a gap and a band, or null when the gap cannot hold a tab. Measure the text at this size first. */
+export function tabFont(gap, bandWidth = Infinity) {
+    const height = Math.min(HEIGHT, gap - CLEARANCE, bandWidth * HEIGHT_OF_BAND)
     if (height < MIN_HEIGHT) return null
     return { height, fontSize: round1(height * 0.7), letterSpacing: `${LETTER_SPACING}em` }
 }

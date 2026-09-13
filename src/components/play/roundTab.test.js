@@ -1,10 +1,12 @@
 import { describe, it, expect } from 'vitest'
 import { tabFont, tabGeometry, tabLabel, TAB_MAX_CHARS } from './roundTab'
 
-// A round of this user's, at the app's own numbers: 48px band and steps, 16px between bands.
-const own = { cx: 500, cy: 500, ringRadius: 256, bandWidth: 48, gap: 16 }
-// A collaborator's round: everything a third of the size, so about five pixels between bands.
-const theirs = { cx: 500, cy: 500, ringRadius: 320, bandWidth: 16, gap: 5.3 }
+// A round of this user's, at the app's numbers from the Figma: a 52px band, 48px steps, 76px between bands.
+const own = { cx: 500, cy: 500, ringRadius: 512, bandWidth: 52, gap: 76 }
+// A collaborator's round: half size, a 26px band, 23px between bands: room for a small tab.
+const theirs = { cx: 500, cy: 500, ringRadius: 896, bandWidth: 26, gap: 23 }
+// A round with no room at all outside it.
+const cramped = { cx: 500, cy: 500, ringRadius: 320, bandWidth: 16, gap: 5.3 }
 
 describe('tabLabel', () => {
     it('shows the instrument in capitals', () => {
@@ -74,8 +76,12 @@ describe('tabGeometry', () => {
         expect(tab.textOffset).toBeCloseTo(textLength / 2 + tab.fontSize * 0.12 / 2, 0)
     })
 
-    it('draws no tab where there is no room for one, as on a collaborator\'s round', () => {
-        expect(tabGeometry({ ...theirs, text: 'KICK' })).toBeNull()
+    it('gives a collaborator\'s smaller band a smaller tab, and draws none where there is no room', () => {
+        const small = tabGeometry({ ...theirs, text: 'KICK' })
+        const mine = tabGeometry({ ...own, text: 'KICK' })
+        expect(small.height).toBeLessThan(mine.height)
+        expect(small.height).toBeCloseTo(theirs.bandWidth * 0.45, 5)
+        expect(tabGeometry({ ...cramped, text: 'KICK' })).toBeNull()
     })
 
     it('draws no tab for an empty name', () => {
