@@ -1,0 +1,25 @@
+{
+  "url": "http://127.0.0.1:3102/",
+  "stepsOn": null,
+  "roundUrl": "http://127.0.0.1:3102/play/644eda28-6536-49fc-bf76-6bcde61bc8f8",
+  "layers": [
+    "HI-HAT",
+    "PERC",
+    "PERC"
+  ],
+  "meter": {
+    "samples": 2236416,
+    "maxAbs": 0.9947660565376282,
+    "over1": 0,
+    "over099": 79,
+    "sumSq": 42755.409332306095,
+    "blocks": 273,
+    "runs": 0,
+    "longestRun": 0,
+    "over1Share": 0.0,
+    "over099Share": 3.532437614468865e-05,
+    "rms": 0.13826722253951326
+  },
+  "bufferStarts": 271,
+  "console": []
+}
