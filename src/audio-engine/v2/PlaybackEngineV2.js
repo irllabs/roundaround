@@ -15,7 +15,7 @@ import _ from 'lodash'
 import { createScheduler } from './scheduler'
 import { snapshotFromRound } from './arrangement'
 import { createSampleLibrary } from './samples'
-import { playHit, createChokeGroups, dbToGain } from './voices'
+import { playHit, createChokeGroups, createVoiceRegistry, dbToGain } from './voices'
 import { alignedOrigin } from './transport'
 
 export const TRACK_TYPE_LAYER = 'TRACK_TYPE_LAYER'
@@ -83,7 +83,8 @@ class LayerTrackV2 {
             velocity: hit.velocity,
             destination: this.output,
             chokeGroups: this.engine.chokeGroups,
-            chokeGroup: this.trackParameters.instrument ? this.trackParameters.instrument.chokeGroup : null
+            chokeGroup: this.trackParameters.instrument ? this.trackParameters.instrument.chokeGroup : null,
+            registry: this.engine.voices
         })
     }
     setVolume (value) {
@@ -148,6 +149,8 @@ export function createPlaybackEngineV2 ({ base, tone = Tone, library = null, sch
         tracksByType: {},
         round: null,
         chokeGroups: createChokeGroups(),
+        // every voice sounding or still to come, so stop can silence them all at once
+        voices: createVoiceRegistry(),
         context,
         currentTime () {
             return context().currentTime
@@ -234,6 +237,7 @@ export function createPlaybackEngineV2 ({ base, tone = Tone, library = null, sch
             engine.tracksById = {}
             engine.tracksByType = {}
             engine.chokeGroups.clear()
+            engine.voices.stopAll(context().currentTime)
         },
 
         /** The round changed (steps, offsets, a layer added or removed, tempo): a new snapshot, nothing rebuilt. */
@@ -270,8 +274,10 @@ export function createPlaybackEngineV2 ({ base, tone = Tone, library = null, sch
             return origin
         },
 
+        /** Stops scheduling and silences every voice already handed to Web Audio: nothing lands after the button. */
         stop () {
             engine.scheduler.stop()
+            engine.voices.stopAll(context().currentTime)
             pendingServerStart = null
             for (const fn of playListeners) fn({ playing: false })
         },

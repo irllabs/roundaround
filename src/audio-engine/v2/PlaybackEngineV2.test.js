@@ -1,6 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { createPlaybackEngineV2, START_DELAY } from './PlaybackEngineV2'
 import { createScheduler } from './scheduler'
+import { STOP_FADE } from './voices'
 
 // A fake of everything below the engine: the old engine's busses and master, Tone's context and
 // connect, a sample library that resolves at once, and a hand-driven scheduler clock.
@@ -150,6 +151,23 @@ describe('PlaybackEngineV2', () => {
         await f.engine.play()
         f.engine.stop()
         expect(events).toEqual([{ playing: true, originContextTime: START_DELAY }, { playing: false }])
+    })
+
+    it('silences every voice already handed to Web Audio when it stops, so nothing lands after the button', async () => {
+        await f.engine.load(round([layer('L1', 'u1', 4)]))
+        await f.engine.play()
+        f.run(0.2) // the first window: hits scheduled up to 150 ms ahead
+        const sources = f.nodes.filter(n => n.kind === 'source')
+        expect(sources.length).toBeGreaterThan(0)
+        const at = f.ctx.currentTime
+        f.engine.stop()
+        for (const source of sources) {
+            expect(source.stop).toHaveBeenCalledTimes(1)
+            expect(source.stop.mock.calls[0][0]).toBeCloseTo(at + STOP_FADE, 6)
+        }
+        // and nothing new is scheduled once stopped
+        f.run(0.6)
+        expect(f.nodes.filter(n => n.kind === 'source').length).toBe(sources.length)
     })
 
     it('removes a track and its output, and warns once about automation layers', async () => {

@@ -8,13 +8,15 @@
 
 /** How long a choked voice takes to fade, seconds. */
 export const CHOKE_FADE = 0.005
+/** How long every voice takes to fade when playback stops, seconds: short enough to feel like a stop, long enough not to click on a kick. */
+export const STOP_FADE = 0.03
 
 /**
  * Plays `buffer` at `time` (context seconds) into `destination`.
  *
  * @returns {{ source: AudioBufferSourceNode, gain: GainNode, stop: (at: number) => void }}
  */
-export function playHit ({ context, buffer, time, velocity = 1, destination, chokeGroups = null, chokeGroup = null }) {
+export function playHit ({ context, buffer, time, velocity = 1, destination, chokeGroups = null, chokeGroup = null, registry = null }) {
     const source = context.createBufferSource()
     source.buffer = buffer
     const gain = context.createGain()
@@ -24,16 +26,19 @@ export function playHit ({ context, buffer, time, velocity = 1, destination, cho
     const voice = {
         source,
         gain,
-        stop (at) {
+        stop (at, fade = CHOKE_FADE) {
             gain.gain.setValueAtTime(gain.gain.value, at)
-            gain.gain.linearRampToValueAtTime(0, at + CHOKE_FADE)
-            source.stop(at + CHOKE_FADE)
+            gain.gain.linearRampToValueAtTime(0, at + fade)
+            // a voice still waiting for its start time never sounds: stop before start is silence
+            source.stop(at + fade)
         }
     }
     source.onended = () => {
         source.disconnect()
         gain.disconnect()
+        if (registry) registry.delete(voice)
     }
+    if (registry) registry.add(voice)
     if (chokeGroups && chokeGroup) {
         chokeGroups.choke(chokeGroup, voice, time)
     }
@@ -57,6 +62,24 @@ export function createChokeGroups () {
         },
         clear () {
             last.clear()
+        }
+    }
+}
+
+/**
+ * Every voice that is sounding or still to come. Stop silences them all at once: the scheduler
+ * only stops scheduling, and the hits already handed to Web Audio inside the look-ahead would
+ * otherwise land after the button and ring on, which is heard as an echo after pause.
+ */
+export function createVoiceRegistry () {
+    const live = new Set()
+    return {
+        add (voice) { live.add(voice) },
+        delete (voice) { live.delete(voice) },
+        get size () { return live.size },
+        stopAll (at, fade = STOP_FADE) {
+            for (const voice of live) voice.stop(at, fade)
+            live.clear()
         }
     }
 }
