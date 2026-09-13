@@ -1,0 +1,224 @@
+{
+ "A_master_engine": {
+  "alignment shift s": 2.128,
+  "reference hits": 23,
+  "recording hits": 25,
+  "missing": 0,
+  "extra": [
+   -0.011,
+   7.989
+  ],
+  "timing error ms: mean": -0.1,
+  "abs max": 1.4,
+  "spread (std)": 0.5,
+  "tail vs reference dB at +200 ms": 1.1,
+  "at +400 ms": 1.1,
+  "level vs reference dB": -1.5,
+  "after the press: audible above -40 dB until ms": 406,
+  "hits after the press s": [
+   0.05
+  ],
+  "layers": [
+   {
+    "sampler": "Perc",
+    "sample": "stick3",
+    "file": "samples/Perc_Stick-9a.wav",
+    "steps": [
+     0,
+     4,
+     8,
+     11,
+     12
+    ],
+    "length_s": 0.6955208333333334,
+    "leading_silence_ms": 15.6
+   },
+   {
+    "sampler": "Kicks",
+    "sample": "burn",
+    "file": "samples/KSA_Kick_3a.wav",
+    "steps": [
+     0,
+     4,
+     12
+    ],
+    "length_s": 0.36102083333333335,
+    "leading_silence_ms": 0.8
+   },
+   {
+    "sampler": "Kicks",
+    "sample": "sub",
+    "file": "samples/KSA_Kick_8a.wav",
+    "steps": [
+     10
+    ],
+    "length_s": 0.37552083333333336,
+    "leading_silence_ms": 0.1
+   },
+   {
+    "sampler": "HiHats",
+    "sample": "dash",
+    "file": "samples/KSA_Hats_12a.wav",
+    "steps": [
+     0,
+     1,
+     2,
+     3,
+     4,
+     5,
+     6,
+     7,
+     12
+    ],
+    "length_s": 0.35952083333333335,
+    "leading_silence_ms": 0.6
+   }
+  ]
+ },
+ "B_PR321": {
+  "alignment shift s": 2.13,
+  "reference hits": 23,
+  "recording hits": 24,
+  "missing": 0,
+  "extra": [
+   -0.011
+  ],
+  "timing error ms: mean": -2.4,
+  "abs max": 14.6,
+  "spread (std)": 5.6,
+  "tail vs reference dB at +200 ms": -1.6,
+  "at +400 ms": -1.9,
+  "level vs reference dB": -3.2,
+  "after the press: audible above -40 dB until ms": 0,
+  "hits after the press s": [],
+  "layers": [
+   {
+    "sampler": "Perc",
+    "sample": "stick3",
+    "file": "samples/Perc_Stick-9a.wav",
+    "steps": [
+     0,
+     4,
+     8,
+     11,
+     12
+    ],
+    "length_s": 0.6955208333333334,
+    "leading_silence_ms": 15.6
+   },
+   {
+    "sampler": "Kicks",
+    "sample": "burn",
+    "file": "samples/KSA_Kick_3a.wav",
+    "steps": [
+     0,
+     4,
+     12
+    ],
+    "length_s": 0.36102083333333335,
+    "leading_silence_ms": 0.8
+   },
+   {
+    "sampler": "Kicks",
+    "sample": "sub",
+    "file": "samples/KSA_Kick_8a.wav",
+    "steps": [
+     10
+    ],
+    "length_s": 0.37552083333333336,
+    "leading_silence_ms": 0.1
+   },
+   {
+    "sampler": "HiHats",
+    "sample": "dash",
+    "file": "samples/KSA_Hats_12a.wav",
+    "steps": [
+     0,
+     1,
+     2,
+     3,
+     4,
+     5,
+     6,
+     7,
+     12
+    ],
+    "length_s": 0.35952083333333335,
+    "leading_silence_ms": 0.6
+   }
+  ]
+ },
+ "C_PR322": {
+  "alignment shift s": 2.02,
+  "reference hits": 24,
+  "recording hits": 25,
+  "missing": 0,
+  "extra": [
+   -0.011
+  ],
+  "timing error ms: mean": 0.1,
+  "abs max": 0.8,
+  "spread (std)": 0.3,
+  "tail vs reference dB at +200 ms": 1.1,
+  "at +400 ms": 1.0,
+  "level vs reference dB": -1.8,
+  "after the press: audible above -40 dB until ms": 54,
+  "hits after the press s": [],
+  "layers": [
+   {
+    "sampler": "Perc",
+    "sample": "stick3",
+    "file": "samples/Perc_Stick-9a.wav",
+    "steps": [
+     0,
+     4,
+     8,
+     11,
+     12
+    ],
+    "length_s": 0.6955208333333334,
+    "leading_silence_ms": 15.6
+   },
+   {
+    "sampler": "Kicks",
+    "sample": "burn",
+    "file": "samples/KSA_Kick_3a.wav",
+    "steps": [
+     0,
+     4,
+     12
+    ],
+    "length_s": 0.36102083333333335,
+    "leading_silence_ms": 0.8
+   },
+   {
+    "sampler": "Kicks",
+    "sample": "sub",
+    "file": "samples/KSA_Kick_8a.wav",
+    "steps": [
+     10
+    ],
+    "length_s": 0.37552083333333336,
+    "leading_silence_ms": 0.1
+   },
+   {
+    "sampler": "HiHats",
+    "sample": "dash",
+    "file": "samples/KSA_Hats_12a.wav",
+    "steps": [
+     0,
+     1,
+     2,
+     3,
+     4,
+     5,
+     6,
+     7,
+     12
+    ],
+    "length_s": 0.35952083333333335,
+    "leading_silence_ms": 0.6
+   }
+  ]
+ }
+}
