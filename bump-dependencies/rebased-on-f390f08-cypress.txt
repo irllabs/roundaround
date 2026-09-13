@@ -1,0 +1,3 @@
+ │ Tests: 2 │
+ │ Passing: 2 │
+ │ Failing: 0 │
