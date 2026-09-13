@@ -42,8 +42,17 @@ describe('server offset', () => {
         const spy = vi.spyOn(console, 'warn').mockImplementation(() => {})
         const { offsetMs, samples } = await estimateServerOffset({ sample, rounds: 3 })
         spy.mockRestore()
-        expect(samples).toBe(2)
+        expect(samples).toHaveLength(2)
         expect(offsetMs).toBe(10)
         expect(sample).toHaveBeenCalledTimes(3)
+    })
+
+    it('drops a sample that came back without a server time', async () => {
+        const sample = vi.fn().mockResolvedValueOnce({ t0: 0, t1: 100, serverMs: null }).mockResolvedValueOnce({ t0: 0, t1: 100, serverMs: 70 })
+        const spy = vi.spyOn(console, 'warn').mockImplementation(() => {})
+        const { offsetMs, samples } = await estimateServerOffset({ sample, rounds: 2 })
+        spy.mockRestore()
+        expect(samples).toHaveLength(1)
+        expect(offsetMs).toBe(20)
     })
 })

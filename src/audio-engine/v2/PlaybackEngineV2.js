@@ -323,7 +323,7 @@ export function createPlaybackEngineV2 ({ base, tone = Tone, library = null, sch
             return serverOffsetMs
         },
 
-        /** What the clock estimate came to: the offset used and how many round trips it rests on. */
+        /** What the clock estimate came to: the offset used and the round trips it rests on. */
         clockSync () {
             return { offsetMs: serverOffsetMs, samples: clockSamples }
         },

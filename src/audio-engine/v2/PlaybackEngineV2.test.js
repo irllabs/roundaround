@@ -121,8 +121,8 @@ describe('PlaybackEngineV2', () => {
 
     it('joins a transport another client started: bar 0 sits where the server says, or waits for the gesture', async () => {
         await f.engine.load(round([layer('L1', 'u1', 4)]))
-        f.engine.setServerOffset(250, 3) // the server's clock is 250 ms ahead of ours
-        expect(f.engine.clockSync()).toEqual({ offsetMs: 250, samples: 3 })
+        f.engine.setServerOffset(250, [{ t0: 0, t1: 100, serverMs: 300 }]) // the server's clock is 250 ms ahead of ours
+        expect(f.engine.clockSync()).toEqual({ offsetMs: 250, samples: [{ t0: 0, t1: 100, serverMs: 300 }] })
         // the other client started 1.3 s ago in server time: server now = 1_000_000 + 250
         const startedAt = 1_000_250 - 1300
         expect(f.engine.startAlignedToServer(startedAt)).toBe(false) // the context is still suspended

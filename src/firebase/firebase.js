@@ -67,6 +67,10 @@ class Firebase {
         this.storage = getStorage(this.app);
         this.analytics = null;
         this.initAnalytics();
+        // for the QA probes: the same instance the app holds in its context
+        if (typeof window !== 'undefined') {
+            window.__roundaroundFirebase = this
+        }
     }
 
     // *** Auth ***
@@ -310,16 +314,38 @@ class Firebase {
 
     /**
      * One clock sample for estimating the offset to the server's clock: writes a server timestamp
-     * to the user's own document and reads it back. Resolves `{ t0, t1, serverMs }`: sent at t0,
-     * acknowledged at t1, stamped serverMs by the server.
+     * to the user's own document and waits for the snapshot in which the server has resolved it
+     * (a read straight after the write still shows the pending sentinel, even from the server;
+     * and the stamp of an earlier sample is still there, so only a changed stamp counts).
+     * Resolves `{ t0, t1, serverMs }`: sent at t0, resolved at t1, stamped serverMs by the server.
      */
     sampleServerClock = async (userId) => {
-        const t0 = Date.now()
-        await setDoc(doc(this.db, 'users', userId), { clockSync: serverTimestamp() }, { merge: true })
-        const t1 = Date.now()
-        const snapshot = await getDoc(doc(this.db, 'users', userId))
-        const stamp = snapshot.exists() ? snapshot.data().clockSync : null
-        return { t0, t1, serverMs: stamp && typeof stamp.toMillis === 'function' ? stamp.toMillis() : null }
+        const ref = doc(this.db, 'users', userId)
+        const millis = (snapshot) => {
+            const stamp = snapshot.exists() ? snapshot.data().clockSync : null
+            return stamp && typeof stamp.toMillis === 'function' ? stamp.toMillis() : null
+        }
+        const before = millis(await getDoc(ref))
+        return new Promise((resolve, reject) => {
+            const t0 = Date.now()
+            let done = false
+            const finish = (error, value) => {
+                if (done) return
+                done = true
+                clearTimeout(timer)
+                unsubscribe()
+                if (error) reject(error)
+                else resolve(value)
+            }
+            const timer = setTimeout(() => finish(new Error('Timed out waiting for the server clock')), 8000)
+            const unsubscribe = onSnapshot(ref, { includeMetadataChanges: true }, (snapshot) => {
+                const serverMs = millis(snapshot)
+                if (!snapshot.metadata.hasPendingWrites && !_.isNil(serverMs) && serverMs !== before) {
+                    finish(null, { t0, t1: Date.now(), serverMs })
+                }
+            }, (error) => finish(error))
+            setDoc(ref, { clockSync: serverTimestamp() }, { merge: true }).catch((error) => finish(error))
+        })
     }
 
     /**

@@ -42,10 +42,15 @@ export async function estimateServerOffset ({ sample, rounds = 3 }) {
     const samples = []
     for (let i = 0; i < rounds; i++) {
         try {
-            samples.push(await sample())
+            const s = await sample()
+            if (s && Number.isFinite(s.serverMs)) {
+                samples.push(s)
+            } else {
+                console.warn('Clock sample came back without a server time', s)
+            }
         } catch (error) {
             console.warn('Clock sample failed', error)
         }
     }
-    return { offsetMs: offsetFromSamples(samples), samples: samples.length }
+    return { offsetMs: offsetFromSamples(samples), samples }
 }
