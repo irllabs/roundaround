@@ -4,7 +4,7 @@ import { SVG } from '@svgdotjs/svg.js'
 import '@svgdotjs/svg.panzoom.js'
 import { HTML_UI_Params, PRESET_LETTERS, KEY_MAPPINGS } from '../../utils/constants'
 import { connect, batch } from "react-redux";
-import AudioEngine from '../../audio-engine/AudioEngine'
+import AudioEngine from '../../audio-engine/engine'
 import { getDefaultLayerData } from '../../utils/defaultData';
 import { SET_LAYER_MUTE, TOGGLE_STEP, ADD_LAYER, SET_SELECTED_LAYER_ID, SET_IS_SHOWING_LAYER_SETTINGS, UPDATE_STEP, SET_IS_SHOWING_ORIENTATION_DIALOG, UPDATE_LAYERS, SET_CURRENT_SEQUENCE_PATTERN } from '../../redux/actionTypes'
 import { FirebaseContext } from '../../firebase/'
@@ -84,6 +84,8 @@ export class PlayUI extends Component {
         this.stepModalStepUpdateThrottled = _.throttle(this.stepModalStepUpdate.bind(this), 300)
         this.savePatternDebounced = _.debounce(this.saveActivePatternIfChanged.bind(this), PATTERN_SAVE_DEBOUNCE_MS)
         this.sequencerParts = {}
+        // playback engine v2: one bar-line subscription per running sequence, by user id
+        this.sequenceUnsubscribers = {}
     }
 
     /**
@@ -148,6 +150,9 @@ export class PlayUI extends Component {
         this.removeBackgroundEventListeners()
         this.clear()
         this.disposeToneEvents()
+        for (const id of Object.keys(this.sequenceUnsubscribers)) {
+            this.stopSequence(id)
+        }
     }
 
     setDefaultPattern = async () => {
@@ -488,6 +493,10 @@ export class PlayUI extends Component {
     }
 
     scheduleToneEvents() {
+        if (AudioEngine.isV2) {
+            this.subscribeToEngineSteps()
+            return
+        }
         this.disposeToneEvents()
         const _this = this
         this.toneParts = []
@@ -512,7 +521,36 @@ export class PlayUI extends Component {
         }
     }
 
+    /**
+     * Playback engine v2: the engine hands out every step it schedules (on or off, with the exact
+     * time it sounds) and the light is set for that moment, a frame early as Tone's Draw was. One
+     * subscription for the component's life: the step graphic is looked up when the light fires,
+     * so a redraw needs nothing here.
+     */
+    subscribeToEngineSteps() {
+        if (!_.isNil(this.unsubscribeEngineSteps)) {
+            return
+        }
+        const _this = this
+        this.unsubscribeEngineSteps = AudioEngine.onStep((hit) => {
+            const delayMs = (hit.time - AudioEngine.currentTime()) * 1000 - HTML_UI_Params.stepLightLeadMs
+            setTimeout(() => {
+                if (_this.isDisposing) return
+                const stepGraphic = _.find(_this.stepGraphics, { id: hit.stepId })
+                const layer = _.find(_this.round.layers, { id: hit.layerId })
+                if (!_.isNil(stepGraphic) && !_.isNil(layer)) {
+                    const color = layer.isMuted ? '#FFFFFF' : _this.userColors[layer.createdBy]
+                    flashStep(stepGraphic, color, layer.isMuted ? 0.1 : 1)
+                }
+            }, Math.max(0, delayMs))
+        })
+    }
+
     disposeToneEvents() {
+        if (!_.isNil(this.unsubscribeEngineSteps)) {
+            this.unsubscribeEngineSteps()
+            this.unsubscribeEngineSteps = null
+        }
         if (!_.isNil(this.toneParts)) {
             for (let part of this.toneParts) {
                 if (!_.isNil(part) && !_.isNil(part._events)) {
@@ -534,6 +572,10 @@ export class PlayUI extends Component {
     }
 
     startSequence(userPatterns) {
+        if (AudioEngine.isV2) {
+            this.startSequenceV2(userPatterns)
+            return
+        }
         const PPQ = Tone.getTransport().PPQ
         const ticksPerBar = PPQ * 4
         const notes = []
@@ -573,7 +615,41 @@ export class PlayUI extends Component {
         this.sequencerParts[userPatterns.id] = part
     }
 
+    /**
+     * Playback engine v2: the engine announces every bar line before it schedules that bar, so the
+     * next pattern's steps are swapped in exactly on the line (the engine reads them as a new
+     * snapshot, nothing is rebuilt) and the round is redrawn when the bar actually starts. Pattern
+     * k of the sequence plays on bar k of the transport, as the old parts did from transport zero.
+     */
+    startSequenceV2(userPatterns) {
+        this.stopSequence(userPatterns.id)
+        const entries = []
+        userPatterns.sequence.forEach((id, index) => {
+            if (id !== false) {
+                entries.push({ id, order: index })
+            }
+        })
+        if (entries.length === 0) {
+            return
+        }
+        const _this = this
+        this.sequenceUnsubscribers[userPatterns.id] = AudioEngine.onBar(({ bar, time }) => {
+            const entry = entries[((bar % entries.length) + entries.length) % entries.length]
+            _this.loadPatternPriority(userPatterns.id, entry.id, entry.order)
+            const delayMs = (time - AudioEngine.currentTime()) * 1000
+            setTimeout(() => {
+                if (!_this.isDisposing) {
+                    _this.loadPattern(userPatterns.id, entry.id, entry.order)
+                }
+            }, Math.max(0, delayMs))
+        })
+    }
+
     stopSequence(id) {
+        if (!_.isNil(this.sequenceUnsubscribers[id])) {
+            this.sequenceUnsubscribers[id]()
+            delete this.sequenceUnsubscribers[id]
+        }
         if (!_.isNil(this.sequencerParts[id])) {
             this.sequencerParts[id].stop()
         }
@@ -1401,14 +1477,38 @@ export class PlayUI extends Component {
         this.props.dispatch({ type: SET_IS_SHOWING_ORIENTATION_DIALOG, payload: { value: false } })
     }
     onPlaybackToggle = () => {
-        const { isPlaying, setIsPlaying } = this.props;
+        const { isPlaying, setIsPlaying, round, user } = this.props;
         if (isPlaying) {
             AudioEngine.stop()
             setIsPlaying(false)
+            this.shareTransport({ playing: false, by: user.id, bpm: round.bpm })
         } else {
-            AudioEngine.play()
+            const started = AudioEngine.play()
             setIsPlaying(true)
+            if (AudioEngine.isV2) {
+                // bar 0 in the server's clock, from this client's own offset estimate: the others
+                // align to this number, and this client never has to move its grid afterwards
+                Promise.resolve(started).then((originContextTime) => {
+                    const startedAtMs = Date.now() + AudioEngine.serverOffset() + (originContextTime - AudioEngine.currentTime()) * 1000
+                    this.shareTransport({ playing: true, by: user.id, bpm: round.bpm, startedAtMs: Math.round(startedAtMs) })
+                })
+            }
         }
+    }
+
+    /**
+     * Playback engine v2: play and stop go to the round document, with bar 0 in the server's clock
+     * and a server timestamp beside it, so every other client on v2 starts and stops with this one,
+     * on the same bar (PlayRoute reads it back). Best effort: a round whose rules refuse the write
+     * still plays here.
+     */
+    shareTransport(playback) {
+        if (!AudioEngine.isV2 || _.isNil(this.context) || _.isNil(this.context.setRoundPlayback)) {
+            return
+        }
+        this.context.setRoundPlayback(this.props.round.id, playback).catch((error) => {
+            console.error('Could not share the transport', error)
+        })
     }
 
     isOverStep(initialStepGraphic, x, y) {

@@ -24,6 +24,7 @@ import {
     onSnapshot,
     orderBy,
     query,
+    serverTimestamp,
     setDoc,
     where,
     writeBatch
@@ -66,6 +67,10 @@ class Firebase {
         this.storage = getStorage(this.app);
         this.analytics = null;
         this.initAnalytics();
+        // for the QA probes: the same instance the app holds in its context
+        if (typeof window !== 'undefined') {
+            window.__roundaroundFirebase = this
+        }
     }
 
     // *** Auth ***
@@ -291,6 +296,56 @@ class Firebase {
 
     updateRound = async (roundId, data) => {
         await setDoc(doc(this.db, 'rounds', roundId), data, { merge: true })
+    }
+
+    /**
+     * The shared transport (playback engine v2): who pressed play, at what tempo, and when by the
+     * server's clock, so every client can land on the same bar. `startedAt` is only written on
+     * play; stop leaves it in place with `playing: false`.
+     */
+    setRoundPlayback = async (roundId, { playing, by, bpm, startedAtMs }) => {
+        const playback = { playing: playing === true, by: by || null, bpm: _.isNil(bpm) ? null : bpm }
+        if (playback.playing) {
+            playback.startedAt = serverTimestamp()
+            playback.startedAtMs = Number.isFinite(startedAtMs) ? startedAtMs : null
+        }
+        await setDoc(doc(this.db, 'rounds', roundId), { playback }, { merge: true })
+    }
+
+    /**
+     * One clock sample for estimating the offset to the server's clock: writes a server timestamp
+     * to the user's own document and waits for the snapshot in which the server has resolved it
+     * (a read straight after the write still shows the pending sentinel, even from the server;
+     * and the stamp of an earlier sample is still there, so only a changed stamp counts).
+     * Resolves `{ t0, t1, serverMs }`: sent at t0, resolved at t1, stamped serverMs by the server.
+     */
+    sampleServerClock = async (userId) => {
+        const ref = doc(this.db, 'users', userId)
+        const millis = (snapshot) => {
+            const stamp = snapshot.exists() ? snapshot.data().clockSync : null
+            return stamp && typeof stamp.toMillis === 'function' ? stamp.toMillis() : null
+        }
+        const before = millis(await getDoc(ref))
+        return new Promise((resolve, reject) => {
+            const t0 = Date.now()
+            let done = false
+            const finish = (error, value) => {
+                if (done) return
+                done = true
+                clearTimeout(timer)
+                unsubscribe()
+                if (error) reject(error)
+                else resolve(value)
+            }
+            const timer = setTimeout(() => finish(new Error('Timed out waiting for the server clock')), 8000)
+            const unsubscribe = onSnapshot(ref, { includeMetadataChanges: true }, (snapshot) => {
+                const serverMs = millis(snapshot)
+                if (!snapshot.metadata.hasPendingWrites && !_.isNil(serverMs) && serverMs !== before) {
+                    finish(null, { t0, t1: Date.now(), serverMs })
+                }
+            }, (error) => finish(error))
+            setDoc(ref, { clockSync: serverTimestamp() }, { merge: true }).catch((error) => finish(error))
+        })
     }
 
     /**

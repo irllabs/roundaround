@@ -11,6 +11,8 @@ export const HTML_UI_Params = {
     otherUserLayerPadding: 23,
     firstLayerDiameter: 1024,
     stepAnimationUpdateTime: 200,
+    // playback engine v2: how far ahead of the sound a step lights, ms (what Tone's Draw anticipated)
+    stepLightLeadMs: 8,
     stepStrokeWidth: 4,
     layerStrokeMax: 52,
     layerStrokeOpacity: 0.1,

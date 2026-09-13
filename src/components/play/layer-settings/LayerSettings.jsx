@@ -9,7 +9,7 @@ import {
     SET_SELECTED_LAYER_ID,
     ADD_LAYER
 } from '../../../redux/actionTypes'
-import AudioEngine from '../../../audio-engine/AudioEngine'
+import AudioEngine from '../../../audio-engine/engine'
 import Instruments from '../../../audio-engine/Instruments'
 
 import { FirebaseContext } from '../../../firebase';
