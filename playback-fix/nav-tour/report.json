@@ -1,0 +1,58 @@
+{
+  "steps": [
+    {
+      "step": "landing",
+      "pathname": "/",
+      "ok": true
+    },
+    {
+      "step": "guest round created",
+      "pathname": "/play/72305d73-ed35-4cb4-a315-06b8ced6e89d",
+      "ok": true
+    },
+    {
+      "step": "play then stop",
+      "samplesWhilePlaying": 20,
+      "ok": true,
+      "button": "Play"
+    },
+    {
+      "step": "back link to the rounds list",
+      "pathname": "/rounds",
+      "ok": true
+    },
+    {
+      "step": "new round from the list",
+      "pathname": "/play/1ca1350b-724c-4bf8-b0e1-eab6dc89a817",
+      "ok": true
+    },
+    {
+      "step": "second round is a different round",
+      "ok": true,
+      "first": "/play/72305d73-ed35-4cb4-a315-06b8ced6e89d",
+      "second": "/play/1ca1350b-724c-4bf8-b0e1-eab6dc89a817"
+    },
+    {
+      "step": "back link from the second round",
+      "pathname": "/rounds",
+      "ok": true
+    },
+    {
+      "step": "wordmark to the landing page",
+      "pathname": "/",
+      "ok": true
+    },
+    {
+      "step": "browser back to the rounds list",
+      "pathname": "/rounds",
+      "ok": true
+    },
+    {
+      "step": "deep link into the first round",
+      "pathname": "/play/72305d73-ed35-4cb4-a315-06b8ced6e89d",
+      "ok": true
+    }
+  ],
+  "allOk": true,
+  "consoleErrors": []
+}

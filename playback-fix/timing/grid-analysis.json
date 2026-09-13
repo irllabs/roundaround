@@ -1,0 +1,14 @@
+{
+  "scheduled starts": 198,
+  "bars": 8.13,
+  "grid deviation ms max abs": 0.0,
+  "mean abs": 0.0,
+  "starts per grid time": {
+    "3": 66
+  },
+  "lead ms min/median/max": [
+    46.7,
+    70.7,
+    98.7
+  ]
+}
