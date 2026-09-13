@@ -149,9 +149,9 @@ export default class InstrumentBaseClass {
             this.part.dispose()
         }
     }
-    releaseAll () {
+    releaseAll (time) {
         if (!_.isNil(this.instrument)) {
-            this.instrument.releaseAll()
+            this.instrument.releaseAll(time)
         }
     }
     getSampleMap (articulation) {

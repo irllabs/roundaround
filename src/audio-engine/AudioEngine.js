@@ -52,8 +52,23 @@ const AudioEngine = {
         Tone.getTransport().loop = false
         Tone.getTransport().loopEnd = '1:0:0'
     },
+    /**
+     * Stops the transport and silences every layer at once. The transport only stops scheduling:
+     * the hits already handed to Web Audio inside the look-ahead (up to a quarter of a second of
+     * them) would still land after the button, and whatever was sounding would ring on, which is
+     * heard as an echo after pause. Each sampler releases all its voices now, with its 100 ms fade.
+     */
     stop () {
-        Tone.getTransport().stop()
+        // Tone's "now" sits a look-ahead (100 ms) in the future; stopping and releasing at the
+        // context's current time instead means no tick after the press schedules anything and the
+        // fade starts at once, not a tenth of a second later.
+        const now = Tone.getContext().currentTime
+        Tone.getTransport().stop(now)
+        for (const track of this.tracksByType[Track.TRACK_TYPE_LAYER] || []) {
+            if (!_.isNil(track.instrument) && typeof track.instrument.releaseAll === 'function') {
+                track.instrument.releaseAll(now)
+            }
+        }
     },
     /** Resolves once the context is running (a resume needs a user gesture behind it, which play has). */
     startAudioContext () {
