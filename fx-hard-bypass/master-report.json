@@ -1,0 +1,13 @@
+{
+ "label": "master, bypass by mix",
+ "url": "http://127.0.0.1:3100/play/e7835033-b906-419a-87bc-879bcd37eba6",
+ "layers": [
+  "KICK",
+  "HI-HAT",
+  "PERC",
+  "KICK"
+ ],
+ "play_wall": 1789323471.8574998,
+ "press_wall": 1789323480.199082,
+ "recording": "/private/tmp/claude-501/-Users-mericda/e67e1c2e-8fe8-4018-861a-9b4298000af7/scratchpad/outro-master2/session.mp4"
+}
