@@ -1,4 +1,8 @@
 import _ from 'lodash'
+import * as Tone from 'tone'
+
+/** How long the gates take to open or close, seconds: short enough to feel like a switch, long enough not to click. */
+export const GATE_RAMP = 0.005
 
 /** Bypass by pulling the wet mix down to 0, so only the dry signal is heard. */
 export const BYPASS_STRATEGY_MIX = 'mix'
@@ -9,8 +13,14 @@ export const BYPASS_STRATEGY_FREQUENCY = 'frequency'
  * Shared behaviour for every effect on a user bus.
  *
  * Effects are never disconnected to bypass them: the audio chain would have to be rebuilt,
- * which is far too slow for step automation. Instead the effect keeps running and the one
- * parameter named by its bypass strategy is moved to a value that makes it inaudible.
+ * which is far too slow for step automation. Instead the effect stays in the chain behind a
+ * pair of gates: `input -> through -> output` carries the dry signal while the effect is
+ * bypassed, and `input -> into -> fx -> outOf -> output` carries it while the effect is on.
+ * Gains at 0 are exactly silent; a wet mix at 0 is not. Tone's effects leak their wet path at
+ * about -56 dB with the mix at 0 (measured: a FeedbackDelay with 0.7 feedback still repeats
+ * every hit as a fading echo train), and with two delays "bypassed" that way on every bus the
+ * trail was audible after every stop. The bypass strategy's parameter (wet mix or filter
+ * cutoff) is still moved as before, so an effect switched on sounds as it always did.
  *
  * A subclass supplies its name, icon, label, default parameter values, a createNode() that
  * builds the Tone node, and any parameter setters of its own.
@@ -97,7 +107,8 @@ export default class FXBaseClass {
 
     setBypass (value, time) {
         const passThroughValue = this.passThroughValue
-        if (value === true && !this._override) {
+        const bypassed = value === true && !this._override
+        if (bypassed) {
             const currentValue = this.bypassedParameterValue
             if (currentValue !== passThroughValue) {
                 this._valueBeforeBypass = currentValue
@@ -106,6 +117,28 @@ export default class FXBaseClass {
         } else {
             this.setBypassedParameter(this._valueBeforeBypass, time)
         }
+        this.setGates(bypassed, time)
+    }
+
+    /** Opens the dry path and closes the effect's, or the other way round, over GATE_RAMP. */
+    setGates (bypassed, time) {
+        if (_.isNil(this.through)) {
+            return
+        }
+        const at = _.isNil(time) ? Tone.now() : time
+        const ramp = (node, target) => {
+            const param = node.gain
+            param.setValueAtTime(param.value, at)
+            param.linearRampToValueAtTime(target, at + GATE_RAMP)
+        }
+        ramp(this.through, bypassed ? 1 : 0)
+        ramp(this.into, bypassed ? 0 : 1)
+        ramp(this.outOf, bypassed ? 0 : 1)
+    }
+
+    /** Whether the effect is bypassed right now, from the gates. */
+    get isBypassed () {
+        return _.isNil(this.into) ? true : this.into.gain.value === 0
     }
 
     set isOn (value) {
@@ -132,6 +165,18 @@ export default class FXBaseClass {
 
     enable () {
         this.fx = this.createNode()
+        // the chain connects into `input` and on from `output`; the gates decide which way the signal goes
+        this.input = new Tone.Gain(1)
+        this.output = new Tone.Gain(1)
+        this.through = new Tone.Gain(1)
+        this.into = new Tone.Gain(0)
+        this.outOf = new Tone.Gain(0)
+        this.input.connect(this.through)
+        this.through.connect(this.output)
+        this.input.connect(this.into)
+        this.into.connect(this.fx)
+        this.fx.connect(this.outOf)
+        this.outOf.connect(this.output)
         this.setBypassedParameter(this.bypassedParameterValue)
         this.setBypass(true)
     }
@@ -141,8 +186,12 @@ export default class FXBaseClass {
     }
 
     dispose () {
-        if (!_.isNil(this.fx) && !_.isNil(this.fx._context)) {
-            this.fx.dispose()
+        for (const key of ['fx', 'input', 'output', 'through', 'into', 'outOf']) {
+            const node = this[key]
+            if (!_.isNil(node) && !_.isNil(node._context)) {
+                node.dispose()
+            }
+            this[key] = null
         }
     }
 

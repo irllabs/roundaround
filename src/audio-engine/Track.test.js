@@ -13,6 +13,10 @@ vi.mock('tone', () => {
             this.value = value
             return this
         }
+        linearRampToValueAtTime (value) {
+            this.value = value
+            return this
+        }
     }
     class Node {
         constructor (...args) {
@@ -63,11 +67,18 @@ vi.mock('tone', () => {
             this.wet = new Signal(1)
         }
     }
+    class Gain extends Node {
+        constructor (value = 1) {
+            super(value)
+            this.gain = new Signal(value)
+        }
+    }
     return {
         Channel,
         Filter,
         FeedbackDelay,
-        Gain: Node,
+        Gain,
+        now: () => 10,
         Compressor,
         WaveShaper,
         Part: class { dispose () { } },
@@ -249,5 +260,36 @@ describe('the master track', () => {
         expect(out(-headroom)).toBeGreaterThan(-1)
         // and it is continuous at the knee: the first step past it is a small one
         expect(out(knee + 0.001) - out(knee)).toBeLessThan(0.0011)
+    })
+})
+
+describe('the bus chain and the bypass gates', () => {
+    beforeEach(() => {
+        AudioEngine.busesByUser = { 'user-1': { channel: {} } }
+        AudioEngine.master = { channel: { kind: 'master' } }
+        FX.fxClasses = {}
+        FX.fx = []
+        FX.fxById = {}
+        FX.init()
+    })
+
+    it('runs the bus through each effect\'s gates, so a bypassed effect is silent by gain, not by mix', async () => {
+        const busFx = {
+            'fx-lowpass': { id: 'fx-lowpass', name: 'lowpass', order: 0, isOn: true, isOverride: false },
+            'fx-delay': { id: 'fx-delay', name: 'delay', order: 1, isOn: true, isOverride: true }
+        }
+        const bus = new Track({ id: 'user-1', fx: busFx }, Track.TRACK_TYPE_USER, 'user-1')
+        await flush()
+        bus.buildAudioChain() // the mock keeps every connection ever made; the last one is this build's
+        const lowpass = bus.fx['fx-lowpass'], delay = bus.fx['fx-delay']
+        expect(bus.channel.connections.at(-1)).toBe(lowpass.input)
+        expect(lowpass.output.connections.at(-1)).toBe(delay.input)
+        expect(delay.output.connections.at(-1)).toBe(AudioEngine.master.channel)
+        // bypassed: the dry gate open, the effect's gates shut; switched on: the other way round
+        expect(lowpass.into.gain.value).toBe(0)
+        expect(lowpass.through.gain.value).toBe(1)
+        expect(delay.into.gain.value).toBe(1)
+        expect(delay.outOf.gain.value).toBe(1)
+        expect(delay.through.gain.value).toBe(0)
     })
 })

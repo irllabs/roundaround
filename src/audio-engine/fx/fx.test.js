@@ -22,15 +22,31 @@ vi.mock('tone', () => {
             this.scheduled.push([value, time])
             return this
         }
+        linearRampToValueAtTime (value, time) {
+            this.scheduled.push(['ramp', value, time])
+            this.value = value
+            return this
+        }
     }
     class Node {
         constructor (...args) {
             this.args = args
             this._context = {}
             this.isDisposed = false
+            this.connections = []
+        }
+        connect (node) {
+            this.connections.push(node)
+            return this
         }
         dispose () {
             this.isDisposed = true
+        }
+    }
+    class Gain extends Node {
+        constructor (value = 1) {
+            super(value)
+            this.gain = new Signal(value)
         }
     }
     class WetNode extends Node {
@@ -80,7 +96,7 @@ vi.mock('tone', () => {
             this.type = args[1]
         }
     }
-    return { Signal, AutoWah, BitCrusher, Freeverb, Distortion: ToneDistortion, FeedbackDelay, PingPongDelay, Filter }
+    return { Signal, Gain, AutoWah, BitCrusher, Freeverb, Distortion: ToneDistortion, FeedbackDelay, PingPongDelay, Filter, now: () => 10 }
 })
 
 const { Signal } = ToneMock
@@ -279,5 +295,71 @@ describe('parameter setters write through the Tone signal', () => {
         const fx = build(Lowpass)
         fx.type = 'bandpass'
         expect(fx.fx.type).toBe('bandpass')
+    })
+})
+
+describe('the bypass gates', () => {
+    beforeEach(() => {
+        FX.fxClasses = {}
+        FX.fx = []
+        FX.fxById = {}
+    })
+
+    it('wires the chain through gates: input to through to output, and input to into to the node to outOf to output', () => {
+        const delay = build(Delay)
+        expect(delay.input.connections).toEqual([delay.through, delay.into])
+        expect(delay.through.connections).toEqual([delay.output])
+        expect(delay.into.connections).toEqual([delay.fx])
+        expect(delay.fx.connections).toEqual([delay.outOf])
+        expect(delay.outOf.connections).toEqual([delay.output])
+    })
+
+    it('starts bypassed with the effect path closed by gains at exactly 0, not by the wet mix alone', () => {
+        const delay = build(Delay)
+        expect(delay.through.gain.value).toBe(1)
+        expect(delay.into.gain.value).toBe(0)
+        expect(delay.outOf.gain.value).toBe(0)
+        expect(delay.isBypassed).toBe(true)
+        // the wet mix is still parked, so an effect switched on sounds as before
+        expect(delay.fx.wet.value).toBe(0)
+    })
+
+    it('opens the effect path and closes the dry one when the override lifts the bypass, over a short ramp', () => {
+        const delay = build(Delay)
+        delay.override = true
+        expect(delay.into.gain.value).toBe(1)
+        expect(delay.outOf.gain.value).toBe(1)
+        expect(delay.through.gain.value).toBe(0)
+        expect(delay.isBypassed).toBe(false)
+        expect(delay.fx.wet.value).toBe(0.2)
+        const ramp = delay.into.gain.scheduled.at(-1)
+        expect(ramp[0]).toBe('ramp')
+        expect(ramp[2] - delay.into.gain.scheduled.at(-2)[1]).toBeCloseTo(0.005, 6)
+        delay.override = false
+        expect(delay.isBypassed).toBe(true)
+    })
+
+    it('schedules the gates at the given time for step automation', () => {
+        const delay = build(Delay)
+        delay.setBypass(false, 4.5)
+        expect(delay.into.gain.scheduled.at(-2)[1]).toBe(4.5)
+        expect(delay.into.gain.scheduled.at(-1)[2]).toBeCloseTo(4.505, 6)
+    })
+
+    it('gates a filter the same way, so a bypassed lowpass is not merely opened to 20 kHz', () => {
+        const lowpass = build(Lowpass)
+        expect(lowpass.isBypassed).toBe(true)
+        expect(lowpass.into.gain.value).toBe(0)
+        lowpass.override = true
+        expect(lowpass.into.gain.value).toBe(1)
+        expect(lowpass.fx.frequency.value).toBe(Lowpass.defaultFrequency)
+    })
+
+    it('disposes the gates with the node', () => {
+        const delay = build(Delay)
+        const gates = [delay.input, delay.output, delay.through, delay.into, delay.outOf, delay.fx]
+        delay.isOn = false
+        expect(gates.every(g => g.isDisposed)).toBe(true)
+        expect(delay.into).toBeNull()
     })
 })
