@@ -375,3 +375,61 @@ describe('PlayUI showing whether the round is playing', () => {
         expect(ui.playbackToggle.attr).not.toHaveBeenCalled()
     })
 })
+
+describe('PlayUI sizing the round for the screen', () => {
+    /** The round as drawn on an iPad 10.9" in Safari: 1180 x 716 points, this user's rings innermost. */
+    function makeSizingUI(layers) {
+        const round = { ...makeRound(), layers }
+        const ui = new PlayUI({ round, user, users: [user], display: { isRecordingSequence: false }, dispatch: vi.fn(), saveUserPattern: vi.fn() })
+        ui.round = _.cloneDeep(round)
+        ui.containerWidth = 1180
+        ui.containerHeight = 716
+        return ui
+    }
+    const own = (id, createdAt) => ({ ...layer([step(id + 's0')]), id, createdAt })
+    const theirs = (id, createdAt) => ({ ...own(id, createdAt), createdBy: 'them' })
+
+    it('fits three of this user\'s rings at the zoom measured on the iPad', () => {
+        const ui = makeSizingUI([own('l1', 1), own('l2', 2), own('l3', 3)])
+        expect(ui.fitZoom()).toBeCloseTo(0.339, 3)
+    })
+
+    it('bounds a step\'s hit area by the nearest ring this user can edit, not by a collaborator\'s', () => {
+        const ui = makeSizingUI([own('l1', 1), own('l2', 2), theirs('l3', 3)])
+        expect(ui.ownRingPitch(0)).toBe(128)
+        expect(ui.ownRingPitch(1)).toBe(128)
+    })
+
+    it('bounds a lone ring by the presets in the middle', () => {
+        const ui = makeSizingUI([own('l1', 1)])
+        // the innermost ring's radius is 512, the presets reach 432: twice the 80 between them
+        expect(ui.ownRingPitch(0)).toBe(160)
+    })
+})
+
+describe('PlayUI placing the tabs outside the dots', () => {
+    function makeDottedUI(layers) {
+        const round = { ...makeRound(), layers }
+        const ui = new PlayUI({ round, user, users: [user], display: { isRecordingSequence: false }, dispatch: vi.fn(), saveUserPattern: vi.fn() })
+        ui.round = _.cloneDeep(round)
+        ui.containerWidth = 1180
+        ui.containerHeight = 716
+        ui.zoom = ui.fitZoom()
+        return ui
+    }
+    const own = (id, createdAt, steps = 16) => ({ ...layer(_.range(steps).map(i => step(id + 's' + i))), id, createdAt })
+
+    it('measures a ring by its dots once they reach past the band', () => {
+        const ui = makeDottedUI([own('l1', 1), own('l2', 2), own('l3', 3)])
+        // the dots are 72px on these rings, the band 52px: the ring reaches 36px out, and 56px is left between rings
+        expect(ui.stepSizing(0).dot).toBe(72)
+        expect(ui.ringEdge(0)).toBe(36)
+        expect(ui.gapAfterLayer(0)).toBe(128 - 72)
+        expect(ui.gapAfterLayer(2)).toBe(320)
+    })
+
+    it('keeps a collaborator\'s ring at its band', () => {
+        const ui = makeDottedUI([own('l1', 1), { ...own('l2', 2), createdBy: 'them' }])
+        expect(ui.ringEdge(1)).toBe(13)
+    })
+})

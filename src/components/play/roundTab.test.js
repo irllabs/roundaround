@@ -130,3 +130,22 @@ describe('tabGeometry', () => {
         expect(tabGeometry({ ...own, text: '' })).toBeNull()
     })
 })
+
+describe('tabGeometry on a ring whose dots are bigger than its band', () => {
+    // 72px dots on a 52px band: the dots reach 36px out, the band 26px, and 56px is left before the next ring's dots
+    const dotted = { ...own, edge: 36, gap: 56 }
+
+    it('stands on the dots\' outer edge rather than the band\'s, and still clears the next ring', () => {
+        const tab = tabGeometry({ ...dotted, text: 'KICK' })
+        expect(tab.radius - tab.height / 2).toBeCloseTo(own.ringRadius + 36, 5)
+        expect(tab.radius + tab.height / 2).toBeLessThanOrEqual(own.ringRadius + 36 + 56 - 2)
+    })
+
+    it('is the same tab as before, just further out', () => {
+        const before = tabGeometry({ ...own, text: 'KICK' })
+        const after = tabGeometry({ ...dotted, text: 'KICK' })
+        expect(after.height).toBe(before.height)
+        expect(after.fontSize).toBe(before.fontSize)
+        expect(after.radius - before.radius).toBeCloseTo(10, 5)
+    })
+})
