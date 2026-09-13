@@ -1,0 +1,29 @@
+{
+  "ctx": {
+    "sampleRate": 48000,
+    "baseLatency": 0.005333333333333333,
+    "outputLatency": 0.008,
+    "state": "running"
+  },
+  "tone": "no window.Tone",
+  "analysis": {
+    "starts": 212,
+    "immediate (no time given)": 9,
+    "scheduled in the past": 2,
+    "bars covered": 14.93,
+    "starts per bar": 13.6,
+    "grid deviation ms: max abs": 16.333,
+    "mean abs": 16.172,
+    "lead ms: min": -4213.3,
+    "median": 132.0,
+    "max": 137.3,
+    "start offsets used": [
+      0,
+      1
+    ],
+    "buffer sample rates": [
+      44100,
+      48000
+    ]
+  }
+}

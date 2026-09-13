@@ -1,0 +1,25 @@
+recording: {"frames": 590, "first_frame": 1789317095.224107, "last_frame": 1789317107.479737, "audio_start": 1789317095.553901, "stop": 1789317108.3140092, "offset": 0.32979393005371094, "work": "/var/folders/qy/18d74bjn4vx8mbf0w3h__j180000gn/T/rr-qa-mux-e2t17dxu"}
+{
+  "url": "http://127.0.0.1:3121/",
+  "stepsOn": 48,
+  "roundUrl": "http://127.0.0.1:3121/play/159539fe-e71c-4b5d-8ea5-ae1e8612b694",
+  "layers": [
+    "HI-HAT",
+    "HI-HAT",
+    "PERC"
+  ],
+  "meter": {
+    "samples": 3293184,
+    "maxAbs": 0.9621993899345398,
+    "over1": 0,
+    "over099": 0,
+    "sumSq": 33009.37639146312,
+    "blocks": 402,
+    "runs": 0,
+    "longestRun": 0,
+    "over1Share": 0.0,
+    "over099Share": 0.0,
+    "rms": 0.10011765332002405
+  },
+  "bufferStarts": 254
+}

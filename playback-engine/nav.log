@@ -1,0 +1,10 @@
+ok  landing: /
+ok  guest round created: /play/912913a4-288e-4b62-ac7c-7b784a1b43fa
+ok  play then stop: samples 21
+ok  back link to the rounds list: /rounds
+ok  new round from the list: /play/3acebea0-2db1-4126-8a93-2bcacadb9b86
+ok  back link from the second round: /rounds
+ok  wordmark to the landing page: /
+ok  browser back to the rounds list: /rounds
+ok  deep link into the first round: /play/912913a4-288e-4b62-ac7c-7b784a1b43fa
+ALL OK []

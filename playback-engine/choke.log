@@ -1,0 +1,22 @@
+{
+  "choke": {
+    "hits": 35,
+    "hits with a stop scheduled": 0,
+    "sample length ms": {
+      "26040": 542.0
+    },
+    "sounding time ms: min": null,
+    "median": null,
+    "max": null
+  },
+  "rebuild": {
+    "starts": 67,
+    "per buffer": {
+      "26040": 66,
+      "58451": 1
+    },
+    "double starts (same buffer, same time)": 0,
+    "examples": [],
+    "stops scheduled for right now (a hit cut on rebuild)": 0
+  }
+}

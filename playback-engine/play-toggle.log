@@ -1,0 +1,26 @@
+recording: {"frames": 324, "first_frame": 1789317087.179067, "last_frame": 1789317094.814022, "audio_start": 1789317087.508008, "stop": 1789317100.523726, "offset": 0.32894110679626465, "work": "/var/folders/qy/18d74bjn4vx8mbf0w3h__j180000gn/T/rr-qa-mux-jeik3u2p"}
+{
+  "before": {
+    "label": "Play",
+    "paths": 1,
+    "icon": "play",
+    "bufferStarts": 11,
+    "ctx": "running"
+  },
+  "after_first_click": {
+    "label": "Stop",
+    "paths": 2,
+    "icon": "pause",
+    "bufferStarts": 50,
+    "ctx": "running"
+  },
+  "after_second_click": {
+    "label": "Play",
+    "paths": 1,
+    "icon": "play",
+    "bufferStarts": 74,
+    "ctx": "running",
+    "newStartsAfterStop": 0
+  },
+  "console": []
+}

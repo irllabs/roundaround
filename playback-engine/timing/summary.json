@@ -1,0 +1,13 @@
+{
+ "scheduledHits": 201,
+ "bars": 8.25,
+ "gridDeviationMsMax": 1.4432899320127035e-12,
+ "hitsPerGridTime": {
+  "3": 67
+ },
+ "leadMs": {
+  "min": 94.7,
+  "median": 132.0,
+  "max": 137.3
+ }
+}
