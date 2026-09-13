@@ -1,0 +1,25 @@
+{
+  "url": "https://rounds.studio/",
+  "stepsOn": null,
+  "roundUrl": "https://rounds.studio/play/1c225586-d152-4ee7-a73d-2d5c1989fce1",
+  "layers": [
+    "PERC",
+    "HI-HAT",
+    "HI-HAT"
+  ],
+  "meter": {
+    "samples": 2039808,
+    "maxAbs": 0.9854736328125,
+    "over1": 0,
+    "over099": 0,
+    "sumSq": 11014.152338836406,
+    "blocks": 249,
+    "runs": 0,
+    "longestRun": 0,
+    "over1Share": 0.0,
+    "over099Share": 0.0,
+    "rms": 0.07348198746375849
+  },
+  "bufferStarts": 256,
+  "console": []
+}

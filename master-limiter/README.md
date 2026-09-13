@@ -9,3 +9,12 @@ Three rounds (hi-hat, perc, perc), all 48 steps on, ten seconds of playback at 1
 | C #316 compressor + soft ceiling | 0.995 | 0.0000% | 0 | `c-compressor-and-ceiling.mp4` |
 
 B’s residue is single-sample overshoots from the compressor’s 1 ms attack; in the encoded recordings A has 161 flat-topped runs and B none, so B already sounds clean at this level, but the device would still clamp those spikes. C holds everything under full scale.
+
+## Live rounds.studio, before and after the merge (8725ea0)
+
+One round created on the live site before the merge with every step on (perc, hi-hat, hi-hat), then joined again after the deploy, so the material is identical.
+
+| live build | peak (x full scale) | samples at or over 1 | clipped runs | recording |
+|---|---|---|---|---|
+| before, master f390f08 | 1.349 | 0.0145% | 474 | `live-before-8725ea0.mp4` |
+| after, master 8725ea0 | 0.985 | 0.0000% | 0 | `live-after-8725ea0.mp4` |

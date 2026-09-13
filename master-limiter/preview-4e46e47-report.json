@@ -1,0 +1,25 @@
+{
+  "url": "https://roundaround-dev--pr316-claude-master-limite-8d5wjpdx.web.app/",
+  "stepsOn": null,
+  "roundUrl": "https://roundaround-dev--pr316-claude-master-limite-8d5wjpdx.web.app/play/644eda28-6536-49fc-bf76-6bcde61bc8f8",
+  "layers": [
+    "HI-HAT",
+    "PERC",
+    "PERC"
+  ],
+  "meter": {
+    "samples": 1843200,
+    "maxAbs": 0.9947660565376282,
+    "over1": 0,
+    "over099": 79,
+    "sumSq": 42696.1900941237,
+    "blocks": 225,
+    "runs": 0,
+    "longestRun": 0,
+    "over1Share": 0.0,
+    "over099Share": 4.2860243055555554e-05,
+    "rms": 0.1521977845852646
+  },
+  "bufferStarts": 273,
+  "console": []
+}
