@@ -742,8 +742,8 @@ export class PlayUI extends Component {
     }
 
     /**
-     * Draws (or redraws) the round's instrument tab from `layerGraphic.tab`: a curved pill resting
-     * on the band's outer edge, centred over the first step, with the name along its arc. A
+     * Draws (or redraws) the round's instrument tab from `layerGraphic.tab`: a tag growing out of
+     * the band's outer edge, centred over the first step, with the name along its arc. A
      * collaborator's round, drawn at a third of the size, has no room between bands and gets none.
      */
     updateLayerLabel(layerGraphic) {
@@ -766,7 +766,7 @@ export class PlayUI extends Component {
             group.remove()
             return
         }
-        group.path(tab.pillPath).fill('none').stroke({ color: input.color, width: tab.height, linecap: 'round' }).back()
+        group.path(tab.labelPath).fill(input.color).back()
         text.path(tab.textPath).attr({ startOffset: tab.textOffset })
         layerGraphic.layerLabel = group
     }

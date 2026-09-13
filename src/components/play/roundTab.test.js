@@ -31,13 +31,16 @@ describe('tabGeometry', () => {
         expect(tab.endAngle).toBeGreaterThan(-90)
     })
 
-    it('rests on the band without entering it and stays clear of the next band', () => {
+    it('stands flat on the band\'s outer edge and stays clear of the next band', () => {
         const tab = tabGeometry({ ...own, text: 'HI-HAT' })
         const bandOuterEdge = own.ringRadius + own.bandWidth / 2
         const nextBandInnerEdge = bandOuterEdge + own.gap
-        expect(tab.radius - tab.height / 2).toBeGreaterThan(bandOuterEdge)
-        expect(tab.radius - tab.height / 2).toBeLessThanOrEqual(bandOuterEdge + 1)
+        expect(tab.radius - tab.height / 2).toBeCloseTo(bandOuterEdge, 5)
         expect(tab.radius + tab.height / 2).toBeLessThanOrEqual(nextBandInnerEdge - 2)
+        // the shape starts and ends on the band's edge and closes: flat bottom, not a pill
+        expect(tab.labelPath.startsWith('M')).toBe(true)
+        expect(tab.labelPath.endsWith('Z')).toBe(true)
+        expect(tab.labelPath.match(/A[\d.]+ [\d.]+ 0 [01] 0 /)).not.toBeNull() // the bottom arc runs back along the band
     })
 
     it('turns with the round when its first step is offset', () => {
@@ -51,20 +54,18 @@ describe('tabGeometry', () => {
         const short = tabGeometry({ ...own, text: 'KICK' })
         const long = tabGeometry({ ...own, text: 'TAMBOURI…' })
         expect(long.endAngle - long.startAngle).toBeGreaterThan(short.endAngle - short.startAngle)
-        // the pill is drawn with round caps that reach past its own arc, so the text arc is the longer one
-        expect(long.pillPath).not.toBe(long.textPath)
-        expect(long.pillPath.startsWith('M')).toBe(true)
+        expect(long.labelPath.length).toBeGreaterThan(long.textPath.length)
     })
 
-    it('sizes the pill to the measured text plus a small pad at each end, dropping the trailing tracking', () => {
+    it('sizes the tab to the measured text plus a small pad at each end, dropping the trailing tracking', () => {
         const { fontSize } = tabFont(own.gap)
         const measured = 40 // what the browser says 'KICK' takes at that size, tracking after every glyph included
         const tab = tabGeometry({ ...own, text: 'KICK', textWidth: measured })
-        const pillWidth = tab.radius * ((tab.endAngle - tab.startAngle) * Math.PI / 180)
-        expect(pillWidth).toBeCloseTo(measured - fontSize * 0.12 + 8, 1)
+        const tabWidth = tab.radius * ((tab.endAngle - tab.startAngle) * Math.PI / 180)
+        expect(tabWidth).toBeCloseTo(measured - fontSize * 0.12 + 8, 1)
     })
 
-    it('sets the text on a baseline below the pill\'s centreline, so the capitals sit centred, with the middle of the text at the middle of its path', () => {
+    it('sets the text on a baseline below the tab\'s centreline, so the capitals sit centred, with the middle of the text at the middle of its path', () => {
         const tab = tabGeometry({ ...own, text: 'SNARE', textWidth: 48 })
         const textRadius = Number(tab.textPath.match(/A([\d.]+) /)[1])
         expect(textRadius).toBeLessThan(tab.radius)
