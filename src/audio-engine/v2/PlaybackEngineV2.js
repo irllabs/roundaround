@@ -335,6 +335,11 @@ export function createPlaybackEngineV2 ({ base, tone = Tone, library = null, sch
             return Math.round(engine.scheduler.positionSeconds() * 1000)
         },
 
+        /** The position in bars, fractional and smooth (a tempo change keeps the phase); negative before the start. */
+        getPositionBars () {
+            return engine.scheduler.positionSeconds() / engine.scheduler.snapshot().barSeconds
+        },
+
         currentBar () {
             return engine.scheduler.currentBar()
         },

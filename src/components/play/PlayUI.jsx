@@ -18,6 +18,7 @@ import { instrumentIcon, ICON_BOX } from './instrumentIcons'
 import { stepTicks, msToTicks } from '../../audio-engine/grid'
 import { flashStep } from './stepFlash'
 import { METRONOME_ICON, applyMetronome } from './metronome'
+import { PLAYHEAD, playheadAngle, playheadSpan, playheadTransform } from './playhead'
 import { CENTRE_PANE, centrePaneLayout } from './centrePane'
 import { fitZoom, dotDiameter, hitSize, inHit, onDot, hitPolicy } from './touchTargets'
 import {
@@ -161,6 +162,7 @@ export class PlayUI extends Component {
         window.removeEventListener('resize', this.onWindowResizeThrottled)
         window.removeEventListener('keydown', this.onKeypress)
         this.removeBackgroundEventListeners()
+        this.stopPlayhead()
         this.clear()
         this.disposeToneEvents()
         for (const id of Object.keys(this.sequenceUnsubscribers)) {
@@ -269,6 +271,11 @@ export class PlayUI extends Component {
         if (prevProps.isPlaying !== this.props.isPlaying && !_.isNil(this.playbackToggleIcon)) {
             this.drawPlaybackToggle()
             this.updateMetronome()
+            if (this.props.isPlaying) {
+                this.startPlayhead()
+            } else {
+                this.stopPlayhead()
+            }
         }
 
         let redraw = !_.isEqual(display.isRecordingSequence, prevProps.display.isRecordingSequence)
@@ -435,6 +442,11 @@ export class PlayUI extends Component {
         for (const layer of this.round.layers) {
             // add order parameter so we can calculate offsets (todo: add this when we create a layer?)
             this.addLayer(layer, i++, shouldAnimate)
+        }
+        // the playhead over the rings, turning if the round already plays (a redraw mid-round)
+        this.drawPlayhead()
+        if (this.props.isPlaying === true) {
+            this.startPlayhead()
         }
         // add layer button
         const play = centrePaneLayout(this.containerWidth / 2, this.containerHeight / 2).play
@@ -722,11 +734,74 @@ export class PlayUI extends Component {
             }
         }
         this.stepGraphics = []
+        this.playhead = null
         if (!_.isNil(this.container)) {
             this.container.clear()
         }
         if (!_.isNil(this.playbackToggle)) {
             this.playbackToggle.click(null)
+        }
+    }
+
+    /**
+     * The playhead (see playhead.js): a hand across every ring, drawn pointing at the first step and
+     * turned by the transport while the round plays. It takes no pointer events, so the steps under
+     * it are still there to tap.
+     */
+    drawPlayhead() {
+        const rings = this.round.layers.map((layer, order) => ({ radius: this.getLayerDiameter(order) / 2, edge: this.ringEdge(order) }))
+        const span = playheadSpan(rings)
+        if (_.isNil(span)) {
+            this.playhead = null
+            return
+        }
+        const cx = this.containerWidth / 2
+        const cy = this.containerHeight / 2
+        const length = span.outer - span.inner
+        const group = this.container.group().attr({ id: 'playhead', 'pointer-events': 'none' })
+        group.rect(PLAYHEAD.width, length).radius(PLAYHEAD.width / 2).attr({ fill: '#fff', opacity: PLAYHEAD.opacity }).x(cx - PLAYHEAD.width / 2).y(cy - span.outer)
+        group.rect(PLAYHEAD.core, length).radius(PLAYHEAD.core / 2).attr({ fill: '#fff', opacity: PLAYHEAD.coreOpacity }).x(cx - PLAYHEAD.core / 2).y(cy - span.outer)
+        this.playhead = { group, cx, cy }
+        this.turnPlayhead(this.props.isPlaying === true ? AudioEngine.getPositionBars() : 0)
+        group.attr({ visibility: this.props.isPlaying === true ? 'visible' : 'hidden' })
+    }
+
+    /** Turns the hand to the transport's position in `bars`. */
+    turnPlayhead(bars) {
+        if (_.isNil(this.playhead)) {
+            return
+        }
+        this.playhead.group.attr({ transform: playheadTransform(playheadAngle(bars), this.playhead.cx, this.playhead.cy) })
+    }
+
+    /** Turns the hand with the transport, every frame, until the round stops. */
+    startPlayhead() {
+        if (!_.isNil(this.playheadFrame) || typeof window === 'undefined') {
+            return
+        }
+        const frame = () => {
+            if (this.isDisposing || this.props.isPlaying !== true) {
+                this.playheadFrame = null
+                return
+            }
+            if (!_.isNil(this.playhead)) {
+                this.turnPlayhead(AudioEngine.getPositionBars())
+                this.playhead.group.attr({ visibility: 'visible' })
+            }
+            this.playheadFrame = window.requestAnimationFrame(frame)
+        }
+        this.playheadFrame = window.requestAnimationFrame(frame)
+    }
+
+    /** Stops turning the hand and puts it away at the top. */
+    stopPlayhead() {
+        if (!_.isNil(this.playheadFrame)) {
+            window.cancelAnimationFrame(this.playheadFrame)
+            this.playheadFrame = null
+        }
+        if (!_.isNil(this.playhead)) {
+            this.turnPlayhead(0)
+            this.playhead.group.attr({ visibility: 'hidden' })
         }
     }
 

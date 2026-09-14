@@ -85,6 +85,13 @@ describe('AudioEngine metronome', () => {
         AudioEngine.metronome = null
     })
 
+    it('reports the position in bars at the context\'s time, for the playhead', () => {
+        transport.getTicksAtTime = vi.fn(time => time * 2 * transport.PPQ) // 120 bpm from a start at 0
+        // context.currentTime is 12.5: 25 beats in
+        expect(AudioEngine.getPositionBars()).toBeCloseTo(6.25, 9)
+        expect(transport.getTicksAtTime).toHaveBeenCalledWith(context.currentTime)
+    })
+
     it('is off, and switching it on does nothing, before init has built it', () => {
         expect(AudioEngine.isMetronomeOn()).toBe(false)
         expect(AudioEngine.setMetronome(true)).toBe(false)

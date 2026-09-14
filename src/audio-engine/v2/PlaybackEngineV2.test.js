@@ -171,6 +171,17 @@ describe('PlaybackEngineV2', () => {
         expect(f.nodes.filter(n => n.kind === 'source').length).toBe(sources.length)
     })
 
+    it('reports the position in bars, smooth and fractional, negative before the start', async () => {
+        await f.engine.load(round([layer('L1', 'u1', 4)]))
+        await f.engine.play()
+        expect(f.engine.getPositionBars()).toBeCloseTo(-START_DELAY / 2, 9)
+        f.run(1.1) // one second after bar 0 at 120 bpm: half a bar
+        expect(f.engine.getPositionBars()).toBeCloseTo(0.5, 9)
+        f.engine.setTempo(60) // the phase is kept; a bar is now four seconds
+        f.run(2.1)
+        expect(f.engine.getPositionBars()).toBeCloseTo(0.75, 9)
+    })
+
     it('clicks the metronome on every beat while it is on, into the master, and silences it with the rest on stop', async () => {
         await f.engine.load(round([layer('L1', 'u1', 4)]))
         // the click goes into the master, past the users' busses and their effects

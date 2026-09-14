@@ -2,6 +2,7 @@ import * as Tone from 'tone';
 import Track from './Track';
 import _ from 'lodash';
 import { createMetronomeClick } from './metronomeClick';
+import { BEATS_PER_BAR } from './grid';
 
 const AudioEngine = {
     tracks: [],
@@ -183,6 +184,15 @@ const AudioEngine = {
     },
     getPositionMilliseconds () {
         return Math.round(Tone.getTransport().seconds * 1000)
+    },
+    /**
+     * The transport's position in bars, fractional, at the context's current time (not Tone's
+     * look-ahead "now", which sits a tenth of a second ahead of the sound): what the playhead turns
+     * by. Zero before the start.
+     */
+    getPositionBars () {
+        const transport = Tone.getTransport()
+        return transport.getTicksAtTime(Tone.getContext().currentTime) / (transport.PPQ * BEATS_PER_BAR)
     },
     setTempo (bpm) {
         Tone.getTransport().bpm.value = bpm
