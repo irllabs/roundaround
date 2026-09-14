@@ -8,12 +8,14 @@
  *
  * Bar starts are handed out through `onBar` before the hits of that bar, and a window that
  * straddles a bar line is scheduled in two halves, so a snapshot swapped by an `onBar` handler
- * (a sequence moving to its next pattern) takes effect exactly on the bar line.
+ * (a sequence moving to its next pattern) takes effect exactly on the bar line. Beats (quarter
+ * notes from bar 0) are handed out through `onBeat`, each exactly once, for the metronome.
  *
  * The timer lives in a Worker, where browsers do not throttle it, with setInterval as the
  * fallback; both are behind an injectable `timer` so the tests can drive ticks by hand.
  */
 import { hitsBetween } from './arrangement'
+import { BEATS_PER_BAR } from '../grid'
 
 /** A timer in a Worker: `onTick` every `intervalMs`, unthrottled; returns a function that stops it. */
 export function workerTimer (intervalMs, onTick) {
@@ -47,13 +49,27 @@ export function createScheduler ({ context, lookAhead = 0.15, interval = 0.025, 
     let running = false
     let stopTimer = null
     let lastBarHandedOut = -Infinity
+    let lastBeatHandedOut = -Infinity
     const stepListeners = new Set()
     const barListeners = new Set()
+    const beatListeners = new Set()
 
     const emitBar = (bar, time) => {
         if (bar <= lastBarHandedOut) return
         lastBarHandedOut = bar
         for (const fn of barListeners) fn({ bar, time })
+    }
+
+    /** The beat lines in [from, to), counted from bar 0, each once however the windows fall. */
+    const emitBeats = (from, to) => {
+        if (beatListeners.size === 0) return
+        const beatSeconds = snapshot.barSeconds / BEATS_PER_BAR
+        // nothing before bar 0 (and Math.max turns the -0 Math.ceil can give into 0)
+        let beat = Math.max(Math.ceil((from - origin) / beatSeconds - 1e-9), lastBeatHandedOut + 1, 0)
+        for (let time = origin + beat * beatSeconds; time < to; beat += 1, time = origin + beat * beatSeconds) {
+            lastBeatHandedOut = beat
+            for (const fn of beatListeners) fn({ beat, bar: Math.floor(beat / BEATS_PER_BAR), time })
+        }
     }
 
     const emitHits = (from, to) => {
@@ -66,6 +82,7 @@ export function createScheduler ({ context, lookAhead = 0.15, interval = 0.025, 
     /** Schedules everything in [from, to), split at the bar lines so onBar handlers land exactly on them. */
     const schedule = (from, to) => {
         if (!(to > from)) return
+        emitBeats(from, to)
         const bar = snapshot.barSeconds
         let at = from
         let nextBar = Math.floor((from - origin) / bar) + 1
@@ -113,12 +130,18 @@ export function createScheduler ({ context, lookAhead = 0.15, interval = 0.025, 
             barListeners.add(fn)
             return () => barListeners.delete(fn)
         },
+        /** Every beat as `{ beat, bar, time }`, beats counted from bar 0; the metronome's clock. */
+        onBeat (fn) {
+            beatListeners.add(fn)
+            return () => beatListeners.delete(fn)
+        },
         /** Starts with bar 0 at `originTime` (context seconds). A past origin joins mid-bar: nothing before now is played. */
         start (originTime = context.currentTime) {
             scheduler.stop()
             origin = originTime
             cursor = Math.max(originTime, context.currentTime)
             lastBarHandedOut = Math.floor((cursor - origin) / snapshot.barSeconds) - 1
+            lastBeatHandedOut = -Infinity
             running = true
             tick()
             stopTimer = timer(interval * 1000, tick)
@@ -167,6 +190,7 @@ export function createScheduler ({ context, lookAhead = 0.15, interval = 0.025, 
             scheduler.stop()
             stepListeners.clear()
             barListeners.clear()
+            beatListeners.clear()
         }
     }
     return scheduler

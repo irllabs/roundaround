@@ -1683,22 +1683,53 @@ export class PlayUI extends Component {
         applyMetronome(this.metronomeArm, { bpm: this.props.round.bpm, playing: this.props.isPlaying === true })
     }
 
+    /**
+     * The tempo pill is the metronome's switch: a tap turns the click on every beat on or off, for
+     * this client only (a collaborator's metronome is theirs). The arm swings either way.
+     */
+    onMetronomeToggle = () => {
+        const on = AudioEngine.setMetronome(!AudioEngine.isMetronomeOn())
+        this.drawMetronomeSwitch(on)
+    }
+
+    /** The pill fills in while the click is on. */
+    drawMetronomeSwitch(on) {
+        if (_.isNil(this.tempoButton)) {
+            return
+        }
+        const spec = CENTRE_PANE.tempo
+        this.tempoButton.attr({ opacity: on ? spec.onFillOpacity : spec.fillOpacity, 'aria-pressed': on })
+    }
+
     renderTempoButton = (layout, bpm) => {
         const { tempo } = layout
         const spec = CENTRE_PANE.tempo
         const tempoButton = this.container.nested().rect(tempo.width, tempo.height).radius(tempo.height / 2)
         tempoButton.x(tempo.x).y(tempo.y)
-        tempoButton.fill('#fff').attr({ opacity: 0.1, id: 'tempo-button' })
+        tempoButton.fill('#fff').attr({ id: 'tempo-button', role: 'button', tabindex: 0, 'aria-label': 'Metronome' })
+        tempoButton.addClass(BUTTON_CLASS)
+        tempoButton.click(this.onMetronomeToggle)
+        tempoButton.on('keydown', (e) => {
+            if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault()
+                e.stopPropagation()
+                this.onMetronomeToggle()
+            }
+        })
+        this.tempoButton = tempoButton
+        this.drawMetronomeSwitch(AudioEngine.isMetronomeOn())
         const tempoIcon = this.container.nested()
         tempoIcon.svg(METRONOME_ICON)
         const iconHeight = spec.iconSize * 13 / 14
         tempoIcon.findOne('svg')?.size(spec.iconSize, iconHeight)
         tempoIcon.x(tempo.x + spec.iconInset).y(tempo.cy - iconHeight / 2)
         tempoIcon.attr({ id: 'tempIcon' })
+        tempoIcon.addClass(BUTTON_ICON_CLASS)
         // the arm swings at the tempo while the round plays
         this.metronomeArm = tempoIcon.node.querySelector('.metronome-arm')
         this.updateMetronome()
         const tempoButtonText = this.centredText(bpm, tempo.x + spec.labelInset, tempo.cy, spec.labelSize, '#fff', { anchor: 'start', opacity: spec.labelOpacity, attrs: { id: 'tempo-button-text' } })
+        tempoButtonText.addClass(BUTTON_ICON_CLASS)
         this.sequencerButtons.push(tempoButton, tempoIcon, tempoButtonText)
     }
 

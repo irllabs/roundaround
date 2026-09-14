@@ -11,7 +11,10 @@ import { SET_SELECTED_LAYER_ID, TOGGLE_STEP, UPDATE_LAYERS } from '../../redux/a
 vi.mock('@svgdotjs/svg.js', () => ({ SVG: () => ({}) }))
 vi.mock('@svgdotjs/svg.panzoom.js', () => ({}))
 vi.mock('tone', () => ({}))
-vi.mock('../../audio-engine/AudioEngine', () => ({ default: { recalculateParts: vi.fn(), play: vi.fn(), stop: vi.fn() } }))
+vi.mock('../../audio-engine/AudioEngine', () => {
+    let metronomeOn = false
+    return { default: { recalculateParts: vi.fn(), play: vi.fn(), stop: vi.fn(), setMetronome: vi.fn(on => { metronomeOn = on; return on }), isMetronomeOn: vi.fn(() => metronomeOn) } }
+})
 vi.mock('../../audio-engine/Instruments', () => ({ default: {} }))
 
 const user = { id: 'me', color: '#fff' }
@@ -432,5 +435,23 @@ describe('PlayUI placing the tabs outside the dots', () => {
     it('keeps a collaborator\'s ring at its band', () => {
         const ui = makeDottedUI([own('l1', 1), { ...own('l2', 2), createdBy: 'them' }])
         expect(ui.ringEdge(1)).toBe(13)
+    })
+})
+
+describe('PlayUI metronome switch', () => {
+    it('turns the click on and off from the tempo pill, and fills the pill in while it is on', () => {
+        const ui = makeUI(makeRound())
+        ui.tempoButton = { attr: vi.fn() }
+        ui.onMetronomeToggle()
+        expect(AudioEngine.setMetronome).toHaveBeenLastCalledWith(true)
+        expect(ui.tempoButton.attr).toHaveBeenLastCalledWith({ opacity: 0.3, 'aria-pressed': true })
+        ui.onMetronomeToggle()
+        expect(AudioEngine.setMetronome).toHaveBeenLastCalledWith(false)
+        expect(ui.tempoButton.attr).toHaveBeenLastCalledWith({ opacity: 0.1, 'aria-pressed': false })
+    })
+
+    it('draws nothing before the pill exists', () => {
+        const ui = makeUI(makeRound())
+        expect(() => ui.drawMetronomeSwitch(true)).not.toThrow()
     })
 })

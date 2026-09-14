@@ -7,6 +7,9 @@
  * the bar always adds up, and everyone converts the same way.
  */
 
+/** Beats (quarter notes) to the bar: the rounds are in four. */
+export const BEATS_PER_BAR = 4
+
 /** The tick a step starts on: its exact position, rounded once. */
 export function stepTick (i, n, totalTicks) {
     return Math.round((i * totalTicks) / n)

@@ -22,8 +22,8 @@ export const CENTRE_PANE = {
     // Frame 244 in the file: a 120x64 pill with a 1px border at 10%; a 64px box on the left holding a 48px disc at 20% with a 20px ring (2px, 50%) and the letter (14px);
     // a 48px box at x=64 holding the 24px sequence icon: twelve 4px hollow dots on a 10px radius
     switch: { width: 120, height: 64, aboveCentre: 96, borderOpacity: 0.1, disc: 48, discOpacity: 0.2, letterRing: { diameter: 20, width: 2, opacity: 0.5 }, labelSize: 14, dots: { radius: 10, size: 4, width: 1 }, dotsCentre: 88 },
-    /** the tempo pill, below the centre */
-    tempo: { width: 93, height: 48, belowCentre: 104, iconSize: 24, iconInset: 16, labelSize: 16, labelInset: 48, labelOpacity: 0.9 },
+    /** the tempo pill, below the centre; it is also the metronome's switch, and fills in while the click is on */
+    tempo: { width: 93, height: 48, belowCentre: 104, iconSize: 24, iconInset: 16, labelSize: 16, labelInset: 48, labelOpacity: 0.9, fillOpacity: 0.1, onFillOpacity: 0.3 },
 }
 
 const rad = (deg) => (deg * Math.PI) / 180

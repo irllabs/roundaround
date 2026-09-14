@@ -169,4 +169,49 @@ describe('createScheduler', () => {
         expect(h.scheduler.alignTo(2.08)).toBeCloseTo(0, 9)
         expect(h.scheduler.alignTo(1.9)).toBeCloseTo(-0.18, 9)
     })
+
+    it('hands out every beat exactly once, on the beat line, across the small windows', () => {
+        const h = harness()
+        const beats = []
+        h.scheduler.onBeat(b => beats.push(b))
+        h.scheduler.setSnapshot(snap([layer(4)]))
+        h.scheduler.start(1)
+        h.run(5) // two bars from origin 1 at 120 bpm
+        const inRange = beats.filter(b => b.time < 5)
+        expect(inRange.map(b => b.beat)).toEqual([0, 1, 2, 3, 4, 5, 6, 7])
+        expect(inRange.map(b => b.bar)).toEqual([0, 0, 0, 0, 1, 1, 1, 1])
+        inRange.forEach((b, i) => expect(b.time).toBeCloseTo(1 + i * 0.5, 9))
+        expect(new Set(beats.map(b => b.beat)).size).toBe(beats.length)
+    })
+
+    it('joins mid-bar: the first beat handed out is the next one after now', () => {
+        const h = harness()
+        const beats = []
+        h.scheduler.onBeat(b => beats.push(b))
+        h.scheduler.setSnapshot(snap([layer(4)]))
+        h.context.currentTime = 10
+        h.scheduler.start(10 - 2.75) // bar 1 started 0.75 s ago: beat 5 was 0.25 s ago, beat 6 is 0.25 s ahead
+        h.run(11)
+        expect(beats[0]).toMatchObject({ beat: 6, bar: 1 })
+        expect(beats[0].time).toBeCloseTo(10.25, 9)
+    })
+
+    it('keeps counting beats through a tempo change without repeating one', () => {
+        const h = harness()
+        const beats = []
+        h.scheduler.onBeat(b => beats.push(b))
+        h.scheduler.setSnapshot(snap([layer(4)]))
+        h.scheduler.start(0)
+        h.run(1)
+        h.scheduler.setTempo(60) // a beat is now a second
+        h.run(4)
+        const indexes = beats.map(b => b.beat)
+        expect(new Set(indexes).size).toBe(indexes.length)
+        expect(indexes).toEqual(indexes.slice().sort((a, b) => a - b))
+        // after the change, a second apart
+        const later = beats.filter(b => b.time > 1.2)
+        for (let i = 1; i < later.length; i++) {
+            expect(later[i].time - later[i - 1].time).toBeCloseTo(1, 6)
+        }
+    })
 })

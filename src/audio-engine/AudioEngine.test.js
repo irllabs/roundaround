@@ -63,4 +63,31 @@ describe('AudioEngine.stop', () => {
         expect(AudioEngine.tracksByType.TRACK_TYPE_USER[0].instrument.releaseAll).not.toHaveBeenCalled()
         AudioEngine.tracksByType = {}
     })
+
+    it('silences the metronome\'s pending clicks with the layers', () => {
+        AudioEngine.metronome = { stopAll: vi.fn(), isEnabled: () => true }
+        AudioEngine.stop()
+        expect(AudioEngine.metronome.stopAll).toHaveBeenCalledWith(context.currentTime)
+        AudioEngine.metronome = null
+    })
+})
+
+describe('AudioEngine metronome', () => {
+    it('hands the transport\'s quarter notes to the click, counted in beats from the start', () => {
+        AudioEngine.metronome = { click: vi.fn(), setEnabled: vi.fn(on => on), isEnabled: () => true }
+        transport.getTicksAtTime = vi.fn(time => (time - 0.1) * 2 * transport.PPQ) // 120 bpm from a start at 0.1 s
+        AudioEngine.clickBeat(0.1)
+        AudioEngine.clickBeat(2.6)
+        expect(AudioEngine.metronome.click).toHaveBeenNthCalledWith(1, { time: 0.1, beat: 0 })
+        expect(AudioEngine.metronome.click).toHaveBeenNthCalledWith(2, { time: 2.6, beat: 5 })
+        expect(AudioEngine.setMetronome(false)).toBe(false)
+        expect(AudioEngine.metronome.setEnabled).toHaveBeenCalledWith(false)
+        AudioEngine.metronome = null
+    })
+
+    it('is off, and switching it on does nothing, before init has built it', () => {
+        expect(AudioEngine.isMetronomeOn()).toBe(false)
+        expect(AudioEngine.setMetronome(true)).toBe(false)
+        expect(() => AudioEngine.clickBeat(1)).not.toThrow()
+    })
 })

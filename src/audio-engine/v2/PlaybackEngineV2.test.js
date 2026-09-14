@@ -6,14 +6,15 @@ import { STOP_FADE } from './voices'
 // A fake of everything below the engine: the old engine's busses and master, Tone's context and
 // connect, a sample library that resolves at once, and a hand-driven scheduler clock.
 function fakes () {
-    const param = () => ({ value: 1, setTargetAtTime: vi.fn(), cancelScheduledValues: vi.fn(), setValueAtTime: vi.fn(), linearRampToValueAtTime: vi.fn() })
+    const param = () => ({ value: 1, setTargetAtTime: vi.fn(), cancelScheduledValues: vi.fn(), setValueAtTime: vi.fn(), linearRampToValueAtTime: vi.fn(), exponentialRampToValueAtTime: vi.fn() })
     const nodes = []
     const ctx = {
         currentTime: 0,
         state: 'suspended',
         resume: vi.fn(async () => { ctx.state = 'running' }),
         createGain () { const n = { kind: 'gain', gain: param(), connect: vi.fn(), disconnect: vi.fn() }; nodes.push(n); return n },
-        createBufferSource () { const n = { kind: 'source', buffer: null, playbackRate: param(), connect: vi.fn(), disconnect: vi.fn(), start: vi.fn(), stop: vi.fn(), onended: null }; nodes.push(n); return n }
+        createBufferSource () { const n = { kind: 'source', buffer: null, playbackRate: param(), connect: vi.fn(), disconnect: vi.fn(), start: vi.fn(), stop: vi.fn(), onended: null }; nodes.push(n); return n },
+        createOscillator () { const n = { kind: 'osc', type: null, frequency: param(), connect: vi.fn(), disconnect: vi.fn(), start: vi.fn(), stop: vi.fn(), onended: null }; nodes.push(n); return n }
     }
     const tone = { getContext: () => ctx, connect: vi.fn() }
     const base = {
@@ -168,6 +169,28 @@ describe('PlaybackEngineV2', () => {
         // and nothing new is scheduled once stopped
         f.run(0.6)
         expect(f.nodes.filter(n => n.kind === 'source').length).toBe(sources.length)
+    })
+
+    it('clicks the metronome on every beat while it is on, into the master, and silences it with the rest on stop', async () => {
+        await f.engine.load(round([layer('L1', 'u1', 4)]))
+        // the click goes into the master, past the users' busses and their effects
+        expect(f.tone.connect).toHaveBeenCalledWith(f.engine.metronome.output, f.base.master.channel)
+        expect(f.engine.isMetronomeOn()).toBe(false)
+        await f.engine.play()
+        f.run(1.2)
+        expect(f.nodes.filter(n => n.kind === 'osc')).toHaveLength(0)
+        expect(f.engine.setMetronome(true)).toBe(true)
+        f.run(2.2)
+        const clicks = f.nodes.filter(n => n.kind === 'osc')
+        // the beats from the next window on: 1.5, 2.0 s after the press (bar 0 is at START_DELAY)
+        expect(clicks.map(c => c.start.mock.calls[0][0])).toEqual([START_DELAY + 1.5, START_DELAY + 2.0])
+        // beat 4 is a downbeat, beat 3 is not
+        expect(clicks[0].frequency.value).toBeLessThan(clicks[1].frequency.value)
+        f.engine.stop()
+        for (const c of clicks) {
+            expect(c.stop).toHaveBeenLastCalledWith(f.ctx.currentTime + 0.005)
+        }
+        expect(f.engine.isOn()).toBe(false)
     })
 
     it('removes a track and its output, and warns once about automation layers', async () => {

@@ -1,6 +1,7 @@
 import * as Tone from 'tone';
 import Track from './Track';
 import _ from 'lodash';
+import { createMetronomeClick } from './metronomeClick';
 
 const AudioEngine = {
     tracks: [],
@@ -8,6 +9,10 @@ const AudioEngine = {
     tracksByType: {},
     busesByUser: {},
     master: null,
+    /** The metronome's click (see metronomeClick.js), into the master past the users' effects. */
+    metronome: null,
+    /** The transport event that hands the metronome every quarter note; scheduled once. */
+    metronomeEvent: null,
     init () {
         const _this = this
         return new Promise(async (resolve, reject) => {
@@ -15,8 +20,35 @@ const AudioEngine = {
                 fx: []
             }, Track.TRACK_TYPE_MASTER)
             _this.master.buildAudioChain()
+            // a second init (a new round) rebuilds the master, so the click follows it; on or off as it was
+            const metronomeWasOn = !_.isNil(_this.metronome) && _this.metronome.isEnabled()
+            if (!_.isNil(_this.metronome)) {
+                _this.metronome.dispose()
+            }
+            _this.metronome = createMetronomeClick({ context: Tone.getContext(), enabled: metronomeWasOn })
+            Tone.connect(_this.metronome.output, _this.master.channel)
+            if (_.isNil(_this.metronomeEvent)) {
+                // the beat, as a quarter-note repeat on the transport: it runs whenever the transport does
+                _this.metronomeEvent = Tone.getTransport().scheduleRepeat((time) => _this.clickBeat(time), '4n', 0)
+            }
             resolve()
         })
+    },
+    /** One beat of the transport at `time` (context seconds): the metronome clicks if it is on. */
+    clickBeat (time) {
+        if (_.isNil(this.metronome)) {
+            return
+        }
+        const transport = Tone.getTransport()
+        const beat = Math.round(transport.getTicksAtTime(time) / transport.PPQ)
+        this.metronome.click({ time, beat })
+    },
+    /** Switches the metronome's click on or off; the arm in the tempo pill swings either way. */
+    setMetronome (on) {
+        return _.isNil(this.metronome) ? false : this.metronome.setEnabled(on)
+    },
+    isMetronomeOn () {
+        return !_.isNil(this.metronome) && this.metronome.isEnabled()
     },
     async load (round) {
         const _this = this
@@ -64,6 +96,9 @@ const AudioEngine = {
         // fade starts at once, not a tenth of a second later.
         const now = Tone.getContext().currentTime
         Tone.getTransport().stop(now)
+        if (!_.isNil(this.metronome)) {
+            this.metronome.stopAll(now)
+        }
         for (const track of this.tracksByType[Track.TRACK_TYPE_LAYER] || []) {
             if (!_.isNil(track.instrument) && typeof track.instrument.releaseAll === 'function') {
                 track.instrument.releaseAll(now)
