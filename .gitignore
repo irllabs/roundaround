@@ -30,3 +30,10 @@ cypress/fixtures/example.json
 
 # Cypress local credentials
 cypress.env.json
+
+# Ignore the Playwright build and its output (see playwright.config.js)
+build-e2e
+e2e/results
+e2e/report
+test-results
+playwright-report

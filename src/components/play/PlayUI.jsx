@@ -824,7 +824,10 @@ export class PlayUI extends Component {
         layer.isMuted && layerGraphic.stroke({ color: 'rgba(255,255,255,0.1)' })
         layerGraphic.x(xOffset)
         layerGraphic.y(yOffset)
+        // as with a step dot: `id` is the SVG.js wrapper's own property, and `data-layer` is the
+        // attribute that names the ring in the DOM
         layerGraphic.id = layer.id
+        layerGraphic.attr({ 'data-layer': layer.id })
         layerGraphic.order = order
         layerGraphic.isAllowedInteraction = layer.createdBy === this.props.user.id
         if (layer.id === this.selectedLayerId) {
@@ -874,7 +877,12 @@ export class PlayUI extends Component {
             stepGraphic.x(x)
             stepGraphic.y(y)
             stepGraphic.layerId = layer.id
+            // `id` here is a property on the SVG.js wrapper, not a DOM attribute: it is what
+            // _.find(this.stepGraphics, { id }) looks up. The dot itself carries the step's id as
+            // `data-step` so a test (and a screenshot) can name the dot it means; `data-step-hit`
+            // on the invisible ellipse beside it is what a finger actually lands on.
             stepGraphic.id = step.id
+            stepGraphic.attr({ 'data-step': step.id, 'data-step-layer': layer.id, 'data-step-on': step.isOn === true })
             stepGraphic.diameter = stepDiameter
             stepGraphic.isAllowedInteraction = !dim && createdByThisUser
             stepGraphic.userColor = this.userColors[layer.createdBy]
@@ -1069,6 +1077,9 @@ export class PlayUI extends Component {
         if (_.isNil(layer) || _.isNil(stepGraphic)) {
             return
         }
+        // the dot says whether it is on, so the state a player reads off the screen is the state a
+        // test reads off the element (the flash on a sounding step is a fill, and leaves this alone)
+        stepGraphic.attr({ 'data-step-on': step.isOn === true })
         if (step.isOn) {
             const color = layer.isMuted ? 'rgba(255,255,255, 0.1)' : this.userColors[layer.createdBy]
             stepGraphic.attr({ fill: color, stroke: color, 'fill-opacity': step.probability })

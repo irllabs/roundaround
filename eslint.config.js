@@ -149,7 +149,7 @@ const reactAppRules = {
 }
 
 export default [
-    { ignores: ['build/**', 'node_modules/**', 'functions/**', 'cypress/results/**', 'cypress/screenshots/**', 'cypress/videos/**'] },
+    { ignores: ['build/**', 'build-e2e/**', 'node_modules/**', 'functions/**', 'cypress/results/**', 'cypress/screenshots/**', 'cypress/videos/**', 'e2e/results/**', 'e2e/report/**'] },
     {
         files: ['**/*.{js,jsx,mjs}'],
         plugins: { react, 'react-hooks': reactHooks, 'jsx-a11y': jsxA11y },
@@ -185,7 +185,16 @@ export default [
         rules: { 'testing-library/no-manual-cleanup': 'off' },
     },
     {
-        files: ['vite.config.js', 'eslint.config.js'],
+        // The Playwright suite: Node and the browser both, since the specs run in Node and the
+        // bodies of page.evaluate run in the page. `react-hooks/rules-of-hooks` is off because
+        // Playwright's fixtures take a callback named `use`, which the rule reads as a React hook
+        // called outside a component.
+        files: ['e2e/**/*.js'],
+        languageOptions: { globals: { ...globals.browser, ...globals.node } },
+        rules: { ...reactAppRules, 'react-hooks/rules-of-hooks': 'off' },
+    },
+    {
+        files: ['vite.config.js', 'eslint.config.js', 'playwright.config.js'],
         languageOptions: { globals: { ...globals.node } },
     },
 ]
