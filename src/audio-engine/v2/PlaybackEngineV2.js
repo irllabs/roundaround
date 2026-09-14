@@ -17,6 +17,7 @@ import { snapshotFromRound } from './arrangement'
 import { createSampleLibrary } from './samples'
 import { playHit, createChokeGroups, createVoiceRegistry, dbToGain } from './voices'
 import { alignedOrigin } from './transport'
+import { createMetronomeClick } from '../metronomeClick'
 
 export const TRACK_TYPE_LAYER = 'TRACK_TYPE_LAYER'
 export const TRACK_TYPE_USER = 'TRACK_TYPE_USER'
@@ -168,7 +169,7 @@ export function createPlaybackEngineV2 ({ base, tone = Tone, library = null, sch
             }
         },
 
-        init () {
+        async init () {
             engine.library = library || createSampleLibrary({ context: context() })
             engine.scheduler = scheduler || createScheduler({ context: context() })
             engine.scheduler.onStep(hit => {
@@ -178,7 +179,24 @@ export function createPlaybackEngineV2 ({ base, tone = Tone, library = null, sch
                     track.play(hit)
                 }
             })
-            return base.init()
+            // the metronome's click on every beat, into the master past the users' effects; on or off as it was
+            const metronomeWasOn = !_.isNil(engine.metronome) && engine.metronome.isEnabled()
+            if (!_.isNil(engine.metronome)) {
+                engine.metronome.dispose()
+            }
+            engine.metronome = createMetronomeClick({ context: context(), enabled: metronomeWasOn })
+            engine.scheduler.onBeat(({ time, beat }) => engine.metronome.click({ time, beat }))
+            await base.init()
+            tone.connect(engine.metronome.output, base.master.channel)
+        },
+
+        /** Switches the metronome's click on or off; the arm in the tempo pill swings either way. */
+        setMetronome (on) {
+            return _.isNil(engine.metronome) ? false : engine.metronome.setEnabled(on)
+        },
+
+        isMetronomeOn () {
+            return !_.isNil(engine.metronome) && engine.metronome.isEnabled()
         },
 
         async load (round) {
@@ -278,6 +296,9 @@ export function createPlaybackEngineV2 ({ base, tone = Tone, library = null, sch
         stop () {
             engine.scheduler.stop()
             engine.voices.stopAll(context().currentTime)
+            if (!_.isNil(engine.metronome)) {
+                engine.metronome.stopAll(context().currentTime)
+            }
             pendingServerStart = null
             for (const fn of playListeners) fn({ playing: false })
         },
@@ -312,6 +333,11 @@ export function createPlaybackEngineV2 ({ base, tone = Tone, library = null, sch
 
         getPositionMilliseconds () {
             return Math.round(engine.scheduler.positionSeconds() * 1000)
+        },
+
+        /** The position in bars, fractional and smooth (a tempo change keeps the phase); negative before the start. */
+        getPositionBars () {
+            return engine.scheduler.positionSeconds() / engine.scheduler.snapshot().barSeconds
         },
 
         currentBar () {
@@ -366,10 +392,18 @@ export function createPlaybackEngineV2 ({ base, tone = Tone, library = null, sch
             return engine.scheduler.onBar(fn)
         },
 
+        onBeat (fn) {
+            return engine.scheduler.onBeat(fn)
+        },
+
         dispose () {
             engine.stop()
             engine.reset()
             engine.scheduler.dispose()
+            if (!_.isNil(engine.metronome)) {
+                engine.metronome.dispose()
+                engine.metronome = null
+            }
         }
     }
     return engine

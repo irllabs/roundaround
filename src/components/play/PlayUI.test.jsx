@@ -11,7 +11,10 @@ import { SET_SELECTED_LAYER_ID, TOGGLE_STEP, UPDATE_LAYERS } from '../../redux/a
 vi.mock('@svgdotjs/svg.js', () => ({ SVG: () => ({}) }))
 vi.mock('@svgdotjs/svg.panzoom.js', () => ({}))
 vi.mock('tone', () => ({}))
-vi.mock('../../audio-engine/AudioEngine', () => ({ default: { recalculateParts: vi.fn(), play: vi.fn(), stop: vi.fn() } }))
+vi.mock('../../audio-engine/AudioEngine', () => {
+    let metronomeOn = false
+    return { default: { recalculateParts: vi.fn(), play: vi.fn(), stop: vi.fn(), setMetronome: vi.fn(on => { metronomeOn = on; return on }), isMetronomeOn: vi.fn(() => metronomeOn), getPositionBars: vi.fn(() => 0) } }
+})
 vi.mock('../../audio-engine/Instruments', () => ({ default: {} }))
 
 const user = { id: 'me', color: '#fff' }
@@ -432,5 +435,63 @@ describe('PlayUI placing the tabs outside the dots', () => {
     it('keeps a collaborator\'s ring at its band', () => {
         const ui = makeDottedUI([own('l1', 1), { ...own('l2', 2), createdBy: 'them' }])
         expect(ui.ringEdge(1)).toBe(13)
+    })
+})
+
+describe('PlayUI metronome switch', () => {
+    it('turns the click on and off from the tempo pill, and fills the pill in while it is on', () => {
+        const ui = makeUI(makeRound())
+        ui.tempoButton = { attr: vi.fn() }
+        ui.onMetronomeToggle()
+        expect(AudioEngine.setMetronome).toHaveBeenLastCalledWith(true)
+        expect(ui.tempoButton.attr).toHaveBeenLastCalledWith({ opacity: 0.3, 'aria-pressed': true })
+        ui.onMetronomeToggle()
+        expect(AudioEngine.setMetronome).toHaveBeenLastCalledWith(false)
+        expect(ui.tempoButton.attr).toHaveBeenLastCalledWith({ opacity: 0.1, 'aria-pressed': false })
+    })
+
+    it('draws nothing before the pill exists', () => {
+        const ui = makeUI(makeRound())
+        expect(() => ui.drawMetronomeSwitch(true)).not.toThrow()
+    })
+})
+
+describe('PlayUI playhead', () => {
+    it('turns the hand about the round\'s centre by the transport\'s position in bars', () => {
+        const ui = makeUI(makeRound())
+        ui.playhead = { group: { attr: vi.fn() }, cx: 650, cy: 450 }
+        ui.turnPlayhead(1.25)
+        expect(ui.playhead.group.attr).toHaveBeenLastCalledWith({ transform: 'rotate(90.000 650 450)' })
+    })
+
+    it('turns with the engine every frame while playing, and is put away at the top on stop', () => {
+        const ui = makeUI(makeRound())
+        ui.props = { ...ui.props, isPlaying: true }
+        ui.playhead = { group: { attr: vi.fn() }, cx: 650, cy: 450 }
+        AudioEngine.getPositionBars.mockReturnValue(2.5)
+        const frames = []
+        vi.spyOn(window, 'requestAnimationFrame').mockImplementation(fn => { frames.push(fn); return frames.length })
+        vi.spyOn(window, 'cancelAnimationFrame').mockImplementation(() => {})
+        ui.startPlayhead()
+        frames[0]()
+        expect(ui.playhead.group.attr).toHaveBeenCalledWith({ transform: 'rotate(180.000 650 450)' })
+        expect(ui.playhead.group.attr).toHaveBeenCalledWith({ visibility: 'visible' })
+        expect(frames).toHaveLength(2) // the next frame is asked for
+        ui.stopPlayhead()
+        expect(window.cancelAnimationFrame).toHaveBeenCalledWith(2)
+        expect(ui.playhead.group.attr).toHaveBeenCalledWith({ transform: 'rotate(0.000 650 450)' })
+        expect(ui.playhead.group.attr).toHaveBeenLastCalledWith({ visibility: 'hidden' })
+        // once stopped, a frame still in flight does nothing more
+        ui.props = { ...ui.props, isPlaying: false }
+        const calls = ui.playhead.group.attr.mock.calls.length
+        frames[1]()
+        expect(ui.playhead.group.attr.mock.calls.length).toBe(calls)
+        vi.restoreAllMocks()
+    })
+
+    it('does nothing without a hand', () => {
+        const ui = makeUI(makeRound())
+        expect(() => ui.turnPlayhead(0.5)).not.toThrow()
+        expect(() => ui.stopPlayhead()).not.toThrow()
     })
 })
