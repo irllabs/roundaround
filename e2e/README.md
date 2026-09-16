@@ -67,7 +67,8 @@ The canvas is drawn with SVG.js rather than React, so most of it is addressed by
 | `#tempo-button` | the tempo pill, which is also the metronome's switch (`aria-pressed`) |
 | `#playhead` | the playhead |
 | `[id="0_pattern_clickable_button"]` | a pattern preset (an id that starts with a digit is not a valid `#` selector) |
-| `#clickable-switch`, `#sequence-cickable-button` | the sequence switch and the record button |
+| `#clickable-switch`, `#sequence-cickable-button` | the sequence switch and the record button (the record button keeps that id whether it shows Sequence or Stop; the spelling is the app's) |
+| `[data-effect="delay"]` | an effect in the sidebar, with a `role="switch"` inside carrying `aria-checked` and `data-on` |
 
 The layer bar's popups carry `data-test` (`mixer-popup`, `layer-popup`, `volume-popup`) and are
 hidden by class, so assert `data-open` rather than visibility when checking one has closed.
@@ -79,6 +80,10 @@ hidden by class, so assert `data-open` rather than visibility when checking one 
   middle of its bounding box is the middle of the round rather than the ring.
 - **The step modal only opens on a step that is already on**, after a press of about half a second.
   A press on the ring beside the dot opens the layer's settings instead.
+- **The effects switches are dragged, not clicked.** The thumb is drawn with SVG.js, so a test
+  operates the switch with the keyboard (`Enter`) rather than simulating a drag. Space works too,
+  and the switch stops the key from reaching PlayUI's window listener, which would otherwise start
+  the round.
 
 ## Where this sits next to the other suites
 

@@ -2215,7 +2215,10 @@ export class PlayUI extends Component {
             sequenceText.front()
             const clickableSequenceButton = this.container.nested().rect(pill.width, pill.height).radius(pill.height / 2)
             clickableSequenceButton.on('click', this.onToggleRecordSequence)
-            clickableSequenceButton.attr({ id: 'sequence-button', fill: '#000', opacity: 0.00001, cursor: 'pointer' })
+            // the same id the Sequence variant gives its overlay: one click target whichever the
+            // button is showing. It used to repeat the pill's own `sequence-button` here, which put
+            // two elements with one id in the document for as long as a recording ran.
+            clickableSequenceButton.attr({ id: 'sequence-cickable-button', fill: '#000', opacity: 0.00001, cursor: 'pointer' })
             clickableSequenceButton.x(pill.x).y(pill.y)
             this.microLayerGraphics.push(sequenceText, sequenceButton, sequenceStop, clickableSequenceButton)
         }

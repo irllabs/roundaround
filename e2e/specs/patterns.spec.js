@@ -77,6 +77,19 @@ test.describe('the sequence', () => {
         await expect(page.locator('#sequence-text')).toHaveText('Stop')
     })
 
+    test('keeps one element per id while recording, and one click target throughout', async ({ page }) => {
+        await expect(page.locator('#sequence-button')).toHaveCount(1)
+        await expect(page.locator('#sequence-cickable-button')).toHaveCount(1)
+
+        await page.locator('#sequence-cickable-button').click()
+        await expect(page.locator('#sequence-stop')).toBeAttached()
+
+        // the Stop variant used to give its overlay the pill's own id, putting two elements with
+        // one id in the document for as long as the recording ran
+        await expect(page.locator('#sequence-button')).toHaveCount(1)
+        await expect(page.locator('#sequence-cickable-button')).toHaveCount(1)
+    })
+
     test('records the presets that are tapped, and stops again', async ({ page, app }) => {
         await page.locator('#sequence-cickable-button').click()
         await expect(page.locator('#sequence-stop')).toBeAttached()
@@ -84,8 +97,7 @@ test.describe('the sequence', () => {
         await page.locator('[id="0_pattern_clickable_button"]').click()
         await page.locator('[id="1_pattern_clickable_button"]').click()
 
-        // while recording, the pill and its click target share an id; the overlay is drawn last
-        await page.locator('#sequence-button').last().click()
+        await page.locator('#sequence-cickable-button').click()
         await expect(page.locator('#sequence-text')).toHaveText('Sequence')
 
         // finishing the recording is what starts the sequence playing, and that is written
