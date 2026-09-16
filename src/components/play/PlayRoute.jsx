@@ -74,9 +74,13 @@ class PlayRoute extends Component {
         this.removeFirebaseListeners()
         this.leaveRound()
         AudioEngine.stop()
-        if (!_.isNil(this.props.round) && !_.isNil(this.props.round.currentUsers)) {
-            this.props.setIsPlaying(false)
-        }
+        // No `setIsPlaying(false)` here. `isPlaying` is a field of the round and the next line
+        // takes the whole round away, so the stop had nothing to write; what it did have was a
+        // guard on `this.props.round`, which is the last round this instance rendered with, not
+        // the one the store holds. Under StrictMode the two come apart on every remount -- React
+        // renders the incoming route before the outgoing one's unmount clears the round, and then
+        // double-invokes the new instance's unmount against props that still hold it -- and the
+        // dispatch reached the reducer with no round to write to.
         this.props.setRound(null)
         this.props.setUsers([])
         this.isLoadingRound = false;

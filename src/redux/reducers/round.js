@@ -196,6 +196,13 @@ export default createReducer(initialState, (builder) => {
             state.id = action.payload.id
         })
         .addCase(SET_IS_PLAYING, (state, action) => {
+            // A stop can still be on its way when the round has already gone: a shared-transport
+            // snapshot that lands after the play route cleared it, or any dispatch made from a
+            // component whose props still hold the round the store no longer has. There is nothing
+            // to mark as playing then, and the next SET_ROUND carries its own flag.
+            if (_.isNil(state)) {
+                return
+            }
             state.isPlaying = action.payload.value
         })
         .addCase(SET_ROUND_SHORTLINK, (state, action) => {

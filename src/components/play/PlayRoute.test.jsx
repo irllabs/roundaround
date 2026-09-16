@@ -6,7 +6,7 @@ import { Routes, Route } from 'react-router-dom'
 import PlayRoute from './PlayRoute'
 import AudioEngine from '../../audio-engine/AudioEngine'
 import { renderWithProviders, makeStore, LocationProbe } from '../../test/test-utils'
-import { setUser } from '../../redux/actions'
+import { setUser, setIsPlaying } from '../../redux/actions'
 
 vi.mock('../../audio-engine/AudioEngine', () => ({
     default: {
@@ -266,6 +266,31 @@ describe('PlayRoute', () => {
         expect(store.getState().round.contributors).toBeUndefined()
         // the profiles are still loaded, so the layers keep their colours
         expect(store.getState().users.map(user => user.id)).toEqual(['owner', 'me'])
+    })
+
+    // The dev server renders the app inside StrictMode and react-refresh remounts a class
+    // component whose module was edited. React renders the incoming instance before the outgoing
+    // one's unmount clears the round, then double-invokes the new instance's unmount, so anything
+    // that dispatch reads off `this.props` there is a round the store no longer has. A stop sent
+    // from that unmount used to reach the reducer with no round to write to, and the route spent
+    // the rest of the session in the error boundary.
+    it('survives the remount the dev server does to a round that is playing', async () => {
+        const { firebase } = makeFirebase({ round: roundWithMembers(['me']) })
+        const store = makeStore()
+        store.dispatch(setUser(me))
+        const tree = (key) => (
+            <React.StrictMode>
+                <Routes><Route path="/play/*" element={<PlayRoute key={key} />} /></Routes>
+            </React.StrictMode>
+        )
+        const { rerender } = renderWithProviders(tree('first'), { store, firebase, route: '/play/r1' })
+        await waitFor(() => expect(store.getState().round).not.toBeNull())
+        act(() => { store.dispatch(setIsPlaying(true)) })
+
+        rerender(tree('second'))
+
+        await waitFor(() => expect(store.getState().round).not.toBeNull())
+        expect(store.getState().round.id).toBe('r1')
     })
 
     it('takes the user out of the round when the play route goes away', async () => {

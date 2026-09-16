@@ -46,6 +46,15 @@ describe('the round reducer', () => {
         expect(round(state, { type: 'NOT_A_ROUND_ACTION', payload: {} })).toBe(state)
     })
 
+    // The play route clears the round on its way out, and a stop can arrive after that: a shared-
+    // transport snapshot still in flight, or an unmount dispatching against props that still hold
+    // the round the store has already dropped. Before this the reducer wrote to null and the whole
+    // route fell into the error boundary.
+    it('leaves a cleared round alone when a stop arrives after it', () => {
+        expect(round(null, { type: types.SET_IS_PLAYING, payload: { value: false } })).toBeNull()
+        expect(round(null, { type: types.SET_IS_PLAYING, payload: { value: true } })).toBeNull()
+    })
+
     const cases = [
         {
             name: 'SET_ROUND replaces the whole round',
